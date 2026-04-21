@@ -1294,7 +1294,7 @@ export const CoachVoiceChat = ({
           tokenEndpoint,
           mode,
           scenario,
-          extraBody
+          extraBody: { ...extraBody, voice_type: voiceType }
         });
         chatRef.current = miniProgramClient;
         await miniProgramClient.connect();
@@ -1361,7 +1361,7 @@ export const CoachVoiceChat = ({
             description: "正在使用豆包语音通道...",
           });
           try {
-            const doubaoChat = new DoubaoRealtimeChat(handleVoiceMessage, handleStatusChange, handleTranscript, preAcquiredStream);
+            const doubaoChat = new DoubaoRealtimeChat(handleVoiceMessage, handleStatusChange, handleTranscript, preAcquiredStream, voiceType);
             chatRef.current = doubaoChat;
             await doubaoChat.init();
             updateConnectionPhase('connected');
@@ -1394,7 +1394,7 @@ export const CoachVoiceChat = ({
             tokenEndpoint,
             mode,
             scenario,
-            extraBody
+            extraBody: { ...extraBody, voice_type: voiceType }
           });
           chatRef.current = miniProgramClient;
           await miniProgramClient.connect();

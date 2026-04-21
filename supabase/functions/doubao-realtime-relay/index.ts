@@ -352,6 +352,18 @@ serve(async (req) => {
   // 从请求 URL 获取认证信息
   const url = new URL(req.url);
   const authToken = url.searchParams.get('token') || req.headers.get('authorization')?.replace('Bearer ', '');
+  const clientVoiceType = url.searchParams.get('voice_type') || '';
+
+  // ElevenLabs 音色 ID -> 豆包 speaker 映射（默认男声 echo 风格）
+  const DOUBAO_DEFAULT_SPEAKER = 'zh_male_yunzhou_jupiter_bigtts';
+  const doubaoSpeakerMap: Record<string, string> = {
+    'nPczCjzI2devNBz1zQrb': 'zh_male_yunzhou_jupiter_bigtts',   // Brian 温暖男声
+    'JBFqnCBsd6RMkjVDRZzb': 'zh_male_yunzhou_jupiter_bigtts',   // George 沉稳长者（暂用同款男声）
+    'EXAVITQu4vr4xnSDxMaL': 'zh_female_cancan_mars_bigtts',     // Sarah 温柔女声
+    'pFZP5JQG7iQjIQuC4Bku': 'zh_female_wanwanxiaohe_moon_bigtts', // Lily 清新女声
+  };
+  const doubaoSpeaker = doubaoSpeakerMap[clientVoiceType] || DOUBAO_DEFAULT_SPEAKER;
+  console.log('[DoubaoRelay] 🎙️ Voice mapping:', { clientVoiceType, doubaoSpeaker });
 
   let doubaoWs: NodeWebSocket | null = null;
   let sessionId = '';
@@ -482,7 +494,7 @@ serve(async (req) => {
               const systemRole = buildEmotionPrompt(userName);
               const startSessionPayload = {
                 tts: {
-                  speaker: 'zh_male_yunzhou_jupiter_bigtts',
+                  speaker: doubaoSpeaker,
                   audio_config: {
                     format: 'pcm_s16le',
                     sample_rate: 24000,

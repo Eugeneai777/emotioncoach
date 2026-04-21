@@ -23,6 +23,23 @@ interface ClientMessage {
   audio?: string;
   text?: string;
   instructions?: string;
+  voice_type?: string;
+}
+
+// ElevenLabs 音色 ID -> OpenAI Realtime voice 名称
+function mapVoiceTypeToOpenAIVoice(voiceType: string | null | undefined, mode: string): string {
+  const fallback = mode === 'teen' ? 'shimmer' : 'echo';
+  const voiceMap: Record<string, string> = {
+    'nPczCjzI2devNBz1zQrb': 'echo',     // Brian 温暖男声
+    'JBFqnCBsd6RMkjVDRZzb': 'ash',      // George 沉稳长者
+    'EXAVITQu4vr4xnSDxMaL': 'shimmer',  // Sarah 温柔女声
+    'pFZP5JQG7iQjIQuC4Bku': 'coral',    // Lily 清新女声
+  };
+  if (!voiceType) return fallback;
+  // 如果客户端直接传了 OpenAI 原生 voice 名称，也接受
+  const allowedNative = new Set(['alloy', 'ash', 'coral', 'echo', 'sage', 'shimmer', 'verse']);
+  if (allowedNative.has(voiceType)) return voiceType;
+  return voiceMap[voiceType] || fallback;
 }
 
 Deno.serve(async (req) => {
@@ -75,6 +92,7 @@ Deno.serve(async (req) => {
   let isConnected = false;
   let healthCheckInterval: ReturnType<typeof setInterval> | null = null;
   let clientInstructions: string | null = null;
+  let clientVoiceType: string | null = null;
   let instructionsResolve: ((value: string | null) => void) | null = null;
 
   // 🔧 定期检查 OpenAI 连接健康状态
@@ -136,13 +154,16 @@ Deno.serve(async (req) => {
           console.log('[Relay] Using pre-received client instructions');
         }
 
+        const resolvedVoice = mapVoiceTypeToOpenAIVoice(clientVoiceType, mode);
+        console.log('[Relay] Resolved voice for session:', { clientVoiceType, mode, resolvedVoice });
+
         // 发送会话配置
         const sessionConfig = {
           type: 'session.update',
           session: {
             modalities: ['text', 'audio'],
             instructions: finalInstructions,
-            voice: mode === 'teen' ? 'shimmer' : 'echo',
+            voice: resolvedVoice,
             input_audio_format: AUDIO_CONFIG.format,
             output_audio_format: AUDIO_CONFIG.format,
             max_response_output_tokens: "inf",
@@ -190,12 +211,18 @@ Deno.serve(async (req) => {
       const message: ClientMessage = JSON.parse(event.data);
 
       // session_config 必须在 OpenAI 连接前就能处理（不需要守卫）
-      if (message.type === 'session_config' && message.instructions) {
-        console.log('[Relay] Received client session_config with instructions');
-        clientInstructions = message.instructions;
-        if (instructionsResolve) {
-          instructionsResolve(message.instructions);
-          instructionsResolve = null;
+      if (message.type === 'session_config') {
+        if (message.voice_type) {
+          clientVoiceType = message.voice_type;
+          console.log('[Relay] Received client voice_type:', clientVoiceType);
+        }
+        if (message.instructions) {
+          console.log('[Relay] Received client session_config with instructions');
+          clientInstructions = message.instructions;
+          if (instructionsResolve) {
+            instructionsResolve(message.instructions);
+            instructionsResolve = null;
+          }
         }
         return;
       }
