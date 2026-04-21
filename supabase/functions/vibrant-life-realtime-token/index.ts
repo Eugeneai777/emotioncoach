@@ -7,6 +7,23 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
+// ElevenLabs voice ID -> OpenAI Realtime voice 名称映射
+// 前端使用 ElevenLabs ID 作为统一标识，后端必须映射成 OpenAI 原生 voice 名才会生效
+function mapVoiceTypeToOpenAIVoice(voiceType: string | null, mode: string): string {
+  const fallback = mode === 'teen' ? 'shimmer' : 'echo';
+  const VOICE_MAP: Record<string, string> = {
+    'nPczCjzI2devNBz1zQrb': 'echo',    // Brian 温暖男声
+    'JBFqnCBsd6RMkjVDRZzb': 'ash',     // George 沉稳长者
+    'EXAVITQu4vr4xnSDxMaL': 'shimmer', // Sarah 温柔女声
+    'pFZP5JQG7iQjIQuC4Bku': 'coral',   // Lily 清新女声
+  };
+  if (!voiceType) return fallback;
+  // 已经是 OpenAI 原生 voice 名（向后兼容）
+  const NATIVE = ['alloy', 'ash', 'ballad', 'coral', 'echo', 'sage', 'shimmer', 'verse'];
+  if (NATIVE.includes(voiceType)) return voiceType;
+  return VOICE_MAP[voiceType] || fallback;
+}
+
 // 通用工具定义
 const commonTools = [
   {
