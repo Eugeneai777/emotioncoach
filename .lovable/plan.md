@@ -1,89 +1,106 @@
 
 
-## 教练身份识别机制说明 + 加固方案
+## 修复教练价格显示一致性 · 林蒿老师 ¥0 → ¥300
 
-### 当前系统如何识别"同一个人"
+### 根因
 
-答案：**通过 Supabase Auth 登录态的 `user_id`**，不是通过邀请链接本身。
+数据库查询确认：
+- **Lisa**：`price_tier_id` → 新锐教练 ¥300，`coach_services.price = 300` ✅
+- **林蒿老师**：`price_tier_id` → 新锐教练 ¥300，但 `coach_services.price = 0` ❌
 
-具体链路（已实现）：
+价格同步触发器存在，但**只在 `UPDATE OF price_tier_id` 时触发**：
+```sql
+CREATE TRIGGER trg_sync_coach_services_price 
+AFTER UPDATE OF price_tier_id ON public.human_coaches ...
+```
 
-1. 教练点击邀请链接 `https://wechat.eugenewe.net/become-coach?invite=xxx`
-2. 链接只做两件事：
-   - **校验邀请码有效性**（`coach_invitations` 表，防止陌生人申请）
-   - **进入申请页面**
-3. 申请页面要求**必须登录**（手机号 / 微信 OAuth），未登录会跳 `/auth?redirect=/become-coach?invite=xxx`
-4. 登录成功后，系统拿到 `auth.uid()`，查询 `human_coaches WHERE user_id = auth.uid()`：
-   - 查到记录 → 预填表单（编辑模式）
-   - 未查到 → 空表单（首次申请）
-5. 数据库层 `human_coaches.user_id` 有 **UNIQUE 约束**（上次重复申请 bug 修复时加的），保证一个登录账号只能对应一条教练记录
+林蒿的服务记录被设置为 0 是因为：
+1. 申请时教练自填价格为 0（或未填）
+2. 之后管理员通过 BecomeCoach 流程设置了 price_tier，但服务行可能是后来补建的，或 update 时机错位导致触发器没生效
+3. 触发器不覆盖 INSERT 场景与"先建服务后定档"的顺序
 
-> **结论**：邀请链接是"准入门票"（可被多人共享），登录账号才是"身份证"。Lisa 第一次用手机号 138xxxx 登录提交，第二次必须再用同一个手机号（或绑定的微信）登录，才能看到自己的资料。
+前端 `HumanCoachDetail.tsx:97`：`lowestPrice = Math.min(...services.map(s => Number(s.price)))` → 直接读 services 表 → 显示 ¥0。
 
-### 潜在风险评估
+### 修复方案（3 处改动 · 数据 + 触发器 + 前端兜底）
 
-| 风险场景 | 当前处理 | 是否需要加固 |
-|---|---|---|
-| Lisa 用 A 手机号登录提交，再用 B 手机号登录 | 看到的是空表单（B 账号视角下没有教练记录），提交会因 `user_id` UNIQUE 不冲突而新建一条 | ⚠️ **是**，会产生孤立的"假 Lisa"记录 |
-| Lisa 用同一手机号登录两次 | 正确进入编辑模式 | ✅ 已正确 |
-| Lisa 用手机号注册后，用微信登录（未绑定） | 微信会被识别为新账号 → 看到空表单 | ⚠️ **是**，建议在申请页加"姓名+手机号"二次防重 |
-| 陌生人盗用邀请链接 | 必须登录，登录后用自己的 `user_id` 查不到教练记录 → 走首次申请流程 → 管理员审核拦截 | ✅ 流程合理（管理员把关） |
-| 教练把邀请链接转发给朋友 | 朋友登录后能进入申请流程，但提交后是朋友自己的 `user_id`，不会污染 Lisa 数据 | ✅ 数据隔离正确 |
+#### 1 · 数据库迁移 · 一次性回填 + 触发器加固
 
-### 加固方案（2 处小改动）
+```sql
+-- 1.1 回填所有"已设档但服务价为 0"的教练
+UPDATE coach_services cs
+SET price = cpt.price, updated_at = now()
+FROM human_coaches hc
+JOIN coach_price_tiers cpt ON cpt.id = hc.price_tier_id
+WHERE cs.coach_id = hc.id
+  AND hc.price_tier_id IS NOT NULL
+  AND (cs.price IS NULL OR cs.price = 0);
 
-#### 1 · `BecomeCoach.tsx` 提交前增加「姓名 + 手机号」二次防重
+-- 1.2 加固触发器：服务表 INSERT 时若教练有档次，自动套用档次价
+CREATE OR REPLACE FUNCTION public.apply_tier_price_on_service_insert()
+RETURNS TRIGGER LANGUAGE plpgsql AS $$
+DECLARE tier_price numeric;
+BEGIN
+  IF (NEW.price IS NULL OR NEW.price = 0) THEN
+    SELECT cpt.price INTO tier_price
+    FROM human_coaches hc
+    JOIN coach_price_tiers cpt ON cpt.id = hc.price_tier_id
+    WHERE hc.id = NEW.coach_id;
+    IF tier_price IS NOT NULL THEN
+      NEW.price := tier_price;
+    END IF;
+  END IF;
+  RETURN NEW;
+END $$;
 
-在 `handleSubmit` 的 INSERT 分支前，先按"姓名 + 手机号"模糊查一次：
+CREATE TRIGGER trg_apply_tier_price_on_service_insert
+BEFORE INSERT ON public.coach_services
+FOR EACH ROW EXECUTE FUNCTION apply_tier_price_on_service_insert();
+```
+
+> 双保险：未来无论先定档还是先建服务、无论顺序如何，价格都不会再为 0。
+
+#### 2 · 前端兜底 · `HumanCoachDetail.tsx` & `HumanCoachCard.tsx`
+
+在 `lowestPrice` 计算逻辑中增加"档次价兜底"：
 
 ```ts
-// 仅在 INSERT 分支（无 existing 记录）执行
-const { data: dupByName } = await supabase
-  .from('human_coaches')
-  .select('id, user_id, name, phone, status')
-  .eq('phone', basicInfo.phone)
-  .eq('name', basicInfo.name)
-  .maybeSingle();
-
-if (dupByName && dupByName.user_id !== user.id) {
-  toast.error('该姓名+手机号已被其他账号申请，请使用原账号登录或联系客服');
-  return;
-}
+// HumanCoachDetail.tsx (line ~97)
+const servicePrices = services.map(s => Number(s.price)).filter(p => p > 0);
+const lowestPrice = servicePrices.length > 0 
+  ? Math.min(...servicePrices)
+  : (coach.price_tier?.price ?? null);  // 兜底用档次价
 ```
 
-> 这能拦截"同一人换账号重复申请"的常见场景（如手机号账号忘了，又用微信注册）。
+在 `useHumanCoach` hook 里 join 档次表，让 `coach` 对象带上 `price_tier`（同 `useActiveHumanCoaches` 写法）。
 
-#### 2 · 申请页顶部展示当前登录账号信息
+`HumanCoachCard.tsx` 列表卡片的价格显示同步改造（如果有的话）。
 
-在状态横幅下方加一行小字提示，让教练明确知道"系统是按这个账号识别我的身份"：
+#### 3 · 前端最后兜底 · 价格为 null 时不显示 ¥0
 
-```text
-┌────────────────────────────────────────────┐
-│ 当前以「138****1234」身份申请               │
-│ 下次编辑请使用同一账号登录                  │
-└────────────────────────────────────────────┘
+底部价格条改为：
+
+```tsx
+{lowestPrice !== null && lowestPrice > 0 ? (
+  <div>起 <span className="text-2xl font-bold">¥{lowestPrice}</span></div>
+) : (
+  <div className="text-sm text-muted-foreground">价格待定</div>
+)}
 ```
 
-这是**纯 UX 改进**，不改逻辑，但能极大降低"为什么我看到的是空表单"的客服咨询。
-
-#### 3 · 管理后台「修改申请」标签上额外显示原 `user_id` 一致性
-
-在 `CoachApplicationsList.tsx` 的「✏️ 修改申请」徽章 hover 时，显示该记录的 `user_id` 与申请人当前账号是否一致（已经一致才能查到，所以这一项默认 ✅）。
-
-> 这个改动很小但能给管理员审核时多一层信心：「这条修改确实来自原教练账号」。
-
-### 不动的内容
-
-- 邀请链接归因系统
-- `human_coaches.user_id` UNIQUE 约束
-- 已有的 `pending → approved → 编辑回退 pending` 流程
-- `/coach-dashboard` 的「修改资料」入口
+> 杜绝任何场景下显示 ¥0 误导用户。
 
 ### 验证标准
 
-1. **同账号编辑**：Lisa 用手机号 138xxxx 登录 → 进入邀请链接 → 看到自己的资料预填 ✅
-2. **陌生账号访问**：另一手机号 139xxxx 登录 → 进入邀请链接 → 看到空表单（首次申请视角）
-3. **同人换账号防重**：139xxxx 试图用「Lisa + 138xxxx 同手机号」提交 → 弹错「请使用原账号登录」
-4. **状态提示**：申请页顶部显示「当前以 138****1234 身份申请」
-5. **管理员视角**：「✏️ 修改申请」徽章 hover 显示原 user_id 一致 ✅
+1. **数据库**：`SELECT price FROM coach_services WHERE coach_id='063f4816-...'`（林蒿）→ **300.00**
+2. **林蒿详情页** `/human-coaches/063f4816-...`：底部显示「起 ¥300」（不再是 ¥0）
+3. **未来新教练**：管理员审核通过并设档时，无论 services 行先建还是后建，价格都自动等于档次价
+4. **极端场景**：若教练既无档次又无服务定价 → 显示「价格待定」而不是 ¥0
+5. **Lisa**：现有 ¥300 显示不受影响
+6. **管理后台**：价格档次切换功能不变
+
+### 不动的内容
+
+- `coach_price_tiers` 表与档次配置
+- 已有 `trg_sync_coach_services_price` 触发器（继续保留作 UPDATE 路径双保险）
+- BookingDialog 与下单流程
 
