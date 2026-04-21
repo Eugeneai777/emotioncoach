@@ -1030,6 +1030,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
                 margin: 2,
                 color: { dark: "#000000", light: "#ffffff" },
               });
+              if (!isPaymentSessionActive(sessionId)) return;
               setQrCodeDataUrl(qrDataUrl);
               setPayUrl(nativeData.qrCodeUrl || nativeData.payUrl);
               setPayType("native");
@@ -1053,6 +1054,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
           margin: 2,
           color: { dark: "#000000", light: "#ffffff" },
         });
+        if (!isPaymentSessionActive(sessionId)) return;
         setQrCodeDataUrl(qrDataUrl);
         setStatus("pending");
         startPolling(data.orderNo);
