@@ -499,6 +499,7 @@ export default function BecomeCoach() {
                 onSubmit={handleSubmit}
                 onBack={() => setCurrentStep("certifications")}
                 isSubmitting={isSubmitting}
+                submitLabel={existingCoach ? "保存并重新提交审核" : "提交申请"}
               />
             )}
           </div>
