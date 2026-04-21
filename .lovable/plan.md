@@ -1,117 +1,52 @@
 
 
-# /wealth-block 页面在「微信浏览器（公众号 H5）」环境下的微信授权与支付逻辑梳理
+# 在 /promo/midlife-men-399 增加"7 天交付清单"中的「1 瓶知乐胶囊」模块
 
-> 仅梳理，不改代码。环境判定：`MicroMessenger` 在 UA 中、且非小程序 WebView。
+## 目标
+当前 `/promo/midlife-men-399` 的「7 天交付路径」只覆盖了：海沃塔团队对话 / 每日冥想 / AI 男士教练。缺一项实物交付：**1 瓶知乐胶囊**。需补齐，且文案与卖点参考已在 `/camps`「7 天有劲训练营」中沉淀的知乐胶囊介绍，UI 复用本页深色高级感（炭黑 + 暖金 `#c9a876` + 暗酒红 `#6b2c2c`）。
 
-## 一、环境识别（页面初始化）
+## 改动范围（单文件）
+- `src/pages/PromoMidlifeMen399.tsx`
 
-文件：`src/pages/WealthBlockAssessment.tsx`
+## 模块设计
 
-```ts
-isWeChatBrowserEnv = /MicroMessenger/i.test(ua)
-                  && !/miniProgram/i.test(ua)
-                  && !window.__wxjs_environment;
-```
+### 1) 在「04 / 09 · 7 天交付路径」节追加第 4 张卡片
+- 卡片标题：**1 瓶知乐胶囊（30 粒装）**
+- 副标题：**7 天体验装 · 随营寄出**
+- 一句话价值：**白天稳住情绪、晚上沉得住睡眠的"身体兜底"**
+- 3 条 bullet（参考 7 天有劲训练营版本，按男士场景改写）：
+  - 🌿 GABA + L-茶氨酸：缓解工作日"绷着的那根弦"
+  - 🌙 酸枣仁 + 镁：帮 40+ 男士拿回深度睡眠
+  - 💊 0 褪黑素 / 不依赖：起床清醒、不昏沉
+- 角标：**已含在 ¥399 体验营内**（暖金描边小 chip）
 
-- `isMiniProgram` = `isWeChatMiniProgram()` → 这里为 `false`，不会进小程序 resume 链路。
-- 同时跑 `usePaymentCallback`（监听 H5 支付回调 URL 参数）。
+### 2) 在「05 / 09 · ¥399 权益清单」中新增一行
+- ✓ **1 瓶知乐胶囊（7 天体验装，包邮到家）**
+- 与现有 6 条 ✓ 保持同一 UI 风格
 
-## 二、用户状态分支（点击「立即测评 ¥9.9」时 `handlePayClick`）
+### 3) 在「07 / 09 · 隐私承诺」之前 / 或交付路径之后插入轻量条幅
+- 一行小字：**实物由「有劲生活馆」统一发货 · 顺丰包邮 · 下单后 48h 内寄出**
 
-| 用户状态 | 微信浏览器分支 |
-|---|---|
-| 未登录 | 调 `triggerWeChatSilentAuth()` → 跳微信网页授权（snsapi_base 静默） |
-| 已登录、未购买 | 直接 `openWealthPayDialog()` → 弹 `AssessmentPayDialog` |
-| 已登录、已购买 / 绽放合伙人 | 直接 `setShowIntro(false)` 进测评 |
+## 视觉规范（与 3980/399 同款）
+- 卡片：`bg-[#1f1f1f]` + `border border-[#c9a876]/20`，悬浮 `border-[#c9a876]/40`
+- 标题：衬线字体 + 暖金 `#c9a876`
+- bullet：无衬线 + `text-white/80`
+- chip："已含在 ¥399 体验营内"用 `bg-[#6b2c2c]/30 text-[#c9a876] border border-[#c9a876]/40`
+- 进入动画沿用本页 framer-motion `fadeInUp`
+- 移动优先 `max-w-[480px]`，与现有 3 张交付卡片同栅格（单列堆叠）
 
-## 三、微信网页授权链路（未登录用户）
+## 文案来源
+参考 `/camps` 中 `emotion_stress_7` 训练营沉淀的「知乐胶囊」营养介绍（GABA / L-茶氨酸 / 酸枣仁 / 镁 / 0 褪黑素），在保持成分与功效一致的前提下，把语气从"情绪解压"改成"40+ 男士身体兜底"，与本页"难言之隐 / 中年质感"叙事一致。
 
-1. 前端 `triggerWeChatSilentAuth`：
-   - 在当前 URL 上加 `?assessment_pay_resume=1` 作为回跳 URL
-   - 调 edge function `wechat-pay-auth`，body：`{ redirectUri, flow: 'wealth_assessment' }`
-   - 后端返回 `authUrl`（即 `https://open.weixin.qq.com/connect/oauth2/authorize?...&scope=snsapi_base&state=...`）
-   - `window.location.href = authUrl`
-2. 微信回跳 → 公众号回调 edge function 解 `code → openId`，并：
-   - 若 openId 已有绑定账号：生成 `payment_token_hash`（magic link），随 `payment_openid`、`pay_flow` 拼回页面
-   - 若未绑定：仍带 `payment_openid` 回页面
-   - 若失败：带 `payment_auth_error=1`
-3. 页面 `useEffect handleWeChatPayAuthReturn` 解析 URL 参数：
-   - **缓存 openId**：写入 3 个 key 兜底匹配 `WechatPayDialog`：
-     - `sessionStorage.wechat_payment_openid`
-     - `localStorage.cached_payment_openid_gzh`
-     - `sessionStorage.cached_payment_openid_gzh`
-   - **自动登录**：若有 `payment_token_hash` → `supabase.auth.verifyOtp({type:'magiclink'})`
-   - **清理 URL 参数**，避免重复触发
-   - 登录态就绪 + 未购买 → 自动 `openWealthPayDialog()` 续上支付
+## 不做
+- 不改产品价格、不动 `camp-emotion_stress_7` 套餐配置
+- 不新增数据库字段、不改后端发货流程（沿用「有劲生活馆」既有链路）
+- 不改主 CTA / 升舱钩子 / 路由
+- 不生成图片素材（继续纯排版 + 几何 + emoji icon）
 
-## 四、支付弹窗内部分流（`AssessmentPayDialog`）
-
-OpenID 解析顺序（`getPaymentOpenId`）：
-1. URL: `payment_openid` / `openid` / `openId` / `mp_openid`
-2. `sessionStorage.wechat_payment_openid`
-
-### 在微信浏览器环境的支付方式选择
-- 有 `userOpenId`（公众号 openId 已就绪）→ `payType = 'jsapi'`，调 `create-wechat-order`，返回的 `payParams` 通过 `WeixinJSBridge.invoke('getBrandWCPayRequest', ...)` 唤起微信内支付
-- 无 `userOpenId`（授权失败兜底）→ 触发一次 `wechat-pay-auth` 静默授权重试；若仍失败 → 降级 `payType = 'h5'`（生成 mweb_url，不在微信内是直链；在微信内会被拦截，所以兼有扫码二维码 fallback）
-- 桌面微信（PC 微信浏览器）：归到 `native`，渲染收款二维码
-
-### 双轨支付完成检测
-| 通道 | 触发 |
-|---|---|
-| JSAPI 回调 | `WeixinJSBridge.invoke` 的 `res.err_msg === 'get_brand_wcpay_request:ok'` |
-| 后端轮询 | `startPolling(orderNo)` → 周期调 `check-order-status`，命中 `status='paid'` 即成功 |
-| URL 回调 | `usePaymentCallback` 监听 H5 支付返回 URL（兜底） |
-
-## 五、支付成功后
-
-- `setShowPayDialog(false)`、`setShowIntro(false)`，进入测评
-- 后端 `wechat-pay-callback` 已写入 `orders.status='paid'`
-- 页面 `onAuthStateChange('SIGNED_IN')` 二次校验 `orders` 表防漏判（场景：先支付后登录）
-
-## 六、关键防御机制（已落实，不需改）
-
-1. **防重复授权**：`silentAuthTriggeredRef`、`pay_auth_in_progress` sessionStorage 标记
-2. **防订单复用 / 取消后卡死**：`MP_POST_CANCEL_FLAG_KEY` + `cancel-pending-order` edge fn（小程序场景为主，浏览器同样写入埋点）
-3. **三 key 缓存兜底**：避免 `WechatPayDialog` 与 `WealthBlockAssessment` 因 cache key 不一致循环授权
-4. **登录回跳续付费**：`sessionStorage.wealth_block_pending_pay='1'` 标记 + 登录后 useEffect 自动重开弹窗
-5. **埋点**：`trackPaymentEvent('payment_cancelled' / 'payment_success')`、`useWealthCampAnalytics`
-
-## 七、整条链路时序（微信浏览器，未登录新用户）
-
-```text
-点击 [立即测评 ¥9.9]
-   │
-   ▼
-isWeChatBrowserEnv && !user
-   │
-   ▼
-wechat-pay-auth (edge) → authUrl
-   │
-   ▼
-微信 OAuth (snsapi_base) → 回跳 ?assessment_pay_resume=1
-                                &payment_openid=...
-                                &payment_token_hash=...
-   │
-   ▼
-verifyOtp(magiclink) → Supabase 登录态建立
-   │
-   ▼
-缓存 openId 三 key → openWealthPayDialog()
-   │
-   ▼
-AssessmentPayDialog: payType=jsapi
-create-wechat-order (with openId, userId)
-   │
-   ▼
-WeixinJSBridge.invoke(getBrandWCPayRequest)  ←→  startPolling(check-order-status)
-   │                                                    │
-   └──────── 成功 ─────────► onSuccess ───────► 进入测评
-```
-
-## 八、潜在改进点（仅列出，不实施）
-
-- 微信 PC 桌面浏览器目前走 `native` 二维码，但 `isWeChatBrowserEnv` 也会命中 PC 微信内置浏览器，建议显式区分以减少授权 redirect 的无效跳转
-- `payment_token_hash` 失败时直接弹窗用扫码兜底；可增加一次"重试静默授权"按钮，提升 conversion
-- `wechat_payment_openid` 与 `cached_payment_openid_gzh` 三 key 同步可抽成统一工具函数，降低后续新页面接入成本
+## 验证建议（落地后）
+- 移动端 H5（公众号内 + 浏览器内）查看新卡片视觉是否与原 3 张同一节奏
+- 「权益清单」新增行是否对齐其余 6 条
+- 主 CTA 文案不变、跳转 `camp-emotion_stress_7` 不变
+- 升舱钩子卡片仍指向 `/promo/midlife-men-3980`
 
