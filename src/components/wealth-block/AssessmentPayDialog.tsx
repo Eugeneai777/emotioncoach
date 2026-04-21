@@ -161,6 +161,8 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
   const [isCancellingOrder, setIsCancellingOrder] = useState(false);
   const [isRepaying, setIsRepaying] = useState(false);
   const closeInProgressRef = useRef(false);
+  const dialogOpenRef = useRef(open);
+  const paymentSessionIdRef = useRef(0);
 
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
   const pollingStartTimeRef = useRef<number>(0);
@@ -202,6 +204,18 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
 
   // 检测是否为安卓设备
   const isAndroid = /Android/i.test(navigator.userAgent);
+
+  const isPaymentSessionActive = useCallback((sessionId: number) => {
+    return dialogOpenRef.current && paymentSessionIdRef.current === sessionId && !closeInProgressRef.current;
+  }, []);
+
+  useEffect(() => {
+    dialogOpenRef.current = open;
+    paymentSessionIdRef.current += 1;
+    if (open) {
+      closeInProgressRef.current = false;
+    }
+  }, [open]);
 
   // 优化后的 WeixinJSBridge 等待逻辑：安卓缩短为 500ms，iOS 保持 1.5 秒
   const waitForWeixinJSBridge = useCallback(
@@ -651,6 +665,9 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
 
   // 创建订单（带超时处理）
   const createOrder = async () => {
+    const sessionId = paymentSessionIdRef.current;
+    if (!isPaymentSessionActive(sessionId)) return;
+
     console.log(
       "[AssessmentPay] createOrder called, userId:",
       userId,
@@ -677,6 +694,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
           .maybeSingle();
 
         if (existingOrder) {
+          if (!isPaymentSessionActive(sessionId)) return;
           console.log('[AssessmentPay] User already purchased, skipping payment');
           toast.success('您已购买过测评，直接开始！');
           onSuccess(userId);
@@ -692,6 +710,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
     // ⚠️ 小程序场景：不再等待 openId，直接创建订单，由小程序原生页面获取 openId 并完成支付
     // postMessage 无法实时通信，所以不能依赖它获取 openId
 
+    if (!isPaymentSessionActive(sessionId)) return;
     setStatus("creating");
     setErrorMessage("");
 
@@ -757,6 +776,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
 
         clearTimeout(timeoutId);
 
+        if (!isPaymentSessionActive(sessionId)) return;
         if (alipayError) throw alipayError;
         if (!alipayData?.success) throw new Error(alipayData?.error || "创建支付宝订单失败");
 
@@ -776,6 +796,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
         
         // 2秒后跳转
         setTimeout(() => {
+          if (!isPaymentSessionActive(sessionId)) return;
           window.location.href = alipayData.payUrl;
         }, 2000);
         return;
@@ -805,6 +826,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
 
       clearTimeout(timeoutId);
 
+      if (!isPaymentSessionActive(sessionId)) return;
       if (error) throw error;
       if (!data?.success) throw new Error(data?.error || "创建订单失败，请稍后重试");
 
@@ -846,6 +868,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
           updatedAt: Date.now(),
         });
         const launched = await triggerMiniProgramNativePay(data.miniprogramPayParams, data.orderNo);
+        if (!isPaymentSessionActive(sessionId)) return;
         if (launched) {
           // 不再立即关闭弹框：保留 polling 状态 + 重新支付按钮，
           // 这样用户从原生支付页取消返回 H5 时，可一键重新拉起
@@ -876,12 +899,15 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
         // 微信浏览器：先等待 Bridge 就绪，再调起支付
         console.log("[Payment] WeChat browser: waiting for Bridge then invoke JSAPI");
         const bridgeAvailable = await waitForWeixinJSBridge();
+        if (!isPaymentSessionActive(sessionId)) return;
 
         if (bridgeAvailable) {
           try {
             await invokeJsapiPay(data.jsapiPayParams);
+            if (!isPaymentSessionActive(sessionId)) return;
             console.log("[Payment] JSAPI pay invoked successfully");
           } catch (jsapiError: any) {
+            if (!isPaymentSessionActive(sessionId)) return;
             console.log("[Payment] JSAPI pay error:", jsapiError?.message);
             if (jsapiError?.message !== "用户取消支付") {
               // JSAPI 失败，降级到扫码模式
@@ -913,6 +939,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
                   margin: 2,
                   color: { dark: "#000000", light: "#ffffff" },
                 });
+                if (!isPaymentSessionActive(sessionId)) return;
                 setQrCodeDataUrl(qrDataUrl);
                 setPayUrl(nativeData.qrCodeUrl || nativeData.payUrl);
                 setPayType("native");
@@ -927,12 +954,15 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
           // 微信浏览器：先等待 Bridge 就绪，再调起支付
           console.log("[Payment] WeChat browser: waiting for Bridge then invoke JSAPI");
           const bridgeAvailable = await waitForWeixinJSBridge();
+          if (!isPaymentSessionActive(sessionId)) return;
 
           if (bridgeAvailable) {
             try {
               await invokeJsapiPay(data.jsapiPayParams);
+              if (!isPaymentSessionActive(sessionId)) return;
               console.log("[Payment] JSAPI pay invoked successfully");
             } catch (jsapiError: any) {
+              if (!isPaymentSessionActive(sessionId)) return;
               console.log("[Payment] JSAPI pay error:", jsapiError?.message);
               if (jsapiError?.message !== "用户取消支付") {
                 // JSAPI 失败，降级到扫码模式
@@ -964,6 +994,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
                     margin: 2,
                     color: { dark: "#000000", light: "#ffffff" },
                   });
+                  if (!isPaymentSessionActive(sessionId)) return;
                   setQrCodeDataUrl(qrDataUrl);
                   setPayUrl(nativeData.qrCodeUrl || nativeData.payUrl);
                   setPayType("native");
@@ -999,6 +1030,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
                 margin: 2,
                 color: { dark: "#000000", light: "#ffffff" },
               });
+              if (!isPaymentSessionActive(sessionId)) return;
               setQrCodeDataUrl(qrDataUrl);
               setPayUrl(nativeData.qrCodeUrl || nativeData.payUrl);
               setPayType("native");
@@ -1022,6 +1054,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
           margin: 2,
           color: { dark: "#000000", light: "#ffffff" },
         });
+        if (!isPaymentSessionActive(sessionId)) return;
         setQrCodeDataUrl(qrDataUrl);
         setStatus("pending");
         startPolling(data.orderNo);
@@ -1040,10 +1073,12 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
         createOrderRetriedRef.current = true;
         console.warn("[AssessmentPay] Network error, auto-retrying createOrder once...");
         await new Promise((r) => setTimeout(r, 1200));
+        if (!isPaymentSessionActive(sessionId)) return;
         createOrder();
         return;
       }
 
+      if (!isPaymentSessionActive(sessionId)) return;
       const msg = isNetworkLayerError
         ? "网络较慢，请检查网络后重试"
         : rawMsg || "创建订单失败，请稍后重试";
