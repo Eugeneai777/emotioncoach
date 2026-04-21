@@ -231,7 +231,24 @@ export default function BecomeCoach() {
           .select("id");
         if (delSvcError) throw delSvcError;
       } else {
-        // 3) First-time application -> INSERT
+        // 3) First-time application -> 先做「姓名+手机号」二次防重，避免同人换账号重复申请
+        const { data: dupByName } = await supabase
+          .from("human_coaches")
+          .select("id, user_id, name, phone, status")
+          .eq("phone", basicInfo.phone)
+          .eq("name", basicInfo.displayName)
+          .maybeSingle();
+
+        if (dupByName && dupByName.user_id !== user.id) {
+          toast({
+            title: "该姓名+手机号已被其他账号申请",
+            description: "请使用首次申请时的账号登录，或联系客服合并账号。",
+            variant: "destructive",
+          });
+          setIsSubmitting(false);
+          return;
+        }
+
         const { data: inserted, error: coachError } = await supabase
           .from("human_coaches")
           .insert({ user_id: user.id, ...coachPayload })
@@ -421,6 +438,22 @@ export default function BecomeCoach() {
           <div className="max-w-lg mx-auto px-4 pt-4">
             <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-800">
               ❌ 上次审核未通过{existingCoach.admin_note ? `：${existingCoach.admin_note}` : ""}，请补充资料后重新提交。
+            </div>
+          </div>
+        )}
+
+        {user && (
+          <div className="max-w-lg mx-auto px-4 pt-3">
+            <div className="bg-muted/50 border border-border rounded-lg px-3 py-2 text-xs text-muted-foreground flex items-start gap-1.5">
+              <span>🪪</span>
+              <span>
+                当前以「<span className="font-medium text-foreground">
+                  {user.phone
+                    ? `${user.phone.slice(0, 3)}****${user.phone.slice(-4)}`
+                    : user.email || "当前账号"}
+                </span>」身份{existingCoach ? "编辑资料" : "申请"}。
+                <span className="block mt-0.5">下次编辑请使用<strong>同一账号</strong>登录，否则系统会视为新申请。</span>
+              </span>
             </div>
           </div>
         )}
