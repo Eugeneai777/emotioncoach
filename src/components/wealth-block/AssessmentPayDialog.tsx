@@ -776,6 +776,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
 
         clearTimeout(timeoutId);
 
+        if (!isPaymentSessionActive(sessionId)) return;
         if (alipayError) throw alipayError;
         if (!alipayData?.success) throw new Error(alipayData?.error || "创建支付宝订单失败");
 
@@ -824,6 +825,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
 
       clearTimeout(timeoutId);
 
+      if (!isPaymentSessionActive(sessionId)) return;
       if (error) throw error;
       if (!data?.success) throw new Error(data?.error || "创建订单失败，请稍后重试");
 
@@ -865,6 +867,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
           updatedAt: Date.now(),
         });
         const launched = await triggerMiniProgramNativePay(data.miniprogramPayParams, data.orderNo);
+        if (!isPaymentSessionActive(sessionId)) return;
         if (launched) {
           // 不再立即关闭弹框：保留 polling 状态 + 重新支付按钮，
           // 这样用户从原生支付页取消返回 H5 时，可一键重新拉起
@@ -895,12 +898,15 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
         // 微信浏览器：先等待 Bridge 就绪，再调起支付
         console.log("[Payment] WeChat browser: waiting for Bridge then invoke JSAPI");
         const bridgeAvailable = await waitForWeixinJSBridge();
+        if (!isPaymentSessionActive(sessionId)) return;
 
         if (bridgeAvailable) {
           try {
             await invokeJsapiPay(data.jsapiPayParams);
+            if (!isPaymentSessionActive(sessionId)) return;
             console.log("[Payment] JSAPI pay invoked successfully");
           } catch (jsapiError: any) {
+            if (!isPaymentSessionActive(sessionId)) return;
             console.log("[Payment] JSAPI pay error:", jsapiError?.message);
             if (jsapiError?.message !== "用户取消支付") {
               // JSAPI 失败，降级到扫码模式
