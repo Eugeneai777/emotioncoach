@@ -371,7 +371,7 @@ export default function PromoMidlifeMen399() {
         </Section>
 
         {/* ============ 08 升舱钩子 → 3980 ============ */}
-        <Section index={8} eyebrow="如果 7 天后你想「正经处理」这件事" title="¥399 学费，可全额抵扣 ¥3980 闭门修复计划">
+        <Section index={8} eyebrow="如果 7 天后你想「正经处理」这件事" title="完赛即解锁「老学员专属通道」">
           <div
             className="p-5 rounded-xl space-y-4"
             style={{
@@ -379,18 +379,65 @@ export default function PromoMidlifeMen399() {
               border: `1.5px solid ${C.gold}`,
             }}
           >
+            {/* 顶部叙事 */}
             <p className="text-[14px] leading-[1.85]" style={{ color: C.text }}>
-              ¥399 体验营结束后，每一位完赛的学员，
+              ¥399 体验营，是
+              <span style={{ color: C.gold }}>「中年男性闭门修复计划」</span>
+              的入场资格筛选。
               <br />
-              将获得一次
-              <span style={{ color: C.gold }}>「中年男性闭门修复计划」(¥3980)</span>
-              的内部席位评估。
+              完赛学员，进入 <span style={{ color: C.gold }}>200 人老学员通道</span>。
             </p>
-            <div className="space-y-2.5 pt-2 border-t" style={{ borderColor: C.divider }}>
+
+            {/* 极简流程图 */}
+            <div
+              className="flex items-center justify-between gap-1 py-2.5 px-1 rounded-lg text-center"
+              style={{ background: "rgba(212,180,129,0.06)", border: `1px dashed ${C.divider}` }}
+            >
               {[
-                "¥399 学费 全额抵扣 闭门修复计划",
-                "优先锁定本期 200 个限定席位",
-                "由总教练 1 对 1 路径定制（不公开报名）",
+                { t: "完赛 ¥399", s: "入场" },
+                { t: "¥800 资格券", s: "承诺" },
+                { t: "¥3,980 抢订", s: "锁席" },
+              ].map((s, i, arr) => (
+                <React.Fragment key={i}>
+                  <div className="flex-1">
+                    <p className="text-[11.5px] font-semibold" style={{ color: C.gold }}>{s.t}</p>
+                    <p className="text-[10px] mt-0.5" style={{ color: C.textMute }}>{s.s}</p>
+                  </div>
+                  {i < arr.length - 1 && (
+                    <span style={{ color: C.gold, fontSize: 12 }}>→</span>
+                  )}
+                </React.Fragment>
+              ))}
+            </div>
+
+            {/* 价格阶梯表 */}
+            <div className="rounded-lg overflow-hidden" style={{ border: `1px solid ${C.divider}` }}>
+              <div className="flex items-center justify-between px-3.5 py-2.5" style={{ background: "rgba(0,0,0,0.15)" }}>
+                <span className="text-[12.5px]" style={{ color: C.textMute }}>闭门修复计划 · 公开报价</span>
+                <span className="text-[14px] line-through" style={{ color: "rgba(232,227,216,0.5)" }}>¥4,180</span>
+              </div>
+              <div className="flex items-center justify-between px-3.5 py-2.5 border-t" style={{ borderColor: C.divider }}>
+                <span className="text-[12.5px]" style={{ color: C.textMute }}>老学员资格券</span>
+                <span className="text-[12.5px]" style={{ color: C.text }}>¥800 购 ¥1,000</span>
+              </div>
+              <div
+                className="flex items-end justify-between px-3.5 py-3 border-t"
+                style={{ borderColor: C.divider, background: "rgba(212,180,129,0.08)" }}
+              >
+                <div>
+                  <p className="text-[12.5px]" style={{ color: C.gold }}>你的实际抢订价</p>
+                  <p className="text-[10.5px] mt-0.5" style={{ color: C.textMute }}>省 ¥200 + 优先锁席</p>
+                </div>
+                <span style={{ color: C.gold, fontSize: 22, fontWeight: 700, ...serif }}>¥3,980</span>
+              </div>
+            </div>
+
+            {/* 三条权益 */}
+            <div className="space-y-2.5 pt-1">
+              {[
+                "完赛即获 老学员资格券购买权（¥800 → ¥1,000 抵扣）",
+                "优先锁定本期 200 个限定席位（不公开报名）",
+                "由总教练 1 对 1 路径定制（先评估，后入营）",
               ].map((line, i) => (
                 <div key={i} className="flex gap-2.5 items-start">
                   <span style={{ color: C.gold, fontSize: 13 }}>✓</span>
@@ -398,10 +445,13 @@ export default function PromoMidlifeMen399() {
                 </div>
               ))}
             </div>
-            <div className="pt-3 space-y-1 text-[12px]" style={{ color: C.textMute }}>
-              <p>—— 体验营，是入场券</p>
-              <p style={{ color: C.gold }}>—— 闭门修复计划，才是真正的修复</p>
+
+            {/* 底部金句 */}
+            <div className="pt-3 space-y-1 text-[12px] border-t" style={{ borderColor: C.divider, color: C.textMute }}>
+              <p>—— ¥399，是诚意；¥800，是承诺</p>
+              <p style={{ color: C.gold }}>—— 闭门修复计划，只给已经走完 7 天的人</p>
             </div>
+
             <button
               onClick={handleUpsell}
               className="w-full mt-2 py-2.5 rounded-lg text-[12.5px] flex items-center justify-center gap-1.5 transition active:scale-[0.98]"
