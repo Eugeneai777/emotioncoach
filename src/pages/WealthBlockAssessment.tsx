@@ -967,7 +967,7 @@ export default function WealthBlockAssessmentPage() {
               animate={{ opacity: 1, y: 0 }}
               style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
             >
-            {/* 正在跳转微信授权中 */}
+            {/* 正在跳转微信授权中（占位，真正全屏遮罩在页面根节点） */}
             {isRedirectingForAuth && (
               <div className="flex flex-col items-center justify-center py-20 space-y-4">
                 <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
