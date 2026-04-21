@@ -108,6 +108,61 @@ export default function BecomeCoach() {
 
   const [certifications, setCertifications] = useState<Certification[]>([]);
 
+  // Existing coach record (for edit-mode prefill + status banner)
+  const [existingCoach, setExistingCoach] = useState<{
+    id: string;
+    status: string;
+    admin_note: string | null;
+  } | null>(null);
+  const [prefillLoading, setPrefillLoading] = useState(false);
+
+  // Prefill form when user already has a human_coaches record
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    const loadExisting = async () => {
+      setPrefillLoading(true);
+      const { data: coach } = await supabase
+        .from("human_coaches")
+        .select("id, status, admin_note, name, bio, avatar_url, specialties, experience_years")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (cancelled) return;
+
+      if (coach) {
+        setExistingCoach({ id: coach.id, status: coach.status, admin_note: coach.admin_note });
+        setBasicInfo((prev) => ({
+          ...prev,
+          displayName: coach.name || prev.displayName,
+          bio: coach.bio || prev.bio,
+          avatarUrl: coach.avatar_url || prev.avatarUrl,
+          specialties: coach.specialties || prev.specialties,
+          yearsExperience: coach.experience_years || prev.yearsExperience,
+        }));
+
+        // Prefill certifications from existing record
+        const { data: certs } = await supabase
+          .from("coach_certifications")
+          .select("cert_type, cert_name, issuing_authority, cert_number, image_url, description")
+          .eq("coach_id", coach.id);
+        if (!cancelled && certs && certs.length > 0) {
+          setCertifications(certs.map((c) => ({
+            certType: c.cert_type,
+            certName: c.cert_name,
+            issuingAuthority: c.issuing_authority || "",
+            certNumber: c.cert_number || "",
+            imageUrl: c.image_url || "",
+            description: c.description || "",
+          })));
+        }
+      }
+      setPrefillLoading(false);
+    };
+    loadExisting();
+    return () => { cancelled = true; };
+  }, [user]);
+
   const getCurrentStepIndex = () =>
     STEPS.findIndex((s) => s.key === currentStep);
 
