@@ -108,6 +108,61 @@ export default function BecomeCoach() {
 
   const [certifications, setCertifications] = useState<Certification[]>([]);
 
+  // Existing coach record (for edit-mode prefill + status banner)
+  const [existingCoach, setExistingCoach] = useState<{
+    id: string;
+    status: string;
+    admin_note: string | null;
+  } | null>(null);
+  const [, setPrefillLoading] = useState(false);
+
+  // Prefill form when user already has a human_coaches record
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    const loadExisting = async () => {
+      setPrefillLoading(true);
+      const { data: coach } = await supabase
+        .from("human_coaches")
+        .select("id, status, admin_note, name, bio, avatar_url, specialties, experience_years")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (cancelled) return;
+
+      if (coach) {
+        setExistingCoach({ id: coach.id, status: coach.status, admin_note: coach.admin_note });
+        setBasicInfo((prev) => ({
+          ...prev,
+          displayName: coach.name || prev.displayName,
+          bio: coach.bio || prev.bio,
+          avatarUrl: coach.avatar_url || prev.avatarUrl,
+          specialties: coach.specialties || prev.specialties,
+          yearsExperience: coach.experience_years || prev.yearsExperience,
+        }));
+
+        // Prefill certifications from existing record
+        const { data: certs } = await supabase
+          .from("coach_certifications")
+          .select("cert_type, cert_name, issuing_authority, cert_number, image_url, description")
+          .eq("coach_id", coach.id);
+        if (!cancelled && certs && certs.length > 0) {
+          setCertifications(certs.map((c) => ({
+            certType: c.cert_type,
+            certName: c.cert_name,
+            issuingAuthority: c.issuing_authority || "",
+            certNumber: c.cert_number || "",
+            imageUrl: c.image_url || "",
+            description: c.description || "",
+          })));
+        }
+      }
+      setPrefillLoading(false);
+    };
+    loadExisting();
+    return () => { cancelled = true; };
+  }, [user]);
+
   const getCurrentStepIndex = () =>
     STEPS.findIndex((s) => s.key === currentStep);
 
@@ -134,16 +189,6 @@ export default function BecomeCoach() {
 
       if (existingError) throw existingError;
 
-      // Already approved -> block & redirect
-      if (existing?.status === "approved") {
-        toast({
-          title: "您已通过审核",
-          description: "请前往教练后台编辑资料",
-        });
-        navigate("/coach-dashboard");
-        return;
-      }
-
       let coachData: { id: string };
 
       const coachPayload = {
@@ -152,13 +197,14 @@ export default function BecomeCoach() {
         avatar_url: basicInfo.avatarUrl,
         specialties: basicInfo.specialties,
         experience_years: basicInfo.yearsExperience,
+        // Any edit (including from approved coach) goes back to pending for re-review
         status: "pending",
         is_accepting_new: false,
         is_verified: false,
       };
 
       if (existing) {
-        // 2) Pending or rejected -> UPDATE existing record (latest submission wins)
+        // Pending / approved / rejected -> UPDATE existing record (latest submission wins, status reset to pending)
         const { data: updated, error: updateError } = await supabase
           .from("human_coaches")
           .update(coachPayload)
@@ -345,12 +391,36 @@ export default function BecomeCoach() {
       >
         <PageHeader title="申请成为教练" showBack />
 
-        {invitationData && (
+        {invitationData && !existingCoach && (
           <div className="max-w-lg mx-auto px-4 pt-4">
             <div className="bg-teal-50 border border-teal-200 rounded-lg p-3 text-sm text-teal-700">
               ✨ 您已收到教练入驻邀请
               {invitationData.invitee_name && `（${invitationData.invitee_name}）`}
               ，请填写以下资料完成申请
+            </div>
+          </div>
+        )}
+
+        {existingCoach?.status === "pending" && (
+          <div className="max-w-lg mx-auto px-4 pt-4">
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-800">
+              ⏳ 您的申请正在审核中，编辑后将重新排队，预计 1-2 个工作日反馈。
+            </div>
+          </div>
+        )}
+
+        {existingCoach?.status === "approved" && (
+          <div className="max-w-lg mx-auto px-4 pt-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
+              ✅ 您已通过认证。修改资料需重新审核，期间已上线的预约不受影响。
+            </div>
+          </div>
+        )}
+
+        {existingCoach?.status === "rejected" && (
+          <div className="max-w-lg mx-auto px-4 pt-4">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-800">
+              ❌ 上次审核未通过{existingCoach.admin_note ? `：${existingCoach.admin_note}` : ""}，请补充资料后重新提交。
             </div>
           </div>
         )}
@@ -429,6 +499,7 @@ export default function BecomeCoach() {
                 onSubmit={handleSubmit}
                 onBack={() => setCurrentStep("certifications")}
                 isSubmitting={isSubmitting}
+                submitLabel={existingCoach ? "保存并重新提交审核" : "提交申请"}
               />
             )}
           </div>

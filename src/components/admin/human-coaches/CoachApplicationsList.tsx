@@ -142,11 +142,24 @@ export function CoachApplicationsList({ status }: CoachApplicationsListProps) {
               </div>
               
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
                   <h3 className="font-semibold text-foreground">{coach.name}</h3>
                   <Badge variant={status === "pending" ? "secondary" : "destructive"}>
                     {status === "pending" ? "待审核" : "已拒绝"}
                   </Badge>
+                  {status === "pending" && (() => {
+                    const isEdited = coach.updated_at && coach.created_at &&
+                      new Date(coach.updated_at).getTime() - new Date(coach.created_at).getTime() > 1000;
+                    return isEdited ? (
+                      <Badge variant="outline" className="text-xs border-blue-500 text-blue-600">
+                        ✏️ 修改申请
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-xs border-emerald-500 text-emerald-600">
+                        🆕 新申请
+                      </Badge>
+                    );
+                  })()}
                 </div>
                 
                 <p className="text-sm text-muted-foreground mb-2">{coach.title}</p>

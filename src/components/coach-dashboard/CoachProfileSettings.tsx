@@ -1,5 +1,7 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useUpdateCoachProfile } from "@/hooks/useCoachDashboard";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,14 +11,15 @@ import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { 
-  User, 
-  Save, 
-  Camera,
+import {
+  User,
+  Save,
   Star,
   Shield,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Pencil,
+  ArrowRight,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -40,6 +43,35 @@ interface CoachProfileSettingsProps {
 }
 
 export function CoachProfileSettings({ coach }: CoachProfileSettingsProps) {
+  const navigate = useNavigate();
+  const [loadingInvite, setLoadingInvite] = useState(false);
+
+  const handleEditProfileClick = async () => {
+    setLoadingInvite(true);
+    try {
+      const { data, error } = await supabase
+        .from("coach_invitations")
+        .select("token, expires_at")
+        .eq("status", "pending")
+        .gt("expires_at", new Date().toISOString())
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) throw error;
+      if (!data?.token) {
+        toast.error("暂无可用邀请链接，请联系管理员获取");
+        return;
+      }
+      navigate(`/become-coach?invite=${data.token}`);
+    } catch (e) {
+      console.error("Load invite error", e);
+      toast.error("跳转失败，请稍后重试");
+    } finally {
+      setLoadingInvite(false);
+    }
+  };
+
   const [formData, setFormData] = useState({
     name: coach.name || '',
     title: coach.title || '',
@@ -93,6 +125,27 @@ export function CoachProfileSettings({ coach }: CoachProfileSettingsProps) {
         <h1 className="text-2xl font-bold">个人设置</h1>
         <p className="text-muted-foreground">管理您的教练资料</p>
       </div>
+
+      {/* Edit Profile Entry — unified to /become-coach */}
+      <Card
+        className="border-primary/30 bg-primary/5 cursor-pointer hover:bg-primary/10 transition-colors"
+        onClick={() => !loadingInvite && handleEditProfileClick()}
+        role="button"
+        tabIndex={0}
+      >
+        <CardContent className="p-4 flex items-center gap-4">
+          <div className="h-10 w-10 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
+            <Pencil className="h-5 w-5 text-primary" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-foreground">修改资料 / 头像</p>
+            <p className="text-sm text-muted-foreground">
+              {loadingInvite ? "正在加载…" : "点击进入资料编辑（修改后需重新审核）"}
+            </p>
+          </div>
+          <ArrowRight className="h-5 w-5 text-muted-foreground shrink-0" />
+        </CardContent>
+      </Card>
 
       {/* Profile Status Card */}
       <Card>
