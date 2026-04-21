@@ -13,7 +13,7 @@ import { AssessmentPayDialog } from "@/components/wealth-block/AssessmentPayDial
 import { usePaymentCallback } from "@/hooks/usePaymentCallback";
 import { useEmotionHealthPurchase } from "@/hooks/useEmotionHealthPurchase";
 import { usePackageByKey } from "@/hooks/usePackages";
-import { isWeChatBrowser } from "@/utils/platform";
+
 import {
   EmotionHealthStartScreen,
   EmotionHealthQuestions,
@@ -45,7 +45,7 @@ export default function EmotionHealthPage() {
   
   // 支付相关状态
   const [showPayDialog, setShowPayDialog] = useState(false);
-  const [isRedirectingForAuth, setIsRedirectingForAuth] = useState(false);
+  
   
   // 购买状态检查
   const { data: purchaseRecord, isLoading: purchaseLoading, refetch: refetchPurchase } = useEmotionHealthPurchase();
@@ -113,36 +113,6 @@ export default function EmotionHealthPage() {
     }
   }, [answers, step]);
 
-  // 触发微信静默授权
-  const triggerWeChatSilentAuth = useCallback(async () => {
-    setIsRedirectingForAuth(true);
-    try {
-      const resumeUrl = new URL(window.location.href);
-      resumeUrl.searchParams.set('assessment_pay_resume', '1');
-
-      const { data, error } = await supabase.functions.invoke('wechat-pay-auth', {
-        body: {
-          redirectUri: resumeUrl.toString(),
-          flow: 'emotion_health_assessment',
-        },
-      });
-
-      if (error || !data?.authUrl) {
-        console.error('[EmotionHealth] Failed to get silent auth URL:', error || data);
-        setIsRedirectingForAuth(false);
-        // 授权失败，直接打开支付弹窗（使用扫码支付）
-        setShowPayDialog(true);
-        return;
-      }
-
-      window.location.href = data.authUrl;
-    } catch (err) {
-      console.error('[EmotionHealth] Silent auth error:', err);
-      setIsRedirectingForAuth(false);
-      setShowPayDialog(true);
-    }
-  }, []);
-
   // 跳转登录前写入回跳信息（登录后回到本页）
   const redirectToAuth = useCallback(() => {
     const target = '/emotion-health';
@@ -155,25 +125,16 @@ export default function EmotionHealthPage() {
     navigate(`/auth?redirect=${encodeURIComponent(target)}`, { state: { from: target } });
   }, [navigate]);
 
-  // 处理支付按钮点击
+  // 处理支付按钮点击 —— 与产品中心一致：直接打开支付弹窗，
+  // openid 的获取与缓存完全交由 WechatPayDialog 内部处理（cached_payment_openid_gzh）
   const handlePayClick = useCallback(() => {
     if (!user) {
       toast.error("请先登录");
       redirectToAuth();
       return;
     }
-
-    // 微信环境下，检查是否需要静默授权获取 openId
-    if (isWeChatBrowser()) {
-      const existingOpenId = sessionStorage.getItem('wechat_openid');
-      if (!existingOpenId) {
-        triggerWeChatSilentAuth();
-        return;
-      }
-    }
-
     setShowPayDialog(true);
-  }, [user, redirectToAuth, triggerWeChatSilentAuth]);
+  }, [user, redirectToAuth]);
 
   // 处理开始测评
   const handleStart = useCallback(() => {
@@ -284,7 +245,7 @@ export default function EmotionHealthPage() {
     setStep('questions');
   }, [refetchPurchase]);
 
-  const isLoading = authLoading || purchaseLoading || isRedirectingForAuth;
+  const isLoading = authLoading || purchaseLoading;
 
   return (
     <div className="h-screen overflow-y-auto overscroll-contain bg-background" style={{ WebkitOverflowScrolling: 'touch' }}>
