@@ -114,7 +114,7 @@ export default function BecomeCoach() {
     status: string;
     admin_note: string | null;
   } | null>(null);
-  const [prefillLoading, setPrefillLoading] = useState(false);
+  const [, setPrefillLoading] = useState(false);
 
   // Prefill form when user already has a human_coaches record
   useEffect(() => {
