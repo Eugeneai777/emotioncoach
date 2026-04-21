@@ -33,11 +33,12 @@ export function DynamicAssessmentQuestions({ questions, scoreOptions, onComplete
     return scoreOptions;
   }, [scoreOptions]);
 
-  // Pre-compute shuffled options for all questions (stable across re-renders)
+  // Stable option order: template-shared scoreOptions sort by score asc; question-level options keep DB order
   const shuffledOptionsMap = useMemo(() => {
-    return questions.map((question, idx) => {
+    return questions.map((question) => {
       const opts = getOptionsForQuestion(question);
-      return seededShuffle(opts, idx * 97 + 31);
+      if (question.options?.length > 0) return opts;
+      return [...opts].sort((a: any, b: any) => (a.score ?? 0) - (b.score ?? 0));
     });
   }, [questions, getOptionsForQuestion]);
 
