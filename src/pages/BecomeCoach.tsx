@@ -230,21 +230,6 @@ export default function BecomeCoach() {
           .eq("coach_id", coachData.id)
           .select("id");
         if (delSvcError) throw delSvcError;
-
-        // Wipe old certs & services so latest submission fully replaces them
-        const { error: delCertError } = await supabase
-          .from("coach_certifications")
-          .delete()
-          .eq("coach_id", coachData.id)
-          .select("id");
-        if (delCertError) throw delCertError;
-
-        const { error: delSvcError } = await supabase
-          .from("coach_services")
-          .delete()
-          .eq("coach_id", coachData.id)
-          .select("id");
-        if (delSvcError) throw delSvcError;
       } else {
         // 3) First-time application -> INSERT
         const { data: inserted, error: coachError } = await supabase
