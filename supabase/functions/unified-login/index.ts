@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-import * as bcrypt from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -8,14 +7,17 @@ const corsHeaders = {
 };
 
 /**
- * 统一登录 edge function（灰度试点）
- * 支持通过 user_identities 表查找主账号并签发 magic link
+ * 统一登录 edge function（一账号多登录方式 - 灰度试点）
  *
- * 灰度名单存储在 app_settings.pilot_unified_login_phones
- * 仅在灰度名单中的手机号才被允许走此链路（双重保险，前端也会判断）
+ * 流程：
+ * 1. 校验灰度名单（pilot_unified_login_phones）
+ * 2. 在 user_identities 找 phone → user_id
+ * 3. 拿到 user_id 对应的 auth.users.email
+ * 4. 用 anon client 调用 signInWithPassword({email, password}) 验证密码
+ *    （复用 Supabase 内置密码 hash，最安全）
+ * 5. 验证通过后用 service_role 重新签发 magicLink 给前端
  *
- * Body: { phone: string, password: string, country_code?: string }
- * Returns: { success: true, magicLink: string, tokenHash: string, userId: string }
+ * Body: { phone, password, country_code? }
  */
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -25,6 +27,7 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const anonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const admin = createClient(supabaseUrl, serviceKey);
 
     const body = await req.json();
@@ -34,7 +37,7 @@ serve(async (req) => {
       return jsonResponse({ error: 'phone and password are required' }, 400);
     }
 
-    // 1. 校验灰度名单（双重保险）
+    // 1. 灰度名单校验
     const { data: settingRow } = await admin
       .from('app_settings')
       .select('setting_value')
@@ -46,69 +49,65 @@ serve(async (req) => {
       : [];
 
     if (!pilotList.includes(phone)) {
-      console.log('[unified-login] Phone not in pilot list:', phone);
+      console.log('[unified-login] phone not in pilot list:', phone);
       return jsonResponse({ error: 'not_in_pilot' }, 403);
     }
 
-    // 2. 在 user_identities 找匹配
+    // 2. user_identities 查找
     const { data: identity, error: identityErr } = await admin
       .from('user_identities')
-      .select('user_id, password_hash')
+      .select('user_id')
       .eq('provider', 'phone')
       .eq('provider_uid', phone)
       .maybeSingle();
 
     if (identityErr) {
-      console.error('[unified-login] Identity lookup failed:', identityErr);
+      console.error('[unified-login] identity lookup failed:', identityErr);
       return jsonResponse({ error: '查询失败' }, 500);
     }
-
-    if (!identity || !identity.password_hash) {
-      console.log('[unified-login] Identity not found for phone:', phone);
+    if (!identity) {
       return jsonResponse({ error: '手机号或密码错误' }, 401);
     }
 
-    // 3. 校验密码
-    const isValid = await bcrypt.compare(password, identity.password_hash);
-    if (!isValid) {
-      console.log('[unified-login] Password mismatch for phone:', phone);
-      return jsonResponse({ error: '手机号或密码错误' }, 401);
-    }
-
-    // 4. 拿到主账号 user_id，查它的 auth.users.email
+    // 3. 拿主账号 email
     const { data: userInfo, error: userErr } = await admin.auth.admin.getUserById(identity.user_id);
-    if (userErr || !userInfo?.user) {
-      console.error('[unified-login] User not found:', userErr);
+    if (userErr || !userInfo?.user?.email) {
+      console.error('[unified-login] user lookup failed:', userErr);
       return jsonResponse({ error: '账号不存在' }, 404);
     }
-
     const userEmail = userInfo.user.email;
-    if (!userEmail) {
-      return jsonResponse({ error: '账号无 email，无法签发 token' }, 500);
+
+    // 4. 用 anon client 验证密码（复用 Supabase 内置密码哈希）
+    const anon = createClient(supabaseUrl, anonKey);
+    const { error: signInErr } = await anon.auth.signInWithPassword({
+      email: userEmail,
+      password,
+    });
+    if (signInErr) {
+      console.log('[unified-login] password verify failed:', signInErr.message);
+      return jsonResponse({ error: '手机号或密码错误' }, 401);
     }
 
-    // 5. 用 admin.generateLink 签发 magiclink
+    // 5. 签发 magic link 给前端
     const { data: linkData, error: linkErr } = await admin.auth.admin.generateLink({
       type: 'magiclink',
       email: userEmail,
     });
-
     if (linkErr || !linkData?.properties?.hashed_token) {
-      console.error('[unified-login] Generate link failed:', linkErr);
+      console.error('[unified-login] generate link failed:', linkErr);
       return jsonResponse({ error: '签发登录令牌失败' }, 500);
     }
 
-    console.log('[unified-login] Login success for user:', identity.user_id);
+    console.log('[unified-login] login success for user:', identity.user_id);
 
     return jsonResponse({
       success: true,
-      magicLink: linkData.properties.action_link,
       tokenHash: linkData.properties.hashed_token,
       userId: identity.user_id,
     });
   } catch (err) {
-    console.error('[unified-login] Unexpected error:', err);
-    return jsonResponse({ error: err instanceof Error ? err.message : 'Unknown error' }, 500);
+    console.error('[unified-login] unexpected:', err);
+    return jsonResponse({ error: err instanceof Error ? err.message : 'Unknown' }, 500);
   }
 });
 
