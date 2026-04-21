@@ -124,11 +124,46 @@ const leadCoach = {
 };
 
 const coachTeam = [
-  { name: "晓一", specialty: "婚姻家庭 / 情绪管理", image: coachXiaoyi },
-  { name: "肖剑雄", specialty: "婚姻关系 / 职业焦虑", image: coachXiaojianxiong },
-  { name: "Amy", specialty: "情感困惑 / 亲子关系", image: coachAmy },
-  { name: "木棉", specialty: "身心整体疗愈", image: coachMumian },
-  { name: "贝蒂", specialty: "亲密关系 / 生命重建", image: coachBetty },
+  {
+    name: "晓一",
+    role: "资深教练",
+    image: coachXiaoyi,
+    subtitle: "婚姻家庭 / 情绪管理专家",
+    certifications: ["[占位] 国家二级心理咨询师", "[占位] 婚姻家庭治疗师", "[占位] 情绪疗愈师", "[占位] 10年个案经验"],
+    motto: "[占位] 每一段关系，都值得被温柔对待",
+  },
+  {
+    name: "肖剑雄",
+    role: "资深教练",
+    image: coachXiaojianxiong,
+    subtitle: "婚姻关系 / 职业焦虑专家",
+    certifications: ["[占位] 资深婚姻顾问", "[占位] 职业生涯规划师", "[占位] EAP 专员", "[占位] 15年阅历"],
+    motto: "[占位] 男人的体面，从直面开始",
+  },
+  {
+    name: "Amy",
+    role: "资深教练",
+    image: coachAmy,
+    subtitle: "情感困惑 / 亲子关系专家",
+    certifications: ["[占位] 国际认证心理咨询师", "[占位] 萨提亚家庭治疗师", "[占位] 亲子沟通教练", "[占位] 12年陪伴经验"],
+    motto: "[占位] 看见自己，才能看见家人",
+  },
+  {
+    name: "木棉",
+    role: "资深教练",
+    image: coachMumian,
+    subtitle: "身心整体疗愈专家",
+    certifications: ["[占位] 身心疗愈导师", "[占位] 正念冥想教练", "[占位] 能量整合咨询师", "[占位] 8年深度陪伴"],
+    motto: "[占位] 身体记得你忘记的一切",
+  },
+  {
+    name: "贝蒂",
+    role: "资深教练",
+    image: coachBetty,
+    subtitle: "亲密关系 / 生命重建专家",
+    certifications: ["[占位] 亲密关系教练", "[占位] 生命重建导师", "[占位] 高级心理咨询师", "[占位] 14年实战经验"],
+    motto: "[占位] 重建关系，先重建自己",
+  },
 ];
 
 /* ========== 知乐胶囊 specs ========== */
@@ -451,7 +486,7 @@ export default function SynergyPromoPage() {
   return (
     <div className="min-h-screen w-full" style={{ background: C.bg, color: C.text }}>
       <Helmet>
-        <title>40 岁以后，有些事不该一个人扛着 ｜ 7 天有劲训练营 · 含知乐胶囊</title>
+        <title>7 天有劲训练营 · 40 岁以后不该一个人扛着 ｜ 含知乐胶囊</title>
         <meta
           name="description"
           content="38–55 岁男人的 7 天身心舒展计划。海沃塔团队对话 + 知乐胶囊实物 + AI 男士教练 + 私密社群。施强健康 ✕ 有劲AI 联合出品。"
@@ -469,13 +504,14 @@ export default function SynergyPromoPage() {
           <p className="text-xs tracking-[0.4em] mb-5" style={{ color: C.gold }}>
             FOR&nbsp;MEN&nbsp;38–55&nbsp;·&nbsp;7&nbsp;DAYS
           </p>
-          <h1 className="text-[30px] leading-[1.4] font-bold mb-4" style={{ ...serif, color: C.text }}>
-            40 岁以后，
-            <br />
-            <span style={{ color: C.gold }}>有些事</span>
+          <h1 className="text-[32px] leading-[1.3] font-bold mb-3" style={{ ...serif, color: C.gold }}>
+            7 天有劲训练营
+          </h1>
+          <h2 className="text-[22px] leading-[1.5] font-semibold mb-4" style={{ ...serif, color: C.text }}>
+            40 岁以后，<span style={{ color: C.gold }}>有些事</span>
             <br />
             不该一个人扛着。
-          </h1>
+          </h2>
           <p className="text-[14px] leading-[1.85] mb-6" style={{ color: C.textMute }}>
             38–55 岁男人的 7 天身心舒展计划
             <br />
@@ -777,29 +813,63 @@ export default function SynergyPromoPage() {
             </div>
           </div>
 
-          {/* 5 教练横滑紧凑卡 */}
+          {/* 5 资深教练大卡 · 与黛汐同款布局 */}
           <p className="text-[11px] tracking-widest mb-3" style={{ color: C.goldSoft }}>
-            教练团队 · 5 位资深陪伴
+            同行教练 · 5 位资深陪伴
           </p>
-          <div className="flex gap-3 overflow-x-auto pb-2 -mx-6 px-6 snap-x snap-mandatory">
+          <div className="space-y-4">
             {coachTeam.map((c, i) => (
               <div
                 key={i}
-                className="shrink-0 w-[120px] p-3 rounded-xl text-center snap-start"
+                className="p-5 rounded-2xl"
                 style={{ background: C.bgCard, border: `1px solid ${C.divider}` }}
               >
-                <div
-                  className="w-16 h-16 mx-auto rounded-full overflow-hidden mb-2"
-                  style={{ border: `1.5px solid ${C.divider}` }}
-                >
-                  <img src={c.image} alt={c.name} className="w-full h-full object-cover" />
+                <div className="flex items-start gap-4">
+                  <div
+                    className="w-20 h-20 shrink-0 rounded-full overflow-hidden"
+                    style={{ border: `2px solid ${C.divider}` }}
+                  >
+                    <img src={c.image} alt={c.name} className="w-full h-full object-cover" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h4 className="text-[18px] font-bold" style={{ ...serif, color: C.text }}>
+                        {c.name}
+                      </h4>
+                      <span
+                        className="text-[10px] px-2 py-0.5 rounded-full"
+                        style={{
+                          background: "rgba(212,180,129,0.12)",
+                          color: C.gold,
+                          border: `1px solid ${C.divider}`,
+                        }}
+                      >
+                        {c.role}
+                      </span>
+                    </div>
+                    <p className="text-[11px] mb-2" style={{ color: C.goldSoft }}>
+                      {c.subtitle}
+                    </p>
+                    <div className="flex flex-wrap gap-1 mb-2">
+                      {c.certifications.map((cert, j) => (
+                        <span
+                          key={j}
+                          className="text-[10px] px-1.5 py-0.5 rounded"
+                          style={{
+                            background: "rgba(212,180,129,0.08)",
+                            color: C.text,
+                            border: `1px solid ${C.divider}`,
+                          }}
+                        >
+                          {cert}
+                        </span>
+                      ))}
+                    </div>
+                    <p className="text-[11.5px] italic leading-[1.6]" style={{ color: C.gold }}>
+                      「{c.motto}」
+                    </p>
+                  </div>
                 </div>
-                <p className="text-[13px] font-semibold mb-0.5" style={{ ...serif, color: C.text }}>
-                  {c.name}
-                </p>
-                <p className="text-[10px] leading-[1.5]" style={{ color: C.textMute }}>
-                  {c.specialty}
-                </p>
               </div>
             ))}
           </div>
