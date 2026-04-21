@@ -442,6 +442,22 @@ export default function BecomeCoach() {
           </div>
         )}
 
+        {user && (
+          <div className="max-w-lg mx-auto px-4 pt-3">
+            <div className="bg-muted/50 border border-border rounded-lg px-3 py-2 text-xs text-muted-foreground flex items-start gap-1.5">
+              <span>🪪</span>
+              <span>
+                当前以「<span className="font-medium text-foreground">
+                  {user.phone
+                    ? `${user.phone.slice(0, 3)}****${user.phone.slice(-4)}`
+                    : user.email || "当前账号"}
+                </span>」身份{existingCoach ? "编辑资料" : "申请"}。
+                <span className="block mt-0.5">下次编辑请使用<strong>同一账号</strong>登录，否则系统会视为新申请。</span>
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* Progress */}
         <div className="max-w-lg mx-auto px-4 py-4">
           <div className="flex items-center justify-between mb-2">
