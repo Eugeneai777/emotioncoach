@@ -274,12 +274,14 @@ export class MiniProgramAudioClient {
         clearTimeout(timeout);
         console.log('[MiniProgramAudio] WebSocket connected');
 
-        // 如果有个性化 instructions，立即发送给 relay
-        if (this.cachedInstructions && this.ws) {
-          console.log('[MiniProgramAudio] Sending session_config with personalized instructions');
+        // 把 voice_type / instructions 一起发给 relay，确保 relay 能正确选择音色
+        const voiceType = (this.config.extraBody as any)?.voice_type;
+        if ((this.cachedInstructions || voiceType) && this.ws) {
+          console.log('[MiniProgramAudio] Sending session_config (instructions + voice_type)', { hasInstructions: !!this.cachedInstructions, voiceType });
           this.ws.send(JSON.stringify({
             type: 'session_config',
-            instructions: this.cachedInstructions,
+            instructions: this.cachedInstructions ?? undefined,
+            voice_type: voiceType,
           }));
         }
 
