@@ -103,26 +103,42 @@ const useCases = [
   {
     emoji: "🌙",
     title: "深夜焦虑",
+    subtitle: "翻来覆去睡不着",
     topic: "anxiety",
-    colorClass: "border-indigo-200 text-indigo-700 bg-indigo-50/70 hover:bg-indigo-100/80",
+    iconBg: "bg-indigo-500/20",
+    bg: "bg-gradient-to-br from-indigo-500/15 to-violet-500/8",
+    ring: "ring-indigo-400/25",
+    glow: "shadow-indigo-500/10",
   },
   {
     emoji: "💼",
     title: "职场迷茫",
+    subtitle: "想换工作没勇气",
     topic: "career",
-    colorClass: "border-amber-200 text-amber-700 bg-amber-50/70 hover:bg-amber-100/80",
+    iconBg: "bg-amber-500/20",
+    bg: "bg-gradient-to-br from-amber-500/15 to-orange-500/8",
+    ring: "ring-amber-400/25",
+    glow: "shadow-amber-500/10",
   },
   {
     emoji: "💗",
     title: "关系困扰",
+    subtitle: "刚和TA吵完架",
     topic: "relationship",
-    colorClass: "border-rose-200 text-rose-700 bg-rose-50/70 hover:bg-rose-100/80",
+    iconBg: "bg-rose-500/20",
+    bg: "bg-gradient-to-br from-rose-500/15 to-pink-500/8",
+    ring: "ring-rose-400/25",
+    glow: "shadow-rose-500/10",
   },
   {
     emoji: "💰",
     title: "财富卡点",
+    subtitle: "赚多少都存不下",
     topic: "wealth",
-    colorClass: "border-emerald-200 text-emerald-700 bg-emerald-50/70 hover:bg-emerald-100/80",
+    iconBg: "bg-emerald-500/20",
+    bg: "bg-gradient-to-br from-emerald-500/15 to-teal-500/8",
+    ring: "ring-emerald-400/25",
+    glow: "shadow-emerald-500/10",
   },
 ];
 
@@ -589,18 +605,17 @@ const MiniAppEntry = () => {
         </div>
       </div>
 
-      {/* ── 使用场景芯片区 → 直达 PTT 语音教练 ── */}
+      {/* ── 使用场景小卡区 → 直达 PTT 语音教练 ── */}
       <div className="px-4 pb-4">
         <div className="space-y-2.5">
           <div className="px-0.5">
             <div className="flex items-center gap-2 mb-1">
               <div className="w-1 h-4 rounded-full bg-gradient-to-b from-rose-400 to-pink-500" />
-              <h3 className="text-sm font-bold text-foreground">什么时候可以找有劲AI？</h3>
               <span className="text-base">🎙️</span>
+              <h3 className="text-sm font-bold text-foreground">想说点什么？按住和有劲AI说</h3>
             </div>
-            <p className="text-[11px] text-muted-foreground ml-3">任何时刻，任何情绪 —— 按住说话即可</p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {useCases.map((c, i) => (
               <motion.button
                 key={c.topic}
@@ -610,10 +625,13 @@ const MiniAppEntry = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 + i * 0.04, duration: 0.25 }}
                 whileTap={{ scale: 0.95 }}
-                className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-full border text-xs font-medium transition-all ${c.colorClass}`}
+                className={`group relative rounded-xl p-3 text-left ring-1 shadow-lg transition-all hover:brightness-110 ${c.bg} ${c.ring} ${c.glow}`}
               >
-                <span className="text-sm">{c.emoji}</span>
-                <span>{c.title}</span>
+                <div className={`w-9 h-9 rounded-full flex items-center justify-center mb-1.5 ${c.iconBg}`}>
+                  <span className="text-xl leading-none">{c.emoji}</span>
+                </div>
+                <div className="text-[12px] font-bold text-foreground leading-tight">{c.title}</div>
+                <div className="text-[10px] text-muted-foreground mt-0.5 leading-tight">{c.subtitle}</div>
               </motion.button>
             ))}
           </div>
