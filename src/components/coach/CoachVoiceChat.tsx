@@ -2075,6 +2075,11 @@ export const CoachVoiceChat = ({
       if (inactivityTimerRef.current) {
         clearInterval(inactivityTimerRef.current);
       }
+      // ✅ 取消 pending 的字幕渲染帧
+      if (aiFlushRafRef.current != null) {
+        cancelAnimationFrame(aiFlushRafRef.current);
+        aiFlushRafRef.current = null;
+      }
       // 🔧 组件卸载时释放全局语音锁
       releaseLock();
     };
