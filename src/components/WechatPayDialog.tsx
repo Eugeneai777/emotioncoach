@@ -199,6 +199,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
   const [qrCountdown, setQrCountdown] = useState<number>(0); // 二维码倒计时（秒）
   const silentAuthTriggeredRef = useRef<boolean>(false); // 防止重复触发静默授权
   const codeExchangedRef = useRef<boolean>(false); // 防止重复换取 openId
+  const abortRef = useRef<AbortController | null>(null); // 取消进行中的 invoke 请求
   const prevOpenRef = useRef<boolean>(false); // 跟踪上一次 open 值，用于"打开边沿"重置
 
   // 仅在 open 从 false → true 的"打开边沿"重置订单创建标记，
@@ -706,6 +707,11 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     openIdFetchedRef.current = false; // 重置 openId 获取标记
     silentAuthTriggeredRef.current = false; // 重置静默授权标记
     codeExchangedRef.current = false; // 重置 code 换取标记
+    // 🆕 取消进行中的 invoke 请求（防止关闭弹窗后请求继续在飞导致二次点击卡住）
+    try { abortRef.current?.abort(); } catch {}
+    abortRef.current = null;
+    // 🆕 清理 sessionStorage 防抖标记（resetState 中补漏，避免二次点击跳过授权卡死）
+    sessionStorage.removeItem('pay_auth_in_progress');
     // 🆕 保留 sessionStorage 中缓存的 openId，防止循环授权
     const cachedId = propOpenId || urlOpenId || getCachedPaymentOpenId();
     setUserOpenId(cachedId);
@@ -976,6 +982,13 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
       return;
     }
 
+    // 🆕 若上一笔 invoke 仍在飞，先中断再继续
+    if (abortRef.current && !abortRef.current.signal.aborted) {
+      try { abortRef.current.abort(); } catch {}
+      await new Promise((r) => setTimeout(r, 100));
+    }
+    abortRef.current = new AbortController();
+
     // 仅合伙人套餐验证条款
     if (needsTerms && !agreedTerms) {
       toast.error('请先阅读并同意服务条款和隐私政策');
@@ -1054,9 +1067,18 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
           idCardName: shippingInfo?.idCardName,
           idCardNumber: shippingInfo?.idCardNumber,
         },
+        // @ts-ignore - supabase v2 透传 fetch options
+        signal: abortRef.current?.signal,
       });
 
-      if (error) throw error;
+      if (error) {
+        // 用户中途关闭弹窗导致的中断不当作错误抛出
+        if ((error as any)?.name === 'AbortError' || abortRef.current?.signal.aborted) {
+          console.log('[Payment] createOrder aborted (dialog closed)');
+          return;
+        }
+        throw error;
+      }
       if (!data.success) throw new Error(data.error || '创建订单失败');
 
       // 🆕 处理后端返回的 alreadyPaid 响应（用户已购买）
