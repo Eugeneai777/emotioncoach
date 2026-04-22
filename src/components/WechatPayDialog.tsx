@@ -13,6 +13,7 @@ import confetti from 'canvas-confetti';
 import { isWeChatMiniProgram, isWeChatBrowser, waitForWxMiniProgramReady } from '@/utils/platform';
 import { getPostPaymentRedirectPath } from '@/utils/postPaymentRedirect';
 import { setPostAuthRedirect } from '@/lib/postAuthRedirect';
+import { trackPaymentEvent } from '@/utils/paymentFlowTracker';
 
 // 声明 WeixinJSBridge 类型（wx 类型已在 platform.ts 中声明）
 declare global {
