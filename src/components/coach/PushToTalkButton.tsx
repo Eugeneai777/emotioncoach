@@ -41,8 +41,8 @@ export function PushToTalkButton({ colors, onStart, onStop }: PushToTalkButtonPr
         onPointerCancel={handleUp}
         onPointerLeave={handleUp}
         onContextMenu={(e) => e.preventDefault()}
-        className={`relative w-24 h-24 rounded-full ${colors.bg} flex items-center justify-center
-          shadow-2xl ${colors.glow} ring-4 ring-white/15 transition-transform duration-150
+        className={`relative w-24 h-24 rounded-full bg-gradient-to-br from-rose-500 to-rose-700 flex items-center justify-center
+          shadow-2xl shadow-rose-900/50 ring-4 ring-white/10 transition-transform duration-150
           ${isPressed ? 'scale-110' : 'scale-100 active:scale-95'}`}
         style={{ touchAction: 'none' }}
       >

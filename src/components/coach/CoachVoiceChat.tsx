@@ -2098,7 +2098,7 @@ export const CoachVoiceChat = ({
               {!skipBilling && (
                 <>
                   <span className="text-white/25">·</span>
-                  <span className="flex items-center gap-0.5 text-amber-400/90">
+                  <span className="flex items-center gap-0.5 text-amber-300/70">
                     <Coins className="w-3 h-3" />
                     {billedMinutes * POINTS_PER_MINUTE}点
                   </span>
@@ -2143,7 +2143,7 @@ export const CoachVoiceChat = ({
             }
             endCall(e);
           }}
-          className="rounded-full px-3 h-8 bg-red-500/20 text-red-400 hover:bg-red-500/40 hover:text-red-300 backdrop-blur-sm text-xs font-medium"
+          className="rounded-full px-3 h-8 bg-white/[0.08] text-white/75 hover:bg-white/15 hover:text-white backdrop-blur-sm text-xs font-medium"
         >
           {isEnding ? (
             <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
@@ -2162,17 +2162,16 @@ export const CoachVoiceChat = ({
             <div className="relative mb-10 flex items-center justify-center" style={{ width: 120, height: 120 }}>
               {/* 外层光晕 */}
               <span
-                className={`absolute rounded-full blur-2xl transition-all duration-500 ${
+                className={`absolute rounded-full blur-xl transition-all duration-500 ${
                   speakingStatus === 'user-speaking'
-                    ? 'bg-emerald-400/40'
+                    ? 'bg-emerald-400/25'
                     : speakingStatus === 'assistant-speaking'
-                    ? `${colors.bg} opacity-60`
-                    : `${colors.bg} opacity-25`
+                    ? `${colors.bg} opacity-35`
+                    : `${colors.bg} opacity-15`
                 }`}
                 style={{
-                  width: speakingStatus === 'idle' ? 130 : 170,
-                  height: speakingStatus === 'idle' ? 130 : 170,
-                  animation: speakingStatus === 'idle' ? 'pulse-slow 2.6s ease-in-out infinite' : undefined,
+                  width: speakingStatus === 'idle' ? 110 : 140,
+                  height: speakingStatus === 'idle' ? 110 : 140,
                 }}
               />
               {/* 涟漪环 */}
@@ -2199,7 +2198,7 @@ export const CoachVoiceChat = ({
                       ? 'pulse-slow 0.9s ease-in-out infinite'
                       : undefined,
                   transform: speakingStatus === 'user-speaking' ? 'scale(1.08)' : undefined,
-                  background: 'radial-gradient(circle at 30% 30%, hsl(350 95% 78%), hsl(345 82% 52%))',
+                  background: 'radial-gradient(circle at 30% 30%, hsl(350 85% 72%), hsl(345 75% 48%))',
                 }}
               />
 
@@ -2222,7 +2221,7 @@ export const CoachVoiceChat = ({
               )}
               {latestAiLine && (
                 <div className="animate-in fade-in slide-in-from-bottom-1 duration-300">
-                  <p className="text-rose-100 text-[17px] font-medium leading-relaxed line-clamp-5 text-center">
+                  <p className="text-white/95 text-[17px] font-medium leading-relaxed line-clamp-5 text-center">
                     {latestAiLine}
                     {speakingStatus === 'assistant-speaking' && (
                       <span className="inline-block w-[3px] h-4 ml-1 bg-rose-200 align-middle animate-pulse rounded-sm" />
