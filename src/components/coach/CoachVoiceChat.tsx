@@ -2220,12 +2220,28 @@ export const CoachVoiceChat = ({
           )}
         </div>
 
-        {/* 转录文本 - 仅显示用户输入 */}
-        <div className="w-full max-w-md space-y-3">
-          {userTranscript && (
-            <div className="bg-black/30 rounded-2xl px-4 py-3 backdrop-blur-md border border-white/10">
-              <p className="text-white/70 text-xs mb-1 font-medium">你说：</p>
-              <p className="text-white text-sm leading-relaxed">{userTranscript}</p>
+        {/* 实时字幕 - 显示最近一句你说 + 当前 AI 回复 */}
+        <div className="w-full max-w-md space-y-2 px-2">
+          {!latestUserLine && !latestAiLine && status === 'connected' && (
+            <p className="text-center text-white/40 text-sm leading-relaxed">
+              {pttMode ? '按住下方按钮 · 和教练说说' : '正在聆听你…'}
+            </p>
+          )}
+          {latestUserLine && (
+            <div className="animate-in fade-in slide-in-from-bottom-1 duration-300">
+              <p className="text-white/70 text-sm leading-relaxed line-clamp-3">
+                <span className="text-white/50 mr-1">你：</span>{latestUserLine}
+              </p>
+            </div>
+          )}
+          {latestAiLine && (
+            <div className="animate-in fade-in slide-in-from-bottom-1 duration-300">
+              <p className="text-rose-200/95 text-base leading-relaxed line-clamp-4">
+                <span className="text-rose-300/70 mr-1">教练：</span>{latestAiLine}
+                {speakingStatus === 'assistant-speaking' && (
+                  <span className="inline-block w-1 h-4 ml-0.5 bg-rose-300/80 align-middle animate-pulse" />
+                )}
+              </p>
             </div>
           )}
         </div>
