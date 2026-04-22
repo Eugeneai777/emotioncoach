@@ -2185,7 +2185,22 @@ export const CoachVoiceChat = ({
               )}
               {/* 光球本体 */}
               <div
-                className={`relative rounded-full bg-gradient-to-br ${colors.from || 'from-rose-300'} ${colors.to || 'to-rose-600'} shadow-2xl transition-all duration-300`}
+                className="relative rounded-full shadow-2xl transition-all duration-300"
+                style={{
+                  width: 80,
+                  height: 80,
+                  filter: speakingStatus === 'idle' ? 'saturate(0.85)' : 'saturate(1.15)',
+                  animation:
+                    speakingStatus === 'idle'
+                      ? 'pulse-slow 2.4s ease-in-out infinite'
+                      : speakingStatus === 'assistant-speaking'
+                      ? 'pulse-slow 0.9s ease-in-out infinite'
+                      : undefined,
+                  transform: speakingStatus === 'user-speaking' ? 'scale(1.08)' : undefined,
+                  background: 'radial-gradient(circle at 30% 30%, hsl(350 95% 78%), hsl(345 82% 52%))',
+                }}
+              />
+
                 style={{
                   width: 80,
                   height: 80,
