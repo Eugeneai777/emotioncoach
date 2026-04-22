@@ -3,7 +3,7 @@ import { useContext } from 'react';
 import { GlobalVoiceContext } from '@/components/voice/GlobalVoiceProvider';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Phone, PhoneOff, Mic, Volume2, Loader2, Coins, MapPin, Search, X, Heart, ExternalLink, BookOpen, Tent, Play, Clock, ChevronLeft, Info } from 'lucide-react';
+import { Phone, PhoneOff, Mic, Volume2, Loader2, Coins, MapPin, Search, X, Heart, ExternalLink, BookOpen, Tent, Play, Clock, ChevronLeft, Info, Signal } from 'lucide-react';
 import { PointsRulesDialog } from '@/components/PointsRulesDialog';
 import { AudioWaveform } from './AudioWaveform';
 import { PushToTalkButton } from './PushToTalkButton';
