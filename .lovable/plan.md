@@ -1,41 +1,40 @@
 
 
-## 优化语音教练接通体验
+## 在 PTT 通话界面中央显示实时对话文字
 
-### 问题诊断
-1. **挂断后又自动重连**：`CoachVoiceChat` 的 `getOrCreateSessionId` 在 30s 内复用上次 session；用户挂断 → `navigate(-1)` 回上一页 → 若上一页又跳回 `/life-coach-voice`（或用户再次进入），会被识别为"断线重连"自动接通。
-2. **跳出注册页**：`LifeCoachVoice.tsx` 在 `useAuth` 还没 hydrate 完成时 `user=null`，立即 `navigate('/auth?redirect=...')`；`AwakeningBottomNav` 中心按钮无未登录拦截，未登录用户点按钮直接进语音页 → 闪现登录注册页。
-3. **接通界面像截图**：`ConnectionProgress` 完整渲染 5 个图标 + 进度条 + "连接成功" + 网络徽章 + 余额行，停留时间长且画面信息密集。
+### 目标
+通话过程中，屏幕中央实时显示双方对话文字（用户语音转写 + AI 回复文字），让用户清晰看到「我说了什么 / AI 回了什么」，提升信任感和可读性。
 
 ### 改造方案
 
-**1. 修复挂断不复用 session — `src/components/coach/CoachVoiceChat.tsx`**
-- 在 PTT 模式的强制挂断（顶部"挂断"和"返回"按钮）里，显式清除 `localStorage.removeItem('voice_chat_session')`，再 disconnect + onClose。
-- 同时在 `endCall` 正常流程末尾，PTT 模式下也清除该 key（PTT 用户语义就是"结束就是结束"，不应自动续）。
-- 效果：再次进入语音页时一定走全新 session，不会被旧 session 残留触发立刻"已连接"重连。
+**1. `src/utils/RealtimeAudio.ts` — 暴露转写文字事件**
+- OpenAI Realtime 已经在数据通道里推送以下事件，目前未被向上转发：
+  - `conversation.item.input_audio_transcription.completed` → 用户说的话（最终稿）
+  - `response.audio_transcript.delta` → AI 回复的文字流（增量）
+  - `response.audio_transcript.done` → AI 回复完结
+- 在现有 `dc.onmessage` 处理里，把这三类事件通过 `onMessage` 回调透传出去（已有 `onMessage` 通道，无需新增 API）。
 
-**2. 修复闪现注册页 — `src/pages/LifeCoachVoice.tsx`**
-- 引入 `useAuth` 的 `loading` 状态（若 hook 未暴露则用本地短延时兜底），`loading=true` 时 return `<ConnectionProgress phase="preparing" />` 占位，避免 `user=null` 误判。
-- 仅在 `!loading && !user` 时才跳 `/auth`。
-- 入口侧 `AwakeningBottomNav.tsx` 给中心按钮加未登录拦截：未登录直接 `navigate('/auth?redirect=/life-coach-voice')`，避免进入语音页内再二次跳转产生闪烁。
+**2. `src/components/coach/CoachVoiceChat.tsx` — 中央字幕区**
+- 新增本地 state：`userTranscript`（最近一句用户话）和 `aiTranscript`（AI 当前回复，按 delta 累加）。
+- 在现有 `onMessage` handler 里根据事件类型更新对应 state；AI 新一轮回复开始时清空旧 `aiTranscript`。
+- 在 PTT 模式主区中央渲染一个**字幕卡**（替换当前空白主区）：
+  - 上半行：`你：xxxxx`（白色 70% 透明，text-sm，淡入）
+  - 下半行：`教练：xxxxx`（玫红 90%，text-base，光标闪烁表示正在输出）
+  - 最长 3 行截断，超出滚动到底部，自动隐藏 8s 内无更新的旧内容
+  - 空闲（无任何转写）时显示灰色提示：`按住下方按钮 · 和教练说说`
+- 字幕区位于顶栏下方到 PTT 按钮之间的中部空间，左右 padding-x-6，max-w-md 居中。
 
-**3. 极简化接通过程 + 提速 — `src/components/coach/CoachVoiceChat.tsx`**
-- 接通态的视觉替换：移除当前的 `ConnectionProgress`（5 图标 + 进度条 + 网络徽章 + 余额行）和 `coachTitle / coachEmoji` 满屏布局。
-- 改为极简 loading：屏幕中央仅显示一个柔和呼吸光圈 + 一行小字「正在接通…」+ 底部一个浅色"取消"。无 emoji、无标题、无图标条、无余额行、无网络徽章。
-- 跳过非必要的串行步骤以加速：
-  - `checkQuota`、`getMaxDurationForUser` 由"串行 await 后再 connect" 改为**与 `connect()` 并行触发**（`Promise.all` 不阻塞 WebRTC 握手）。额度不足时再走中断分支（已存在的 `insufficientDuringCall` 路径）。
-  - 移除接通阶段的 `ConnectionStatusBadge` 与 `InCallNetworkHint` 渲染（连接前不显示），仅在接通成功后保留 in-call 网络提示。
-  - 将 `connectionPhase` 多阶段动画过渡缩短：当前每阶段都有 ~200-400ms 视觉延迟，PTT 模式下直接跳过中间阶段，`preparing → connected` 一步切。
-- 接通成功后立即切到 PTT 主界面（大圆按钮），不再展示"✓ 连接成功"过渡画面。
+**3. 不动**
+- 计费、PTT 录音逻辑、网络徽章、挂断流程
+- 非 PTT 模式（其它教练入口）渲染分支
 
 ### 涉及文件
-- `src/components/coach/CoachVoiceChat.tsx`（清 session、并行预检、极简接通 UI、跳过过渡动画）
-- `src/pages/LifeCoachVoice.tsx`（auth loading 占位）
-- `src/components/awakening/AwakeningBottomNav.tsx`（未登录拦截）
+- `src/utils/RealtimeAudio.ts`（透传 3 个转写事件）
+- `src/components/coach/CoachVoiceChat.tsx`（中央字幕组件 + state 管理）
 
 ### 验证清单
-- [ ] 挂断后再次点中心按钮，进入页面是"全新接通"，不会瞬间显示"已连接"
-- [ ] 未登录点中心按钮直接进 `/auth`，登录后正确回到 `/life-coach-voice`，无闪烁
-- [ ] 接通画面只剩"呼吸光圈 + 正在接通… + 取消"，无图标条/进度条/网络徽章/余额行
-- [ ] 从点击到出现 PTT 大圆按钮的总耗时明显缩短（额度查询不再阻塞 WebRTC）
+- [ ] 按住说话松开后 1-2 秒内，屏幕中央出现「你：…」自己说的话
+- [ ] AI 回复时「教练：…」逐字流式出现
+- [ ] 多轮对话时只显示最近一轮，不堆积
+- [ ] 空闲态显示提示文案，不留白屏
 
