@@ -7,6 +7,9 @@ import { Phone, PhoneOff, Mic, Volume2, Loader2, Coins, MapPin, Search, X, Heart
 import { PointsRulesDialog } from '@/components/PointsRulesDialog';
 import { AudioWaveform } from './AudioWaveform';
 import { PushToTalkButton } from './PushToTalkButton';
+import { VoiceWaveformVisualizer } from './VoiceWaveformVisualizer';
+import { VoiceSuggestionChips } from './VoiceSuggestionChips';
+import { useVoiceGreeting } from '@/hooks/useVoiceGreeting';
 import { RealtimeChat } from '@/utils/RealtimeAudio';
 import { DoubaoRealtimeChat } from '@/utils/DoubaoRealtimeAudio';
 import { MiniProgramAudioClient, ConnectionStatus as MiniProgramStatus } from '@/utils/MiniProgramAudio';
