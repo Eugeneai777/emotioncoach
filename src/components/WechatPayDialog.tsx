@@ -13,6 +13,7 @@ import confetti from 'canvas-confetti';
 import { isWeChatMiniProgram, isWeChatBrowser, waitForWxMiniProgramReady } from '@/utils/platform';
 import { getPostPaymentRedirectPath } from '@/utils/postPaymentRedirect';
 import { setPostAuthRedirect } from '@/lib/postAuthRedirect';
+import { trackPaymentEvent } from '@/utils/paymentFlowTracker';
 
 // 声明 WeixinJSBridge 类型（wx 类型已在 platform.ts 中声明）
 declare global {
@@ -288,11 +289,24 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
       }
     }
 
+    // 🔍 埋点：微信授权流程触发
+    trackPaymentEvent('wechat_auth_triggered', {
+      metadata: {
+        scenario: 'silent_auth_for_openid',
+        isWechat: isWeChatBrowser(),
+        isMiniProgram: isWeChatMiniProgram(),
+      },
+    });
+
     // 🆕 全局兜底：8 秒内若仍未跳转（invoke 卡住或被微信浏览器拦截），自动回退扫码
     // 鸿蒙微信浏览器对跨域 fetch 行为有差异，invoke 可能永久挂起且不抛错
     const fallbackTimer = window.setTimeout(() => {
       if (!silentAuthTriggeredRef.current) return;
       console.warn('[Payment] Silent auth global fallback (8s) triggered — switching to QR code');
+      trackPaymentEvent('wechat_auth_timeout', {
+        errorMessage: 'Silent auth fallback after 8s',
+        metadata: { fallbackTo: 'qr_code' },
+      });
       setIsRedirectingForOpenId(false);
       silentAuthTriggeredRef.current = false;
       sessionStorage.removeItem("pay_auth_in_progress");
@@ -342,6 +356,10 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
       if (error || !data?.authUrl) {
         window.clearTimeout(fallbackTimer);
         console.error('[Payment] Failed to get silent auth URL:', error || data);
+        trackPaymentEvent('wechat_auth_failed', {
+          errorMessage: (error as any)?.message || 'No authUrl returned',
+          metadata: { stage: 'invoke_wechat_pay_auth' },
+        });
         setIsRedirectingForOpenId(false);
         silentAuthTriggeredRef.current = false;
         sessionStorage.removeItem("pay_auth_in_progress");
@@ -351,11 +369,18 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
       }
 
       console.log('[Payment] Redirecting to silent auth...');
+      trackPaymentEvent('wechat_auth_redirecting', {
+        targetUrl: data.authUrl,
+      });
       // 跳转生效后让全局 fallbackTimer 继续守护（页面若被拦截留在原地，8s 兜底自动切扫码）
       window.location.href = data.authUrl;
     } catch (err) {
       window.clearTimeout(fallbackTimer);
       console.error('[Payment] Silent auth error:', err);
+      trackPaymentEvent('wechat_auth_failed', {
+        errorMessage: (err as any)?.message || 'Silent auth exception',
+        metadata: { stage: 'silent_auth_exception' },
+      });
       setIsRedirectingForOpenId(false);
       silentAuthTriggeredRef.current = false;
       sessionStorage.removeItem("pay_auth_in_progress");
@@ -370,6 +395,11 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     if (codeExchangedRef.current) return;
     codeExchangedRef.current = true;
     setIsExchangingCode(true);
+
+    // 🔍 埋点：开始用 code 换 openId
+    trackPaymentEvent('wechat_auth_code_received', {
+      metadata: { isLoggedIn: !!user },
+    });
 
     try {
       const isLoggedIn = !!user;
@@ -389,18 +419,29 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
 
       if (error || !data?.openId) {
         console.error('[Payment] Failed to exchange code:', error || data);
+        trackPaymentEvent('wechat_auth_failed', {
+          errorMessage: (error as any)?.message || data?.error || 'No openId returned',
+          metadata: { stage: 'code_exchange' },
+        });
         setIsExchangingCode(false);
         setOpenIdResolved(true); // 换取失败，继续使用扫码支付
         return;
       }
 
       console.log('[Payment] Successfully got openId from code');
+      trackPaymentEvent('wechat_auth_success', {
+        metadata: { hasOpenId: true },
+      });
       setUserOpenId(data.openId);
       cachePaymentOpenId(data.openId);
       setOpenIdResolved(true);
       setIsExchangingCode(false);
     } catch (err) {
       console.error('[Payment] Code exchange error:', err);
+      trackPaymentEvent('wechat_auth_failed', {
+        errorMessage: (err as any)?.message || 'Code exchange exception',
+        metadata: { stage: 'code_exchange_exception' },
+      });
       setIsExchangingCode(false);
       setOpenIdResolved(true);
     }
@@ -786,19 +827,35 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     return new Promise<void>((resolve, reject) => {
       console.log('Invoking JSAPI pay with WeixinJSBridge, params:', { ...params, paySign: '***' });
       
+      // 🔍 埋点：开始拉起 JSAPI 支付
+      trackPaymentEvent('payment_jsapi_invoking', {
+        metadata: {
+          bridgeAvailable: typeof window.WeixinJSBridge !== 'undefined',
+          isMiniProgram: isWeChatMiniProgram(),
+        },
+      });
+
       const onBridgeReady = () => {
         if (!window.WeixinJSBridge) {
           console.error('WeixinJSBridge is not available');
+          trackPaymentEvent('payment_jsapi_failed', {
+            errorMessage: 'WeixinJSBridge not available after ready event',
+            metadata: { stage: 'bridge_check' },
+          });
           reject(new Error('WeixinJSBridge 未初始化，请在微信中打开'));
           return;
         }
         
         console.log('WeixinJSBridge ready, invoking getBrandWCPayRequest');
+        trackPaymentEvent('payment_jsapi_bridge_ready');
         window.WeixinJSBridge.invoke(
           'getBrandWCPayRequest',
           params,
           (res) => {
             console.log('WeixinJSBridge payment result:', res.err_msg);
+            trackPaymentEvent('payment_jsapi_callback', {
+              metadata: { errMsg: res.err_msg },
+            });
             if (res.err_msg === 'get_brand_wcpay_request:ok') {
               resolve();
             } else if (res.err_msg === 'get_brand_wcpay_request:cancel') {
@@ -1052,6 +1109,18 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
       const { data: { user: freshUser } } = await supabase.auth.getUser();
       const resolvedUserId = freshUser?.id || user?.id || sessionStorage.getItem('pending_payment_user_id') || 'guest';
 
+      // 🔍 埋点：提交创建订单请求
+      trackPaymentEvent('payment_submitted', {
+        metadata: {
+          payType: selectedPayType,
+          packageKey: packageInfo.key,
+          amount: packageInfo.price,
+          hasOpenId: !!resolvedOpenId,
+          isMiniProgram,
+          isWechat,
+        },
+      });
+
       const { data, error } = await supabase.functions.invoke('create-wechat-order', {
         body: {
           packageKey: packageInfo.key,
@@ -1093,6 +1162,11 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
 
       setOrderNo(data.orderNo);
 
+      // 🔍 埋点：订单创建成功
+      trackPaymentEvent('payment_order_created', {
+        metadata: { orderNo: data.orderNo, payType: selectedPayType },
+      });
+
       // 🆕 小程序原生支付：缓存订单号，便于从原生支付页返回后恢复状态
       if (selectedPayType === 'miniprogram') {
         setPendingOrderToCache(data.orderNo);
@@ -1103,6 +1177,9 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
           // 🆕 后端未调用微信支付 API（无 openId），直接跳转小程序原生支付页
           // 由原生端获取 openId，再调用后端生成 prepay 参数并完成支付
           console.log('[Payment] MiniProgram: needsNativePayment, navigating to native pay page with orderNo');
+          trackPaymentEvent('payment_miniprogram_navigating', {
+            metadata: { mode: 'needs_native_payment', orderNo: data.orderNo },
+          });
           setStatus('polling');
           startPolling(data.orderNo);
           triggerMiniProgramNativePay({
@@ -1114,6 +1191,9 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
           }, data.orderNo);
         } else {
           console.log('[Payment] MiniProgram: triggering native pay via navigateTo with prepay params');
+          trackPaymentEvent('payment_miniprogram_navigating', {
+            metadata: { mode: 'with_prepay_params', orderNo: data.orderNo },
+          });
           setStatus('polling');
           startPolling(data.orderNo);
           triggerMiniProgramNativePay(data.miniprogramPayParams, data.orderNo);
@@ -1133,20 +1213,34 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
           try {
             await invokeJsapiPay(data.jsapiPayParams);
             console.log('[Payment] JSAPI pay invoked successfully');
+            trackPaymentEvent('payment_jsapi_success', {
+              metadata: { orderNo: data.orderNo },
+            });
           } catch (jsapiError: any) {
             console.log('[Payment] JSAPI pay error:', jsapiError?.message);
             if (jsapiError?.message === '用户取消支付') {
               // 用户取消：标记为已取消，允许用复用同一订单重新唤起
               console.log('[Payment] User cancelled JSAPI, allowing retry with same order');
+              trackPaymentEvent('payment_jsapi_user_cancelled', {
+                metadata: { orderNo: data.orderNo },
+              });
               setJsapiCancelled(true);
             } else {
               // JSAPI 失败，降级到扫码模式
+              trackPaymentEvent('payment_jsapi_failed', {
+                errorMessage: jsapiError?.message,
+                metadata: { orderNo: data.orderNo, fallbackTo: 'native' },
+              });
               await fallbackToNativePayment(data.orderNo);
             }
           }
         } else {
           // Bridge 不可用，直接降级到扫码
           console.log('[Payment] Bridge not available, falling back to native');
+          trackPaymentEvent('payment_jsapi_failed', {
+            errorMessage: 'WeixinJSBridge not available within 1500ms',
+            metadata: { orderNo: data.orderNo, fallbackTo: 'native', stage: 'bridge_wait_timeout' },
+          });
           await fallbackToNativePayment(data.orderNo);
         }
       } else if ((data.payType || selectedPayType) === 'h5' && (data.h5Url || data.payUrl)) {
