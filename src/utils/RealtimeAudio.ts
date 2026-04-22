@@ -461,6 +461,9 @@ export class RealtimeChat {
   // 🚀 快路径：服务端 token 函数返回的延迟 session 配置（在 datachannel open 后推送）
   private pendingSessionConfig: any = null;
 
+  // 🎬 场景开场白：PTT 模式下，进入 PTT 后由 AI 主动播报第一句
+  private scenarioOpening: string | null = null;
+
   constructor(
     private onMessage: (message: any) => void,
     private onStatusChange: (status: 'connecting' | 'connected' | 'disconnected' | 'error') => void,
