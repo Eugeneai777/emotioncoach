@@ -580,28 +580,11 @@ const WealthCampIntro = () => {
           price: 299
         }}
         onSuccess={async () => {
-          // 1. 首先记录购买（最重要）
-          try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-              const { error } = await supabase.from('user_camp_purchases').insert({
-                user_id: user.id,
-                camp_type: 'wealth_block_7',
-                camp_name: '财富觉醒训练营',
-                purchase_price: 299,
-                payment_status: 'paid'
-              });
-              if (error) {
-                console.error('❌ Failed to record purchase:', error);
-              } else {
-                console.log('✅ Purchase recorded successfully');
-              }
-            }
-          } catch (err) {
-            console.error('❌ Failed to record purchase:', err);
-          }
-          
-          // 2. 然后执行其他操作
+          // ⚠️ 不再前端写 user_camp_purchases：
+          //   后端 wechat-pay-callback / check-order-status 会基于 orders 表
+          //   自动补齐 user_camp_purchases（参见 camp-self-healing-and-reset-standard-zh）。
+          //   前端写入会导致：1) 如订单错挂他人账户，仍把权益写到当前用户造成不一致；
+          //                  2) 与后端去重逻辑冲突。
           setShowPayDialog(false);
           toast.success("购买成功！请选择开始日期");
           refetchPurchase();
