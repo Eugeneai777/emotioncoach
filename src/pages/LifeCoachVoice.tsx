@@ -6,13 +6,23 @@ import { getSavedVoiceType } from "@/config/voiceTypeConfig";
 
 const LifeCoachVoice = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
 
   useEffect(() => {
+    if (loading) return;
     if (!user) {
       navigate("/auth?redirect=/life-coach-voice", { replace: true });
     }
-  }, [user, navigate]);
+  }, [user, loading, navigate]);
+
+  if (loading) {
+    return (
+      <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col items-center justify-center">
+        <div className="w-16 h-16 rounded-full bg-rose-500/20 animate-pulse" />
+        <p className="mt-4 text-white/60 text-sm">正在准备…</p>
+      </div>
+    );
+  }
 
   if (!user) return null;
 
