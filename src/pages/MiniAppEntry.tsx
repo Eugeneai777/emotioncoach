@@ -770,10 +770,12 @@ const MiniAppEntry = () => {
         </AnimatePresence>
       </div>
 
-      {/* ── Powered by 有劲AI ── */}
-      <div className="flex items-center justify-center gap-1.5 py-4">
-        <span className="text-xs text-muted-foreground tracking-wider">Powered by</span>
-        <span className="text-xs font-semibold text-amber-700 tracking-wide">有劲AI</span>
+      {/* ── Powered by 有劲AI（自适应对比度胶囊） ── */}
+      <div className="flex items-center justify-center py-4">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-background/70 dark:bg-background/40 backdrop-blur-sm ring-1 ring-border/50 shadow-sm">
+          <span className="text-xs text-muted-foreground tracking-wider">Powered by</span>
+          <span className="text-xs font-semibold text-amber-700 dark:text-amber-400 tracking-wide">有劲AI</span>
+        </div>
       </div>
 
       {/* ── 底部留白，避免被固定导航栏遮挡 ── */}
