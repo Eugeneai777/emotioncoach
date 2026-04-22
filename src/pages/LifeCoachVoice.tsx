@@ -16,6 +16,10 @@ const TOPIC_TO_SCENARIO_KEY: Record<string, string> = {
   career: "职场迷茫",
   relationship: "关系困扰",
   wealth: "财富卡点",
+  sleep: "睡不着觉",
+  meltdown: "情绪崩溃",
+  exam: "考试焦虑",
+  social: "社交困扰",
 };
 
 const LifeCoachVoice = () => {
