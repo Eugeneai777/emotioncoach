@@ -2071,6 +2071,7 @@ export const CoachVoiceChat = ({
             e.stopPropagation();
             // 🔧 PTT 模式：返回 = 强制断开，避免卡在异步流程
             if (pttMode) {
+              isEndingRef.current = true;  // 🔧 标记主动挂断，避免误报"意外中断"
               try { chatRef.current?.disconnect(); } catch(err) { console.warn(err); }
               try { if (durationRef.current) clearInterval(durationRef.current); } catch(err) { console.warn(err); }
               try { localStorage.removeItem(SESSION_STORAGE_KEY); } catch {}
@@ -2132,6 +2133,7 @@ export const CoachVoiceChat = ({
             console.log('[VoiceChat] 挂断 clicked, isEnding=', isEnding);
             // 🔧 PTT 模式或重复点击：直接强制关闭，避免卡在异步流程
             if (pttMode || isEnding) {
+              isEndingRef.current = true;  // 🔧 标记主动挂断，避免误报"意外中断"
               try { chatRef.current?.disconnect(); } catch(err) { console.warn(err); }
               try { if (durationRef.current) clearInterval(durationRef.current); } catch(err) { console.warn(err); }
               try { localStorage.removeItem(SESSION_STORAGE_KEY); } catch {}
@@ -2637,6 +2639,7 @@ export const CoachVoiceChat = ({
               onClick={(e) => {
                 if (isEnding) {
                   console.log('[VoiceChat] Force close triggered from bottom button');
+                  isEndingRef.current = true;  // 🔧 标记主动挂断
                   try { chatRef.current?.disconnect(); } catch(err) { console.warn(err); }
                   try { if (durationRef.current) clearInterval(durationRef.current); } catch(err) { console.warn(err); }
                   releaseLock();
