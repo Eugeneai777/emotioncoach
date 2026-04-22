@@ -750,6 +750,11 @@ export class RealtimeChat {
       // 添加本地音频轨道
       this.pc.addTrack(this.localStream.getTracks()[0]);
 
+      // 🎙️ PTT 预设：addTrack 后立即静音，避免远端 VAD 收到任何声音
+      if (this.pttPreset) {
+        try { this.setMicMuted(true); } catch {}
+      }
+
       // 设置数据通道
       this.dc = this.pc.createDataChannel("oai-events");
       
