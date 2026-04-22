@@ -103,6 +103,8 @@ export function UnifiedPayDialog({
       // 埋点：用户关闭支付弹窗
       trackPaymentEvent('payment_cancelled');
       endPaymentFlow();
+      // 🆕 双保险：清理支付授权防抖标记，避免下次点击被错误跳过
+      sessionStorage.removeItem('pay_auth_in_progress');
       onOpenChange(false);
     }
   }, [onOpenChange]);
