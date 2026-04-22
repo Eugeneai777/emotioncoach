@@ -854,6 +854,12 @@ export class RealtimeChat {
         sdp: await sdpResponse.text(),
       };
       
+      // 🔧 防御：SDP 等待期间可能被外部 disconnect() 清空 pc，避免 setRemoteDescription on null
+      if (!this.pc || this.isDisconnected) {
+        console.warn('[WebRTC] pc was nulled during SDP wait, aborting silently');
+        throw new Error('连接已被取消');
+      }
+      
       await this.pc.setRemoteDescription(answer);
       console.log('[WebRTC] Connection established:', performance.now() - startTime, 'ms');
 
