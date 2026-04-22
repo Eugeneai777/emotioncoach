@@ -223,7 +223,7 @@ export default function PromoMidlife25to45Women399() {
                 Icon: Users,
                 tag: "权益 01 · 同龄姐妹海沃塔小组",
                 title: "终于可以说真话的地方",
-                desc: "1 场同龄 6–8 人小组，由女性教练带场。和姐妹 1 对 1 配对深度对话，不是被建议，是被听见。",
+                desc: "1 场同龄 3 人小组，由女性教练带场。和姐妹 1 对 1 配对深度对话，不是被建议，是被听见。",
               },
               {
                 Icon: Wind,
