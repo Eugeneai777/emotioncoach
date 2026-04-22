@@ -223,7 +223,7 @@ export default function PromoMidlife25to45Women399() {
                 Icon: Users,
                 tag: "权益 01 · 同龄姐妹海沃塔小组",
                 title: "终于可以说真话的地方",
-                desc: "1 场同龄 6–8 人小组，由女性教练带场。和姐妹 1 对 1 配对深度对话，不是被建议，是被听见。",
+                desc: "1 场同龄 3 人小组，由女性教练带场。和姐妹 1 对 1 配对深度对话，不是被建议，是被听见。",
               },
               {
                 Icon: Wind,
@@ -351,7 +351,6 @@ export default function PromoMidlife25to45Women399() {
                 points: [
                   "教练 + AI + 实物胶囊 + 私密社群",
                   "一支口红的钱，拿到 ¥3,980 闭门计划同款核心",
-                  "7 天无理由全额退款",
                 ],
               },
             ].map((adv, i) => (
@@ -466,7 +465,7 @@ export default function PromoMidlife25to45Women399() {
         </Section>
 
         {/* ============ 06 信任保障 ============ */}
-        <Section index={6} eyebrow="我们懂你的在意" title="4 条不可妥协的承诺">
+        <Section index={6} eyebrow="我们懂你的在意" title="3 条不可妥协的承诺">
           <div
             className="flex items-center justify-around gap-2 mb-5 p-3 rounded-xl"
             style={{ background: `${C.primarySoft}1c`, border: `1px solid ${C.divider}` }}
@@ -501,7 +500,6 @@ export default function PromoMidlife25to45Women399() {
               { t: "全程女性社群 · 不混入男性", d: "实名审核 · 仅限同龄女性入群" },
               { t: "课程链接仅本人可看", d: "不可分享转发 · 链接绑定账号" },
               { t: "沟通仅你与教练可见", d: "平台不留对话记录" },
-              { t: "7 天无理由全额退款", d: "试听不满意 · 一句话即退" },
             ].map((p, i) => (
               <div key={i} className="flex gap-3 items-start">
                 <Lock className="w-4 h-4 mt-1 shrink-0" style={{ color: C.primary }} />
