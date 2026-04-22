@@ -60,6 +60,7 @@ interface CoachVoiceChatProps {
   extraBody?: Record<string, any>; // 额外传递给 token 端点的数据
   maxDurationOverride?: number | null; // undefined=走默认逻辑, null=不限时, number=指定分钟数
   skipBilling?: boolean; // 跳过积分检查和扣费（如财富教练免费5次）
+  pttMode?: boolean; // Push-to-Talk 模式：按住说话、松开发送
 }
 
 type ConnectionStatus = 'idle' | 'connecting' | 'connected' | 'disconnected' | 'error';
@@ -85,7 +86,8 @@ export const CoachVoiceChat = ({
   openingMessage,
   extraBody,
   maxDurationOverride,
-  skipBilling = false
+  skipBilling = false,
+  pttMode = false
 }: CoachVoiceChatProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -852,6 +854,16 @@ export const CoachVoiceChat = ({
           return newVal;
         });
       }, 1000);
+      // 🔧 PTT 模式：连接成功后切换为按住说话
+      if (pttMode) {
+        const client = chatRef.current as any;
+        if (client && typeof client.setPushToTalkMode === 'function') {
+          // 稍延迟，等待 dc open 之后的 session.created 事件
+          setTimeout(() => {
+            try { client.setPushToTalkMode(true); } catch (e) { console.warn('[PTT] enable failed', e); }
+          }, 400);
+        }
+      }
     } else if (mappedStatus === 'disconnected' || mappedStatus === 'error') {
       if (durationRef.current) clearInterval(durationRef.current);
 
