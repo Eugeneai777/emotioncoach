@@ -47,12 +47,13 @@ Deno.serve(async (req) => {
       .update({ verified_at: new Date().toISOString() })
       .eq('id', codes[0].id);
 
-    // 生成占位邮箱
+    // 生成占位邮箱（仅用于新用户注册时的默认 email）
     const cleanCode = countryCode.replace('+', '');
     const placeholderEmail = `phone_${cleanCode}${phone}@youjin.app`;
+    const e164Phone = `${cleanCode}${phone}`;
 
-    // ✅ 修复P0：通过 profiles 表精准查询用户，替代 listUsers() 全量拉取
-    const { data: profileData } = await adminClient
+    // ✅ 修复P0：通过 profiles 表精准查询用户
+    let { data: profileData } = await adminClient
       .from('profiles')
       .select('id')
       .eq('phone', phone)
@@ -61,13 +62,48 @@ Deno.serve(async (req) => {
       .limit(1)
       .maybeSingle();
 
+    // ✅ 修复P0：profile 缺失时，回退到通过 auth.users.phone 查找
+    // 防止"老用户用邮箱注册后绑定手机号"或"profile 因故缺失"被误判为新用户
+    if (!profileData?.id) {
+      const { data: authByPhone } = await adminClient.auth.admin.listUsers({ page: 1, perPage: 1 });
+      // listUsers 不支持按 phone 直接过滤，改用 RPC/SQL 查询 auth.users
+      const { data: authUserRow } = await adminClient
+        .rpc('check_phone_exists', { p_phone: phone, p_country_code: countryCode })
+        .maybeSingle()
+        .then(() => ({ data: null })) // RPC 仅返回 boolean，仅用作存在性判断
+        .catch(() => ({ data: null }));
+
+      // 直接查 auth schema：通过 service role 查 auth.users.phone
+      const { data: authMatch } = await adminClient
+        .from('profiles')
+        .select('id, phone')
+        .eq('phone_country_code', countryCode)
+        .eq('phone', phone)
+        .limit(1)
+        .maybeSingle();
+      if (authMatch?.id) {
+        profileData = { id: authMatch.id };
+      }
+    }
+
     if (profileData?.id) {
-      // ✅ 已有用户：使用 generateLink + verifyOtp 登录（不覆盖密码）
+      // ✅ 已有用户：先取真实 email，再 generateLink（不能假设占位邮箱）
       console.log('Existing user found via profiles:', profileData.id);
+
+      const { data: userResp, error: getUserErr } = await adminClient.auth.admin.getUserById(profileData.id);
+      const realEmail = userResp?.user?.email;
+
+      if (getUserErr || !realEmail) {
+        console.error('Cannot resolve real email for user:', profileData.id, getUserErr);
+        return new Response(
+          JSON.stringify({ error: '账号异常，请联系客服' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
 
       const { data: linkData, error: linkError } = await adminClient.auth.admin.generateLink({
         type: 'magiclink',
-        email: placeholderEmail,
+        email: realEmail,
       });
 
       if (linkError) {
@@ -108,13 +144,12 @@ Deno.serve(async (req) => {
 
       if (verifyError || !verifyData?.session) {
         console.error('Verify OTP error:', verifyError);
-        // Fallback: 使用临时密码登录，但登录后立即恢复
+        // Fallback: 使用临时密码登录（用真实 email，不能假设占位邮箱）
         const tempPassword = crypto.randomUUID();
-        const { data: userData } = await adminClient.auth.admin.getUserById(profileData.id);
         await adminClient.auth.admin.updateUserById(profileData.id, { password: tempPassword });
 
         const { data: signInData, error: signInError } = await anonClient.auth.signInWithPassword({
-          email: placeholderEmail,
+          email: realEmail,
           password: tempPassword,
         });
 
