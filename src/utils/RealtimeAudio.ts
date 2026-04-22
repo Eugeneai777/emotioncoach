@@ -622,6 +622,8 @@ export class RealtimeChat {
           throw new Error("Failed to get ephemeral token");
         }
         EPHEMERAL_KEY = tokenData.client_secret.value;
+        // 🚀 捕获快路径延迟 session 配置
+        this.pendingSessionConfig = tokenData.pending_session_config || null;
       } else {
         // 并行执行 token 获取和麦克风权限请求
         const [tokenResult, micResult] = await Promise.all([
@@ -645,6 +647,8 @@ export class RealtimeChat {
 
         EPHEMERAL_KEY = tokenData.client_secret.value;
         realtimeApiUrl = tokenData.realtime_url || 'https://api.openai.com/v1/realtime';
+        // 🚀 捕获快路径延迟 session 配置
+        this.pendingSessionConfig = tokenData.pending_session_config || null;
         
         // 缓存配置（按天）
         setCachedConfig(this.tokenEndpoint, realtimeApiUrl);
