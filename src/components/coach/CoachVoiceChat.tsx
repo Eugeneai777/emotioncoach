@@ -97,6 +97,9 @@ export const CoachVoiceChat = ({
   const [speakingStatus, setSpeakingStatus] = useState<SpeakingStatus>('idle');
   const [transcript, setTranscript] = useState('');
   const [userTranscript, setUserTranscript] = useState('');
+  // 🔧 PTT 字幕：仅保留"最近一句"用户话与"当前一轮"AI 回复
+  const [latestUserLine, setLatestUserLine] = useState('');
+  const [latestAiLine, setLatestAiLine] = useState('');
   const [duration, setDuration] = useState(0);
   const durationValueRef = useRef(0); // 🔧 用于 endCall 退款判断，避免 state 延迟问题
   const [billedMinutes, setBilledMinutes] = useState(0);
