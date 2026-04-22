@@ -2071,6 +2071,7 @@ export const CoachVoiceChat = ({
             e.stopPropagation();
             // 🔧 PTT 模式：返回 = 强制断开，避免卡在异步流程
             if (pttMode) {
+              isEndingRef.current = true;  // 🔧 标记主动挂断，避免误报"意外中断"
               try { chatRef.current?.disconnect(); } catch(err) { console.warn(err); }
               try { if (durationRef.current) clearInterval(durationRef.current); } catch(err) { console.warn(err); }
               try { localStorage.removeItem(SESSION_STORAGE_KEY); } catch {}
