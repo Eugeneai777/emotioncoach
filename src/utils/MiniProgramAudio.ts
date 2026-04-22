@@ -96,6 +96,11 @@ export class MiniProgramAudioClient {
   /** 按住说话：打开闸门，让本地音频开始流向 relay */
   public pttStart(): { ok: boolean; reason?: string } {
     if (!this.pttPreset) return { ok: false, reason: 'not_in_ptt_mode' };
+    if (this.webAudioContext && this.webAudioContext.state !== 'running') {
+      void this.webAudioContext.resume().catch((error) => {
+        console.warn('[MiniProgramAudio][PTT] Failed to resume recording context:', error);
+      });
+    }
     this.pttMuted = false;
     this.pttRecordingStart = Date.now();
     // 通知 relay 清空缓冲
@@ -359,8 +364,22 @@ export class MiniProgramAudioClient {
 
   private async initRecorder(): Promise<void> {
     const wx = window.wx;
+
+    const canUseWebAudio = !!((window.AudioContext || (window as any).webkitAudioContext) && navigator.mediaDevices?.getUserMedia);
+    const shouldPreferWebAudio = !!this.preAcquiredStream?.active || canUseWebAudio;
+
+    if (shouldPreferWebAudio) {
+      try {
+        await this.initWebAudioRecorder();
+        return;
+      } catch (error) {
+        console.warn('[MiniProgramAudio] Web Audio recorder init failed, falling back to wx recorder if available:', error);
+        this.stopWebAudioRecording();
+        this.useWebAudioFallback = false;
+      }
+    }
     
-    // 🔧 优先使用小程序原生 API
+    // 仅在 H5 / Web Audio 不可用时才回退到 wx 原生录音器
     if (wx?.getRecorderManager) {
       console.log('[MiniProgramAudio] Using wx.getRecorderManager');
       
@@ -408,12 +427,14 @@ export class MiniProgramAudioClient {
       return;
     }
 
-    // 🔧 降级为 Web Audio API（小程序 WebView 中使用）
-    console.log('[MiniProgramAudio] wx.getRecorderManager not available, using Web Audio API fallback');
+    throw new Error('当前环境无法初始化录音器');
+  }
+
+  private async initWebAudioRecorder(): Promise<void> {
+    console.log('[MiniProgramAudio] Using Web Audio API recorder');
     this.useWebAudioFallback = true;
-    
+
     try {
-      // 优先复用用户手势中预获取的麦克风流，避免小程序 WebView 吞掉首个 PTT 手势
       if (this.preAcquiredStream?.active) {
         this.webMediaStream = this.preAcquiredStream;
         this.preAcquiredStream = null;
@@ -428,24 +449,27 @@ export class MiniProgramAudioClient {
           }
         });
       }
-      
-      // 创建 AudioContext
+
       this.webAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)({
         sampleRate: 24000
       });
-      
-      // 创建音频源
+
+      if (this.webAudioContext.state === 'suspended') {
+        try {
+          await this.webAudioContext.resume();
+        } catch (error) {
+          console.warn('[MiniProgramAudio] Recording AudioContext resume deferred:', error);
+        }
+      }
+
       this.webSource = this.webAudioContext.createMediaStreamSource(this.webMediaStream);
-      
-      // 创建处理节点（bufferSize=4096 约 170ms 延迟，平衡延迟和音质）
       this.webProcessor = this.webAudioContext.createScriptProcessor(4096, 1, 1);
-      
+
       this.webProcessor.onaudioprocess = (e) => {
         if (this.ws?.readyState !== WebSocket.OPEN) return;
-        
+
         const inputData = e.inputBuffer.getChannelData(0);
-        
-        // 🔧 音频能量检测：判断麦克风是否仍有信号
+
         let maxAmplitude = 0;
         for (let i = 0; i < inputData.length; i += 64) {
           const abs = Math.abs(inputData[i]);
@@ -457,15 +481,13 @@ export class MiniProgramAudioClient {
         } else {
           this.silentFrameCount++;
         }
-        
-        // 转换为 PCM16 格式
+
         const int16Array = new Int16Array(inputData.length);
         for (let i = 0; i < inputData.length; i++) {
           const s = Math.max(-1, Math.min(1, inputData[i]));
           int16Array[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
         }
-        
-        // 转换为 Base64
+
         const uint8Array = new Uint8Array(int16Array.buffer);
         let binary = '';
         const chunkSize = 0x8000;
@@ -474,24 +496,22 @@ export class MiniProgramAudioClient {
           binary += String.fromCharCode.apply(null, Array.from(chunk));
         }
         const base64Audio = btoa(binary);
-        
-        // 🎙️ PTT 闸门：未按住时不送出音频
+
         if (this.pttPreset && this.pttMuted) return;
-        // 发送到服务器
+
         const audioChunk: AudioChunk = {
           type: 'audio_input',
           audio: base64Audio,
         };
         this.ws?.send(JSON.stringify(audioChunk));
       };
-      
-      // 连接节点（静音输出，避免回声）
+
       this.webSource.connect(this.webProcessor);
       const silentGain = this.webAudioContext.createGain();
       silentGain.gain.value = 0;
       this.webProcessor.connect(silentGain);
       silentGain.connect(this.webAudioContext.destination);
-      
+
       console.log('[MiniProgramAudio] Web Audio API recorder initialized');
     } catch (error) {
       console.error('[MiniProgramAudio] Web Audio API init failed:', error);
