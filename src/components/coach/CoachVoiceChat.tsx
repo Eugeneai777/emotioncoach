@@ -1084,6 +1084,8 @@ export const CoachVoiceChat = ({
       setIsEnding(false);
       setTranscript('');
       setUserTranscript('');
+      setLatestUserLine('');
+      setLatestAiLine('');
       // ✅ 重置 delta 累积 refs
       currentAssistantDeltaRef.current = '';
       completedTranscriptRef.current = '';
