@@ -56,7 +56,7 @@ const AwakeningBottomNav: React.FC = () => {
         
         {/* 主按钮 */}
         <motion.button
-          onClick={() => navigate('/life-coach-voice')}
+          onClick={handleVoiceCoachClick}
           className="relative w-14 h-14 rounded-full flex items-center justify-center overflow-hidden
                      border-0 shadow-lg shadow-orange-500/30"
           whileHover={{ scale: 1.05 }}
