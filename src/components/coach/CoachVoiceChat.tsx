@@ -2230,7 +2230,7 @@ export const CoachVoiceChat = ({
             </div>
 
             {/* 智能场景芯片 — 仅空闲且尚未对话时显示 */}
-            {status === 'connected' && !latestUserLine && !latestAiLine && (
+            {status === 'connected' && !latestUserLine && (
               <div className="w-full mt-4 animate-in fade-in duration-500">
                 <VoiceSuggestionChips
                   recentThemes={recentThemes}
