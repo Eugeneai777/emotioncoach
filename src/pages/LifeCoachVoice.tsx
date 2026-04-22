@@ -32,11 +32,31 @@ const LifeCoachVoice = () => {
   const [searchParams] = useSearchParams();
   const topic = searchParams.get("topic") || undefined;
 
-  // ✅ 用 useMemo 稳定引用，避免每次渲染产生新字符串触发 CoachVoiceChat 重连
-  const scenarioKey = useMemo(
-    () => (topic ? TOPIC_TO_SCENARIO_KEY[topic] : undefined),
-    [topic]
-  );
+  // ✅ 运行时校验：未知 topic 或映射缺失时给出明确提示，回退到通用模式
+  const scenarioKey = useMemo(() => {
+    if (!topic) return undefined;
+    if (!KNOWN_TOPICS.includes(topic)) {
+      console.warn(`[LifeCoachVoice] 未知 topic="${topic}"，回退到通用教练模式`);
+      toast({
+        title: "未识别的场景",
+        description: `场景"${topic}"暂未配置，已切换到通用模式`,
+        variant: "destructive",
+      });
+      return undefined;
+    }
+    const key = TOPIC_TO_SCENARIO_KEY[topic];
+    if (!key) {
+      console.error(`[LifeCoachVoice] topic="${topic}" 缺少 SCENARIO_KEY 映射`);
+      toast({
+        title: "场景配置缺失",
+        description: "已切换到通用模式，请联系支持反馈",
+        variant: "destructive",
+      });
+      return undefined;
+    }
+    console.log(`[LifeCoachVoice] topic="${topic}" → scenario="${key}"`);
+    return key;
+  }, [topic]);
 
   useEffect(() => {
     if (loading) return;
