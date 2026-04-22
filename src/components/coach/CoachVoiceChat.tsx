@@ -12,7 +12,7 @@ import { MiniProgramAudioClient, ConnectionStatus as MiniProgramStatus } from '@
 import { isWeChatMiniProgram, supportsWebRTC, getPlatformInfo } from '@/utils/platform';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { UnifiedPayDialog } from '@/components/UnifiedPayDialog';
+
 import { useVoiceSessionLock, forceReleaseSessionLock } from '@/hooks/useVoiceSessionLock';
 import { ConnectionProgress, ConnectionStatusBadge, type ConnectionPhase, type NetworkQuality } from './ConnectionProgress';
 import { InCallNetworkHint, type NetworkWarningLevel } from './VoiceNetworkWarning';
@@ -99,7 +99,7 @@ export const CoachVoiceChat = ({
   const [billedMinutes, setBilledMinutes] = useState(0);
   const [remainingQuota, setRemainingQuota] = useState<number | null>(null);
   const [isCheckingQuota, setIsCheckingQuota] = useState(true);
-  const [showPayDialog, setShowPayDialog] = useState(false);
+  
   const [pendingNavigation, setPendingNavigation] = useState<{ path: string; name: string } | null>(null);
   const [searchResults, setSearchResults] = useState<any[] | null>(null);
   const [searchKeyword, setSearchKeyword] = useState('');
