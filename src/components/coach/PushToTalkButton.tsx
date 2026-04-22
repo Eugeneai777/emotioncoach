@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { Mic } from 'lucide-react';
 
 interface ColorScheme {
@@ -16,21 +16,53 @@ interface PushToTalkButtonProps {
 
 export function PushToTalkButton({ colors, onStart, onStop }: PushToTalkButtonProps) {
   const [isPressed, setIsPressed] = useState(false);
+  const isPressedRef = useRef(false);
 
-  const handleDown = useCallback((e: React.PointerEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    try { e.currentTarget.setPointerCapture(e.pointerId); } catch {}
+  const startPress = useCallback(() => {
+    if (isPressedRef.current) return;
+    isPressedRef.current = true;
     setIsPressed(true);
     onStart();
   }, [onStart]);
 
+  const stopPress = useCallback(() => {
+    if (!isPressedRef.current) return;
+    isPressedRef.current = false;
+    setIsPressed(false);
+    onStop();
+  }, [onStop]);
+
+  const handleDown = useCallback((e: React.PointerEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    try { e.currentTarget.setPointerCapture(e.pointerId); } catch {}
+    startPress();
+  }, [startPress]);
+
   const handleUp = useCallback((e: React.PointerEvent<HTMLButtonElement>) => {
     e.preventDefault();
-    if (!isPressed) return;
-    setIsPressed(false);
     try { e.currentTarget.releasePointerCapture(e.pointerId); } catch {}
-    onStop();
-  }, [isPressed, onStop]);
+    stopPress();
+  }, [stopPress]);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    startPress();
+  }, [startPress]);
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    stopPress();
+  }, [stopPress]);
+
+  const handleMouseDown = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    startPress();
+  }, [startPress]);
+
+  const handleMouseUp = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    stopPress();
+  }, [stopPress]);
 
   return (
     <div className="flex flex-col items-center gap-3 select-none">
@@ -40,6 +72,12 @@ export function PushToTalkButton({ colors, onStart, onStop }: PushToTalkButtonPr
         onPointerUp={handleUp}
         onPointerCancel={handleUp}
         onPointerLeave={handleUp}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchEnd}
+        onMouseDown={handleMouseDown}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
         onContextMenu={(e) => e.preventDefault()}
         className={`relative w-24 h-24 rounded-full bg-gradient-to-br from-rose-500 to-rose-700 flex items-center justify-center
           shadow-2xl shadow-rose-900/50 ring-4 ring-white/10 transition-transform duration-150
