@@ -1208,6 +1208,36 @@ serve(async (req) => {
     const OPENAI_PROXY_URL = Deno.env.get('OPENAI_PROXY_URL');
     const baseUrl = OPENAI_PROXY_URL || 'https://api.openai.com';
 
+    // 🚀 加速：通用模式（最常用路径）走"快路径"——立即并行启动 OpenAI session 创建
+    // 与上下文查询并发，session.create 与 4 个 DB 查询同时进行，减少 300-500ms
+    const isFastPath = !scenario && mode === 'general';
+
+    // 用最简 instructions 立即启动 OpenAI session 创建（与下面 DB 查询并行）
+    const fastPathSessionPromise = isFastPath
+      ? fetch(`${baseUrl}/v1/realtime/sessions`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${OPENAI_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "gpt-4o-mini-realtime-preview",
+            voice: mapVoiceTypeToOpenAIVoice(voiceOverride, mode),
+            // 占位 instructions，真正的个性化 instructions 由前端在连接后通过 session.update 推送
+            instructions: '你是劲老师，温暖的AI生活教练。请等待系统配置后开始对话。',
+            input_audio_format: "pcm16",
+            output_audio_format: "pcm16",
+            max_response_output_tokens: "inf",
+            turn_detection: {
+              type: "server_vad",
+              threshold: 0.6,
+              prefix_padding_ms: 200,
+              silence_duration_ms: 1800,
+            },
+          }),
+        })
+      : null;
+
     // 🌟 并行获取用户上下文数据（用户昵称、历史对话、记忆、对话次数）
     const [
       profileResult,
@@ -1419,33 +1449,33 @@ ${photoList}
       ];
     }
 
-    // 请求 OpenAI Realtime session
+    // 请求 OpenAI Realtime session（快路径下复用并行启动的 Promise）
     const realtimeUrl = `${baseUrl}/v1/realtime/sessions`;
-    const response = await fetch(realtimeUrl, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${OPENAI_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini-realtime-preview",
-        voice: mapVoiceTypeToOpenAIVoice(voiceOverride, mode),
-        instructions: instructions,
-        tools: tools,
-        tool_choice: "auto",
-        input_audio_format: "pcm16",
-        output_audio_format: "pcm16",
-        // 用户体验优先：不硬性限制 token，通过 Prompt 软控制回复长度
-        // 避免 AI 说话说到一半被截断，这是最影响体验的问题
-        max_response_output_tokens: "inf",
-        turn_detection: {
-          type: "server_vad",
-          threshold: 0.6,
-          prefix_padding_ms: 200,
-          silence_duration_ms: 1800 // 延长静默检测，给用户更多思考时间，避免抢话
-        }
-      }),
-    });
+    const response = fastPathSessionPromise
+      ? await fastPathSessionPromise
+      : await fetch(realtimeUrl, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${OPENAI_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "gpt-4o-mini-realtime-preview",
+            voice: mapVoiceTypeToOpenAIVoice(voiceOverride, mode),
+            instructions: instructions,
+            tools: tools,
+            tool_choice: "auto",
+            input_audio_format: "pcm16",
+            output_audio_format: "pcm16",
+            max_response_output_tokens: "inf",
+            turn_detection: {
+              type: "server_vad",
+              threshold: 0.6,
+              prefix_padding_ms: 200,
+              silence_duration_ms: 1800,
+            },
+          }),
+        });
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -1454,16 +1484,22 @@ ${photoList}
     }
 
     const data = await response.json();
-    console.log("Realtime session created, mode:", mode);
+    console.log("Realtime session created, mode:", mode, "fastPath:", !!fastPathSessionPromise);
 
     const realtimeProxyUrl = OPENAI_PROXY_URL 
       ? `${OPENAI_PROXY_URL}/v1/realtime`
       : 'https://api.openai.com/v1/realtime';
 
+    // 快路径下：把完整 instructions 和 tools 一并下发，前端在 datachannel open 后用 session.update 推送
     return new Response(JSON.stringify({
       ...data,
       realtime_url: realtimeProxyUrl,
-      mode: mode
+      mode: mode,
+      pending_session_config: fastPathSessionPromise ? {
+        instructions,
+        tools,
+        tool_choice: "auto",
+      } : null,
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

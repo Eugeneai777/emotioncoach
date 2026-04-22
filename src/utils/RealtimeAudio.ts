@@ -458,6 +458,9 @@ export class RealtimeChat {
   // 🔧 Safari 兼容：支持接收预获取的 MediaStream，跳过内部 getUserMedia
   private preAcquiredStream: MediaStream | null = null;
 
+  // 🚀 快路径：服务端 token 函数返回的延迟 session 配置（在 datachannel open 后推送）
+  private pendingSessionConfig: any = null;
+
   constructor(
     private onMessage: (message: any) => void,
     private onStatusChange: (status: 'connecting' | 'connected' | 'disconnected' | 'error') => void,
@@ -619,6 +622,8 @@ export class RealtimeChat {
           throw new Error("Failed to get ephemeral token");
         }
         EPHEMERAL_KEY = tokenData.client_secret.value;
+        // 🚀 捕获快路径延迟 session 配置
+        this.pendingSessionConfig = tokenData.pending_session_config || null;
       } else {
         // 并行执行 token 获取和麦克风权限请求
         const [tokenResult, micResult] = await Promise.all([
@@ -642,6 +647,8 @@ export class RealtimeChat {
 
         EPHEMERAL_KEY = tokenData.client_secret.value;
         realtimeApiUrl = tokenData.realtime_url || 'https://api.openai.com/v1/realtime';
+        // 🚀 捕获快路径延迟 session 配置
+        this.pendingSessionConfig = tokenData.pending_session_config || null;
         
         // 缓存配置（按天）
         setCachedConfig(this.tokenEndpoint, realtimeApiUrl);
@@ -733,7 +740,21 @@ export class RealtimeChat {
         if (!this.isDisconnected) {
           console.log('[WebRTC] Data channel opened:', performance.now() - startTime, 'ms');
           this.lastDataChannelActivity = Date.now();
-          
+
+          // 🚀 快路径：推送完整 session 配置（instructions/tools），覆盖最简占位配置
+          if (this.pendingSessionConfig && this.dc?.readyState === 'open') {
+            try {
+              this.dc.send(JSON.stringify({
+                type: 'session.update',
+                session: this.pendingSessionConfig,
+              }));
+              console.log('[WebRTC] Pending session config pushed:', performance.now() - startTime, 'ms');
+              this.pendingSessionConfig = null;
+            } catch (e) {
+              console.warn('[WebRTC] Failed to push pending session config:', e);
+            }
+          }
+
           // 🔧 启动活动检测：每 30 秒检测一次数据通道活动
           this.activityCheckInterval = setInterval(() => {
             const inactiveTime = Date.now() - this.lastDataChannelActivity;
