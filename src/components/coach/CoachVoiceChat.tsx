@@ -222,12 +222,6 @@ export const CoachVoiceChat = ({
   const [hasWarnedInactivity, setHasWarnedInactivity] = useState(false);
   const warningTimestampRef = useRef<number>(0);
 
-  const MEMBER_365_PACKAGE = {
-    key: 'member365',
-    name: '365会员',
-    price: 365,
-    quota: 1000
-  };
 
   // 颜色映射 — 增加深色背景渐变
   const colorMap: Record<string, { bg: string; border: string; text: string; glow: string; deepBg: string; banner: string; bannerText: string }> = {
@@ -1934,8 +1928,9 @@ export const CoachVoiceChat = ({
       setIsCheckingQuota(false);
       
       if (quotaResult === 'show_pay') {
-        // 显示支付对话框
-        setShowPayDialog(true);
+        // 进入页面但不发起通话，直接显示横幅引导充值（与通话中余额不足体验一致）
+        setInsufficientDuringCall(true);
+        setStatus('idle');
       } else if (quotaResult === true) {
         startCall();
       } else {
@@ -1967,38 +1962,6 @@ export const CoachVoiceChat = ({
       releaseLock();
     };
   }, []);
-
-  // 显示支付对话框
-  if (showPayDialog) {
-    return (
-      <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col items-center justify-center">
-        <div className="text-center mb-6">
-          <div className="text-5xl mb-4">💫</div>
-          <h2 className="text-white text-xl font-medium mb-2">点数不足</h2>
-          <p className="text-white/60 text-sm">至少需要 {POINTS_PER_MINUTE} 点才能开始语音对话</p>
-        </div>
-        
-        <UnifiedPayDialog
-          open={true}
-          onOpenChange={(open) => {
-            if (!open) {
-              setShowPayDialog(false);
-              onClose();
-            }
-          }}
-          packageInfo={MEMBER_365_PACKAGE}
-          onSuccess={() => {
-            toast({
-              title: "续费成功！",
-              description: "正在开始语音对话...",
-            });
-            setShowPayDialog(false);
-            startCall();
-          }}
-        />
-      </div>
-    );
-  }
 
   // 🔧 连接中显示进度
   if (isCheckingQuota || status === 'connecting') {
@@ -2542,6 +2505,10 @@ export const CoachVoiceChat = ({
                 setRemainingQuota(account.remaining_quota);
                 if (account.remaining_quota >= POINTS_PER_MINUTE) {
                   setInsufficientDuringCall(false);
+                  // 入口前余额不足场景：充值后自动开始通话，无缝衔接
+                  if (status === 'idle') {
+                    startCall();
+                  }
                 }
               }
             }
