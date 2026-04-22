@@ -925,6 +925,7 @@ export const CoachVoiceChat = ({
             ? `${completedTranscriptRef.current}\n${sanitizedText}`
             : sanitizedText;
           setTranscript(completedTranscriptRef.current);
+          setLatestAiLine(sanitizedText); // 🔧 PTT 字幕：完整回复
         }
         currentAssistantDeltaRef.current = '';
       } else {
@@ -936,12 +937,15 @@ export const CoachVoiceChat = ({
             ? `${completedTranscriptRef.current}\n${currentDelta}`
             : currentDelta;
           setTranscript(display);
+          setLatestAiLine(currentDelta); // 🔧 PTT 字幕：当前增量
         }
       }
       aiLastActivityRef.current = Date.now();
     } else if (role === 'user' && isFinal && text.trim()) {
       // 用户发言：每次收到 final 文本时累积，用换行分隔
       setUserTranscript(prev => prev ? `${prev}\n${text}` : text);
+      setLatestUserLine(text); // 🔧 PTT 字幕：仅保留最近一句
+      setLatestAiLine(''); // 🔧 用户开口 = 新一轮，清空旧的 AI 回复
       userLastActivityRef.current = Date.now();
     }
   };
