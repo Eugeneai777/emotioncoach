@@ -15,6 +15,23 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import zhileCapsules from "@/assets/zhile-capsules.jpeg";
+import coachDaixi from "@/assets/coach-daixi.jpg";
+import coachXiaoyi from "@/assets/coach-xiaoyi.png";
+import coachAmy from "@/assets/coach-amy.jpg";
+import coachMumian from "@/assets/coach-mumian.jpg";
+import coachXiaojianxiong from "@/assets/coach-xiaojianxiong.jpg";
+import coachBetty from "@/assets/coach-betty.jpg";
+import wecomCoachQr from "@/assets/wecom-coach-qr.jpg";
+
+const COACH_TEAM = [
+  { name: "黛汐", role: "总教练", image: coachDaixi, subtitle: "生命教练 / 高级心理咨询师" },
+  { name: "肖剑雄", role: "资深教练", image: coachXiaojianxiong, subtitle: "婚姻关系 / 职业焦虑" },
+  { name: "晓一", role: "资深教练", image: coachXiaoyi, subtitle: "婚姻家庭 / 情绪管理" },
+  { name: "Amy", role: "资深教练", image: coachAmy, subtitle: "情感困惑 / 亲子关系" },
+  { name: "木棉", role: "资深教练", image: coachMumian, subtitle: "身心整体疗愈" },
+  { name: "贝蒂", role: "资深教练", image: coachBetty, subtitle: "亲密关系 / 生命重建" },
+];
 
 /**
  * 中年男性 ¥399 体验营 售前页（v2 · 8 段精简版）
@@ -25,7 +42,7 @@ import {
 
 const PACKAGE_KEY = "camp-emotion_stress_7";
 const RETURN_URL = "/promo/midlife-men-399";
-const TOTAL_SECTIONS = 8;
+const TOTAL_SECTIONS = 9;
 
 const C = {
   bg: "#0f0f0f",
