@@ -2152,109 +2152,179 @@ export const CoachVoiceChat = ({
         </Button>
       </div>
 
-      {/* 中心区域 - 教练头像和状态 */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6">
-        {/* 教练头像 */}
-        <div className="relative mb-6">
-          {/* 外层呼吸光环 */}
-          {status === 'connected' && (
-            <>
-              <span className={`absolute -inset-3 rounded-full ${colors.bg} opacity-10 animate-pulse pointer-events-none`} />
-              <span className={`absolute -inset-6 rounded-full ${colors.bg} opacity-5 animate-pulse [animation-delay:0.5s] pointer-events-none`} />
-            </>
-          )}
-          <div className={`relative w-32 h-32 rounded-full ${colors.bg} flex items-center justify-center text-6xl shadow-2xl ${colors.glow} ring-4 ring-white/10`}>
-            {coachEmoji}
-          </div>
-          {/* 说话涟漪 */}
-          {speakingStatus === 'assistant-speaking' && (
-            <>
-              <div className={`absolute inset-0 rounded-full border-2 ${colors.border} animate-ping opacity-40`} />
-              <div className={`absolute -inset-2 rounded-full border ${colors.border} animate-ping opacity-20 [animation-delay:0.3s]`} />
-            </>
-          )}
-        </div>
-
-        {/* 教练名称 */}
-        <h2 className="text-white text-xl font-semibold mb-2 tracking-wide" style={{ textShadow: '0 2px 12px rgba(0,0,0,0.5)' }}>{coachTitle}</h2>
-
-        {/* 费率 + 余额 + 可聊时长提示 */}
-        {!skipBilling && remainingQuota !== null && (
-          <span className={`text-[11px] mb-2 ${remainingQuota < POINTS_PER_MINUTE * 3 ? 'text-red-400' : 'text-white/50'}`}>
-            {POINTS_PER_MINUTE}点/分钟 · 余额 {remainingQuota} 点（约 {Math.max(0, Math.floor(remainingQuota / POINTS_PER_MINUTE))} 分钟）
-          </span>
-        )}
-        
-        {/* 🔧 音频波形可视化 */}
-        <div className="mb-4 w-24">
-          <AudioWaveform 
-            status={
-              speakingStatus === 'user-speaking' ? 'user-speaking' :
-              speakingStatus === 'assistant-speaking' ? 'assistant-speaking' :
-              'idle'
-            }
-            primaryColor={primaryColor}
-          />
-        </div>
-        
-        {/* 🔧 通话中弱网提示 */}
-        {showNetworkHint && status === 'connected' && (
-          <div className="mb-4 w-full max-w-xs">
-            <InCallNetworkHint
-              level={networkWarningLevel}
-              rtt={networkRtt}
-              onDismiss={() => setShowNetworkHint(false)}
-            />
-          </div>
-        )}
-        
-        {/* 状态文字 - 增强对比度 */}
-        <div className="flex items-center gap-2 text-white/80 text-sm mb-6 drop-shadow-md font-medium">
-          {status === 'connected' && speakingStatus === 'idle' && (
-            <>
-              <Mic className="w-4 h-4" />
-              正在聆听...
-            </>
-          )}
-          {status === 'connected' && speakingStatus === 'user-speaking' && (
-            <>
-              <Mic className="w-4 h-4 text-green-400 animate-pulse" />
-              你正在说话...
-            </>
-          )}
-          {status === 'connected' && speakingStatus === 'assistant-speaking' && (
-            <>
-              <Volume2 className="w-4 h-4 text-rose-400 animate-pulse" />
-              劲老师正在回复...
-            </>
-          )}
-        </div>
-
-        {/* 实时字幕 - 显示最近一句你说 + 当前 AI 回复 */}
-        <div className="w-full max-w-md space-y-2 px-2">
-          {!latestUserLine && !latestAiLine && status === 'connected' && (
-            <p className="text-center text-white/40 text-sm leading-relaxed">
-              {pttMode ? '按住下方按钮 · 和教练说说' : '正在聆听你…'}
-            </p>
-          )}
-          {latestUserLine && (
-            <div className="animate-in fade-in slide-in-from-bottom-1 duration-300">
-              <p className="text-white/70 text-sm leading-relaxed line-clamp-3">
-                <span className="text-white/50 mr-1">你：</span>{latestUserLine}
-              </p>
+      {/* 中心区域 */}
+      <div className="flex-1 flex flex-col items-center px-6 pt-[8vh]">
+        {pttMode ? (
+          <>
+            {/* 动态光球 — 唯一视觉焦点（替代头像/音波/状态文字） */}
+            <div className="relative mb-10 flex items-center justify-center" style={{ width: 120, height: 120 }}>
+              {/* 外层光晕 */}
+              <span
+                className={`absolute rounded-full blur-2xl transition-all duration-500 ${
+                  speakingStatus === 'user-speaking'
+                    ? 'bg-emerald-400/40'
+                    : speakingStatus === 'assistant-speaking'
+                    ? `${colors.bg} opacity-60`
+                    : `${colors.bg} opacity-25`
+                }`}
+                style={{
+                  width: speakingStatus === 'idle' ? 130 : 170,
+                  height: speakingStatus === 'idle' ? 130 : 170,
+                  animation: speakingStatus === 'idle' ? 'pulse-slow 2.6s ease-in-out infinite' : undefined,
+                }}
+              />
+              {/* 涟漪环 */}
+              {speakingStatus === 'assistant-speaking' && (
+                <>
+                  <span className={`absolute inset-0 rounded-full border ${colors.border} opacity-50 animate-ping`} />
+                  <span className={`absolute -inset-3 rounded-full border ${colors.border} opacity-25 animate-ping [animation-delay:0.4s]`} />
+                </>
+              )}
+              {speakingStatus === 'user-speaking' && (
+                <span className="absolute -inset-2 rounded-full border border-emerald-400/60 animate-ping" />
+              )}
+              {/* 光球本体 */}
+              <div
+                className={`relative rounded-full bg-gradient-to-br ${colors.from || 'from-rose-300'} ${colors.to || 'to-rose-600'} shadow-2xl transition-all duration-300`}
+                style={{
+                  width: 80,
+                  height: 80,
+                  filter: speakingStatus === 'idle' ? 'saturate(0.85)' : 'saturate(1.15)',
+                  animation:
+                    speakingStatus === 'idle'
+                      ? 'pulse-slow 2.4s ease-in-out infinite'
+                      : speakingStatus === 'assistant-speaking'
+                      ? 'pulse-slow 0.9s ease-in-out infinite'
+                      : undefined,
+                  transform: speakingStatus === 'user-speaking' ? 'scale(1.08)' : undefined,
+                  background: !colors.from
+                    ? 'radial-gradient(circle at 30% 30%, hsl(350 90% 75%), hsl(345 80% 50%))'
+                    : undefined,
+                }}
+              />
             </div>
-          )}
-          {latestAiLine && (
-            <div className="animate-in fade-in slide-in-from-bottom-1 duration-300">
-              <p className="text-rose-200/95 text-base leading-relaxed line-clamp-4">
-                <span className="text-rose-300/70 mr-1">教练：</span>{latestAiLine}
-                {speakingStatus === 'assistant-speaking' && (
-                  <span className="inline-block w-1 h-4 ml-0.5 bg-rose-300/80 align-middle animate-pulse" />
-                )}
-              </p>
+
+            {/* 字幕区 — 视觉重心 */}
+            <div className="w-full max-w-md space-y-3 px-2 min-h-[120px]">
+              {!latestUserLine && !latestAiLine && status === 'connected' && (
+                <p className="text-center text-white/35 text-sm leading-relaxed">
+                  按住下方按钮 · 和教练说说
+                </p>
+              )}
+              {latestUserLine && (
+                <div className="animate-in fade-in slide-in-from-bottom-1 duration-300">
+                  <p className="text-white/55 text-sm leading-relaxed line-clamp-2 text-center">
+                    {latestUserLine}
+                  </p>
+                </div>
+              )}
+              {latestAiLine && (
+                <div className="animate-in fade-in slide-in-from-bottom-1 duration-300">
+                  <p className="text-rose-100 text-[17px] font-medium leading-relaxed line-clamp-5 text-center">
+                    {latestAiLine}
+                    {speakingStatus === 'assistant-speaking' && (
+                      <span className="inline-block w-[3px] h-4 ml-1 bg-rose-200 align-middle animate-pulse rounded-sm" />
+                    )}
+                  </p>
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </>
+        ) : (
+          <div className="flex-1 flex flex-col items-center justify-center w-full">
+            {/* 教练头像 */}
+            <div className="relative mb-6">
+              {status === 'connected' && (
+                <>
+                  <span className={`absolute -inset-3 rounded-full ${colors.bg} opacity-10 animate-pulse pointer-events-none`} />
+                  <span className={`absolute -inset-6 rounded-full ${colors.bg} opacity-5 animate-pulse [animation-delay:0.5s] pointer-events-none`} />
+                </>
+              )}
+              <div className={`relative w-32 h-32 rounded-full ${colors.bg} flex items-center justify-center text-6xl shadow-2xl ${colors.glow} ring-4 ring-white/10`}>
+                {coachEmoji}
+              </div>
+              {speakingStatus === 'assistant-speaking' && (
+                <>
+                  <div className={`absolute inset-0 rounded-full border-2 ${colors.border} animate-ping opacity-40`} />
+                  <div className={`absolute -inset-2 rounded-full border ${colors.border} animate-ping opacity-20 [animation-delay:0.3s]`} />
+                </>
+              )}
+            </div>
+
+            <h2 className="text-white text-xl font-semibold mb-2 tracking-wide" style={{ textShadow: '0 2px 12px rgba(0,0,0,0.5)' }}>{coachTitle}</h2>
+
+            {!skipBilling && remainingQuota !== null && (
+              <span className={`text-[11px] mb-2 ${remainingQuota < POINTS_PER_MINUTE * 3 ? 'text-red-400' : 'text-white/50'}`}>
+                {POINTS_PER_MINUTE}点/分钟 · 余额 {remainingQuota} 点（约 {Math.max(0, Math.floor(remainingQuota / POINTS_PER_MINUTE))} 分钟）
+              </span>
+            )}
+
+            <div className="mb-4 w-24">
+              <AudioWaveform
+                status={
+                  speakingStatus === 'user-speaking' ? 'user-speaking' :
+                  speakingStatus === 'assistant-speaking' ? 'assistant-speaking' :
+                  'idle'
+                }
+                primaryColor={primaryColor}
+              />
+            </div>
+
+            {showNetworkHint && status === 'connected' && (
+              <div className="mb-4 w-full max-w-xs">
+                <InCallNetworkHint
+                  level={networkWarningLevel}
+                  rtt={networkRtt}
+                  onDismiss={() => setShowNetworkHint(false)}
+                />
+              </div>
+            )}
+
+            <div className="flex items-center gap-2 text-white/80 text-sm mb-6 drop-shadow-md font-medium">
+              {status === 'connected' && speakingStatus === 'idle' && (
+                <>
+                  <Mic className="w-4 h-4" />
+                  正在聆听...
+                </>
+              )}
+              {status === 'connected' && speakingStatus === 'user-speaking' && (
+                <>
+                  <Mic className="w-4 h-4 text-green-400 animate-pulse" />
+                  你正在说话...
+                </>
+              )}
+              {status === 'connected' && speakingStatus === 'assistant-speaking' && (
+                <>
+                  <Volume2 className="w-4 h-4 text-rose-400 animate-pulse" />
+                  劲老师正在回复...
+                </>
+              )}
+            </div>
+
+            <div className="w-full max-w-md space-y-2 px-2">
+              {!latestUserLine && !latestAiLine && status === 'connected' && (
+                <p className="text-center text-white/40 text-sm leading-relaxed">正在聆听你…</p>
+              )}
+              {latestUserLine && (
+                <div className="animate-in fade-in slide-in-from-bottom-1 duration-300">
+                  <p className="text-white/70 text-sm leading-relaxed line-clamp-3">
+                    <span className="text-white/50 mr-1">你：</span>{latestUserLine}
+                  </p>
+                </div>
+              )}
+              {latestAiLine && (
+                <div className="animate-in fade-in slide-in-from-bottom-1 duration-300">
+                  <p className="text-rose-200/95 text-base leading-relaxed line-clamp-4">
+                    <span className="text-rose-300/70 mr-1">教练：</span>{latestAiLine}
+                    {speakingStatus === 'assistant-speaking' && (
+                      <span className="inline-block w-1 h-4 ml-0.5 bg-rose-300/80 align-middle animate-pulse" />
+                    )}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* 搜索结果卡片浮层 */}
         {searchResults && searchResults.length > 0 && (
