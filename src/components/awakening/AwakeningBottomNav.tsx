@@ -3,9 +3,20 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { User, BookOpen } from "lucide-react";
 import logoImage from "@/assets/youjin-ai-logo.png";
+import { useAuth } from "@/hooks/useAuth";
 
 const AwakeningBottomNav: React.FC = () => {
   const navigate = useNavigate();
+  const { user, loading } = useAuth();
+
+  const handleVoiceCoachClick = () => {
+    if (loading) return;
+    if (!user) {
+      navigate('/auth?redirect=/life-coach-voice');
+      return;
+    }
+    navigate('/life-coach-voice');
+  };
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40">
