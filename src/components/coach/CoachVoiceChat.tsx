@@ -1409,6 +1409,10 @@ export const CoachVoiceChat = ({
           scenario,
           extraBody: { ...extraBody, voice_type: voiceType }
         });
+        // 🎙️ PTT 预设：在 connect 之前声明，让 relay 关闭服务端 VAD 并启用本地音频闸门
+        if (pttMode && typeof (miniProgramClient as any).presetPushToTalk === 'function') {
+          try { (miniProgramClient as any).presetPushToTalk(true); } catch (e) { console.warn('[PTT] miniprogram preset failed', e); }
+        }
         chatRef.current = miniProgramClient;
         await miniProgramClient.connect();
         updateConnectionPhase('connected');
