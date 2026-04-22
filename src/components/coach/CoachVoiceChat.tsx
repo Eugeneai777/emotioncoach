@@ -18,6 +18,7 @@ import { ConnectionProgress, ConnectionStatusBadge, type ConnectionPhase, type N
 import { InCallNetworkHint, type NetworkWarningLevel } from './VoiceNetworkWarning';
 import { useNetworkQuality } from '@/hooks/useNetworkQuality';
 import { ContinueCallDialog } from './ContinueCallDialog';
+import { QuotaRechargeDialog } from '@/components/QuotaRechargeDialog';
 
 export type VoiceChatMode = 'general' | 'parent_teen' | 'teen' | 'emotion';
 
