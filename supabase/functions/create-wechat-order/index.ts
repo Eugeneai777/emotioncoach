@@ -147,6 +147,28 @@ serve(async (req) => {
     //   反查到一个已绑定的 system_user_id，做"先付款后登录"的便捷归属。
     let finalUserId = userId;
     const isAuthenticatedUser = userId && userId !== 'guest';
+
+    // 🔐 解析 Authorization JWT，识别真实当前登录用户（jwtUserId）
+    // 用于校验"游客 + openId 自动绑定"分支，防止订单错挂到他人账户。
+    let jwtUserId: string | null = null;
+    try {
+      const authHeader = req.headers.get('authorization') || req.headers.get('Authorization');
+      if (authHeader && authHeader.toLowerCase().startsWith('bearer ')) {
+        const token = authHeader.slice(7).trim();
+        // 排除 anon/service_role key（不是用户 JWT）
+        const anonKey = Deno.env.get('SUPABASE_ANON_KEY') || '';
+        const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
+        if (token && token !== anonKey && token !== serviceKey) {
+          const { data: jwtData } = await supabase.auth.getUser(token);
+          if (jwtData?.user?.id) {
+            jwtUserId = jwtData.user.id;
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('[CreateOrder] JWT parse failed (ignored):', (e as Error).message);
+    }
+
     if (!isAuthenticatedUser && openId) {
       const { data: mapping } = await supabase
         .from('wechat_user_mappings')
@@ -155,8 +177,25 @@ serve(async (req) => {
         .maybeSingle();
 
       if (mapping?.system_user_id) {
+        // 🚫 一致性校验：如果当前请求自带 JWT，且 JWT user 与 openId 反查 user 不一致，
+        //    拒绝下单，强制前端弹出"账号与微信不一致"提示，防止订单错挂他人账户。
+        if (jwtUserId && jwtUserId !== mapping.system_user_id) {
+          console.warn('[CreateOrder] AUTH_MISMATCH: jwtUser', jwtUserId, '!= openId-bound user', mapping.system_user_id, 'openId:', openId);
+          return new Response(
+            JSON.stringify({
+              success: false,
+              code: 'AUTH_MISMATCH',
+              error: '当前微信已绑定其他账号，订单可能错挂。请刷新页面或重新登录后再试。',
+            }),
+            { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
         finalUserId = mapping.system_user_id;
-        console.log('[CreateOrder] Guest with openId → bound user:', openId, '->', finalUserId);
+        console.log('[CreateOrder] Guest with openId → bound user:', openId, '->', finalUserId, 'jwtUserId:', jwtUserId);
+      } else if (jwtUserId) {
+        // openId 未绑定任何 user，但当前请求有 JWT user → 直接归属到 JWT user
+        finalUserId = jwtUserId;
+        console.log('[CreateOrder] Guest payload but JWT present → using jwtUserId:', jwtUserId);
       }
     } else if (isAuthenticatedUser && openId) {
       console.log('[CreateOrder] Authenticated user provided, ignoring openId→user reverse lookup. userId:', userId);

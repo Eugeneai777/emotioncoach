@@ -45,21 +45,44 @@ export function useWechatOpenId() {
 
   // 监听用户切换：如果登录用户变了，清除旧缓存重新获取
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+    const clearAllOpenIdCaches = () => {
+      localStorage.removeItem('cached_wechat_openid');
+      sessionStorage.removeItem('cached_wechat_openid');
+      localStorage.removeItem('cached_payment_openid');
+      sessionStorage.removeItem('cached_payment_openid');
+      localStorage.removeItem('cached_payment_openid_gzh');
+      sessionStorage.removeItem('cached_payment_openid_gzh');
+      localStorage.removeItem('cached_payment_openid_mp');
+      sessionStorage.removeItem('cached_payment_openid_mp');
+    };
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_OUT') {
-        localStorage.removeItem('cached_wechat_openid');
-        sessionStorage.removeItem('cached_wechat_openid');
-        localStorage.removeItem('cached_payment_openid');
-        sessionStorage.removeItem('cached_payment_openid');
-        localStorage.removeItem('cached_payment_openid_gzh');
-        sessionStorage.removeItem('cached_payment_openid_gzh');
-        localStorage.removeItem('cached_payment_openid_mp');
-        sessionStorage.removeItem('cached_payment_openid_mp');
+        clearAllOpenIdCaches();
         setOpenId(undefined);
-      } else if (event === 'SIGNED_IN') {
-        // 登录后清除旧缓存，触发重新获取
+      } else if (event === 'SIGNED_IN' && session?.user) {
+        // 🔐 校验缓存的 openid 是否归属当前登录用户。
+        // 换号场景下，localStorage 里可能残留上一个用户的 openid，
+        // 必须立即清除，避免支付时 openId 反查到他人账户。
         const cached = localStorage.getItem('cached_wechat_openid');
-        if (!cached) {
+        if (cached) {
+          // 异步校验，不阻塞登录流程
+          supabase
+            .from('wechat_user_mappings')
+            .select('system_user_id')
+            .eq('openid', cached)
+            .maybeSingle()
+            .then(({ data: mapping }) => {
+              if (mapping?.system_user_id && mapping.system_user_id !== session.user.id) {
+                console.warn('[useWechatOpenId] Cached openId belongs to another user, clearing.', {
+                  cachedOpenIdUser: mapping.system_user_id,
+                  currentUser: session.user.id,
+                });
+                clearAllOpenIdCaches();
+                setOpenId(undefined);
+              }
+            });
+        } else {
           setOpenId(undefined); // 触发 useEffect 重新 fetch
         }
       }
