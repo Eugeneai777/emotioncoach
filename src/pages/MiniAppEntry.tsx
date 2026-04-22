@@ -772,8 +772,8 @@ const MiniAppEntry = () => {
 
       {/* ── Powered by 有劲AI ── */}
       <div className="flex items-center justify-center gap-1.5 py-4">
-        <span className="text-xs text-muted-foreground/50 tracking-wider">Powered by</span>
-        <span className="text-sm font-bold bg-gradient-to-r from-primary/70 to-accent/70 bg-clip-text text-transparent tracking-wide">有劲AI</span>
+        <span className="text-xs text-muted-foreground tracking-wider">Powered by</span>
+        <span className="text-xs font-semibold text-amber-700 tracking-wide">有劲AI</span>
       </div>
 
       {/* ── 底部留白，避免被固定导航栏遮挡 ── */}
