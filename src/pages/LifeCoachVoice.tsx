@@ -3,6 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
 import { useAuth } from "@/hooks/useAuth";
 import { getSavedVoiceType } from "@/config/voiceTypeConfig";
+import {
+  preheatTokenEndpoint,
+  prefetchToken,
+  prewarmMicrophoneStream,
+} from "@/utils/RealtimeAudio";
 
 const LifeCoachVoice = () => {
   const navigate = useNavigate();
@@ -14,6 +19,19 @@ const LifeCoachVoice = () => {
       navigate("/auth?redirect=/life-coach-voice", { replace: true });
     }
   }, [user, loading, navigate]);
+
+  // 🚀 进入页面立即并行预热：Edge Function + Token + 麦克风流
+  // 用户点击「接通」时可直接复用，节省 1-2 秒
+  useEffect(() => {
+    if (loading || !user) return;
+
+    const endpoint = "vibrant-life-realtime-token";
+
+    // 并行触发，互不阻塞；失败仅打 warn，不影响后续正常连接
+    void preheatTokenEndpoint(endpoint);
+    void prefetchToken(endpoint, "general");
+    void prewarmMicrophoneStream();
+  }, [loading, user]);
 
   if (loading) {
     return (
