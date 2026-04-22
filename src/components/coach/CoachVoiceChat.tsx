@@ -150,6 +150,30 @@ export const CoachVoiceChat = ({
     userId,
     Boolean(pttMode && !isIncomingCall && userId)
   );
+
+  // 🔧 接通后 1 秒注入主动问候（仅 PTT 非来电模式，且仅一次）
+  useEffect(() => {
+    if (!pttMode || isIncomingCall) return;
+    if (status !== 'connected') return;
+    if (!voiceGreeting) return;
+    if (hasGreetedRef.current) return;
+    const t = setTimeout(() => {
+      try {
+        chatRef.current?.sendTextMessage?.(voiceGreeting);
+        hasGreetedRef.current = true;
+      } catch (e) {
+        console.warn('[VoiceChat] proactive greeting failed:', e);
+      }
+    }, 800);
+    return () => clearTimeout(t);
+  }, [status, voiceGreeting, pttMode, isIncomingCall]);
+
+  // 接通断开重置问候标记
+  useEffect(() => {
+    if (status === 'idle' || status === 'disconnected') {
+      hasGreetedRef.current = false;
+    }
+  }, [status]);
   // 🔧 连接进度追踪
   const [connectionPhase, setConnectionPhase] = useState<ConnectionPhase>('preparing');
   const [connectionElapsedTime, setConnectionElapsedTime] = useState(0);
