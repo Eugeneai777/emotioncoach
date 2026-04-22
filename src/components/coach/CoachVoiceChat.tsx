@@ -2219,12 +2219,19 @@ export const CoachVoiceChat = ({
               )}
               {latestAiLine && (
                 <div className="animate-in fade-in slide-in-from-bottom-1 duration-300">
-                  <p className="text-white/95 text-[17px] font-medium leading-relaxed line-clamp-5 text-center">
-                    {latestAiLine}
-                    {speakingStatus === 'assistant-speaking' && (
-                      <span className="inline-block w-[3px] h-4 ml-1 bg-rose-300/80 align-middle animate-pulse rounded-sm" />
-                    )}
-                  </p>
+                  <div
+                    ref={(el) => {
+                      if (el) el.scrollTop = el.scrollHeight;
+                    }}
+                    className="max-h-[8.5rem] overflow-y-auto scrollbar-none px-1"
+                  >
+                    <p className="text-white/95 text-[17px] font-medium leading-relaxed text-center">
+                      {latestAiLine}
+                      {speakingStatus === 'assistant-speaking' && (
+                        <span className="inline-block w-[3px] h-4 ml-1 bg-rose-300/80 align-middle animate-pulse rounded-sm" />
+                      )}
+                    </p>
+                  </div>
                 </div>
               )}
             </div>
