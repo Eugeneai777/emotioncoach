@@ -510,7 +510,7 @@ export default function PromoMidlifeMen399() {
           </p>
         </Section>
 
-        {/* ============ 08 价格 + CTA ============ */}
+        {/* ============ 09 价格 + CTA ============ */}
         <section className="px-6 py-12">
           <div className="flex items-center gap-3 mb-3">
             <span className="text-xs tracking-[0.2em] font-mono" style={{ color: C.gold }}>
