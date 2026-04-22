@@ -337,21 +337,44 @@ export default function WealthBlockAssessmentPage() {
     // 用户主动打开：清理 dismissed/guard
     sessionStorage.removeItem(MP_PENDING_PAYMENT_DISMISSED_KEY);
     sessionStorage.removeItem(MP_PENDING_PAYMENT_RESUME_GUARD_KEY);
-    // 🔧 小程序内：每次主动点击都强制重建弹窗实例 + 清理任何残留缓存，保证“全新订单”链路
-    // 不再依赖脆弱的 MP_POST_CANCEL_FLAG_KEY，规避 iOS pageshow 时序竞态
+    // 🆕 双保险：清理 pay_auth_in_progress 防抖标记，避免上一次失败/取消的残留导致下次点击被静默忽略
+    sessionStorage.removeItem('pay_auth_in_progress');
+
+    // 🔧 全平台强制重建弹窗实例
+    // 解决场景：用户从支付宝/微信支付页用「返回」按钮回到本页（bfcache 恢复），
+    // showPayDialog 仍为 true，setShowPayDialog(true) 不触发 re-render，
+    // 弹窗内部 createOrderCalledRef.current=true 阻止重新建单，按钮看似"无反应"。
+    // bump key + 先 false 再 true：强制 unmount + 重建，重置所有内部 refs。
     if (isMiniProgram) {
       console.log('[WealthBlock] MP user click: hard-reset mp pay cache and remount dialog');
       sessionStorage.removeItem(MP_PENDING_PAYMENT_STORAGE_KEY);
       sessionStorage.removeItem(MP_POST_CANCEL_FLAG_KEY);
       setMiniProgramPayReturnSignal(Date.now());
-      setPayDialogInstanceKey((prev) => prev + 1);
     }
-    setShowPayDialog(true);
+    setPayDialogInstanceKey((prev) => prev + 1);
+    setShowPayDialog(false);
+    // 下一帧再开，确保 React 真正 unmount 旧实例
+    requestAnimationFrame(() => {
+      setShowPayDialog(true);
+    });
   };
 
   // 处理支付按钮点击
   const handlePayClick = async () => {
-    console.log('[WealthBlock] handlePayClick called, user:', user?.id, 'isWeChatBrowser:', isWeChatBrowserEnv);
+    console.log('[WealthBlock] handlePayClick called, user:', user?.id, 'isWeChatBrowser:', isWeChatBrowserEnv, 'showPayDialog(before):', showPayDialog);
+
+    // 🆕 埋点：记录每次点击「立即测评」按钮，包含当前状态便于排查"按钮无反应"问题
+    trackPaymentEvent('payment_button_clicked', {
+      metadata: {
+        source: 'wealth_block_intro',
+        packageKey: 'wealth_block_assessment',
+        showPayDialog,
+        isWeChatBrowser: isWeChatBrowserEnv,
+        isMiniProgram,
+        hasUser: !!user,
+        ua: navigator.userAgent.slice(0, 200),
+      },
+    });
 
     // 微信浏览器内且未登录：先触发静默授权（自动登录/注册）
     if (isWeChatBrowserEnv && !user) {
