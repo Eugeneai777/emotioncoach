@@ -181,12 +181,27 @@ Deno.serve(async (req) => {
           );
         }
 
+        await logAuthEvent(req, {
+          event_type: 'login_success',
+          auth_method: 'sms',
+          user_id: profileData.id,
+          phone,
+          email: realEmail,
+          extra: { fallback: 'password' },
+        });
         return new Response(
           JSON.stringify({ success: true, isNewUser: false, session: signInData.session }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
+      await logAuthEvent(req, {
+        event_type: 'login_success',
+        auth_method: 'sms',
+        user_id: profileData.id,
+        phone,
+        email: realEmail,
+      });
       return new Response(
         JSON.stringify({ success: true, isNewUser: false, session: verifyData.session }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
