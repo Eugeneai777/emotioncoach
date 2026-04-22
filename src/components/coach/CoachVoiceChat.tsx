@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Phone, PhoneOff, Mic, Volume2, Loader2, Coins, MapPin, Search, X, Heart, ExternalLink, BookOpen, Tent, Play, Clock, ChevronLeft, Info } from 'lucide-react';
 import { PointsRulesDialog } from '@/components/PointsRulesDialog';
 import { AudioWaveform } from './AudioWaveform';
+import { PushToTalkButton } from './PushToTalkButton';
 import { RealtimeChat } from '@/utils/RealtimeAudio';
 import { DoubaoRealtimeChat } from '@/utils/DoubaoRealtimeAudio';
 import { MiniProgramAudioClient, ConnectionStatus as MiniProgramStatus } from '@/utils/MiniProgramAudio';
@@ -60,6 +61,7 @@ interface CoachVoiceChatProps {
   extraBody?: Record<string, any>; // 额外传递给 token 端点的数据
   maxDurationOverride?: number | null; // undefined=走默认逻辑, null=不限时, number=指定分钟数
   skipBilling?: boolean; // 跳过积分检查和扣费（如财富教练免费5次）
+  pttMode?: boolean; // Push-to-Talk 模式：按住说话、松开发送
 }
 
 type ConnectionStatus = 'idle' | 'connecting' | 'connected' | 'disconnected' | 'error';
@@ -85,7 +87,8 @@ export const CoachVoiceChat = ({
   openingMessage,
   extraBody,
   maxDurationOverride,
-  skipBilling = false
+  skipBilling = false,
+  pttMode = false
 }: CoachVoiceChatProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -852,6 +855,16 @@ export const CoachVoiceChat = ({
           return newVal;
         });
       }, 1000);
+      // 🔧 PTT 模式：连接成功后切换为按住说话
+      if (pttMode) {
+        const client = chatRef.current as any;
+        if (client && typeof client.setPushToTalkMode === 'function') {
+          // 稍延迟，等待 dc open 之后的 session.created 事件
+          setTimeout(() => {
+            try { client.setPushToTalkMode(true); } catch (e) { console.warn('[PTT] enable failed', e); }
+          }, 400);
+        }
+      }
     } else if (mappedStatus === 'disconnected' || mappedStatus === 'error') {
       if (durationRef.current) clearInterval(durationRef.current);
 
@@ -2438,46 +2451,82 @@ export const CoachVoiceChat = ({
 
       {/* 底部操作区 */}
       <div className="p-6 pb-safe flex flex-col items-center gap-3">
-        <Button
-          onClick={(e) => {
-            if (isEnding) {
-              console.log('[VoiceChat] Force close triggered from bottom button');
-              try { chatRef.current?.disconnect(); } catch(err) { console.warn(err); }
-              try { if (durationRef.current) clearInterval(durationRef.current); } catch(err) { console.warn(err); }
-              releaseLock();
-              onClose();
-              return;
-            }
-            endCall(e);
-          }}
-          size="lg"
-          className={`w-16 h-16 rounded-full bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-500/30 ${status === 'connected' ? 'ring-2 ring-red-400/30' : ''}`}
-        >
-          {status === 'connected' ? (
-            <PhoneOff className="w-6 h-6" />
-          ) : (
-            <Phone className="w-6 h-6" />
-          )}
-        </Button>
-
-        {/* 提示 */}
-        {status !== 'connected' ? (
-          <p className="text-white/30 text-[11px]">
-            {skipBilling
-              ? `💡 直接说话即可 · 免费体验`
-              : `💡 直接说话即可 · ${POINTS_PER_MINUTE}点/分钟`
-            }
-          </p>
-        ) : !skipBilling ? (
-          <PointsRulesDialog
-            trigger={
-              <button className="text-white/30 hover:text-white/50 text-[11px] flex items-center gap-1 transition-colors">
-                <Info className="w-3 h-3" />
-                📖 点数规则
-              </button>
-            }
+        {pttMode && status === 'connected' ? (
+          <PushToTalkButton
+            primaryColor={primaryColor}
+            colors={colors}
+            onStart={() => {
+              const client = chatRef.current as any;
+              if (!client?.startRecording) return;
+              const r = client.startRecording();
+              if (!r?.ok) {
+                if (r?.reason === 'channel_not_open') {
+                  toast({ title: '连接还没准备好', description: '请稍等片刻再试', variant: 'destructive' });
+                }
+                return;
+              }
+              try { navigator.vibrate?.([15, 25, 40]); } catch {}
+              setSpeakingStatus('user-speaking');
+            }}
+            onStop={() => {
+              const client = chatRef.current as any;
+              if (!client?.stopRecording) {
+                setSpeakingStatus('idle');
+                return;
+              }
+              const r = client.stopRecording();
+              setSpeakingStatus('idle');
+              if (!r?.ok && r?.reason === 'too_short') {
+                toast({ title: '按久一点', description: '至少按住 0.3 秒再松开', duration: 1800 });
+                return;
+              }
+              try { navigator.vibrate?.([10, 15, 10]); } catch {}
+            }}
           />
-        ) : null}
+        ) : (
+          <>
+            <Button
+              onClick={(e) => {
+                if (isEnding) {
+                  console.log('[VoiceChat] Force close triggered from bottom button');
+                  try { chatRef.current?.disconnect(); } catch(err) { console.warn(err); }
+                  try { if (durationRef.current) clearInterval(durationRef.current); } catch(err) { console.warn(err); }
+                  releaseLock();
+                  onClose();
+                  return;
+                }
+                endCall(e);
+              }}
+              size="lg"
+              className={`w-16 h-16 rounded-full bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-500/30 ${status === 'connected' ? 'ring-2 ring-red-400/30' : ''}`}
+            >
+              {status === 'connected' ? (
+                <PhoneOff className="w-6 h-6" />
+              ) : (
+                <Phone className="w-6 h-6" />
+              )}
+            </Button>
+
+            {/* 提示 */}
+            {status !== 'connected' ? (
+              <p className="text-white/30 text-[11px]">
+                {skipBilling
+                  ? `💡 直接说话即可 · 免费体验`
+                  : `💡 直接说话即可 · ${POINTS_PER_MINUTE}点/分钟`
+                }
+              </p>
+            ) : !skipBilling ? (
+              <PointsRulesDialog
+                trigger={
+                  <button className="text-white/30 hover:text-white/50 text-[11px] flex items-center gap-1 transition-colors">
+                    <Info className="w-3 h-3" />
+                    📖 点数规则
+                  </button>
+                }
+              />
+            ) : null}
+          </>
+        )}
       </div>
 
       {/* 🔧 AI来电续拨询问弹窗 */}

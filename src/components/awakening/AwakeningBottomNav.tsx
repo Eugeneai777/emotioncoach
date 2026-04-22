@@ -45,7 +45,7 @@ const AwakeningBottomNav: React.FC = () => {
         
         {/* 主按钮 */}
         <motion.button
-          onClick={() => navigate('/youjin-life/chat')}
+          onClick={() => navigate('/life-coach-voice')}
           className="relative w-14 h-14 rounded-full flex items-center justify-center overflow-hidden
                      border-0 shadow-lg shadow-orange-500/30"
           whileHover={{ scale: 1.05 }}
@@ -53,7 +53,7 @@ const AwakeningBottomNav: React.FC = () => {
         >
           <img src={logoImage} alt="有劲AI" className="w-[115%] h-[115%] object-cover" />
         </motion.button>
-        <span className="text-[9px] text-muted-foreground mt-0.5 whitespace-nowrap">开始对话</span>
+        <span className="text-[9px] text-muted-foreground mt-0.5 whitespace-nowrap">语音教练</span>
       </div>
     </nav>
   );
