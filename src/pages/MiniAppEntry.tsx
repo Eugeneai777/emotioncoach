@@ -605,18 +605,17 @@ const MiniAppEntry = () => {
         </div>
       </div>
 
-      {/* ── 使用场景芯片区 → 直达 PTT 语音教练 ── */}
+      {/* ── 使用场景小卡区 → 直达 PTT 语音教练 ── */}
       <div className="px-4 pb-4">
         <div className="space-y-2.5">
           <div className="px-0.5">
             <div className="flex items-center gap-2 mb-1">
               <div className="w-1 h-4 rounded-full bg-gradient-to-b from-rose-400 to-pink-500" />
-              <h3 className="text-sm font-bold text-foreground">什么时候可以找有劲AI？</h3>
               <span className="text-base">🎙️</span>
+              <h3 className="text-sm font-bold text-foreground">想说点什么？按住和有劲AI说</h3>
             </div>
-            <p className="text-[11px] text-muted-foreground ml-3">任何时刻，任何情绪 —— 按住说话即可</p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {useCases.map((c, i) => (
               <motion.button
                 key={c.topic}
@@ -626,10 +625,13 @@ const MiniAppEntry = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 + i * 0.04, duration: 0.25 }}
                 whileTap={{ scale: 0.95 }}
-                className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-full border text-xs font-medium transition-all ${c.colorClass}`}
+                className={`group relative rounded-xl p-3 text-left ring-1 shadow-lg transition-all hover:brightness-110 ${c.bg} ${c.ring} ${c.glow}`}
               >
-                <span className="text-sm">{c.emoji}</span>
-                <span>{c.title}</span>
+                <div className={`w-9 h-9 rounded-full flex items-center justify-center mb-1.5 ${c.iconBg}`}>
+                  <span className="text-xl leading-none">{c.emoji}</span>
+                </div>
+                <div className="text-[12px] font-bold text-foreground leading-tight">{c.title}</div>
+                <div className="text-[10px] text-muted-foreground mt-0.5 leading-tight">{c.subtitle}</div>
               </motion.button>
             ))}
           </div>
