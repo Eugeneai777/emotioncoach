@@ -2523,6 +2523,34 @@ export const CoachVoiceChat = ({
         scenario={callScenarioRef.current || scenario || 'care'}
         onChoice={handleContinueCallChoice}
       />
+
+      {/* 🔧 余额不足就地充值弹窗 - 不打断通话页面 */}
+      <QuotaRechargeDialog
+        open={showRechargeDialog}
+        onOpenChange={setShowRechargeDialog}
+        onSuccess={async () => {
+          setShowRechargeDialog(false);
+          // 刷新余额并关闭横幅
+          try {
+            if (userId) {
+              const { data: account } = await supabase
+                .from('user_accounts')
+                .select('remaining_quota')
+                .eq('user_id', userId)
+                .single();
+              if (account) {
+                setRemainingQuota(account.remaining_quota);
+                if (account.remaining_quota >= POINTS_PER_MINUTE) {
+                  setInsufficientDuringCall(false);
+                }
+              }
+            }
+          } catch (err) {
+            console.warn('[VoiceChat] refresh quota after recharge failed', err);
+            setInsufficientDuringCall(false);
+          }
+        }}
+      />
     </div>
   );
 };
