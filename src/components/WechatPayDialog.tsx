@@ -892,12 +892,16 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     toast.info('正在切换为扫码支付...');
     
     try {
+      // 🔐 始终拉取最新登录用户，绝不依赖可能过期的 user prop
+      const { data: { user: freshUser } } = await supabase.auth.getUser();
+      const resolvedUserId = freshUser?.id || user?.id || sessionStorage.getItem('pending_payment_user_id') || 'guest';
+
       const { data: nativeData, error: nativeError } = await supabase.functions.invoke('create-wechat-order', {
         body: {
           packageKey: packageInfo.key,
           packageName: packageInfo.name,
           amount: packageInfo.price,
-          userId: user?.id || sessionStorage.getItem('pending_payment_user_id') || 'guest',
+          userId: resolvedUserId,
           payType: 'native',
           existingOrderNo,
         },
@@ -1002,12 +1006,16 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     try {
       const needsOpenId = selectedPayType === 'jsapi' || selectedPayType === 'miniprogram';
       
+      // 🔐 始终拉取最新登录用户，绝不依赖可能过期的 user prop
+      const { data: { user: freshUser } } = await supabase.auth.getUser();
+      const resolvedUserId = freshUser?.id || user?.id || sessionStorage.getItem('pending_payment_user_id') || 'guest';
+
       const { data, error } = await supabase.functions.invoke('create-wechat-order', {
         body: {
           packageKey: packageInfo.key,
           packageName: packageInfo.name,
           amount: packageInfo.price,
-          userId: user?.id || sessionStorage.getItem('pending_payment_user_id') || 'guest',
+          userId: resolvedUserId,
           payType: selectedPayType,
           openId: needsOpenId ? resolvedOpenId : undefined,
           isMiniProgram: isMiniProgram,
@@ -1018,6 +1026,14 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
           idCardNumber: shippingInfo?.idCardNumber,
         },
       });
+
+      // 🚫 后端检测到账号与微信不一致 → toast 友好提示并阻断
+      if (data?.code === 'AUTH_MISMATCH') {
+        toast.error(data.error || '当前微信已绑定其他账号，请刷新或重新登录');
+        setStatus('failed');
+        setErrorMessage(data.error || '账号与当前微信不一致');
+        return;
+      }
 
       if (error) throw error;
       if (!data.success) throw new Error(data.error || '创建订单失败');
