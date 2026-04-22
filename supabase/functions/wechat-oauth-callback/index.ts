@@ -212,6 +212,14 @@ serve(async (req) => {
     // 注册成功后跳转到关注公众号引导页，登录成功后直接进入首页
     const nextPath = isNewUser ? '/wechat-auth?mode=follow' : '/';
     
+    await logAuthEvent(req, {
+      event_type: isNewUser ? 'register_success' : 'login_success',
+      auth_method: 'wechat_oauth',
+      user_id: finalUserId,
+      platform: 'wechat',
+      extra: { openid: tokenData.openid?.slice(0, 10) + '...' },
+    });
+
     return new Response(null, {
       status: 302,
       headers: {
@@ -223,7 +231,15 @@ serve(async (req) => {
     console.error('Error in WeChat OAuth callback:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     const redirectUrl = Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '.lovableproject.com') || '';
-    
+
+    await logAuthEvent(req, {
+      event_type: 'login_failed',
+      auth_method: 'wechat_oauth',
+      platform: 'wechat',
+      error_message: errorMessage,
+      error_code: 'oauth_exception',
+    });
+
     return new Response(null, {
       status: 302,
       headers: {
