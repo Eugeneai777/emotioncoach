@@ -1106,6 +1106,92 @@ export class RealtimeChat {
     }
   }
 
+  // ============= Push-to-Talk 支持 =============
+  private pttMode: boolean = false;
+  private pttRecordingStart: number = 0;
+  private static readonly PTT_MIN_RECORDING_MS = 300;
+
+  /** 设置麦克风轨道启用/禁用（不停止流） */
+  private setMicMuted(muted: boolean): void {
+    if (!this.localStream) return;
+    this.localStream.getAudioTracks().forEach(track => {
+      track.enabled = !muted;
+    });
+  }
+
+  /**
+   * 切换 Push-to-Talk 模式
+   * - enabled=true: 关闭服务端 VAD，麦克风默认静音
+   * - enabled=false: 恢复服务端 VAD，麦克风启用
+   */
+  public setPushToTalkMode(enabled: boolean): void {
+    if (!this.dc || this.dc.readyState !== 'open') {
+      console.warn('[PTT] data channel not open, deferring mode set');
+      return;
+    }
+    this.pttMode = enabled;
+    try {
+      this.dc.send(JSON.stringify({
+        type: 'session.update',
+        session: {
+          turn_detection: enabled
+            ? null
+            : { type: 'server_vad', threshold: 0.5, prefix_padding_ms: 300, silence_duration_ms: 500 }
+        }
+      }));
+      this.setMicMuted(enabled); // PTT 默认静音；VAD 默认开启
+      console.log('[PTT] mode set to', enabled ? 'push_to_talk' : 'vad');
+    } catch (e) {
+      console.error('[PTT] setPushToTalkMode error:', e);
+    }
+  }
+
+  /** 按下说话：清空缓冲并开启麦克风 */
+  public startRecording(): { ok: boolean; reason?: string } {
+    if (!this.pttMode) return { ok: false, reason: 'not_in_ptt_mode' };
+    if (!this.dc || this.dc.readyState !== 'open') {
+      return { ok: false, reason: 'channel_not_open' };
+    }
+    try {
+      this.dc.send(JSON.stringify({ type: 'input_audio_buffer.clear' }));
+      this.pttRecordingStart = Date.now();
+      this.setMicMuted(false);
+      console.log('[PTT] startRecording');
+      return { ok: true };
+    } catch (e) {
+      console.error('[PTT] startRecording error:', e);
+      return { ok: false, reason: 'send_failed' };
+    }
+  }
+
+  /** 松开发送：commit 缓冲并触发响应；过短录音丢弃 */
+  public stopRecording(): { ok: boolean; reason?: string } {
+    if (!this.pttMode) return { ok: false, reason: 'not_in_ptt_mode' };
+    if (!this.dc || this.dc.readyState !== 'open') {
+      this.setMicMuted(true);
+      return { ok: false, reason: 'channel_not_open' };
+    }
+    const duration = Date.now() - this.pttRecordingStart;
+    // 始终先重新静音，避免后续环境音被采集
+    this.setMicMuted(true);
+    if (duration < RealtimeChat.PTT_MIN_RECORDING_MS) {
+      try {
+        this.dc.send(JSON.stringify({ type: 'input_audio_buffer.clear' }));
+      } catch {}
+      console.warn('[PTT] recording too short, discarded');
+      return { ok: false, reason: 'too_short' };
+    }
+    try {
+      this.dc.send(JSON.stringify({ type: 'input_audio_buffer.commit' }));
+      this.dc.send(JSON.stringify({ type: 'response.create' }));
+      console.log('[PTT] stopRecording committed,', duration, 'ms');
+      return { ok: true };
+    } catch (e) {
+      console.error('[PTT] stopRecording error:', e);
+      return { ok: false, reason: 'send_failed' };
+    }
+  }
+
   sendTextMessage(text: string) {
     if (this.isDisconnected || !this.dc || this.dc.readyState !== 'open') {
       return;
