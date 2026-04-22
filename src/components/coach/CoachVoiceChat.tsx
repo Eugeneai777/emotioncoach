@@ -945,6 +945,42 @@ export const CoachVoiceChat = ({
   const currentAssistantDeltaRef = useRef('');
   // ✅ 存储已完成的历史回复
   const completedTranscriptRef = useRef('');
+  // ✅ 字幕节流：rAF 调度 + 上一次 delta 到达时间 + latestAiLine 镜像
+  const aiFlushRafRef = useRef<number | null>(null);
+  const lastDeltaTsRef = useRef<number>(0);
+  const latestAiLineRef = useRef('');
+
+  // 把当前累积的 delta 渲染到字幕（合并到下一帧）
+  const scheduleAiFlush = () => {
+    if (aiFlushRafRef.current != null) return;
+    aiFlushRafRef.current = requestAnimationFrame(() => {
+      aiFlushRafRef.current = null;
+      const currentDelta = currentAssistantDeltaRef.current;
+      if (!currentDelta) return;
+      const display = completedTranscriptRef.current
+        ? `${completedTranscriptRef.current}\n${currentDelta}`
+        : currentDelta;
+      setTranscript(display);
+      latestAiLineRef.current = currentDelta;
+      setLatestAiLine(currentDelta);
+    });
+  };
+
+  // 立即 flush（音节边界，保持节奏感）
+  const flushAiNow = () => {
+    if (aiFlushRafRef.current != null) {
+      cancelAnimationFrame(aiFlushRafRef.current);
+      aiFlushRafRef.current = null;
+    }
+    const currentDelta = currentAssistantDeltaRef.current;
+    if (!currentDelta) return;
+    const display = completedTranscriptRef.current
+      ? `${completedTranscriptRef.current}\n${currentDelta}`
+      : currentDelta;
+    setTranscript(display);
+    latestAiLineRef.current = currentDelta;
+    setLatestAiLine(currentDelta);
+  };
 
   // 通用的转录处理函数 - 🔧 修复：实时显示 assistant 回复，不等待 isFinal
   const handleTranscript = (text: string, isFinal: boolean, role: 'user' | 'assistant') => {
@@ -953,25 +989,43 @@ export const CoachVoiceChat = ({
       const sanitizedText = sanitizeIdentity(text);
       
       if (isFinal) {
-        // Final: 保存完整回复到历史，并清空当前累积
+        // Final: 先 flush 任何 pending 帧
+        if (aiFlushRafRef.current != null) {
+          cancelAnimationFrame(aiFlushRafRef.current);
+          aiFlushRafRef.current = null;
+        }
         if (sanitizedText.trim()) {
           completedTranscriptRef.current = completedTranscriptRef.current
             ? `${completedTranscriptRef.current}\n${sanitizedText}`
             : sanitizedText;
           setTranscript(completedTranscriptRef.current);
-          setLatestAiLine(sanitizedText); // 🔧 PTT 字幕：完整回复
+          // 仅当 final 文本与当前展示有差异时才覆盖，避免无意义重渲闪烁
+          const currentShown = latestAiLineRef.current.trim();
+          const finalText = sanitizedText.trim();
+          if (currentShown !== finalText) {
+            latestAiLineRef.current = sanitizedText;
+            setLatestAiLine(sanitizedText);
+          }
         }
+        // ⚠️ 不清空 latestAiLine！保留上一句直到下一轮 delta 到来或用户开口
         currentAssistantDeltaRef.current = '';
       } else {
-        // Delta: 实时累积并显示（历史 + 当前正在生成）
+        // 新一轮第一个 delta：清空旧 AI 字幕（一次性）
+        if (currentAssistantDeltaRef.current === '' && latestAiLineRef.current) {
+          latestAiLineRef.current = '';
+          setLatestAiLine('');
+        }
+        // Delta: 累积到 ref，再按节奏 flush
         currentAssistantDeltaRef.current += sanitizedText;
-        const currentDelta = currentAssistantDeltaRef.current;
-        if (currentDelta.trim()) {
-          const display = completedTranscriptRef.current
-            ? `${completedTranscriptRef.current}\n${currentDelta}`
-            : currentDelta;
-          setTranscript(display);
-          setLatestAiLine(currentDelta); // 🔧 PTT 字幕：当前增量
+        const now = performance.now();
+        const gap = now - lastDeltaTsRef.current;
+        lastDeltaTsRef.current = now;
+        if (gap > 60) {
+          // 音节间隔：立即渲染（保持语音节奏）
+          flushAiNow();
+        } else {
+          // 突发 chunk：合并到下一帧
+          scheduleAiFlush();
         }
       }
       aiLastActivityRef.current = Date.now();
@@ -979,7 +1033,14 @@ export const CoachVoiceChat = ({
       // 用户发言：每次收到 final 文本时累积，用换行分隔
       setUserTranscript(prev => prev ? `${prev}\n${text}` : text);
       setLatestUserLine(text); // 🔧 PTT 字幕：仅保留最近一句
-      setLatestAiLine(''); // 🔧 用户开口 = 新一轮，清空旧的 AI 回复
+      // 用户开口 = 新一轮，立即清空 AI 字幕（语义优先）
+      if (aiFlushRafRef.current != null) {
+        cancelAnimationFrame(aiFlushRafRef.current);
+        aiFlushRafRef.current = null;
+      }
+      currentAssistantDeltaRef.current = '';
+      latestAiLineRef.current = '';
+      setLatestAiLine('');
       userLastActivityRef.current = Date.now();
     }
   };
