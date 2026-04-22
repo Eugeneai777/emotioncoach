@@ -199,6 +199,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
   const [qrCountdown, setQrCountdown] = useState<number>(0); // 二维码倒计时（秒）
   const silentAuthTriggeredRef = useRef<boolean>(false); // 防止重复触发静默授权
   const codeExchangedRef = useRef<boolean>(false); // 防止重复换取 openId
+  const abortRef = useRef<AbortController | null>(null); // 取消进行中的 invoke 请求
   const prevOpenRef = useRef<boolean>(false); // 跟踪上一次 open 值，用于"打开边沿"重置
 
   // 仅在 open 从 false → true 的"打开边沿"重置订单创建标记，
