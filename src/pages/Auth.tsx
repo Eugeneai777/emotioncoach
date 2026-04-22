@@ -10,6 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { extractEdgeFunctionError } from "@/lib/edgeFunctionError";
+import { logAuthEvent } from "@/lib/authEventLogger";
 import { Loader2 } from "lucide-react";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { FollowGuideStep } from "@/components/onboarding/FollowGuideStep";
@@ -386,12 +387,24 @@ const Auth = () => {
         });
         
         if (error) {
+          await logAuthEvent({
+            event_type: 'login_failed',
+            auth_method: 'email_password',
+            email: email.trim(),
+            error_message: error.message,
+            error_code: error.message.includes('Invalid') ? 'invalid_credentials' : 'unknown',
+          });
           if (error.message.includes('Invalid login credentials')) {
             throw new Error('邮箱或密码错误');
           }
           throw error;
         }
         
+        await logAuthEvent({
+          event_type: 'login_success',
+          auth_method: 'email_password',
+          email: email.trim(),
+        });
         toast({
           title: "登录成功",
           description: "欢迎回来 🌿",
@@ -450,10 +463,23 @@ const Auth = () => {
               password,
             });
             if (phoneError) {
+              await logAuthEvent({
+                event_type: 'login_failed',
+                auth_method: 'phone_password',
+                phone,
+                error_message: phoneError.message,
+                error_code: 'invalid_credentials',
+              });
               throw new Error('手机号或密码错误');
             }
           }
         }
+
+        await logAuthEvent({
+          event_type: 'login_success',
+          auth_method: 'phone_password',
+          phone,
+        });
         
         // 记住账号
         if (rememberMe) {

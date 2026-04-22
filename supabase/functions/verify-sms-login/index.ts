@@ -1,15 +1,28 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/auth.ts";
+import { logAuthEvent } from "../_shared/authEventLogger.ts";
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
+  let phoneForLog: string | undefined;
+  let countryCodeForLog = '+86';
+
   try {
     const { phone, code, countryCode = '+86' } = await req.json();
+    phoneForLog = phone;
+    countryCodeForLog = countryCode;
 
     if (!phone || !code) {
+      await logAuthEvent(req, {
+        event_type: 'login_failed',
+        auth_method: 'sms',
+        phone,
+        error_message: '手机号和验证码不能为空',
+        error_code: 'missing_params',
+      });
       return new Response(
         JSON.stringify({ error: '手机号和验证码不能为空' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -35,6 +48,13 @@ Deno.serve(async (req) => {
 
     if (codeError || !codes || codes.length === 0) {
       console.error('Code verification failed:', { codeError, codesFound: codes?.length });
+      await logAuthEvent(req, {
+        event_type: 'login_failed',
+        auth_method: 'sms',
+        phone,
+        error_message: '验证码无效或已过期',
+        error_code: 'invalid_code',
+      });
       return new Response(
         JSON.stringify({ error: '验证码无效或已过期' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -161,12 +181,27 @@ Deno.serve(async (req) => {
           );
         }
 
+        await logAuthEvent(req, {
+          event_type: 'login_success',
+          auth_method: 'sms',
+          user_id: profileData.id,
+          phone,
+          email: realEmail,
+          extra: { fallback: 'password' },
+        });
         return new Response(
           JSON.stringify({ success: true, isNewUser: false, session: signInData.session }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
+      await logAuthEvent(req, {
+        event_type: 'login_success',
+        auth_method: 'sms',
+        user_id: profileData.id,
+        phone,
+        email: realEmail,
+      });
       return new Response(
         JSON.stringify({ success: true, isNewUser: false, session: verifyData.session }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -289,6 +324,21 @@ Deno.serve(async (req) => {
         );
       }
 
+      await logAuthEvent(req, {
+        event_type: 'register_success',
+        auth_method: 'sms',
+        user_id: finalUserId,
+        phone,
+        email: placeholderEmail,
+      });
+      await logAuthEvent(req, {
+        event_type: 'login_success',
+        auth_method: 'sms',
+        user_id: finalUserId,
+        phone,
+        email: placeholderEmail,
+        extra: { auto_register: true },
+      });
       return new Response(
         JSON.stringify({ success: true, isNewUser, session: signInData.session }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -296,6 +346,13 @@ Deno.serve(async (req) => {
     }
   } catch (error) {
     console.error('Verify SMS login error:', error);
+    await logAuthEvent(req, {
+      event_type: 'login_failed',
+      auth_method: 'sms',
+      phone: phoneForLog,
+      error_message: error instanceof Error ? error.message : '验证失败',
+      error_code: 'exception',
+    });
     return new Response(
       JSON.stringify({ error: '验证失败，请稍后重试' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/auth.ts";
+import { logAuthEvent } from "../_shared/authEventLogger.ts";
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -271,12 +272,26 @@ Deno.serve(async (req) => {
 
     console.log(`Phone ${phone} bound to WeChat user ${user.id}`);
 
+    await logAuthEvent(req, {
+      event_type: 'bind_success',
+      auth_method: 'wechat_oauth',
+      user_id: user.id,
+      phone,
+      extra: { merged: false },
+    });
+
     return new Response(
       JSON.stringify({ success: true, message: '手机号绑定成功' }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
     console.error('Bind phone error:', error);
+    await logAuthEvent(req, {
+      event_type: 'bind_failed',
+      auth_method: 'wechat_oauth',
+      error_message: error instanceof Error ? error.message : '绑定失败',
+      error_code: 'exception',
+    });
     return new Response(
       JSON.stringify({ error: '绑定失败，请稍后重试' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
