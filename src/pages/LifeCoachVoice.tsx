@@ -1,13 +1,6 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
-
-const TOPIC_SCENARIO_MAP: Record<string, string> = {
-  anxiety: "深夜焦虑：用户此刻可能正被焦虑感困扰，请用温柔放慢的语速开场，先邀请对方深呼吸一次，再问发生了什么。",
-  career: "职场迷茫：用户在为工作选择或职业方向纠结，请先共情'选择背后的恐惧与渴望'，再邀请对方说出最近最纠结的一件事。",
-  relationship: "关系困扰：用户可能刚经历关系中的委屈或冲突，请先表达'这里是安全的，可以说任何感受'，再邀请对方讲讲发生了什么。",
-  wealth: "财富卡点：用户在金钱与财富信念上感到卡住，请用好奇而不评判的语气，先问'最近和钱有关的事里，最让你不舒服的是哪一刻'。",
-};
 import { useAuth } from "@/hooks/useAuth";
 import { getSavedVoiceType } from "@/config/voiceTypeConfig";
 import {
@@ -16,12 +9,26 @@ import {
   prewarmMicrophoneStream,
 } from "@/utils/RealtimeAudio";
 
+// topic → edge function SCENARIO_CONFIGS 中已注册的中文 key
+// 必须与 supabase/functions/vibrant-life-realtime-token/index.ts 的 SCENARIO_CONFIGS 完全一致
+const TOPIC_TO_SCENARIO_KEY: Record<string, string> = {
+  anxiety: "深夜焦虑",
+  career: "职场迷茫",
+  relationship: "关系困扰",
+  wealth: "财富卡点",
+};
+
 const LifeCoachVoice = () => {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
   const [searchParams] = useSearchParams();
   const topic = searchParams.get("topic") || undefined;
-  const topicScenario = topic ? TOPIC_SCENARIO_MAP[topic] : undefined;
+
+  // ✅ 用 useMemo 稳定引用，避免每次渲染产生新字符串触发 CoachVoiceChat 重连
+  const scenarioKey = useMemo(
+    () => (topic ? TOPIC_TO_SCENARIO_KEY[topic] : undefined),
+    [topic]
+  );
 
   useEffect(() => {
     if (loading) return;
@@ -31,13 +38,10 @@ const LifeCoachVoice = () => {
   }, [user, loading, navigate]);
 
   // 🚀 进入页面立即并行预热：Edge Function + Token + 麦克风流
-  // 用户点击「接通」时可直接复用，节省 1-2 秒
   useEffect(() => {
     if (loading || !user) return;
 
     const endpoint = "vibrant-life-realtime-token";
-
-    // 并行触发，互不阻塞；失败仅打 warn，不影响后续正常连接
     void preheatTokenEndpoint(endpoint);
     void prefetchToken(endpoint, "general");
     void prewarmMicrophoneStream();
@@ -66,7 +70,7 @@ const LifeCoachVoice = () => {
       featureKey="realtime_voice"
       voiceType={getSavedVoiceType()}
       pttMode
-      scenario={topicScenario}
+      scenario={scenarioKey}
     />
   );
 };
