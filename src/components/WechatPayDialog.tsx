@@ -419,18 +419,29 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
 
       if (error || !data?.openId) {
         console.error('[Payment] Failed to exchange code:', error || data);
+        trackPaymentEvent('wechat_auth_failed', {
+          errorMessage: (error as any)?.message || data?.error || 'No openId returned',
+          metadata: { stage: 'code_exchange' },
+        });
         setIsExchangingCode(false);
         setOpenIdResolved(true); // 换取失败，继续使用扫码支付
         return;
       }
 
       console.log('[Payment] Successfully got openId from code');
+      trackPaymentEvent('wechat_auth_success', {
+        metadata: { hasOpenId: true },
+      });
       setUserOpenId(data.openId);
       cachePaymentOpenId(data.openId);
       setOpenIdResolved(true);
       setIsExchangingCode(false);
     } catch (err) {
       console.error('[Payment] Code exchange error:', err);
+      trackPaymentEvent('wechat_auth_failed', {
+        errorMessage: (err as any)?.message || 'Code exchange exception',
+        metadata: { stage: 'code_exchange_exception' },
+      });
       setIsExchangingCode(false);
       setOpenIdResolved(true);
     }
