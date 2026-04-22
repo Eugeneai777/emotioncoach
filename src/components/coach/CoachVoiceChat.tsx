@@ -117,6 +117,7 @@ export const CoachVoiceChat = ({
   const [isEnding, setIsEnding] = useState(false);  // 🔧 防止重复点击挂断
   const isEndingRef = useRef(false);  // 🔧 同步标记：避免主动挂断被误判为意外中断
   const [insufficientDuringCall, setInsufficientDuringCall] = useState(false);  // 🔧 通话中余额不足
+  const [showRechargeDialog, setShowRechargeDialog] = useState(false);  // 🔧 就地充值弹窗
   // API 成本追踪
   const [apiUsage, setApiUsage] = useState({ inputTokens: 0, outputTokens: 0 });
   const chatRef = useRef<AudioClient | null>(null);
