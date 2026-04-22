@@ -1208,6 +1208,36 @@ serve(async (req) => {
     const OPENAI_PROXY_URL = Deno.env.get('OPENAI_PROXY_URL');
     const baseUrl = OPENAI_PROXY_URL || 'https://api.openai.com';
 
+    // 🚀 加速：通用模式（最常用路径）走"快路径"——立即并行启动 OpenAI session 创建
+    // 与上下文查询并发，session.create 与 4 个 DB 查询同时进行，减少 300-500ms
+    const isFastPath = !scenario && mode === 'general';
+
+    // 用最简 instructions 立即启动 OpenAI session 创建（与下面 DB 查询并行）
+    const fastPathSessionPromise = isFastPath
+      ? fetch(`${baseUrl}/v1/realtime/sessions`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${OPENAI_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "gpt-4o-mini-realtime-preview",
+            voice: mapVoiceTypeToOpenAIVoice(voiceOverride, mode),
+            // 占位 instructions，真正的个性化 instructions 由前端在连接后通过 session.update 推送
+            instructions: '你是劲老师，温暖的AI生活教练。请等待系统配置后开始对话。',
+            input_audio_format: "pcm16",
+            output_audio_format: "pcm16",
+            max_response_output_tokens: "inf",
+            turn_detection: {
+              type: "server_vad",
+              threshold: 0.6,
+              prefix_padding_ms: 200,
+              silence_duration_ms: 1800,
+            },
+          }),
+        })
+      : null;
+
     // 🌟 并行获取用户上下文数据（用户昵称、历史对话、记忆、对话次数）
     const [
       profileResult,
