@@ -1,15 +1,28 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/auth.ts";
+import { logAuthEvent } from "../_shared/authEventLogger.ts";
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
+  let phoneForLog: string | undefined;
+  let countryCodeForLog = '+86';
+
   try {
     const { phone, code, countryCode = '+86' } = await req.json();
+    phoneForLog = phone;
+    countryCodeForLog = countryCode;
 
     if (!phone || !code) {
+      await logAuthEvent(req, {
+        event_type: 'login_failed',
+        auth_method: 'sms',
+        phone,
+        error_message: '手机号和验证码不能为空',
+        error_code: 'missing_params',
+      });
       return new Response(
         JSON.stringify({ error: '手机号和验证码不能为空' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
