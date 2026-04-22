@@ -79,6 +79,53 @@ export class MiniProgramAudioClient {
   // 🔧 iOS 可见性监听
   private visibilityHandler: (() => void) | null = null;
 
+  // 🎙️ PTT 模式：音频送出闸门 + 服务端 VAD 关闭
+  private pttPreset: boolean = false;
+  private pttMuted: boolean = true;     // PTT 模式下默认静音，按住时打开
+  private pttRecordingStart: number = 0;
+  private static readonly PTT_MIN_RECORDING_MS = 300;
+
+  /** 在 connect() 之前调用：声明 PTT 模式，使 ws open 时立刻通知 relay 关闭 VAD，并启用音频闸门 */
+  public presetPushToTalk(enabled: boolean): void {
+    this.pttPreset = enabled;
+    this.pttMuted = enabled;  // 默认静音
+  }
+
+  /** 按住说话：打开闸门，让本地音频开始流向 relay */
+  public pttStart(): { ok: boolean; reason?: string } {
+    if (!this.pttPreset) return { ok: false, reason: 'not_in_ptt_mode' };
+    this.pttMuted = false;
+    this.pttRecordingStart = Date.now();
+    // 通知 relay 清空缓冲
+    try {
+      this.ws?.readyState === WebSocket.OPEN && this.ws.send(JSON.stringify({ type: 'input_audio_buffer.clear' }));
+    } catch {}
+    return { ok: true };
+  }
+
+  /** 松开发送：关闭闸门，commit 缓冲并请求响应 */
+  public pttStop(): { ok: boolean; reason?: string } {
+    if (!this.pttPreset) return { ok: false, reason: 'not_in_ptt_mode' };
+    const duration = Date.now() - this.pttRecordingStart;
+    this.pttMuted = true;
+    if (duration < MiniProgramAudioClient.PTT_MIN_RECORDING_MS) {
+      try {
+        this.ws?.readyState === WebSocket.OPEN && this.ws.send(JSON.stringify({ type: 'input_audio_buffer.clear' }));
+      } catch {}
+      return { ok: false, reason: 'too_short' };
+    }
+    try {
+      if (this.ws?.readyState === WebSocket.OPEN) {
+        this.ws.send(JSON.stringify({ type: 'input_audio_buffer.commit' }));
+        this.ws.send(JSON.stringify({ type: 'response.create' }));
+      }
+    } catch (e) {
+      console.warn('[MiniProgramAudio][PTT] commit failed:', e);
+      return { ok: false, reason: 'send_failed' };
+    }
+    return { ok: true };
+  }
+
   constructor(config: MiniProgramAudioConfig) {
     this.config = config;
   }
@@ -276,12 +323,14 @@ export class MiniProgramAudioClient {
 
         // 把 voice_type / instructions 一起发给 relay，确保 relay 能正确选择音色
         const voiceType = (this.config.extraBody as any)?.voice_type;
-        if ((this.cachedInstructions || voiceType) && this.ws) {
-          console.log('[MiniProgramAudio] Sending session_config (instructions + voice_type)', { hasInstructions: !!this.cachedInstructions, voiceType });
+        if ((this.cachedInstructions || voiceType || this.pttPreset) && this.ws) {
+          console.log('[MiniProgramAudio] Sending session_config (instructions + voice_type + ptt)', { hasInstructions: !!this.cachedInstructions, voiceType, ptt: this.pttPreset });
           this.ws.send(JSON.stringify({
             type: 'session_config',
             instructions: this.cachedInstructions ?? undefined,
             voice_type: voiceType,
+            // 🎙️ PTT 模式：通知 relay 关闭服务端 VAD（turn_detection: null）
+            turn_detection: this.pttPreset ? null : undefined,
           }));
         }
 
@@ -323,7 +372,8 @@ export class MiniProgramAudioClient {
       // 监听录音帧数据
       this.recorder.onFrameRecorded((res: { frameBuffer: ArrayBuffer; isLastFrame: boolean }) => {
         if (this.ws?.readyState === WebSocket.OPEN && res.frameBuffer) {
-          // 将音频数据转为 Base64 并发送
+          // 🎙️ PTT 闸门：未按住时不发送本地音频，避免 relay/远端 VAD 收到声音
+          if (this.pttPreset && this.pttMuted) return;
           const base64Audio = wx.arrayBufferToBase64?.(res.frameBuffer) || '';
           if (base64Audio) {
             const chunk: AudioChunk = {
@@ -410,6 +460,8 @@ export class MiniProgramAudioClient {
         }
         const base64Audio = btoa(binary);
         
+        // 🎙️ PTT 闸门：未按住时不送出音频
+        if (this.pttPreset && this.pttMuted) return;
         // 发送到服务器
         const audioChunk: AudioChunk = {
           type: 'audio_input',

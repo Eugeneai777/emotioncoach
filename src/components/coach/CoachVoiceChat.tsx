@@ -1409,6 +1409,10 @@ export const CoachVoiceChat = ({
           scenario,
           extraBody: { ...extraBody, voice_type: voiceType }
         });
+        // 🎙️ PTT 预设：在 connect 之前声明，让 relay 关闭服务端 VAD 并启用本地音频闸门
+        if (pttMode && typeof (miniProgramClient as any).presetPushToTalk === 'function') {
+          try { (miniProgramClient as any).presetPushToTalk(true); } catch (e) { console.warn('[PTT] miniprogram preset failed', e); }
+        }
         chatRef.current = miniProgramClient;
         await miniProgramClient.connect();
         updateConnectionPhase('connected');
@@ -1433,6 +1437,11 @@ export const CoachVoiceChat = ({
         // 🔧 所有模式（含情绪教练）优先使用 OpenAI Realtime，失败后降级豆包
         let chat: AudioClient;
         const realtimeChat = new RealtimeChat(handleVoiceMessage, handleStatusChange, handleTranscript, tokenEndpoint, mode, scenario, { ...extraBody, voice_type: voiceType }, preAcquiredStream);
+        // 🎙️ PTT 预设：在 init 之前声明，确保 dc 一打开就关闭服务端 VAD 并静音麦克风
+        // 修复"小程序里直接说话也能被识别、PTT 失效"的根因
+        if (pttMode && typeof (realtimeChat as any).presetPushToTalk === 'function') {
+          try { (realtimeChat as any).presetPushToTalk(true); } catch (e) { console.warn('[PTT] preset failed', e); }
+        }
         chat = realtimeChat;
         chatRef.current = chat;
         
@@ -2695,8 +2704,12 @@ export const CoachVoiceChat = ({
             colors={colors}
             onStart={() => {
               const client = chatRef.current as any;
-              if (!client?.startRecording) return;
-              const r = client.startRecording();
+              // 优先用 pttStart（小程序 WebSocket 通道），其次 startRecording（WebRTC 通道）
+              const fn = client?.pttStart ? client.pttStart.bind(client)
+                       : client?.startRecording ? client.startRecording.bind(client)
+                       : null;
+              if (!fn) return;
+              const r = fn();
               if (!r?.ok) {
                 if (r?.reason === 'channel_not_open') {
                   toast({ title: '连接还没准备好', description: '请稍等片刻再试', variant: 'destructive' });
@@ -2708,11 +2721,14 @@ export const CoachVoiceChat = ({
             }}
             onStop={() => {
               const client = chatRef.current as any;
-              if (!client?.stopRecording) {
+              const fn = client?.pttStop ? client.pttStop.bind(client)
+                       : client?.stopRecording ? client.stopRecording.bind(client)
+                       : null;
+              if (!fn) {
                 setSpeakingStatus('idle');
                 return;
               }
-              const r = client.stopRecording();
+              const r = fn();
               setSpeakingStatus('idle');
               if (!r?.ok && r?.reason === 'too_short') {
                 toast({ title: '按久一点', description: '至少按住 0.3 秒再松开', duration: 1800 });
