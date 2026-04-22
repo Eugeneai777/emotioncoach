@@ -131,15 +131,35 @@ const Auth = () => {
   // 短信验证码登录
   const handleSmsLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return; // 防止重复点击导致并发请求
     if (!phone || !smsCode) {
       toast({ title: "请输入手机号和验证码", variant: "destructive" });
       return;
     }
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('verify-sms-login', {
-        body: { phone, code: smsCode, countryCode },
-      });
+      let data: any = null;
+      let error: any = null;
+      // 网络层失败（FunctionsFetchError）自动重试一次，给出友好提示
+      let attempt = 0;
+      while (attempt < 2) {
+        const res = await supabase.functions.invoke('verify-sms-login', {
+          body: { phone, code: smsCode, countryCode },
+        });
+        data = res.data;
+        error = res.error;
+        const isFetchErr =
+          error &&
+          (error.name === 'FunctionsFetchError' ||
+            /Failed to (send a request|fetch)/i.test(error.message || ''));
+        if (!isFetchErr) break;
+        attempt += 1;
+        if (attempt < 2) {
+          await new Promise((r) => setTimeout(r, 800));
+          continue;
+        }
+        throw new Error('网络异常，请检查网络后重试');
+      }
       if (data?.error || error) {
         const msg = await extractEdgeFunctionError(data, error, '验证失败，请稍后重试');
         throw new Error(msg);
