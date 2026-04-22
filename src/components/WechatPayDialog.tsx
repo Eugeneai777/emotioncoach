@@ -827,19 +827,35 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     return new Promise<void>((resolve, reject) => {
       console.log('Invoking JSAPI pay with WeixinJSBridge, params:', { ...params, paySign: '***' });
       
+      // 🔍 埋点：开始拉起 JSAPI 支付
+      trackPaymentEvent('payment_jsapi_invoking', {
+        metadata: {
+          bridgeAvailable: typeof window.WeixinJSBridge !== 'undefined',
+          isMiniProgram: isWeChatMiniProgram(),
+        },
+      });
+
       const onBridgeReady = () => {
         if (!window.WeixinJSBridge) {
           console.error('WeixinJSBridge is not available');
+          trackPaymentEvent('payment_jsapi_failed', {
+            errorMessage: 'WeixinJSBridge not available after ready event',
+            metadata: { stage: 'bridge_check' },
+          });
           reject(new Error('WeixinJSBridge 未初始化，请在微信中打开'));
           return;
         }
         
         console.log('WeixinJSBridge ready, invoking getBrandWCPayRequest');
+        trackPaymentEvent('payment_jsapi_bridge_ready');
         window.WeixinJSBridge.invoke(
           'getBrandWCPayRequest',
           params,
           (res) => {
             console.log('WeixinJSBridge payment result:', res.err_msg);
+            trackPaymentEvent('payment_jsapi_callback', {
+              metadata: { errMsg: res.err_msg },
+            });
             if (res.err_msg === 'get_brand_wcpay_request:ok') {
               resolve();
             } else if (res.err_msg === 'get_brand_wcpay_request:cancel') {
