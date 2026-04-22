@@ -356,6 +356,10 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
       if (error || !data?.authUrl) {
         window.clearTimeout(fallbackTimer);
         console.error('[Payment] Failed to get silent auth URL:', error || data);
+        trackPaymentEvent('wechat_auth_failed', {
+          errorMessage: (error as any)?.message || 'No authUrl returned',
+          metadata: { stage: 'invoke_wechat_pay_auth' },
+        });
         setIsRedirectingForOpenId(false);
         silentAuthTriggeredRef.current = false;
         sessionStorage.removeItem("pay_auth_in_progress");
@@ -365,11 +369,18 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
       }
 
       console.log('[Payment] Redirecting to silent auth...');
+      trackPaymentEvent('wechat_auth_redirecting', {
+        targetUrl: data.authUrl,
+      });
       // 跳转生效后让全局 fallbackTimer 继续守护（页面若被拦截留在原地，8s 兜底自动切扫码）
       window.location.href = data.authUrl;
     } catch (err) {
       window.clearTimeout(fallbackTimer);
       console.error('[Payment] Silent auth error:', err);
+      trackPaymentEvent('wechat_auth_failed', {
+        errorMessage: (err as any)?.message || 'Silent auth exception',
+        metadata: { stage: 'silent_auth_exception' },
+      });
       setIsRedirectingForOpenId(false);
       silentAuthTriggeredRef.current = false;
       sessionStorage.removeItem("pay_auth_in_progress");
@@ -384,6 +395,11 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     if (codeExchangedRef.current) return;
     codeExchangedRef.current = true;
     setIsExchangingCode(true);
+
+    // 🔍 埋点：开始用 code 换 openId
+    trackPaymentEvent('wechat_auth_code_received', {
+      metadata: { isLoggedIn: !!user },
+    });
 
     try {
       const isLoggedIn = !!user;
