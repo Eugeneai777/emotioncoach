@@ -1589,10 +1589,13 @@ ${photoList}
       : 'https://api.openai.com/v1/realtime';
 
     // 快路径下：把完整 instructions 和 tools 一并下发，前端在 datachannel open 后用 session.update 推送
+    // 同时透传 scenario_opening：PTT 模式下，前端需主动触发 response.create 让 AI 念开场白
+    const scenarioOpening = (scenario && SCENARIO_CONFIGS[scenario]?.opening) || null;
     return new Response(JSON.stringify({
       ...data,
       realtime_url: realtimeProxyUrl,
       mode: mode,
+      scenario_opening: scenarioOpening,
       pending_session_config: fastPathSessionPromise ? {
         instructions,
         tools,

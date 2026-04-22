@@ -461,6 +461,9 @@ export class RealtimeChat {
   // 🚀 快路径：服务端 token 函数返回的延迟 session 配置（在 datachannel open 后推送）
   private pendingSessionConfig: any = null;
 
+  // 🎬 场景开场白：PTT 模式下，进入 PTT 后由 AI 主动播报第一句
+  private scenarioOpening: string | null = null;
+
   constructor(
     private onMessage: (message: any) => void,
     private onStatusChange: (status: 'connecting' | 'connected' | 'disconnected' | 'error') => void,
@@ -624,6 +627,7 @@ export class RealtimeChat {
         EPHEMERAL_KEY = tokenData.client_secret.value;
         // 🚀 捕获快路径延迟 session 配置
         this.pendingSessionConfig = tokenData.pending_session_config || null;
+        this.scenarioOpening = tokenData.scenario_opening || null;
       } else {
         // 并行执行 token 获取和麦克风权限请求
         const [tokenResult, micResult] = await Promise.all([
@@ -649,6 +653,7 @@ export class RealtimeChat {
         realtimeApiUrl = tokenData.realtime_url || 'https://api.openai.com/v1/realtime';
         // 🚀 捕获快路径延迟 session 配置
         this.pendingSessionConfig = tokenData.pending_session_config || null;
+        this.scenarioOpening = tokenData.scenario_opening || null;
         
         // 缓存配置（按天）
         setCachedConfig(this.tokenEndpoint, realtimeApiUrl);
@@ -1168,6 +1173,24 @@ export class RealtimeChat {
       }));
       this.setMicMuted(enabled); // PTT 默认静音；VAD 默认开启
       console.log('[PTT] mode set to', enabled ? 'push_to_talk' : 'vad');
+
+      // 🎬 PTT 模式下，若有场景开场白，主动让 AI 念出第一句（仅触发一次）
+      if (enabled && this.scenarioOpening && this.dc?.readyState === 'open') {
+        const opening = this.scenarioOpening;
+        this.scenarioOpening = null;
+        try {
+          this.dc.send(JSON.stringify({
+            type: 'response.create',
+            response: {
+              modalities: ['audio', 'text'],
+              instructions: `请用温暖自然的语气作为开场说出（不要任何前缀或解释，直接说这句话）：${opening}`,
+            },
+          }));
+          console.log('[PTT] scenario opening triggered:', opening);
+        } catch (e) {
+          console.warn('[PTT] failed to trigger scenario opening:', e);
+        }
+      }
     } catch (e) {
       console.error('[PTT] setPushToTalkMode error:', e);
     }
