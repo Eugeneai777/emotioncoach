@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/auth.ts";
+import { logAuthEvent } from "../_shared/authEventLogger.ts";
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
