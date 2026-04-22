@@ -960,6 +960,13 @@ export const CoachVoiceChat = ({
               setSpeakingStatus('user-speaking');
             }
           }, 80);
+          } else {
+            const activeClient = chatRef.current as any;
+            if (useMiniProgramMode && typeof activeClient?.stopRecording === 'function') {
+              setTimeout(() => {
+                try { activeClient.stopRecording(); } catch (e) { console.warn('[PTT] stop idle mini program recorder failed', e); }
+              }, 50);
+            }
         }
       }
     } else if (mappedStatus === 'disconnected' || mappedStatus === 'error') {
@@ -1485,7 +1492,9 @@ export const CoachVoiceChat = ({
         updateConnectionPhase('connected');
         stopConnectionTimer();
         startMonitoring(); // 开始持续网络监控
-        miniProgramClient.startRecording();
+        if (!pttMode) {
+          miniProgramClient.startRecording();
+        }
         
         // 🔧 AI来电模式：让AI先说开场白
         if (isIncomingCall && openingMessage && miniProgramClient.sendTextMessage) {
@@ -1591,7 +1600,9 @@ export const CoachVoiceChat = ({
           updateConnectionPhase('connected');
           stopConnectionTimer();
           startMonitoring();
-          miniProgramClient.startRecording();
+          if (!pttMode) {
+            miniProgramClient.startRecording();
+          }
           return;
         }
       } else {
