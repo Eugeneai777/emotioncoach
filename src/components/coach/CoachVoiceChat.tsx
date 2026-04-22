@@ -143,6 +143,13 @@ export const CoachVoiceChat = ({
   const isUnmountedRef = useRef(false);
   const startAttemptRef = useRef(0);
   const [useMiniProgramMode, setUseMiniProgramMode] = useState(false);  // 是否使用小程序模式
+  const hasGreetedRef = useRef(false);  // 🔧 PTT 模式：仅注入一次主动问候
+
+  // 🔧 PTT 模式接通后主动问候：拉取昵称 + 最近 7 天主题
+  const { greeting: voiceGreeting, recentThemes } = useVoiceGreeting(
+    userId,
+    Boolean(pttMode && !isIncomingCall && userId)
+  );
   // 🔧 连接进度追踪
   const [connectionPhase, setConnectionPhase] = useState<ConnectionPhase>('preparing');
   const [connectionElapsedTime, setConnectionElapsedTime] = useState(0);
