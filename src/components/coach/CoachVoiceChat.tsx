@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Phone, PhoneOff, Mic, Volume2, Loader2, Coins, MapPin, Search, X, Heart, ExternalLink, BookOpen, Tent, Play, Clock, ChevronLeft, Info } from 'lucide-react';
 import { PointsRulesDialog } from '@/components/PointsRulesDialog';
 import { AudioWaveform } from './AudioWaveform';
+import { PushToTalkButton } from './PushToTalkButton';
 import { RealtimeChat } from '@/utils/RealtimeAudio';
 import { DoubaoRealtimeChat } from '@/utils/DoubaoRealtimeAudio';
 import { MiniProgramAudioClient, ConnectionStatus as MiniProgramStatus } from '@/utils/MiniProgramAudio';
