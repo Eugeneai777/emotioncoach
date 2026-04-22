@@ -2064,6 +2064,7 @@ export const CoachVoiceChat = ({
             if (pttMode) {
               try { chatRef.current?.disconnect(); } catch(err) { console.warn(err); }
               try { if (durationRef.current) clearInterval(durationRef.current); } catch(err) { console.warn(err); }
+              try { localStorage.removeItem(SESSION_STORAGE_KEY); } catch {}
               releaseLock();
               onClose();
               return;
