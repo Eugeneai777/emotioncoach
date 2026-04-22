@@ -1,119 +1,64 @@
 
 
-## 让字幕跟随 delta 节奏平滑更新 + 停顿期不闪烁
+## 把"什么时候可以找有劲AI"重设计成芯片区 → 直达语音教练
 
-### 当前问题
-1. **节奏失真**：每个 `audio_transcript.delta` 到达就立刻 `setLatestAiLine`，文字会一阵阵跳跃式追加（OpenAI Realtime 的 delta 经常一次涌来 30+ 个 chunk，瞬间打满，不像语音"逐字吐"的节奏）
-2. **停顿闪烁**：句子结束（`audio_transcript.done`）时 `setLatestAiLine(sanitizedText)` 会用「完整文本」替换「累积的 delta」。两者通常一致，但偶尔身份替换或空白处理差一格 → DOM diff 触发整段重渲，光标和文字闪一下
-3. **新一轮空白期**：上一轮 done 后到下一轮第一个 delta 之间（几百毫秒到几秒），如果直接清空就会出现"空字幕→文字突然出现"的闪烁
+### 现状
+该区块当前是 4 张大横卡（带插画背景 + "聊一聊 →"），点击跳转到 `/youjin-life/chat?topic=xxx`（文字聊天）。用户上传截图显示卡片视觉沉重、占屏长，且"聊一聊"是文字模式，与首页主推的 PTT 语音教练（中心红色按钮）形成两套入口，转化路径分裂。
 
-### 修复方案
+### 目标
+- 把 4 张大卡压缩为一行可横滑的**情绪芯片**（emoji + 短词），视觉更轻、上屏更密
+- 点击芯片直接进入 `/life-coach-voice`（PTT 语音教练，与首页中心按钮同一入口、同一会话规则），带上 `topic` 参数让教练开场就贴近场景
 
-#### 一、Delta 缓冲 + rAF 节流（按音频时间戳节奏吐字）
+### 设计
 
-在 `handleTranscript` 中，不再每次 delta 都直接 setState。改为：
+#### 一、芯片区视觉（替换 622-663 行的卡片列表）
 
-1. **累积到 ref**：`pendingDeltaRef.current += sanitizedText`（已有 `currentAssistantDeltaRef` 在做这事）
-2. **rAF 调度**：用 `requestAnimationFrame` 把 setState 合并到下一帧。多个 delta 在 16ms 内到达只触发一次重渲
-3. **追加节奏感**：记录每个 delta 的到达时间戳 `lastDeltaTsRef`。如果两次 delta 间隔 > 60ms（说明是音节边界，不是网络突发），立刻 flush；如果 < 60ms（网络突发，多 chunk 同时到），合并到同一帧
-
-新增 refs：
-```ts
-const aiFlushRafRef = useRef<number | null>(null);
-const lastDeltaTsRef = useRef<number>(0);
+```
+什么时候可以找有劲AI？        [图标 🎙️ 同首页中心按钮]
+任何时刻，任何情绪 —— 按住说话即可
+[🌙 深夜焦虑] [💼 职场迷茫] [💗 关系困扰] [💰 财富卡点]
+       ↑ 横滑 pill 芯片，单行，自适应换行
 ```
 
-新增 helper：
-```ts
-const scheduleAiFlush = () => {
-  if (aiFlushRafRef.current != null) return;
-  aiFlushRafRef.current = requestAnimationFrame(() => {
-    aiFlushRafRef.current = null;
-    setLatestAiLine(currentAssistantDeltaRef.current);
-    setTranscript(/* ... */);
-  });
-};
-```
+- 容器：`flex flex-wrap gap-2`（窄屏自动换行成 2 行 × 2 列）
+- 单芯片：圆角 full、px-3 py-2、emoji + 8px + 文字、白底 + 该场景主题色边框（保留原 indigo/amber/rose/emerald 色系做色彩记忆）
+- 点击：`scale-95` 反馈 + 轻微 `bg-{color}-50` 高亮
+- 副标题改为"按住说话即可"（呼应 PTT，与首页中心按钮语义一致）
 
-delta 分支替换为：
-```ts
-currentAssistantDeltaRef.current += sanitizedText;
-const now = performance.now();
-const gap = now - lastDeltaTsRef.current;
-lastDeltaTsRef.current = now;
-if (gap > 60) {
-  // 音节间隔，立刻渲染（保持节奏）
-  if (aiFlushRafRef.current != null) cancelAnimationFrame(aiFlushRafRef.current);
-  aiFlushRafRef.current = null;
-  setLatestAiLine(currentAssistantDeltaRef.current);
-} else {
-  // 突发 chunk，合并到下一帧
-  scheduleAiFlush();
-}
-```
+#### 二、点击行为 → 复用首页中心按钮的 PTT 语音
 
-#### 二、isFinal 时不强制覆盖（避免闪烁）
+- `onClick={() => navigate('/life-coach-voice?topic=anxiety')}`
+- 4 个 topic 值沿用现有：`anxiety / career / relationship / wealth`
+- `LifeCoachVoice.tsx` 读取 `useSearchParams().get('topic')`，作为新 prop `initialTopic` 传给 `CoachVoiceChat`
+- `CoachVoiceChat` 在生成 system instruction / 第一句问候时，按 topic 注入一句场景化开场白（如 anxiety → "看到你这会儿在为深夜焦虑找我，先深呼吸一下…"）
 
-`audio_transcript.done` 收到的 `transcript` 通常 == 累积后的 delta。强制 setState 会触发不必要的重渲。
+> 与首页中心红色按钮的 PTT 完全一致：同 `tokenEndpoint`、同 `voiceType`、同 `pttMode`、同 `useVoiceSessionLock` 互斥锁。区别只是带了个 topic 让教练知道入口语境。
 
-改为：**仅当 final 文本与当前累积差异显著（如长度差 > 0 或 trim 后不同）时才覆盖**：
+#### 三、useCases 数据精简
 
-```ts
-if (isFinal) {
-  // flush 任何 pending
-  if (aiFlushRafRef.current != null) {
-    cancelAnimationFrame(aiFlushRafRef.current);
-    aiFlushRafRef.current = null;
-  }
-  if (sanitizedText.trim()) {
-    const currentShown = currentAssistantDeltaRef.current.trim();
-    const finalText = sanitizedText.trim();
-    if (currentShown !== finalText) {
-      setLatestAiLine(sanitizedText); // 仅在确实不同时覆盖
-    }
-    completedTranscriptRef.current = completedTranscriptRef.current
-      ? `${completedTranscriptRef.current}\n${sanitizedText}`
-      : sanitizedText;
-    setTranscript(completedTranscriptRef.current);
-  }
-  currentAssistantDeltaRef.current = '';
-  // ⚠️ 不清空 latestAiLine！让上一句继续显示，直到下一轮 delta 或用户开口
-}
-```
-
-#### 三、新一轮 delta 到来时才清屏（消除停顿期空白）
-
-旧逻辑：`isFinal=true` 时 `currentAssistantDeltaRef.current = ''` → 下一轮第一个 delta 时累积从 0 开始 → setLatestAiLine 第一个字 → 字幕从满屏长文瞬间变成"嗯"，视觉是「闪一下」。
-
-修复：在 delta 分支判断"是不是新一轮的第一个 delta"（即 currentAssistantDeltaRef 刚被清空且 latestAiLine 还显示着上一句），如果是，**先把 latestAiLine 清空再追加**：
-
-```ts
-} else {
-  // 新一轮第一个 delta：清空旧 AI 字幕（一次性）
-  if (currentAssistantDeltaRef.current === '' && latestAiLineRef.current) {
-    setLatestAiLine('');
-  }
-  currentAssistantDeltaRef.current += sanitizedText;
-  // ...
-}
-```
-
-需要新增 `latestAiLineRef` 镜像 state（避免闭包陈旧值）。
-
-#### 四、清理副作用
-
-- `endCall` / 用户开口分支增加 `cancelAnimationFrame(aiFlushRafRef.current)`
-- 组件卸载 useEffect 增加 cleanup
+把 102-147 行的 `useCases` 数组瘦身：去掉 `bg / accent / iconBg / illustrationKey / desc`，保留 `emoji / title / topic / colorClass`（例如 `colorClass: 'border-indigo-200 text-indigo-600 bg-indigo-50/60'`）。原插画 `scene_*` 资源继续保留在仓库中（其他页面可能复用）。
 
 ### 涉及文件
-- `src/components/coach/CoachVoiceChat.tsx`（仅改 `handleTranscript` 与新增 2 个 refs + 1 个 cleanup，约 30 行改动）
+
+1. **`src/pages/MiniAppEntry.tsx`**
+   - 精简 `useCases` 数据（102-147）
+   - 重写芯片区 UI（612-665）
+   - 副标题改"按住说话即可"
+2. **`src/pages/LifeCoachVoice.tsx`**
+   - 读取 `?topic=` 参数，透传给 `CoachVoiceChat`
+3. **`src/components/coach/CoachVoiceChat.tsx`**
+   - 新增可选 prop `initialTopic?: 'anxiety' | 'career' | 'relationship' | 'wealth'`
+   - 在已有的 system prompt 拼装处追加一句场景化引导（仅 4 行 if/else 映射）
 
 ### 不动
-- RealtimeAudio.ts、字幕 DOM、字体颜色、滚动容器、芯片、PTT、计费
+- 首页中心红色 PTT 按钮、CoachVoiceChat 主流程、计费、字幕节奏修复、芯片缓存、`/youjin-life/chat` 文字聊天页（保留作为兜底入口，不再从此区暴露）
+- 用户见证、"还想探索更多"折叠区
+- 4 张插画资源（其他页面引用保持不变）
 
 ### 验证
-- [ ] AI 长段语音字幕按音节节奏推进，不再"一坨字突然出现"
-- [ ] 句末 done 时光标/文字不闪烁
-- [ ] 上一句结束后到下一句第一个字之间不出现"空白屏"，前一句留着直到新内容覆盖
-- [ ] 用户按 PTT 说话仍立即清空 AI 字幕（语义优先）
+- [ ] 区块高度从 ~520px 压缩到 ~100px
+- [ ] 点击任一芯片 → 直接进入语音教练全屏页（不弹中间步骤）
+- [ ] 教练开场白能呼应所选 topic
+- [ ] 与首页中心红色按钮共享同一会话锁（不会双开）
+- [ ] 无 topic 参数时 `/life-coach-voice` 行为与现在完全一致
 
