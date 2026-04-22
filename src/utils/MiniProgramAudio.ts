@@ -21,6 +21,7 @@ export interface MiniProgramAudioConfig {
   mode: string;
   scenario?: string; // 场景名称，如 "睡不着觉"
   extraBody?: Record<string, any>; // 额外传递给 token 端点的数据
+  preAcquiredStream?: MediaStream | null;
 }
 
 interface AudioChunk {
@@ -59,6 +60,7 @@ export class MiniProgramAudioClient {
   private webProcessor: ScriptProcessorNode | null = null;
   private webSource: MediaStreamAudioSourceNode | null = null;
   private useWebAudioFallback = false;
+  private preAcquiredStream: MediaStream | null = null;
   
   // 🔧 复用播放 AudioContext 提升音质
   private playbackContext: AudioContext | null = null;
@@ -128,6 +130,7 @@ export class MiniProgramAudioClient {
 
   constructor(config: MiniProgramAudioConfig) {
     this.config = config;
+    this.preAcquiredStream = config.preAcquiredStream ?? null;
   }
 
   /**
@@ -369,6 +372,13 @@ export class MiniProgramAudioClient {
 
       this.recorder = wx.getRecorderManager();
 
+      if (this.preAcquiredStream) {
+        try {
+          this.preAcquiredStream.getTracks().forEach(track => track.stop());
+        } catch {}
+        this.preAcquiredStream = null;
+      }
+
       // 监听录音帧数据
       this.recorder.onFrameRecorded((res: { frameBuffer: ArrayBuffer; isLastFrame: boolean }) => {
         if (this.ws?.readyState === WebSocket.OPEN && res.frameBuffer) {
@@ -403,16 +413,21 @@ export class MiniProgramAudioClient {
     this.useWebAudioFallback = true;
     
     try {
-      // 请求麦克风权限 - 增强录音参数
-      this.webMediaStream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          sampleRate: { ideal: 24000 },
-          channelCount: 1,
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-        }
-      });
+      // 优先复用用户手势中预获取的麦克风流，避免小程序 WebView 吞掉首个 PTT 手势
+      if (this.preAcquiredStream?.active) {
+        this.webMediaStream = this.preAcquiredStream;
+        this.preAcquiredStream = null;
+      } else {
+        this.webMediaStream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            sampleRate: { ideal: 24000 },
+            channelCount: 1,
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+          }
+        });
+      }
       
       // 创建 AudioContext
       this.webAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)({
