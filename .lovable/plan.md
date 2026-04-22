@@ -1,106 +1,101 @@
 
 
-## 修复教练价格显示一致性 · 林蒿老师 ¥0 → ¥300
+## 问题：微信支付订单为什么会归属到错的账户
 
-### 根因
+### 一、根因（已通过日志和代码确认）
 
-数据库查询确认：
-- **Lisa**：`price_tier_id` → 新锐教练 ¥300，`coach_services.price = 300` ✅
-- **林蒿老师**：`price_tier_id` → 新锐教练 ¥300，但 `coach_services.price = 0` ❌
+`create-wechat-order` 边缘函数在收到下单请求时，对 `userId` 的判定优先级有缺陷：
 
-价格同步触发器存在，但**只在 `UPDATE OF price_tier_id` 时触发**：
-```sql
-CREATE TRIGGER trg_sync_coach_services_price 
-AFTER UPDATE OF price_tier_id ON public.human_coaches ...
+```text
+前端传入参数               后端处理逻辑
+─────────────────         ──────────────────────────────
+userId: "guest"           → 走"游客分支"
++ openId: "ofx5..."       → 用 openId 反查 wechat_user_mappings
+                          → 命中历史绑定的 user A
+                          → 把订单 user_id 写成 user A
+                          ⚠ 完全没有校验 Authorization JWT 里的当前登录用户 user B
 ```
 
-林蒿的服务记录被设置为 0 是因为：
-1. 申请时教练自填价格为 0（或未填）
-2. 之后管理员通过 BecomeCoach 流程设置了 price_tier，但服务行可能是后来补建的，或 update 时机错位导致触发器没生效
-3. 触发器不覆盖 INSERT 场景与"先建服务后定档"的顺序
+**真实场景还原（用户 18190190026）：**
 
-前端 `HumanCoachDetail.tsx:97`：`lowestPrice = Math.min(...services.map(s => Number(s.price)))` → 直接读 services 表 → 显示 ¥0。
+1. 浏览器历史上某次"神经蛙"微信号 OAuth 登录，留下 `openid → user A(神经蛙)` 的映射
+2. 这次 18190190026（user B）用手机号登录本站，但前端在调 `create-wechat-order` 时传的是：
+   - `userId: "guest"`（前端误判 / 状态丢失 / 未读 user.id）
+   - `openId: <浏览器残留的神经蛙 openid>`
+3. 后端只信 openId，订单归属到 user A
+4. 即便支付成功，权益也写到 user A 名下，user B 永远看到"未购买"
 
-### 修复方案（3 处改动 · 数据 + 触发器 + 前端兜底）
+### 二、为什么会触发"游客 + 残留 openId"
 
-#### 1 · 数据库迁移 · 一次性回填 + 触发器加固
+`useWechatOpenId` 把 openid 持久化到 **localStorage** (`cached_wechat_openid`)，只在 `SIGNED_OUT` 时清除。换号场景下：
+- 用户 A 在该浏览器登录过 → openid 存入 localStorage
+- 用户 A 没点"退出登录"，直接关闭页面
+- 用户 B 在同一浏览器用手机号登录 → localStorage 里仍是 A 的 openid
+- 支付组件可能因为加载时序拿不到最新 user.id，传 `userId: "guest"` + 旧 openid
 
-```sql
--- 1.1 回填所有"已设档但服务价为 0"的教练
-UPDATE coach_services cs
-SET price = cpt.price, updated_at = now()
-FROM human_coaches hc
-JOIN coach_price_tiers cpt ON cpt.id = hc.price_tier_id
-WHERE cs.coach_id = hc.id
-  AND hc.price_tier_id IS NOT NULL
-  AND (cs.price IS NULL OR cs.price = 0);
+### 三、影响范围
 
--- 1.2 加固触发器：服务表 INSERT 时若教练有档次，自动套用档次价
-CREATE OR REPLACE FUNCTION public.apply_tier_price_on_service_insert()
-RETURNS TRIGGER LANGUAGE plpgsql AS $$
-DECLARE tier_price numeric;
-BEGIN
-  IF (NEW.price IS NULL OR NEW.price = 0) THEN
-    SELECT cpt.price INTO tier_price
-    FROM human_coaches hc
-    JOIN coach_price_tiers cpt ON cpt.id = hc.price_tier_id
-    WHERE hc.id = NEW.coach_id;
-    IF tier_price IS NOT NULL THEN
-      NEW.price := tier_price;
-    END IF;
-  END IF;
-  RETURN NEW;
-END $$;
+| 场景 | 风险 |
+|---|---|
+| 共用浏览器 / 换号 | 订单和权益错挂到他人账户 |
+| 微信内未及时同步登录态 | 同上 |
+| 任何走 `userId: "guest" + openId` 路径的下单 | 同上 |
+| 涉及函数 | `create-wechat-order`、所有调用它的支付入口（测评、训练营、合伙人、商城） |
 
-CREATE TRIGGER trg_apply_tier_price_on_service_insert
-BEFORE INSERT ON public.coach_services
-FOR EACH ROW EXECUTE FUNCTION apply_tier_price_on_service_insert();
-```
+### 四、修复方案
 
-> 双保险：未来无论先定档还是先建服务、无论顺序如何，价格都不会再为 0。
+**修复 1：后端强一致性校验（`supabase/functions/create-wechat-order/index.ts`）**
 
-#### 2 · 前端兜底 · `HumanCoachDetail.tsx` & `HumanCoachCard.tsx`
+在 `userId === "guest"` 分支增加 JWT 校验：
+- 解析请求 `Authorization` header 拿到当前登录 user C
+- 若 user C 存在且 ≠ openId 反查到的 user A → **拒绝下单**，返回 `AUTH_MISMATCH`，前端提示"账号与微信不一致，请刷新或重新登录"
+- 若 user C 存在且 = user A → 放行
+- 若无 JWT（真游客）→ 维持现有逻辑
 
-在 `lowestPrice` 计算逻辑中增加"档次价兜底"：
+**修复 2：前端登录态优先（3 个支付入口）**
 
-```ts
-// HumanCoachDetail.tsx (line ~97)
-const servicePrices = services.map(s => Number(s.price)).filter(p => p > 0);
-const lowestPrice = servicePrices.length > 0 
-  ? Math.min(...servicePrices)
-  : (coach.price_tier?.price ?? null);  // 兜底用档次价
-```
+`WealthCampIntro.tsx` / `WealthAssessmentLite.tsx` / `WechatPayDialog.tsx` / `useDynamicAssessmentPurchase.ts`：
+- 下单前 `await supabase.auth.getUser()` 取最新 user.id，**有 user.id 就一定传真实 userId，绝不传 "guest"**
+- 未登录则强制跳 `/auth?redirect=...`，登录回来后通过 `payment-resumption-pattern-zh` 恢复支付
 
-在 `useHumanCoach` hook 里 join 档次表，让 `coach` 对象带上 `price_tier`（同 `useActiveHumanCoaches` 写法）。
+**修复 3：openId 缓存与登录态同步（`src/hooks/useWechatOpenId.ts`）**
 
-`HumanCoachCard.tsx` 列表卡片的价格显示同步改造（如果有的话）。
+- 监听 `SIGNED_IN`：若新登录用户的 `wechat_user_mappings.system_user_id` 与缓存的 openid 不匹配，**立即清空缓存并重拉**
+- 当前逻辑只在 `SIGNED_OUT` 清缓存，不足以应对换号
 
-#### 3 · 前端最后兜底 · 价格为 null 时不显示 ¥0
+### 五、实施清单
 
-底部价格条改为：
+| 文件 | 改动 |
+|---|---|
+| `supabase/functions/create-wechat-order/index.ts` | 游客分支增加 JWT vs openId 一致性校验，不一致返回 `AUTH_MISMATCH` |
+| `src/hooks/useWechatOpenId.ts` | `SIGNED_IN` 时校验 openid 归属，错配则清缓存重拉 |
+| `src/components/WechatPayDialog.tsx` | 下单前 `getUser()` 兜底，禁止传 `userId: "guest"` |
+| `src/pages/WealthCampIntro.tsx` | 同上；移除前端 `user_camp_purchases.insert` |
+| `src/pages/WealthAssessmentLite.tsx` | 同上 |
+| `src/hooks/useDynamicAssessmentPurchase.ts` | 同上 |
+| 前端通用错误提示 | 捕获 `AUTH_MISMATCH` → toast"账号与当前微信不一致，请刷新页面" |
 
-```tsx
-{lowestPrice !== null && lowestPrice > 0 ? (
-  <div>起 <span className="text-2xl font-bold">¥{lowestPrice}</span></div>
-) : (
-  <div className="text-sm text-muted-foreground">价格待定</div>
-)}
-```
+### 六、技术细节
 
-> 杜绝任何场景下显示 ¥0 误导用户。
+- **JWT 解析**：复用 `src/lib/edgeFunctionError.ts` 同等模式，从 `req.headers.get('Authorization')` 提取 Bearer token，调 `supabaseAdmin.auth.getUser(token)` 拿 user
+- **错误码标准**：沿用现有 `extractEdgeFunctionError` 中文化错误链路（参考 `edge-function-error-standard-zh`）
+- **回归点**：JSAPI（公众号）、Native（PC 扫码）、小程序 H5、合伙人下单、训练营下单、测评下单 6 路必须联调
+- **不影响**：真匿名游客（无 JWT）下单流程保持不变
 
-### 验证标准
+### 七、工时
 
-1. **数据库**：`SELECT price FROM coach_services WHERE coach_id='063f4816-...'`（林蒿）→ **300.00**
-2. **林蒿详情页** `/human-coaches/063f4816-...`：底部显示「起 ¥300」（不再是 ¥0）
-3. **未来新教练**：管理员审核通过并设档时，无论 services 行先建还是后建，价格都自动等于档次价
-4. **极端场景**：若教练既无档次又无服务定价 → 显示「价格待定」而不是 ¥0
-5. **Lisa**：现有 ¥300 显示不受影响
-6. **管理后台**：价格档次切换功能不变
+| 阶段 | 工时 |
+|---|---|
+| 后端 JWT 一致性校验 + 错误码 | 0.4 天 |
+| 前端 4 个入口去 "guest" + 错误提示 | 0.6 天 |
+| openId 缓存 SIGNED_IN 校验 | 0.2 天 |
+| 6 路支付链路联调 | 0.6 天 |
+| **合计** | **1.8 天** |
 
-### 不动的内容
+### 八、确认选项
 
-- `coach_price_tiers` 表与档次配置
-- 已有 `trg_sync_coach_services_price` 触发器（继续保留作 UPDATE 路径双保险）
-- BookingDialog 与下单流程
+- 🅰 **同意按此 3 项整体实施**（后端校验 + 前端去 guest + openId 缓存校验）
+- 🅑 **仅做修复 1（后端）**：风险最低，前端旧版本仍可能误传，但后端会拦下
+- 🅒 **仅做修复 2+3（前端）**：不动后端，存在被绕过的可能
+- 🅓 **暂不修代码**，先人工通知 18190190026 用户清浏览器缓存重新下单
 
