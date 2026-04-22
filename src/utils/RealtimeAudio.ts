@@ -740,7 +740,21 @@ export class RealtimeChat {
         if (!this.isDisconnected) {
           console.log('[WebRTC] Data channel opened:', performance.now() - startTime, 'ms');
           this.lastDataChannelActivity = Date.now();
-          
+
+          // 🚀 快路径：推送完整 session 配置（instructions/tools），覆盖最简占位配置
+          if (this.pendingSessionConfig && this.dc?.readyState === 'open') {
+            try {
+              this.dc.send(JSON.stringify({
+                type: 'session.update',
+                session: this.pendingSessionConfig,
+              }));
+              console.log('[WebRTC] Pending session config pushed:', performance.now() - startTime, 'ms');
+              this.pendingSessionConfig = null;
+            } catch (e) {
+              console.warn('[WebRTC] Failed to push pending session config:', e);
+            }
+          }
+
           // 🔧 启动活动检测：每 30 秒检测一次数据通道活动
           this.activityCheckInterval = setInterval(() => {
             const inactiveTime = Date.now() - this.lastDataChannelActivity;
