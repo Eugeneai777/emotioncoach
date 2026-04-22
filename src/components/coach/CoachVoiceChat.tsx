@@ -2704,8 +2704,12 @@ export const CoachVoiceChat = ({
             colors={colors}
             onStart={() => {
               const client = chatRef.current as any;
-              if (!client?.startRecording) return;
-              const r = client.startRecording();
+              // 优先用 pttStart（小程序 WebSocket 通道），其次 startRecording（WebRTC 通道）
+              const fn = client?.pttStart ? client.pttStart.bind(client)
+                       : client?.startRecording ? client.startRecording.bind(client)
+                       : null;
+              if (!fn) return;
+              const r = fn();
               if (!r?.ok) {
                 if (r?.reason === 'channel_not_open') {
                   toast({ title: '连接还没准备好', description: '请稍等片刻再试', variant: 'destructive' });
@@ -2717,11 +2721,14 @@ export const CoachVoiceChat = ({
             }}
             onStop={() => {
               const client = chatRef.current as any;
-              if (!client?.stopRecording) {
+              const fn = client?.pttStop ? client.pttStop.bind(client)
+                       : client?.stopRecording ? client.stopRecording.bind(client)
+                       : null;
+              if (!fn) {
                 setSpeakingStatus('idle');
                 return;
               }
-              const r = client.stopRecording();
+              const r = fn();
               setSpeakingStatus('idle');
               if (!r?.ok && r?.reason === 'too_short') {
                 toast({ title: '按久一点', description: '至少按住 0.3 秒再松开', duration: 1800 });
