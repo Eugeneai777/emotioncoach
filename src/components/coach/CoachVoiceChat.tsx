@@ -144,6 +144,9 @@ export const CoachVoiceChat = ({
   const startAttemptRef = useRef(0);
   const [useMiniProgramMode, setUseMiniProgramMode] = useState(false);  // 是否使用小程序模式
   const hasGreetedRef = useRef(false);  // 🔧 PTT 模式：仅注入一次主动问候
+  const shouldDelayMiniProgramPttConnect = pttMode && isWeChatMiniProgram();
+  const pendingPttStartRef = useRef(false);
+  const pendingPttReleaseCleanupRef = useRef<(() => void) | null>(null);
 
   // 🔧 PTT 模式接通后主动问候：拉取昵称 + 最近 7 天主题
   const { greeting: voiceGreeting, recentThemes } = useVoiceGreeting(
@@ -174,6 +177,48 @@ export const CoachVoiceChat = ({
       hasGreetedRef.current = false;
     }
   }, [status]);
+
+  const clearPendingPttStart = useCallback(() => {
+    pendingPttStartRef.current = false;
+    pendingPttReleaseCleanupRef.current?.();
+    pendingPttReleaseCleanupRef.current = null;
+  }, []);
+
+  const armPendingPttReleaseWatch = useCallback(() => {
+    pendingPttReleaseCleanupRef.current?.();
+
+    const cleanup = () => {
+      window.removeEventListener('pointerup', handleRelease);
+      window.removeEventListener('pointercancel', handleRelease);
+      window.removeEventListener('mouseup', handleRelease);
+      window.removeEventListener('touchend', handleRelease);
+      pendingPttReleaseCleanupRef.current = null;
+    };
+
+    const handleRelease = () => {
+      pendingPttStartRef.current = false;
+      const client = chatRef.current as any;
+      const stopFn = client?.pttStop ? client.pttStop.bind(client)
+        : client?.stopRecording ? client.stopRecording.bind(client)
+        : null;
+
+      if (statusRef.current === 'connected' && stopFn) {
+        const result = stopFn();
+        if (!result?.ok && result?.reason === 'too_short') {
+          toast({ title: '按久一点', description: '至少按住 0.3 秒再松开', duration: 1800 });
+        }
+      }
+
+      setSpeakingStatus('idle');
+      cleanup();
+    };
+
+    window.addEventListener('pointerup', handleRelease, { once: true });
+    window.addEventListener('pointercancel', handleRelease, { once: true });
+    window.addEventListener('mouseup', handleRelease, { once: true });
+    window.addEventListener('touchend', handleRelease, { once: true });
+    pendingPttReleaseCleanupRef.current = cleanup;
+  }, [toast]);
   // 🔧 连接进度追踪
   const [connectionPhase, setConnectionPhase] = useState<ConnectionPhase>('preparing');
   const [connectionElapsedTime, setConnectionElapsedTime] = useState(0);
@@ -901,6 +946,21 @@ export const CoachVoiceChat = ({
             try { client.setPushToTalkMode(true); } catch (e) { console.warn('[PTT] enable failed', e); }
           }, 400);
         }
+
+        if (pendingPttStartRef.current) {
+          setTimeout(() => {
+            if (!pendingPttStartRef.current) return;
+            const activeClient = chatRef.current as any;
+            const startFn = activeClient?.pttStart ? activeClient.pttStart.bind(activeClient)
+              : activeClient?.startRecording ? activeClient.startRecording.bind(activeClient)
+              : null;
+            if (!startFn) return;
+            const result = startFn();
+            if (result?.ok !== false) {
+              setSpeakingStatus('user-speaking');
+            }
+          }, 80);
+        }
       }
     } else if (mappedStatus === 'disconnected' || mappedStatus === 'error') {
       if (durationRef.current) clearInterval(durationRef.current);
@@ -1190,20 +1250,26 @@ export const CoachVoiceChat = ({
       updateConnectionPhase('requesting_mic');
       let preAcquiredStream: MediaStream | null = null;
       try {
-        if (platformInfo.platform === 'miniprogram' && typeof window.wx?.authorize === 'function') {
+        // 🔧 关键：优先在用户手势上下文中同步触发 getUserMedia，供小程序 WebView / WebRTC 复用
+        if (navigator.mediaDevices?.getUserMedia) {
+          try {
+            preAcquiredStream = await navigator.mediaDevices.getUserMedia({
+              audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+            });
+          } catch (webMicError) {
+            console.warn('[VoiceChat] getUserMedia preflight failed:', webMicError);
+            if (platformInfo.platform !== 'miniprogram') throw webMicError;
+          }
+        }
+
+        // 小程序原生录音权限兜底：仅在未拿到 Web 麦克风流时再请求
+        if (!preAcquiredStream && platformInfo.platform === 'miniprogram' && typeof window.wx?.authorize === 'function') {
           await new Promise<void>((resolve, reject) => {
             window.wx?.authorize?.({
               scope: 'scope.record',
               success: () => resolve(),
               fail: (err: any) => reject(err),
             });
-          });
-        }
-
-        // 🔧 关键：在用户手势上下文中请求麦克风，保留 stream 供后续 WebRTC 复用
-        if (navigator.mediaDevices?.getUserMedia) {
-          preAcquiredStream = await navigator.mediaDevices.getUserMedia({
-            audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
           });
         }
 
@@ -1407,7 +1473,8 @@ export const CoachVoiceChat = ({
           tokenEndpoint,
           mode,
           scenario,
-          extraBody: { ...extraBody, voice_type: voiceType }
+          extraBody: { ...extraBody, voice_type: voiceType },
+          preAcquiredStream,
         });
         // 🎙️ PTT 预设：在 connect 之前声明，让 relay 关闭服务端 VAD 并启用本地音频闸门
         if (pttMode && typeof (miniProgramClient as any).presetPushToTalk === 'function') {
@@ -1516,7 +1583,8 @@ export const CoachVoiceChat = ({
             tokenEndpoint,
             mode,
             scenario,
-            extraBody: { ...extraBody, voice_type: voiceType }
+            extraBody: { ...extraBody, voice_type: voiceType },
+            preAcquiredStream,
           });
           chatRef.current = miniProgramClient;
           await miniProgramClient.connect();
@@ -2058,7 +2126,11 @@ export const CoachVoiceChat = ({
         setInsufficientDuringCall(true);
         setStatus('idle');
       } else if (quotaResult === true) {
-        startCall();
+        if (shouldDelayMiniProgramPttConnect) {
+          setStatus('idle');
+        } else {
+          startCall();
+        }
       } else {
         setTimeout(onClose, 1500);
       }
@@ -2090,6 +2162,7 @@ export const CoachVoiceChat = ({
         aiFlushRafRef.current = null;
       }
       // 🔧 组件卸载时释放全局语音锁
+      pendingPttReleaseCleanupRef.current?.();
       releaseLock();
     };
   }, []);
@@ -2698,11 +2771,19 @@ export const CoachVoiceChat = ({
 
       {/* 底部操作区 — PTT 模式上移到拇指区 */}
       <div className={`px-6 flex flex-col items-center gap-3 ${pttMode && status === 'connected' ? 'pb-[14vh] pt-2' : 'p-6 pb-safe'}`}>
-        {pttMode && status === 'connected' ? (
+        {pttMode && status !== 'connecting' ? (
           <PushToTalkButton
             primaryColor={primaryColor}
             colors={colors}
             onStart={() => {
+              if (shouldDelayMiniProgramPttConnect && !chatRef.current && status !== 'connected') {
+                if (status === 'connecting') return;
+                pendingPttStartRef.current = true;
+                armPendingPttReleaseWatch();
+                startCall();
+                return;
+              }
+
               const client = chatRef.current as any;
               // 优先用 pttStart（小程序 WebSocket 通道），其次 startRecording（WebRTC 通道）
               const fn = client?.pttStart ? client.pttStart.bind(client)
@@ -2720,6 +2801,12 @@ export const CoachVoiceChat = ({
               setSpeakingStatus('user-speaking');
             }}
             onStop={() => {
+              if (shouldDelayMiniProgramPttConnect && status !== 'connected') {
+                clearPendingPttStart();
+                setSpeakingStatus('idle');
+                return;
+              }
+
               const client = chatRef.current as any;
               const fn = client?.pttStop ? client.pttStop.bind(client)
                        : client?.stopRecording ? client.stopRecording.bind(client)
