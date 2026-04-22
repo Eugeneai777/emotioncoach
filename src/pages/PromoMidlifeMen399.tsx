@@ -234,6 +234,43 @@ export default function PromoMidlifeMen399() {
                 <p className="text-[13px] leading-[1.75]" style={{ color: C.textMute }}>
                   {card.desc}
                 </p>
+
+                {/* 核心权益 01 · 主教练展示 */}
+                {i === 0 && (
+                  <div
+                    className="mt-4 flex items-center gap-3 p-3 rounded-lg"
+                    style={{ background: "rgba(212,180,129,0.06)", border: `1px solid ${C.divider}` }}
+                  >
+                    <img
+                      src={coachDaixi}
+                      alt="总教练 黛汐"
+                      className="w-14 h-14 rounded-full object-cover shrink-0"
+                      style={{ border: `1px solid ${C.gold}` }}
+                    />
+                    <div className="min-w-0">
+                      <p className="text-[13px] font-semibold" style={{ ...serif, color: C.text }}>
+                        总教练 · 黛汐
+                      </p>
+                      <p className="text-[11.5px] leading-[1.5] mt-0.5" style={{ color: C.textMute }}>
+                        生命教练 / 国际脑点执行师 / PNCC 心流教练 / 高级心理咨询师
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* 核心权益 02 · 知乐胶囊产品大图 */}
+                {i === 1 && (
+                  <div
+                    className="mt-4 rounded-lg overflow-hidden"
+                    style={{ border: `1px solid ${C.divider}` }}
+                  >
+                    <img
+                      src={zhileCapsules}
+                      alt="知乐胶囊产品实拍"
+                      className="w-full object-cover"
+                    />
+                  </div>
+                )}
               </div>
             ))}
 
