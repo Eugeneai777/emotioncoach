@@ -2089,26 +2089,36 @@ export const CoachVoiceChat = ({
           <ChevronLeft className="w-5 h-5" />
         </Button>
 
-        {/* 中间：通话信息 */}
-        <div className="text-white/70 text-xs flex items-center gap-2">
+        {/* 中间：通话信息 - 极简单行 */}
+        <div className="text-white/55 text-xs flex items-center gap-2">
           {status === 'connected' && (
             <>
-              <span className="font-mono">{formatDuration(duration)}</span>
+              <span className="font-mono tabular-nums">{formatDuration(duration)}</span>
               {!skipBilling && (
-                <span className="flex items-center gap-1 text-amber-400">
-                  <Coins className="w-3 h-3" />
-                  {billedMinutes * POINTS_PER_MINUTE}点
-                </span>
+                <>
+                  <span className="text-white/25">·</span>
+                  <span className="flex items-center gap-0.5 text-amber-400/90">
+                    <Coins className="w-3 h-3" />
+                    {billedMinutes * POINTS_PER_MINUTE}点
+                  </span>
+                </>
               )}
-              <ConnectionStatusBadge
-                networkQuality={networkQuality}
-                rtt={networkRtt}
-                usingFallback={useMiniProgramMode}
-              />
+              <span className="text-white/25">·</span>
+              <button
+                type="button"
+                onClick={() => {
+                  const tone = networkQuality === 'poor' ? '网络较差' : networkQuality === 'fair' ? '网络一般' : '网络良好';
+                  toast({ title: tone, description: networkRtt ? `延迟 ${networkRtt}ms` : '正在测量…', duration: 2200 });
+                }}
+                className={`flex items-center ${networkQuality === 'poor' ? 'text-red-400' : networkQuality === 'fair' ? 'text-amber-400' : 'text-white/55'} hover:text-white/90 transition-colors`}
+                aria-label="网络状态"
+              >
+                <Signal className="w-3.5 h-3.5" />
+              </button>
             </>
           )}
           {status === 'error' && <span className="text-red-400">连接失败</span>}
-          {status === 'disconnected' && <span className="text-white/50">已断开</span>}
+          {status === 'disconnected' && <span className="text-white/40">已断开</span>}
         </div>
 
         {/* 右侧：挂断按钮 */}
