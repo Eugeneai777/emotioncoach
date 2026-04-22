@@ -306,6 +306,24 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
       const resumeUrl = new URL(window.location.href);
       resumeUrl.searchParams.set('payment_resume', '1'); // 标记为支付恢复
       
+      // 🆕 鸿蒙微信浏览器对跨域 fetch 的 OPTIONS 预检处理有差异，invoke 会被静默拦截
+      // 兼容方案：所有微信浏览器统一使用顶层导航 GET 请求 edge function（302 → 微信授权）
+      // 这是浏览器顶层跳转，不是 fetch，完全无 CORS 问题
+      const ua = navigator.userAgent.toLowerCase();
+      const isHarmony = /harmonyos|hmsbrowser/i.test(ua);
+      const inWechat = isWeChatBrowser();
+
+      if (inWechat || isHarmony) {
+        const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL;
+        const directUrl = new URL(`${supabaseUrl}/functions/v1/wechat-pay-auth`);
+        directUrl.searchParams.set('redirectUri', resumeUrl.toString());
+        directUrl.searchParams.set('flow', 'camp_purchase');
+        console.log('[Payment] Using top-level navigation for WeChat/HarmonyOS:', directUrl.toString());
+        window.clearTimeout(fallbackTimer);
+        window.location.href = directUrl.toString();
+        return;
+      }
+
       // Promise.race 保证 invoke 不会无限挂起
       const invokePromise = supabase.functions.invoke('wechat-pay-auth', {
         body: {

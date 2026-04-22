@@ -22,6 +22,31 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // 模式0：GET 顶层导航 — 用于鸿蒙等微信浏览器规避 fetch CORS
+  // 直接 302 跳转到微信授权 URL，不经过浏览器端 invoke
+  if (req.method === 'GET') {
+    const url = new URL(req.url);
+    const redirectUri = url.searchParams.get('redirectUri');
+    const flow = url.searchParams.get('flow') || undefined;
+    if (!redirectUri) {
+      return new Response('redirectUri is required', { status: 400 });
+    }
+    const appId = Deno.env.get('WECHAT_APP_ID');
+    if (!appId) {
+      return new Response('WeChat not configured', { status: 500 });
+    }
+    const wechatBaseUrl = 'https://wechat.eugenewe.net';
+    const callbackUrl = new URL('/pay-entry', wechatBaseUrl);
+    callbackUrl.searchParams.set('payment_auth_callback', '1');
+    callbackUrl.searchParams.set('payment_redirect', redirectUri);
+    if (flow) callbackUrl.searchParams.set('pay_flow', flow);
+    const state = flow === 'register' ? `register_${Date.now()}` : `payauth_${Date.now()}`;
+    const scope = flow === 'register' ? 'snsapi_userinfo' : 'snsapi_base';
+    const wechatAuthUrl = `https://open.weixin.qq.com/connect/oauth2/authorize?appid=${appId}&redirect_uri=${encodeURIComponent(callbackUrl.toString())}&response_type=code&scope=${scope}&state=${state}#wechat_redirect`;
+    console.log('[WechatPayAuth] GET redirect → 302 to WeChat for flow:', flow);
+    return new Response(null, { status: 302, headers: { Location: wechatAuthUrl } });
+  }
+
   if (req.method !== 'POST') {
     return new Response(
       JSON.stringify({ error: 'Method not allowed' }),
