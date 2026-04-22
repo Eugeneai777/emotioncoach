@@ -1109,6 +1109,18 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
       const { data: { user: freshUser } } = await supabase.auth.getUser();
       const resolvedUserId = freshUser?.id || user?.id || sessionStorage.getItem('pending_payment_user_id') || 'guest';
 
+      // 🔍 埋点：提交创建订单请求
+      trackPaymentEvent('payment_submitted', {
+        metadata: {
+          payType: selectedPayType,
+          packageKey: packageInfo.key,
+          amount: packageInfo.price,
+          hasOpenId: !!resolvedOpenId,
+          isMiniProgram,
+          isWechat,
+        },
+      });
+
       const { data, error } = await supabase.functions.invoke('create-wechat-order', {
         body: {
           packageKey: packageInfo.key,
@@ -1150,6 +1162,11 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
 
       setOrderNo(data.orderNo);
 
+      // 🔍 埋点：订单创建成功
+      trackPaymentEvent('payment_order_created', {
+        metadata: { orderNo: data.orderNo, payType: selectedPayType },
+      });
+
       // 🆕 小程序原生支付：缓存订单号，便于从原生支付页返回后恢复状态
       if (selectedPayType === 'miniprogram') {
         setPendingOrderToCache(data.orderNo);
@@ -1160,6 +1177,9 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
           // 🆕 后端未调用微信支付 API（无 openId），直接跳转小程序原生支付页
           // 由原生端获取 openId，再调用后端生成 prepay 参数并完成支付
           console.log('[Payment] MiniProgram: needsNativePayment, navigating to native pay page with orderNo');
+          trackPaymentEvent('payment_miniprogram_navigating', {
+            metadata: { mode: 'needs_native_payment', orderNo: data.orderNo },
+          });
           setStatus('polling');
           startPolling(data.orderNo);
           triggerMiniProgramNativePay({
@@ -1171,6 +1191,9 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
           }, data.orderNo);
         } else {
           console.log('[Payment] MiniProgram: triggering native pay via navigateTo with prepay params');
+          trackPaymentEvent('payment_miniprogram_navigating', {
+            metadata: { mode: 'with_prepay_params', orderNo: data.orderNo },
+          });
           setStatus('polling');
           startPolling(data.orderNo);
           triggerMiniProgramNativePay(data.miniprogramPayParams, data.orderNo);
@@ -1190,20 +1213,34 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
           try {
             await invokeJsapiPay(data.jsapiPayParams);
             console.log('[Payment] JSAPI pay invoked successfully');
+            trackPaymentEvent('payment_jsapi_success', {
+              metadata: { orderNo: data.orderNo },
+            });
           } catch (jsapiError: any) {
             console.log('[Payment] JSAPI pay error:', jsapiError?.message);
             if (jsapiError?.message === '用户取消支付') {
               // 用户取消：标记为已取消，允许用复用同一订单重新唤起
               console.log('[Payment] User cancelled JSAPI, allowing retry with same order');
+              trackPaymentEvent('payment_jsapi_user_cancelled', {
+                metadata: { orderNo: data.orderNo },
+              });
               setJsapiCancelled(true);
             } else {
               // JSAPI 失败，降级到扫码模式
+              trackPaymentEvent('payment_jsapi_failed', {
+                errorMessage: jsapiError?.message,
+                metadata: { orderNo: data.orderNo, fallbackTo: 'native' },
+              });
               await fallbackToNativePayment(data.orderNo);
             }
           }
         } else {
           // Bridge 不可用，直接降级到扫码
           console.log('[Payment] Bridge not available, falling back to native');
+          trackPaymentEvent('payment_jsapi_failed', {
+            errorMessage: 'WeixinJSBridge not available within 1500ms',
+            metadata: { orderNo: data.orderNo, fallbackTo: 'native', stage: 'bridge_wait_timeout' },
+          });
           await fallbackToNativePayment(data.orderNo);
         }
       } else if ((data.payType || selectedPayType) === 'h5' && (data.h5Url || data.payUrl)) {
