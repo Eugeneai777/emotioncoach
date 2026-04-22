@@ -387,12 +387,24 @@ const Auth = () => {
         });
         
         if (error) {
+          await logAuthEvent({
+            event_type: 'login_failed',
+            auth_method: 'email_password',
+            email: email.trim(),
+            error_message: error.message,
+            error_code: error.message.includes('Invalid') ? 'invalid_credentials' : 'unknown',
+          });
           if (error.message.includes('Invalid login credentials')) {
             throw new Error('邮箱或密码错误');
           }
           throw error;
         }
         
+        await logAuthEvent({
+          event_type: 'login_success',
+          auth_method: 'email_password',
+          email: email.trim(),
+        });
         toast({
           title: "登录成功",
           description: "欢迎回来 🌿",
