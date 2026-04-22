@@ -149,6 +149,8 @@ export function UnifiedPayDialog({
     }
     return (
       <WechatPayDialog
+        // 🆕 用 flowId 作为 key，每次新支付流程强制 unmount 上一次实例，杜绝状态泄漏
+        key={`${packageInfo?.key ?? 'pkg'}-${getCurrentFlowId() ?? 'noflow'}`}
         open={true}
         onOpenChange={handlePayDialogChange}
         packageInfo={packageInfo}
