@@ -1,64 +1,72 @@
 
 
-## 把"什么时候可以找有劲AI"重设计成芯片区 → 直达语音教练
+## 把 4 个场景按钮升级成与主页同款"暗色发光卡片"
 
-### 现状
-该区块当前是 4 张大横卡（带插画背景 + "聊一聊 →"），点击跳转到 `/youjin-life/chat?topic=xxx`（文字聊天）。用户上传截图显示卡片视觉沉重、占屏长，且"聊一聊"是文字模式，与首页主推的 PTT 语音教练（中心红色按钮）形成两套入口，转化路径分裂。
+### 现状问题
+当前芯片是浅色 pill（`bg-indigo-50/70` 等），而主页主体（audience 头像卡、exploreBlocks、PromoBanner）全是**深色渐变 + 彩色光晕 + ring 边**的高级感风格。两套视觉语言并存，芯片显得像贴上去的便签。
 
-### 目标
-- 把 4 张大卡压缩为一行可横滑的**情绪芯片**（emoji + 短词），视觉更轻、上屏更密
-- 点击芯片直接进入 `/life-coach-voice`（PTT 语音教练，与首页中心按钮同一入口、同一会话规则），带上 `topic` 参数让教练开场就贴近场景
+### 设计目标
+让 4 个场景按钮变成主页"同一个家族"的小卡片：保留紧凑（不回到大横卡），但视觉上对齐 `exploreBlocks` 的暗色发光质感。
 
-### 设计
+### 新版设计
 
-#### 一、芯片区视觉（替换 622-663 行的卡片列表）
+#### 一、视觉规格（对齐 exploreBlocks 风格）
 
 ```
-什么时候可以找有劲AI？        [图标 🎙️ 同首页中心按钮]
-任何时刻，任何情绪 —— 按住说话即可
-[🌙 深夜焦虑] [💼 职场迷茫] [💗 关系困扰] [💰 财富卡点]
-       ↑ 横滑 pill 芯片，单行，自适应换行
+┌──────────────────────────────────────────────────┐
+│  🎙️ 想说点什么？按住和有劲AI说              │
+│  ──────────────────────────────────────       │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐
+│  │  🌙      │ │  💼      │ │  💗      │ │  💰      │
+│  │ 深夜焦虑 │ │ 职场迷茫 │ │ 关系困扰 │ │ 财富卡点 │
+│  │ 睡不着…  │ │ 想换工作 │ │ 吵架了…  │ │ 钱的烦恼 │
+│  └──────────┘ └──────────┘ └──────────┘ └──────────┘
+│  ↑ 4 列等宽小卡（窄屏 2×2），暗色渐变+光晕+ring
+└──────────────────────────────────────────────────┘
 ```
 
-- 容器：`flex flex-wrap gap-2`（窄屏自动换行成 2 行 × 2 列）
-- 单芯片：圆角 full、px-3 py-2、emoji + 8px + 文字、白底 + 该场景主题色边框（保留原 indigo/amber/rose/emerald 色系做色彩记忆）
-- 点击：`scale-95` 反馈 + 轻微 `bg-{color}-50` 高亮
-- 副标题改为"按住说话即可"（呼应 PTT，与首页中心按钮语义一致）
+**单卡样式**（参照 exploreBlocks）：
+- 容器：`rounded-xl p-3 bg-gradient-to-br ring-1 shadow-lg` + 各自主题色（indigo/amber/rose/emerald 的 `/15→/8` 渐变 + `/25` ring + `/10` glow）
+- emoji：放大到 `text-2xl`，带 `bg-{color}-500/20` 圆形底
+- 标题：`text-[12px] font-bold text-foreground`
+- 副标题（**新增**）：`text-[10px] text-muted-foreground` —— 一句具体场景钩子（"睡不着翻来覆去"/"想离职没勇气"/"刚和TA吵完架"/"赚得少存不下"）
+- 点击：`whileTap scale-95` + 整卡轻微亮起
 
-#### 二、点击行为 → 复用首页中心按钮的 PTT 语音
+#### 二、布局
+- `grid grid-cols-4 gap-2`（≥640px）
+- `grid grid-cols-2 gap-2`（手机窄屏自动 2×2）
+- 不再用 `flex flex-wrap pill`
 
-- `onClick={() => navigate('/life-coach-voice?topic=anxiety')}`
-- 4 个 topic 值沿用现有：`anxiety / career / relationship / wealth`
-- `LifeCoachVoice.tsx` 读取 `useSearchParams().get('topic')`，作为新 prop `initialTopic` 传给 `CoachVoiceChat`
-- `CoachVoiceChat` 在生成 system instruction / 第一句问候时，按 topic 注入一句场景化开场白（如 anxiety → "看到你这会儿在为深夜焦虑找我，先深呼吸一下…"）
+#### 三、文案优化（更口语、更具体）
 
-> 与首页中心红色按钮的 PTT 完全一致：同 `tokenEndpoint`、同 `voiceType`、同 `pttMode`、同 `useVoiceSessionLock` 互斥锁。区别只是带了个 topic 让教练知道入口语境。
+| emoji | 标题 | 副标题钩子 |
+|---|---|---|
+| 🌙 | 深夜焦虑 | 翻来覆去睡不着 |
+| 💼 | 职场迷茫 | 想换工作没勇气 |
+| 💗 | 关系困扰 | 刚和TA吵完架 |
+| 💰 | 财富卡点 | 赚多少都存不下 |
 
-#### 三、useCases 数据精简
-
-把 102-147 行的 `useCases` 数组瘦身：去掉 `bg / accent / iconBg / illustrationKey / desc`，保留 `emoji / title / topic / colorClass`（例如 `colorClass: 'border-indigo-200 text-indigo-600 bg-indigo-50/60'`）。原插画 `scene_*` 资源继续保留在仓库中（其他页面可能复用）。
+#### 四、标题区微调
+- 原："什么时候可以找有劲AI？" → 改："🎙️ 想说点什么？按住和有劲AI说"
+- 副标题删除（钩子已下沉到每张卡）
+- 保留左侧 `w-1 h-4` 渐变小竖条（与主页其他 section 标题一致）
 
 ### 涉及文件
 
-1. **`src/pages/MiniAppEntry.tsx`**
-   - 精简 `useCases` 数据（102-147）
-   - 重写芯片区 UI（612-665）
-   - 副标题改"按住说话即可"
-2. **`src/pages/LifeCoachVoice.tsx`**
-   - 读取 `?topic=` 参数，透传给 `CoachVoiceChat`
-3. **`src/components/coach/CoachVoiceChat.tsx`**
-   - 新增可选 prop `initialTopic?: 'anxiety' | 'career' | 'relationship' | 'wealth'`
-   - 在已有的 system prompt 拼装处追加一句场景化引导（仅 4 行 if/else 映射）
+**`src/pages/MiniAppEntry.tsx`**（仅 2 处修改，约 30 行）
+
+1. **102-127 行**：`useCases` 加入 `subtitle`、改成暗色风格的 `bg/ring/glow/iconBg/iconColor` 字段（参照 exploreBlocks 数据结构）
+2. **592-621 行**：芯片区 UI 重写为 `grid grid-cols-2 sm:grid-cols-4 gap-2` + 暗色发光卡片
 
 ### 不动
-- 首页中心红色 PTT 按钮、CoachVoiceChat 主流程、计费、字幕节奏修复、芯片缓存、`/youjin-life/chat` 文字聊天页（保留作为兜底入口，不再从此区暴露）
-- 用户见证、"还想探索更多"折叠区
-- 4 张插画资源（其他页面引用保持不变）
+- 点击行为：仍 `navigate(/life-coach-voice?topic=${topic})`，topic 值不变（anxiety/career/relationship/wealth），edge function 场景映射保持
+- 4 个 topic 与 `vibrant-life-realtime-token` 的 `SCENARIO_CONFIGS` key 映射逻辑
+- 用户见证、"还想探索更多"折叠区、PromoBanner、audience 头像区
+- PTT 语音教练主流程、计费、字幕
 
 ### 验证
-- [ ] 区块高度从 ~520px 压缩到 ~100px
-- [ ] 点击任一芯片 → 直接进入语音教练全屏页（不弹中间步骤）
-- [ ] 教练开场白能呼应所选 topic
-- [ ] 与首页中心红色按钮共享同一会话锁（不会双开）
-- [ ] 无 topic 参数时 `/life-coach-voice` 行为与现在完全一致
+- [ ] 4 张小卡视觉与上方"日常工具/专业测评/系统训练营/健康商城"四宫格观感统一（同样的暗色渐变 + ring + glow）
+- [ ] 窄屏（375px）2×2 排列不挤，宽屏（≥640px）一行 4 列
+- [ ] 每张卡的副标题钩子一眼能看懂"什么时候用"
+- [ ] 点击仍直达 PTT 语音并触发对应场景开场白
 
