@@ -1,126 +1,129 @@
 
 
-## 核查结论：第二次点击支付会卡在「调用支付中」的根因
+# 25-45 岁女性 ¥399 售前落地页设计方案
 
-### 现状日志/网络抓包
+## 商业架构师视角的核心评估
 
-会话期间**无新支付调用记录**（network 只有 `audience_illustrations` / `generate-greeting`），无法直接复现，但通过对 `WechatPayDialog.tsx` 与 `UnifiedPayDialog.tsx` 全链路代码审计，**确认存在 3 个会导致"二次点击卡住"的真实缺陷**：
+**用户反馈科学性评估：**
 
----
-
-### 缺陷 1：`createOrder` 网络请求**没有 AbortController**，关闭弹窗后请求仍在飞
-
-**位置**：`src/components/WechatPayDialog.tsx` line 1042 `supabase.functions.invoke('create-wechat-order', ...)`
-
-**链路**：
-1. 用户首次点击 → `createOrder()` 发起 invoke → `setStatus('loading')`
-2. **后端慢**（微信代理 ETIMEDOUT 重试中，最长 ~45 秒）或网络抖动
-3. 用户**等不及关掉弹窗** → 父级 `setShowPay(false)` → `WechatPayDialog` 的 `useEffect(open→false)` 触发 `resetState()` → `setStatus('idle')`
-4. 但**第一笔 invoke 没被 abort**，继续在后台跑
-5. 用户**第二次点击** → 新 `WechatPayDialog` 挂载 → `createOrder()` 再次触发 → **第二笔 invoke 也发出**
-6. 此时若用户身处微信浏览器，`wechat-pay-auth` / `create-wechat-order` 可能因 `pay_auth_in_progress` 标记或 `silentAuthTriggeredRef` 状态污染卡住，UI 永远停在 "调用支付中"
-
----
-
-### 缺陷 2：`silentAuthTriggeredRef` / `pay_auth_in_progress` **跨弹窗实例不清理**
-
-**位置**：line 268 `silentAuthTriggeredRef.current = true` + line 273 `sessionStorage.setItem("pay_auth_in_progress", "1")`
-
-- 首次点击触发静默授权 → 设置 `pay_auth_in_progress=1`
-- 用户中途关闭（**没真正完成 OAuth 跳转**） → `resetState()` 在 line 707 重置了内存 ref，**但 `sessionStorage.pay_auth_in_progress` 没清**（只有 line 297、346、360 在静默授权 *自身* 异常路径里清，没在 `resetState` 里清）
-- 二次点击若被其他守卫读到 `pay_auth_in_progress=1`，可能跳过授权 → openId 为空 → 卡死
-
----
-
-### 缺陷 3：`UnifiedPayDialog` **没有跟踪正在进行中的支付**
-
-**位置**：`src/components/UnifiedPayDialog.tsx` line 78-94 的 `useEffect`
-
-- 每次 `open=true` 都无条件 `startPaymentFlow()` + `setStage('pay')` + `setPayMethod(getDefaultPayMethod())`
-- 若上次 invoke 还在飞（缺陷 1），子组件 `WechatPayDialog` 重建时会再发一次 invoke（`orderCreatedRef` 在 line 207-211 的 open 边沿被重置）
-- 后端因此可能创建**两个 pending 订单**，且前端 polling 第二个订单永远不会成功（用户实际没付任何一个）
-
----
-
-### 修复方案（3 个文件、零后端改动）
-
-#### A. `WechatPayDialog.tsx` — invoke 加 AbortController + sessionStorage 清理
-
-```ts
-// 顶部新增
-const abortRef = useRef<AbortController | null>(null);
-
-// createOrder 内（line 1042 前）
-abortRef.current?.abort(); // 取消上一笔
-abortRef.current = new AbortController();
-const { data, error } = await supabase.functions.invoke('create-wechat-order', {
-  body: {...},
-  // @ts-ignore - supabase v2 透传 fetch options
-  signal: abortRef.current.signal,
-});
-
-// resetState 内（line 690 后）
-abortRef.current?.abort();
-abortRef.current = null;
-sessionStorage.removeItem('pay_auth_in_progress'); // 🔑 关键补漏
-```
-
-同样保护 `wechat-pay-auth`（line 328）与 `fallbackToNativePayment`（line 928）的 invoke。
-
-#### B. `WechatPayDialog.tsx` — `createOrder` 入口加**正在进行中**守卫升级
-
-```ts
-// line 974 当前只防 'loading'/'polling'/'success'
-// 增补：若 abortRef 仍有未释放的 controller，等其结束或强行取消
-if (abortRef.current && !abortRef.current.signal.aborted) {
-  abortRef.current.abort();
-  await new Promise(r => setTimeout(r, 100));
-}
-```
-
-#### C. `UnifiedPayDialog.tsx` — 弹窗关闭时强制走 unmount 路径
-
-```tsx
-// line 101 handlePayDialogChange 内追加
-if (!v) {
-  trackPaymentEvent('payment_cancelled');
-  endPaymentFlow();
-  sessionStorage.removeItem('pay_auth_in_progress'); // 🔑 双保险
-  onOpenChange(false);
-}
-```
-
-并将 `WechatPayDialog` 的 `key={packageInfo?.key + '-' + open}` 改为 `key={packageInfo?.key + '-' + flowId}`（每次 `startPaymentFlow` 拿新 flowId），**强制 unmount 上一次实例**，从根上杜绝状态泄漏。
-
----
-
-### 行为对照表
-
-| 场景 | 修复前 | 修复后 |
+| 反馈点 | 是否采纳 | 理由 |
 |---|---|---|
-| 首次点击 → 等待中关闭 → 二次点击 | 卡在"调用支付中" | 第一笔 abort，第二笔正常发起 |
-| 首次点击 → 微信授权跳转中关闭 | `pay_auth_in_progress` 残留 | sessionStorage 清干净 |
-| 同一订单号重复创建 | 后端可能产生 2 个 pending | abort 后只剩 1 笔 |
-| 用户取消 JSAPI 后再次点击 | 已通过 `jsapiCancelled` 走复用路径 ✅ | 不变 |
-| 支付成功路径 | 正常 | 正常 |
+| 情绪内耗 / 失眠 / 多角色拉扯 | ✅ 强采纳 | 25-45 女性核心痛点共识，转化锚点 |
+| 自我缺失 / "我到底是谁" | ✅ 强采纳 | 区别于男性"功能/隐私"焦虑，是女性版独有钩子 |
+| 乳房胀痛 / 月经不规律 / 头痛 | ⚠️ 弱化处理 | 韦晨曦反馈正确：女性不应从"疾病"切入，会显牵强且贬低；改为"身体在喊累"的情绪化表达 |
+| 35+ 职场与家庭平衡 | ✅ 强采纳 | 高频共鸣点 |
+| "受害者模式 / 向外求 / 没安全感 / 讨好" | ⚠️ 不直接说 | 用户自己看不见这层，售前页不能教育，要"被看见"。改为"总是先照顾别人，最后才轮到自己" |
+
+**男版 vs 女版差异化定位：**
+
+| 维度 | 男版（现有） | 女版（新建） |
+|---|---|---|
+| 核心情绪 | 隐私 / 体面 / 不能输 | 被理解 / 被看见 / 喘息空间 |
+| 视觉语言 | 暗金 + 酒红，深夜独处感 | 暖米 + 玫瑰豆沙，清晨呼吸感 |
+| 痛点表达 | 5 条直击式 | 3 个场景化故事（更长、更软） |
+| 解决方案 | 4 件实用品 | 3 件 + 故事化叙述 |
+| 教练展示 | 6 人小卡 | 突出女性教练 + 同性安全感 |
+| CTA 语气 | "扛着" → "舒展" | "硬撑" → "喘口气" |
 
 ---
 
-### 影响面 & 工时
+## 页面结构（9 段）
 
-- ✅ 仅 2 个文件 (~25 行新增)
-- ✅ 不动后端 / 不动数据库 / 不动 RPC
-- ✅ 不影响小程序、PC 微信、H5、Native 任意路径
-- ✅ 5 大 AI 教练的余额不足横幅、训练营购买、推广页 CTA 全链路兼容
-- ⏱️ 0.5 天（含微信浏览器、小程序、H5 三端回归）
+```text
+01 HERO         我也想被照顾一次
+02 痛点共鸣      3 个场景，戳中"硬撑的女人"
+03 7 天权益      4 件事，按女人最在意的顺序
+04 3 大优势      为什么是这 ¥399
+05 教练团        6 位教练 · 突出同性安全感
+06 信任保障      4 条承诺（隐私 + 不push）
+07 同龄证言      3 位女性化名故事
+08 FAQ          4 个最常问
+09 价格 + CTA    ¥399 给自己留一次喘息
+```
+
+### 文案要点（用户语言，不教育）
+
+**01 HERO**
+- 主标题："这一次，<br/>**我也想被**<br/>**好好照顾一次。**"
+- 副标："25-45 岁女性的 7 天喘息计划 · 没有功课，只有被听见"
+
+**02 痛点共鸣** — 3 个场景化（不是 5 个清单式）
+1. "白天像打仗，回家还要陪写作业、做家务，明明累到不行，却翻来覆去睡不着。"
+2. "我是项目负责人、是妈妈、是女儿，唯独不是我自己。最近常常在想——我到底是谁。"
+3. "身体一直在喊累，可工作、孩子都等着我，只能自己硬扛着。"
+
+**03 4 件权益**（顺序按女性优先级重排）
+- 权益 01：**同龄姐妹海沃塔小组** · "终于可以说真话的地方"（社群优先于胶囊）
+- 权益 02：**24h AI 女性教练 + 每日 10 分钟静心** · "深夜不必假装坚强"
+- 权益 03：**1 瓶知乐胶囊体验装** · "身体兜底，先把睡眠还给自己"
+- 权益 04：**专属女性私密社群** · "不进朋友圈，不被同事看到"
+
+**04 3 大优势**
+- 优势 1 · **被理解，不被说教**："教练只听不评判，全程不打鸡血、不卖课"
+- 优势 2 · **碎片化无负担**："每天 15 分钟，孩子睡了就能做"
+- 优势 3 · **高性价比体验**："一支口红的钱，拿到 ¥3,980 闭门计划同款核心"
+
+**05 教练团** — 复用 6 人，但置顶并放大「黛汐 / 晓一 / Amy / 木棉 / 贝蒂」5 位女性教练；肖剑雄保留但下沉。补一行："5 位女性教练 · 全程姐妹陪伴"。
+
+**06 4 条承诺**
+1. 全程女性社群 · 不混入男性
+2. 课程链接仅本人可见
+3. 沟通仅你与教练可见
+4. 7 天无理由全额退款
+
+**07 同龄证言**（3 位女性化名）
+- 张女士 · 38 岁 · 二孩妈妈："这是这两年第一次，有人问我'你今天怎么样'。"
+- 林女士 · 33 岁 · 项目经理："海沃塔那场之后，我哭了 20 分钟，然后睡了 8 小时。"
+- 周女士 · 42 岁 · 设计总监："不是变强，是允许自己歇一会。"
+
+**08 FAQ** — 复用男版结构，针对女性改 2 条
+- Q3 改为："孩子哭闹 / 加班错过怎么办？" → 全程回放、AI 24h 在线
+- Q4 改为："家人会知道吗？我先生 / 婆婆会看到吗？"
+
+**09 价格 + CTA**
+- 主 CTA："立即加入 7 天喘息计划 →"
+- 副 CTA："先匿名咨询，了解详情"
+- 收尾文案："你为孩子、为家人、为客户花了那么多<br/>这一次，请留 ¥{price} 和 7 天给自己。"
 
 ---
 
-### 验证清单（修复后必测）
+## 视觉设计（女性审美）
 
-1. PC 微信扫码：打开支付 → 关闭 → 立刻再开 → 二维码正常显示
-2. 手机微信浏览器 JSAPI：弹起后取消 → 关闭弹窗 → 再点支付 → 能再次拉起
-3. 移动浏览器 H5：关掉支付 → 立即再开 → 二维码刷新
-4. 小程序：`mp_openid` 缺失场景下关闭再打开 → 不再死循环授权
-5. 慢网模拟（Chrome DevTools `Slow 3G`）：首次 invoke 中关闭 → 第二次能创建新订单
+| 元素 | 配色 |
+|---|---|
+| bg | `#fdfaf6` 暖米白 |
+| bgSoft | `#f7f0e8` 米色 |
+| bgCard | `#ffffff` |
+| primary | `#c97b8a` 玫瑰豆沙（替代男版金色） |
+| primarySoft | `#e8b4bc` |
+| accent | `#8b6f47` 暖棕（教练徽章） |
+| text | `#3d2e2a` 深咖 |
+| textMute | `#8a7a73` |
+| divider | `rgba(201,123,138,0.2)` |
+
+- 字体：标题保留 `Noto Serif SC`（与男版一致家族），但字重降到 `500`，行高拉到 `1.5`，更柔和
+- 装饰：HERO 用淡玫瑰渐变光晕替代男版金线分割
+- 图片：知乐胶囊大图保留，教练头像加柔粉描边
+
+---
+
+## 技术实现
+
+**新文件：** `src/pages/PromoMidlife25to45Women399.tsx`
+- 整体结构复用 `PromoMidlifeMen399.tsx`，提取重复部分仅替换文案 + 配色对象 `C`
+- 复用包：`PACKAGE_KEY = "camp-emotion_stress_7"`（同一个 ¥399 产品，营内交付不变）
+- 复用组件：`UnifiedPayDialog` / `usePaymentCallback` / `usePackageByKey` / `useWechatOpenId` / `useAuth` / `setPostAuthRedirect`
+- 复用素材：`zhile-capsules.jpeg` / 6 位教练图 / `wecom-coach-qr.jpg`
+- 新路由：`/promo/midlife-women-399` 注册到 `src/App.tsx`
+- SEO：`<Helmet>` 标题 "25–45 岁，请为自己留 7 天 ｜ ¥399 喘息计划"
+
+**埋点不变：** 复用 `payment_flow_events`，能直接和男版做漏斗对比。
+
+---
+
+## 实施清单
+
+1. 创建 `src/pages/PromoMidlife25to45Women399.tsx`（女性版配色 + 文案）
+2. 在 `src/App.tsx` 注册路由 `/promo/midlife-women-399`
+3. 在 `MiniAppEntry` 或 `/mama` 女性专区轮播加入入口（可选第二步，需你确认）
 
