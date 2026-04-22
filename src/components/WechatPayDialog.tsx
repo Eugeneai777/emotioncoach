@@ -287,6 +287,18 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
       }
     }
 
+    // 🆕 全局兜底：8 秒内若仍未跳转（invoke 卡住或被微信浏览器拦截），自动回退扫码
+    // 鸿蒙微信浏览器对跨域 fetch 行为有差异，invoke 可能永久挂起且不抛错
+    const fallbackTimer = window.setTimeout(() => {
+      if (!silentAuthTriggeredRef.current) return;
+      console.warn('[Payment] Silent auth global fallback (8s) triggered — switching to QR code');
+      setIsRedirectingForOpenId(false);
+      silentAuthTriggeredRef.current = false;
+      sessionStorage.removeItem("pay_auth_in_progress");
+      sessionStorage.removeItem('pending_payment_package');
+      setOpenIdResolved(true);
+    }, 8000);
+
     try {
       console.log('[Payment] Triggering silent auth for openId via wechat-pay-auth');
       
@@ -294,14 +306,22 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
       const resumeUrl = new URL(window.location.href);
       resumeUrl.searchParams.set('payment_resume', '1'); // 标记为支付恢复
       
-      const { data, error } = await supabase.functions.invoke('wechat-pay-auth', {
+      // Promise.race 保证 invoke 不会无限挂起
+      const invokePromise = supabase.functions.invoke('wechat-pay-auth', {
         body: {
           redirectUri: resumeUrl.toString(),
           flow: 'camp_purchase',
         },
       });
+      const timeoutPromise = new Promise<{ data: null; error: Error }>((resolve) => {
+        window.setTimeout(() => {
+          resolve({ data: null, error: new Error('wechat-pay-auth invoke timeout (6s)') });
+        }, 6000);
+      });
+      const { data, error } = (await Promise.race([invokePromise, timeoutPromise])) as any;
 
       if (error || !data?.authUrl) {
+        window.clearTimeout(fallbackTimer);
         console.error('[Payment] Failed to get silent auth URL:', error || data);
         setIsRedirectingForOpenId(false);
         silentAuthTriggeredRef.current = false;
