@@ -2234,6 +2234,7 @@ export const CoachVoiceChat = ({
               <div className="w-full mt-4 animate-in fade-in duration-500">
                 <VoiceSuggestionChips
                   recentThemes={recentThemes}
+                  userId={userId}
                   onPick={(text) => {
                     try {
                       chatRef.current?.sendTextMessage?.(text);
