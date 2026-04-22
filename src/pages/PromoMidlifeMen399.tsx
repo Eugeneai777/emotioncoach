@@ -307,7 +307,7 @@ export default function PromoMidlifeMen399() {
             {[
               { t: "海沃塔小组实名审核", d: "仅限同龄男性 · 全程不录像不外传" },
               { t: "课程链接仅本人可看", d: "不可分享转发，链接绑定账号" },
-              { t: "1v1 沟通仅你与教练可见", d: "平台不留对话记录" },
+              { t: "沟通仅你与教练可见", d: "平台不留对话记录" },
               { t: "施强健康 22 年背书", d: "男性健康服务专业资质" },
             ].map((p, i) => (
               <div key={i} className="flex gap-3 items-start">
