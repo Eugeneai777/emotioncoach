@@ -231,7 +231,7 @@ export const CoachVoiceChat = ({
 
   // 颜色映射 — 增加深色背景渐变
   const colorMap: Record<string, { bg: string; border: string; text: string; glow: string; deepBg: string; banner: string; bannerText: string }> = {
-    rose: { bg: 'bg-rose-500', border: 'border-rose-400', text: 'text-rose-500', glow: 'shadow-rose-500/30', deepBg: 'from-stone-950 via-rose-950/30 to-stone-950', banner: 'bg-rose-500', bannerText: 'text-rose-600' },
+    rose: { bg: 'bg-rose-500', border: 'border-rose-400', text: 'text-rose-500', glow: 'shadow-rose-500/30', deepBg: 'from-[#0B0D12] via-[#0F1218] to-[#0B0D12]', banner: 'bg-rose-500', bannerText: 'text-rose-600' },
     green: { bg: 'bg-green-500', border: 'border-green-400', text: 'text-green-500', glow: 'shadow-green-500/30', deepBg: 'from-stone-950 via-emerald-950/30 to-stone-950', banner: 'bg-green-500', bannerText: 'text-green-600' },
     blue: { bg: 'bg-blue-500', border: 'border-blue-400', text: 'text-blue-500', glow: 'shadow-blue-500/30', deepBg: 'from-stone-950 via-blue-950/30 to-stone-950', banner: 'bg-blue-500', bannerText: 'text-blue-600' },
     purple: { bg: 'bg-purple-500', border: 'border-purple-400', text: 'text-purple-500', glow: 'shadow-purple-500/30', deepBg: 'from-stone-950 via-purple-950/30 to-stone-950', banner: 'bg-purple-500', bannerText: 'text-purple-600' },
