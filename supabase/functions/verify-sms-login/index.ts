@@ -144,13 +144,12 @@ Deno.serve(async (req) => {
 
       if (verifyError || !verifyData?.session) {
         console.error('Verify OTP error:', verifyError);
-        // Fallback: 使用临时密码登录，但登录后立即恢复
+        // Fallback: 使用临时密码登录（用真实 email，不能假设占位邮箱）
         const tempPassword = crypto.randomUUID();
-        const { data: userData } = await adminClient.auth.admin.getUserById(profileData.id);
         await adminClient.auth.admin.updateUserById(profileData.id, { password: tempPassword });
 
         const { data: signInData, error: signInError } = await anonClient.auth.signInWithPassword({
-          email: placeholderEmail,
+          email: realEmail,
           password: tempPassword,
         });
 
