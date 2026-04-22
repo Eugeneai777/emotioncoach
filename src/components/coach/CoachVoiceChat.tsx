@@ -2031,6 +2031,15 @@ export const CoachVoiceChat = ({
           variant="ghost"
           size="icon"
           onClick={(e) => {
+            e.stopPropagation();
+            // 🔧 PTT 模式：返回 = 强制断开，避免卡在异步流程
+            if (pttMode) {
+              try { chatRef.current?.disconnect(); } catch(err) { console.warn(err); }
+              try { if (durationRef.current) clearInterval(durationRef.current); } catch(err) { console.warn(err); }
+              releaseLock();
+              onClose();
+              return;
+            }
             if (status === 'idle' || status === 'disconnected' || status === 'error') {
               onClose();
             } else {
@@ -2068,9 +2077,13 @@ export const CoachVoiceChat = ({
         <Button
           variant="ghost"
           size="sm"
+          onPointerDown={(e) => e.stopPropagation()}
           onClick={(e) => {
-            if (isEnding) {
-              console.log('[VoiceChat] Force close triggered');
+            e.stopPropagation();
+            e.preventDefault();
+            console.log('[VoiceChat] 挂断 clicked, isEnding=', isEnding);
+            // 🔧 PTT 模式或重复点击：直接强制关闭，避免卡在异步流程
+            if (pttMode || isEnding) {
               try { chatRef.current?.disconnect(); } catch(err) { console.warn(err); }
               try { if (durationRef.current) clearInterval(durationRef.current); } catch(err) { console.warn(err); }
               releaseLock();
