@@ -763,17 +763,52 @@ export class RealtimeChat {
           console.log('[WebRTC] Data channel opened:', performance.now() - startTime, 'ms');
           this.lastDataChannelActivity = Date.now();
 
-          // 🚀 快路径：推送完整 session 配置（instructions/tools），覆盖最简占位配置
-          if (this.pendingSessionConfig && this.dc?.readyState === 'open') {
+          // 🎙️ PTT 预设：强制关闭服务端 VAD（必须在 pendingSessionConfig 前/后都覆盖一次）
+          if (this.pttPreset) {
+            try { this.setMicMuted(true); } catch {}
             try {
               this.dc.send(JSON.stringify({
                 type: 'session.update',
-                session: this.pendingSessionConfig,
+                session: { turn_detection: null },
               }));
-              console.log('[WebRTC] Pending session config pushed:', performance.now() - startTime, 'ms');
+              console.log('[WebRTC][PTT] turn_detection forced to null at dc open');
+            } catch (e) {
+              console.warn('[WebRTC][PTT] preset session.update failed:', e);
+            }
+          }
+
+          // 🚀 快路径：推送完整 session 配置（instructions/tools），覆盖最简占位配置
+          if (this.pendingSessionConfig && this.dc?.readyState === 'open') {
+            try {
+              const sessionPayload = this.pttPreset
+                ? { ...this.pendingSessionConfig, turn_detection: null }
+                : this.pendingSessionConfig;
+              this.dc.send(JSON.stringify({
+                type: 'session.update',
+                session: sessionPayload,
+              }));
+              console.log('[WebRTC] Pending session config pushed:', performance.now() - startTime, 'ms', this.pttPreset ? '(PTT: VAD off)' : '');
               this.pendingSessionConfig = null;
             } catch (e) {
               console.warn('[WebRTC] Failed to push pending session config:', e);
+            }
+          }
+
+          // 🎬 PTT + 场景开场白：dc 打开后立即触发 AI 念开场白（独立于 setPushToTalkMode 调用时机）
+          if (this.pttPreset && this.scenarioOpening && this.dc?.readyState === 'open') {
+            const opening = this.scenarioOpening;
+            this.scenarioOpening = null;
+            try {
+              this.dc.send(JSON.stringify({
+                type: 'response.create',
+                response: {
+                  modalities: ['audio', 'text'],
+                  instructions: `请用温暖自然的语气作为开场说出（不要任何前缀或解释，直接说这句话）：${opening}`,
+                },
+              }));
+              console.log('[WebRTC][PTT] scenario opening triggered at dc open:', opening);
+            } catch (e) {
+              console.warn('[WebRTC][PTT] failed to trigger scenario opening:', e);
             }
           }
 
