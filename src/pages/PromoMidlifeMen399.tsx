@@ -339,8 +339,54 @@ export default function PromoMidlifeMen399() {
           </div>
         </Section>
 
-        {/* ============ 05 信任保障 ============ */}
-        <Section index={5} eyebrow="我们懂你的在意" title="4 条不可妥协的隐私承诺">
+        {/* ============ 05 带场教练团 ============ */}
+        <Section index={5} eyebrow="带场的不是 AI · 是真人教练" title="6 位资深教练 · 轮值带场">
+          <div className="grid grid-cols-3 gap-3">
+            {COACH_TEAM.map((c, i) => (
+              <div
+                key={i}
+                className="p-3 rounded-xl text-center"
+                style={{ background: C.bgCard, border: `1px solid ${C.divider}` }}
+              >
+                <img
+                  src={c.image}
+                  alt={c.name}
+                  className="w-16 h-16 rounded-full object-cover mx-auto mb-2"
+                  style={{ border: `1px solid ${C.gold}` }}
+                />
+                <p className="text-[13px] font-semibold" style={{ ...serif, color: C.text }}>
+                  {c.name}
+                </p>
+                <p className="text-[10px] mt-0.5" style={{ color: C.gold }}>
+                  {c.role}
+                </p>
+                <p className="text-[10px] leading-[1.5] mt-1" style={{ color: C.textMute }}>
+                  {c.subtitle}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <div
+            className="mt-5 flex items-center gap-3 p-4 rounded-xl"
+            style={{ background: "rgba(212,180,129,0.06)", border: `1px solid ${C.divider}` }}
+          >
+            <div className="p-1.5 rounded-lg shrink-0" style={{ background: C.text }}>
+              <img src={wecomCoachQr} alt="助教企微二维码" className="w-20 h-20 object-contain" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[13px] font-semibold mb-1" style={{ ...serif, color: C.text }}>
+                付款后专属助教 1 对 1 对接
+              </p>
+              <p className="text-[11.5px] leading-[1.65]" style={{ color: C.textMute }}>
+                扫码加入私密企微，48h 内安排入营事项 · 全程匿名
+              </p>
+            </div>
+          </div>
+        </Section>
+
+        {/* ============ 06 信任保障 ============ */}
+        <Section index={6} eyebrow="我们懂你的在意" title="4 条不可妥协的隐私承诺">
           {/* 顶部承诺徽章带 */}
           <div
             className="flex items-center justify-around gap-2 mb-5 p-3 rounded-xl"
