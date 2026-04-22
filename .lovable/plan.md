@@ -1,62 +1,55 @@
 
 
-## 问题：15228901521（365会员）在情绪教练被限 5 分钟
+## 优化方案：余额不足横幅改用「点数充值」弹窗
 
-### 根本原因
+### 现状
 
-`get_voice_max_duration` RPC 优先级有 bug，它把 `subscriptions` 表里的**任意 active 行**当作「主套餐」，导致 365 会员被一次性测评订阅顶替。
+5 个 AI 语音教练（女性 / 职场 / 大劲 / 小劲 / 我们 AI）共用 `CoachVoiceChat.tsx`。通话中余额不足时，顶部出现蓝色横幅"余额不足，继续请前往充值"，点击「前往充值」当前调用 `navigate('/packages')` 整页跳走，用户被带离通话页，必须重新建立连接。
 
-具体到该用户：
-- ✅ `orders` 有 2 笔 `member365`（真正的 365 会员）→ 应不限时
-- ❌ `subscriptions` 有一行 `package_key='emotion_health_assessment'`（¥9.9 测评，被错误写入了 `subscriptions` 表）`status='active'`
-- RPC 第 1 步命中 `emotion_health_assessment`，直接返回 → `package_feature_settings` 中该套餐没有针对 `realtime_voice_emotion` 的配置 → 走默认 **5 分钟**
+### 优化目标
 
-数据验证：
-- `member365` 套餐对 `realtime_voice_emotion` 配置 = `NULL`（不限时）✅
-- `basic` 套餐 = 5 分钟（应该就是非会员的体验限制）
-- `emotion_health_assessment` 无配置（被误用为最高优先级）
+点击「前往充值」改为**就地弹出 `QuotaRechargeDialog`**（与「我的页面 → 充值」按钮完全一致的弹窗），保持通话页面在后面，支付成功后自动刷新额度横幅消失，用户可继续通话或随时挂断。
 
-不影响其它教练的核心逻辑（统一走同一 RPC，但其它教练用户多数没有这种"测评订阅污染"），但本质上是同类风险。
+### 实施
 
-### 修复方案
+**只改 1 个文件：`src/components/coach/CoachVoiceChat.tsx`**
 
-**只改后端 RPC `get_voice_max_duration`，不动前端**：让会员/付费套餐永远高于一次性测评订阅。
+1. 引入：
+   - `import { QuotaRechargeDialog } from '@/components/QuotaRechargeDialog';`
+2. 新增本地状态 `const [showRecharge, setShowRecharge] = useState(false);`
+3. 横幅按钮 onClick 由 `navigate('/packages')` 改为 `setShowRecharge(true)`
+4. 在组件 JSX 末尾挂载弹窗：
+   ```tsx
+   <QuotaRechargeDialog
+     open={showRecharge}
+     onOpenChange={setShowRecharge}
+     onSuccess={() => {
+       setShowRecharge(false);
+       setInsufficientDuringCall(false); // 关闭横幅
+       // 触发 useVoiceBilling / 额度查询的刷新（已有 invalidateQueries 钩子可调用）
+     }}
+   />
+   ```
+5. 在 `onSuccess` 内调用现有额度刷新逻辑（沿用 `useVoiceBilling` 已暴露的 refetch 或 react-query 的 invalidate `['user-quota']`），让顶部点数即时更新。
 
-新优先级（从高到低）：
-1. `subscriptions.status='active'`，且 package 是「会员/订阅类」（`member365`、`custom` 等真正承载权益的套餐）
-2. `orders.status='paid'`，按以下优先级匹配 `package_key`：
-   - 会员级：`member365` → `custom`
-   - 高级单买：`premium_99` → `standard_49`
-   - 体验：`basic` / `trial`
-   - 其它一次性产品（如 `emotion_health_assessment`、`scl90_report`、`wealth_block_assessment`、`store_product_*`）**全部跳过**，不参与时长判定
-3. 最后回退 `basic`（5 分钟）
+### 行为对比
 
-具体实现：
-- 在 RPC 中维护一个白名单数组 `MEMBERSHIP_PACKAGES = ['member365','custom']` 和 `ENTITLEMENT_PACKAGES = ['member365','custom','premium_99','standard_49','basic','trial']`
-- 第 1 步：`subscriptions` 仅认 `MEMBERSHIP_PACKAGES`
-- 第 2 步：`orders` 用 `ORDER BY array_position(ENTITLEMENT_PACKAGES, package_key)` 取最高级，过滤掉非权益类一次性订单
-
-### 数据修复（一次性）
-
-对该用户（`a77c8c50-4c21-4f47-be9d-2b6e29a61f8f`）的脏数据：
-- `subscriptions` 中 `subscription_type='emotion_health_assessment'` 的行 → 标记 `status='completed'`（避免 RPC 再误命中）
-
-并广播一次清理：把 `subscriptions` 中所有 `subscription_type` 在「测评 / 单次产品」白名单内、且 `status='active'` 的记录全部归档为 `completed`（这些本就不应出现在 `subscriptions`）。
+| 场景 | 改造前 | 改造后 |
+|---|---|---|
+| 点击「前往充值」 | 整页跳到 /packages，通话被中断 | 弹出充值卡片浮层，通话页面保留 |
+| 充值成功 | 用户需手动返回，重新拨打 | 横幅自动消失，可立即继续语音 |
+| 关闭弹窗（不充值） | — | 回到通话页面，横幅仍在，可挂断或再次充值 |
+| 我的页面 → 充值 | 不变 | 不变（共用同一弹窗） |
 
 ### 影响面（确认安全）
 
-- ✅ 365 会员的所有 AI 教练（情绪 / 亲子 / 有劲生活 / 财富 / 青少年 / 沟通）：均通过同一 RPC + `realtime_voice_*` feature key 判定，会员套餐对所有这些 feature 的配置都是 `NULL`（不限时），修复后恢复正常
-- ✅ 训练营在前端 `checkQuota` 里已直接 `return true` 跳过限制（416-425 行），不受影响
-- ✅ 非会员、未购套餐用户：仍回退 `basic` = 5 分钟，行为不变
-- ✅ 一次性测评购买者：本就不应享语音教练权益，修复后回退 basic 5 分钟，符合产品定价
-
-### 改动文件
-
-| 类型 | 路径 | 改动 |
-|---|---|---|
-| DB Migration | 新建 | 重写 `get_voice_max_duration` RPC + 一次性 UPDATE 清理 subscriptions 脏数据 |
-| 前端 | 无 | 不动 |
+- ✅ 5 个 AI 教练共享同一 `CoachVoiceChat`，一次改动全部生效
+- ✅ `QuotaRechargeDialog` 已是线上稳定组件，内部接 `UnifiedPayDialog` 自动路由微信/支付宝/扫码支付，覆盖公众号/小程序/H5/PC
+- ✅ 不动计费 RPC、不动 `useVoiceBilling`、不动 `insufficientDuringCall` 触发逻辑，仅替换"跳转动作"
+- ✅ 不影响 `XiaojinVoice` 的本地 quota 流程（它走 `PurchaseOnboardingDialog`，本次不动）
+- ✅ 失败/取消时横幅原样保留，行为可回退
 
 ### 工时
-0.4 天（RPC 重写 + 数据清理 + 6 个教练入口回归）
+
+0.2 天（替换 + 5 路教练入口回归测试）
 
