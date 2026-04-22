@@ -18,6 +18,7 @@ import { ConnectionProgress, ConnectionStatusBadge, type ConnectionPhase, type N
 import { InCallNetworkHint, type NetworkWarningLevel } from './VoiceNetworkWarning';
 import { useNetworkQuality } from '@/hooks/useNetworkQuality';
 import { ContinueCallDialog } from './ContinueCallDialog';
+import { QuotaRechargeDialog } from '@/components/QuotaRechargeDialog';
 
 export type VoiceChatMode = 'general' | 'parent_teen' | 'teen' | 'emotion';
 
@@ -116,6 +117,7 @@ export const CoachVoiceChat = ({
   const [isEnding, setIsEnding] = useState(false);  // 🔧 防止重复点击挂断
   const isEndingRef = useRef(false);  // 🔧 同步标记：避免主动挂断被误判为意外中断
   const [insufficientDuringCall, setInsufficientDuringCall] = useState(false);  // 🔧 通话中余额不足
+  const [showRechargeDialog, setShowRechargeDialog] = useState(false);  // 🔧 就地充值弹窗
   // API 成本追踪
   const [apiUsage, setApiUsage] = useState({ inputTokens: 0, outputTokens: 0 });
   const chatRef = useRef<AudioClient | null>(null);
@@ -2039,7 +2041,7 @@ export const CoachVoiceChat = ({
           <span className="text-white text-sm font-medium">余额不足，继续请前往充值</span>
           <Button
             size="sm"
-            onClick={() => navigate('/packages')}
+            onClick={() => setShowRechargeDialog(true)}
             className={`bg-white ${colors.bannerText} hover:bg-white/90 font-medium px-4 shadow-sm`}
           >
             前往充值
@@ -2520,6 +2522,34 @@ export const CoachVoiceChat = ({
         isOpen={showContinueCallDialog}
         scenario={callScenarioRef.current || scenario || 'care'}
         onChoice={handleContinueCallChoice}
+      />
+
+      {/* 🔧 余额不足就地充值弹窗 - 不打断通话页面 */}
+      <QuotaRechargeDialog
+        open={showRechargeDialog}
+        onOpenChange={setShowRechargeDialog}
+        onSuccess={async () => {
+          setShowRechargeDialog(false);
+          // 刷新余额并关闭横幅
+          try {
+            if (userId) {
+              const { data: account } = await supabase
+                .from('user_accounts')
+                .select('remaining_quota')
+                .eq('user_id', userId)
+                .single();
+              if (account) {
+                setRemainingQuota(account.remaining_quota);
+                if (account.remaining_quota >= POINTS_PER_MINUTE) {
+                  setInsufficientDuringCall(false);
+                }
+              }
+            }
+          } catch (err) {
+            console.warn('[VoiceChat] refresh quota after recharge failed', err);
+            setInsufficientDuringCall(false);
+          }
+        }}
       />
     </div>
   );
