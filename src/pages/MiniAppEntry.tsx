@@ -2,7 +2,7 @@
 import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, ChevronUp, ChevronRight, Wrench, BarChart3, Target, Quote, ShoppingBag, Moon, Briefcase, Heart, TrendingUp } from "lucide-react";
+import { ChevronDown, ChevronUp, ChevronRight, Wrench, BarChart3, Target, Quote, ShoppingBag } from "lucide-react";
 import useEmblaCarousel from "embla-carousel-react";
 
 import logoImage from "@/assets/logo-youjin-ai.png";
@@ -101,48 +101,28 @@ const exploreBlocks = [
 
 const useCases = [
   {
-    icon: Moon,
-    title: "深夜焦虑时",
-    desc: "凌晨两点翻来覆去，你不想打扰任何人——AI教练24小时在线，随时接住你。",
-    illustrationKey: "scene_anxiety",
-    iconColor: "text-indigo-300",
-    iconBg: "bg-indigo-500/20",
-    accent: "border-l-indigo-400",
-    bg: "bg-gradient-to-r from-indigo-500/6 to-transparent",
-    chatRoute: "/youjin-life/chat?topic=anxiety",
+    emoji: "🌙",
+    title: "深夜焦虑",
+    topic: "anxiety",
+    colorClass: "border-indigo-200 text-indigo-700 bg-indigo-50/70 hover:bg-indigo-100/80",
   },
   {
-    icon: Briefcase,
-    title: "职场迷茫时",
-    desc: "不知道该不该换工作、该不该开口……AI帮你看见选择背后的恐惧与渴望。",
-    illustrationKey: "scene_workplace",
-    iconColor: "text-amber-300",
-    iconBg: "bg-amber-500/20",
-    accent: "border-l-amber-400",
-    bg: "bg-gradient-to-r from-amber-500/6 to-transparent",
-    chatRoute: "/youjin-life/chat?topic=career",
+    emoji: "💼",
+    title: "职场迷茫",
+    topic: "career",
+    colorClass: "border-amber-200 text-amber-700 bg-amber-50/70 hover:bg-amber-100/80",
   },
   {
-    icon: Heart,
-    title: "关系困扰时",
-    desc: "吵完架的委屈、说不出口的话……在这里可以安全地说出一切，被理解不被评判。",
-    illustrationKey: "scene_relationship",
-    iconColor: "text-rose-300",
-    iconBg: "bg-rose-500/20",
-    accent: "border-l-rose-400",
-    bg: "bg-gradient-to-r from-rose-500/6 to-transparent",
-    chatRoute: "/youjin-life/chat?topic=relationship",
+    emoji: "💗",
+    title: "关系困扰",
+    topic: "relationship",
+    colorClass: "border-rose-200 text-rose-700 bg-rose-50/70 hover:bg-rose-100/80",
   },
   {
-    icon: TrendingUp,
-    title: "财富渴望时",
-    desc: "总觉得赚得不少却存不下来？AI帮你找到财富卡点，打通金钱信念。",
-    illustrationKey: "scene_growth",
-    iconColor: "text-emerald-300",
-    iconBg: "bg-emerald-500/20",
-    accent: "border-l-emerald-400",
-    bg: "bg-gradient-to-r from-emerald-500/6 to-transparent",
-    chatRoute: "/youjin-life/chat?topic=wealth",
+    emoji: "💰",
+    title: "财富卡点",
+    topic: "wealth",
+    colorClass: "border-emerald-200 text-emerald-700 bg-emerald-50/70 hover:bg-emerald-100/80",
   },
 ];
 
@@ -609,57 +589,33 @@ const MiniAppEntry = () => {
         </div>
       </div>
 
-      {/* ── 使用场景引导（直接展示） ── */}
+      {/* ── 使用场景芯片区 → 直达 PTT 语音教练 ── */}
       <div className="px-4 pb-4">
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           <div className="px-0.5">
             <div className="flex items-center gap-2 mb-1">
               <div className="w-1 h-4 rounded-full bg-gradient-to-b from-rose-400 to-pink-500" />
               <h3 className="text-sm font-bold text-foreground">什么时候可以找有劲AI？</h3>
+              <span className="text-base">🎙️</span>
             </div>
-            <p className="text-[11px] text-muted-foreground ml-3">任何时刻，任何情绪，它都在</p>
+            <p className="text-[11px] text-muted-foreground ml-3">任何时刻，任何情绪 —— 按住说话即可</p>
           </div>
-          <div className="space-y-2">
-            {useCases.map((c, i) => {
-              const Icon = c.icon;
-              return (
-                <motion.div
-                  key={i}
-                  className={`relative p-3.5 rounded-xl ${c.bg} border-l-2 ${c.accent} overflow-hidden cursor-pointer`}
-                  initial={reduceMotion ? false : { opacity: 0, x: -8 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.3, duration: 0.3 }}
-                  onClick={() => navigate(c.chatRoute)}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  {illustrations[c.illustrationKey] && (
-                    <img
-                      src={illustrations[c.illustrationKey]}
-                      alt=""
-                      className="absolute right-2 top-1/2 -translate-y-1/2 w-18 h-18 object-contain opacity-20 pointer-events-none select-none"
-                      loading="lazy"
-                    />
-                  )}
-                  <div className="flex items-center gap-3 relative z-10">
-                    <div className={`w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center shrink-0 bg-white/60 shadow-sm ${illustrations[c.illustrationKey] ? '' : c.iconBg}`}>
-                      {illustrations[c.illustrationKey] ? (
-                        <img src={illustrations[c.illustrationKey]} alt="" className="w-full h-full object-cover" loading="lazy" />
-                      ) : (
-                        <Icon className={`w-3.5 h-3.5 ${c.iconColor}`} />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="text-xs font-bold text-foreground mb-0.5">{c.title}</h4>
-                      <p className="text-[10px] text-foreground/70 leading-relaxed line-clamp-2">{c.desc}</p>
-                    </div>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <span className="text-[10px] font-medium text-primary/80">聊一聊</span>
-                      <ChevronRight className="w-3.5 h-3.5 text-primary/60" />
-                    </div>
-                  </div>
-                </motion.div>
-              );
-            })}
+          <div className="flex flex-wrap gap-2">
+            {useCases.map((c, i) => (
+              <motion.button
+                key={c.topic}
+                type="button"
+                onClick={() => navigate(`/life-coach-voice?topic=${c.topic}`)}
+                initial={reduceMotion ? false : { opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 + i * 0.04, duration: 0.25 }}
+                whileTap={{ scale: 0.95 }}
+                className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-full border text-xs font-medium transition-all ${c.colorClass}`}
+              >
+                <span className="text-sm">{c.emoji}</span>
+                <span>{c.title}</span>
+              </motion.button>
+            ))}
           </div>
         </div>
       </div>
