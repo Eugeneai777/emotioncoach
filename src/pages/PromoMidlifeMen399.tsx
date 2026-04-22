@@ -15,6 +15,23 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import zhileCapsules from "@/assets/zhile-capsules.jpeg";
+import coachDaixi from "@/assets/coach-daixi.jpg";
+import coachXiaoyi from "@/assets/coach-xiaoyi.png";
+import coachAmy from "@/assets/coach-amy.jpg";
+import coachMumian from "@/assets/coach-mumian.jpg";
+import coachXiaojianxiong from "@/assets/coach-xiaojianxiong.jpg";
+import coachBetty from "@/assets/coach-betty.jpg";
+import wecomCoachQr from "@/assets/wecom-coach-qr.jpg";
+
+const COACH_TEAM = [
+  { name: "黛汐", role: "总教练", image: coachDaixi, subtitle: "生命教练 / 高级心理咨询师" },
+  { name: "肖剑雄", role: "资深教练", image: coachXiaojianxiong, subtitle: "婚姻关系 / 职业焦虑" },
+  { name: "晓一", role: "资深教练", image: coachXiaoyi, subtitle: "婚姻家庭 / 情绪管理" },
+  { name: "Amy", role: "资深教练", image: coachAmy, subtitle: "情感困惑 / 亲子关系" },
+  { name: "木棉", role: "资深教练", image: coachMumian, subtitle: "身心整体疗愈" },
+  { name: "贝蒂", role: "资深教练", image: coachBetty, subtitle: "亲密关系 / 生命重建" },
+];
 
 /**
  * 中年男性 ¥399 体验营 售前页（v2 · 8 段精简版）
@@ -25,7 +42,7 @@ import {
 
 const PACKAGE_KEY = "camp-emotion_stress_7";
 const RETURN_URL = "/promo/midlife-men-399";
-const TOTAL_SECTIONS = 8;
+const TOTAL_SECTIONS = 9;
 
 const C = {
   bg: "#0f0f0f",
@@ -217,6 +234,43 @@ export default function PromoMidlifeMen399() {
                 <p className="text-[13px] leading-[1.75]" style={{ color: C.textMute }}>
                   {card.desc}
                 </p>
+
+                {/* 核心权益 01 · 主教练展示 */}
+                {i === 0 && (
+                  <div
+                    className="mt-4 flex items-center gap-3 p-3 rounded-lg"
+                    style={{ background: "rgba(212,180,129,0.06)", border: `1px solid ${C.divider}` }}
+                  >
+                    <img
+                      src={coachDaixi}
+                      alt="总教练 黛汐"
+                      className="w-14 h-14 rounded-full object-cover shrink-0"
+                      style={{ border: `1px solid ${C.gold}` }}
+                    />
+                    <div className="min-w-0">
+                      <p className="text-[13px] font-semibold" style={{ ...serif, color: C.text }}>
+                        总教练 · 黛汐
+                      </p>
+                      <p className="text-[11.5px] leading-[1.5] mt-0.5" style={{ color: C.textMute }}>
+                        生命教练 / 国际脑点执行师 / PNCC 心流教练 / 高级心理咨询师
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* 核心权益 02 · 知乐胶囊产品大图 */}
+                {i === 1 && (
+                  <div
+                    className="mt-4 rounded-lg overflow-hidden"
+                    style={{ border: `1px solid ${C.divider}` }}
+                  >
+                    <img
+                      src={zhileCapsules}
+                      alt="知乐胶囊产品实拍"
+                      className="w-full object-cover"
+                    />
+                  </div>
+                )}
               </div>
             ))}
 
@@ -285,8 +339,54 @@ export default function PromoMidlifeMen399() {
           </div>
         </Section>
 
-        {/* ============ 05 信任保障 ============ */}
-        <Section index={5} eyebrow="我们懂你的在意" title="4 条不可妥协的隐私承诺">
+        {/* ============ 05 带场教练团 ============ */}
+        <Section index={5} eyebrow="带场的不是 AI · 是真人教练" title="6 位资深教练 · 轮值带场">
+          <div className="grid grid-cols-3 gap-3">
+            {COACH_TEAM.map((c, i) => (
+              <div
+                key={i}
+                className="p-3 rounded-xl text-center"
+                style={{ background: C.bgCard, border: `1px solid ${C.divider}` }}
+              >
+                <img
+                  src={c.image}
+                  alt={c.name}
+                  className="w-16 h-16 rounded-full object-cover mx-auto mb-2"
+                  style={{ border: `1px solid ${C.gold}` }}
+                />
+                <p className="text-[13px] font-semibold" style={{ ...serif, color: C.text }}>
+                  {c.name}
+                </p>
+                <p className="text-[10px] mt-0.5" style={{ color: C.gold }}>
+                  {c.role}
+                </p>
+                <p className="text-[10px] leading-[1.5] mt-1" style={{ color: C.textMute }}>
+                  {c.subtitle}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <div
+            className="mt-5 flex items-center gap-3 p-4 rounded-xl"
+            style={{ background: "rgba(212,180,129,0.06)", border: `1px solid ${C.divider}` }}
+          >
+            <div className="p-1.5 rounded-lg shrink-0" style={{ background: C.text }}>
+              <img src={wecomCoachQr} alt="助教企微二维码" className="w-20 h-20 object-contain" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[13px] font-semibold mb-1" style={{ ...serif, color: C.text }}>
+                付款后专属助教 1 对 1 对接
+              </p>
+              <p className="text-[11.5px] leading-[1.65]" style={{ color: C.textMute }}>
+                扫码加入私密企微，48h 内安排入营事项 · 全程匿名
+              </p>
+            </div>
+          </div>
+        </Section>
+
+        {/* ============ 06 信任保障 ============ */}
+        <Section index={6} eyebrow="我们懂你的在意" title="4 条不可妥协的隐私承诺">
           {/* 顶部承诺徽章带 */}
           <div
             className="flex items-center justify-around gap-2 mb-5 p-3 rounded-xl"
@@ -325,8 +425,8 @@ export default function PromoMidlifeMen399() {
           </div>
         </Section>
 
-        {/* ============ 06 同龄人证言 ============ */}
-        <Section index={6} eyebrow="先走一步的他们，说了这些" title="同龄人，不是鸡汤">
+        {/* ============ 07 同龄人证言 ============ */}
+        <Section index={7} eyebrow="先走一步的他们，说了这些" title="同龄人，不是鸡汤">
           <div className="space-y-4">
             {[
               {
@@ -358,8 +458,8 @@ export default function PromoMidlifeMen399() {
           </div>
         </Section>
 
-        {/* ============ 07 FAQ ============ */}
-        <Section index={7} eyebrow="解决最后顾虑" title="你可能想问的 4 个问题">
+        {/* ============ 08 FAQ ============ */}
+        <Section index={8} eyebrow="解决最后顾虑" title="你可能想问的 4 个问题">
           <div
             className="rounded-xl overflow-hidden"
             style={{ background: C.bgCard, border: `1px solid ${C.divider}` }}
@@ -410,11 +510,11 @@ export default function PromoMidlifeMen399() {
           </p>
         </Section>
 
-        {/* ============ 08 价格 + CTA ============ */}
+        {/* ============ 09 价格 + CTA ============ */}
         <section className="px-6 py-12">
           <div className="flex items-center gap-3 mb-3">
             <span className="text-xs tracking-[0.2em] font-mono" style={{ color: C.gold }}>
-              08 / 08
+              09 / 09
             </span>
             <div className="flex-1 h-px" style={{ background: C.divider }} />
           </div>
