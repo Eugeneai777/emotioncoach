@@ -1,70 +1,111 @@
 
 
-## 优化 PTT 通话页配色 — 单一焦点、冷静背景
+## 替换中央红圈 + 接通后 AI 主动问候 + 智能场景提示
 
-### 问题诊断
-当前页面有三处配色冲突：
-1. **背景过红**：`from-stone-950 via-rose-950/30 to-stone-950` 让整屏带粉灰雾感，沉闷压抑
-2. **三个红撞色**：光球（rose-500）+ PTT 按钮（rose-500）+ 挂断按钮（red-500/20）三者颜色相同，视觉重心散乱
-3. **光球光晕过大**：blur-2xl + opacity-25 把整个上半屏染成血红，吞噬了背景
+### 当前问题
+1. **中央光球与底部 PTT 按钮颜色一致**（都是 rose-500 红圈），视觉上重复，光球失去独立意义
+2. **接通后是死寂**，没有 AI 主动开口，用户不知道做什么
+3. **空白字幕区只显示一行灰字提示**，浪费了视觉空间
 
-顶级语音对话产品（ChatGPT Voice / Gemini Live / Siri）的统一做法：
-- 背景**纯中性深色**（近黑或深蓝灰），完全无色彩污染
-- 颜色只属于**唯一一个发声体（光球）**
-- 其它操作按钮一律是**玻璃/中性灰**，不参与色彩竞争
+### 改造方案
 
-### 改造方案 — `src/components/coach/CoachVoiceChat.tsx`
+#### 一、把中央"红圈"替换为「呼吸频谱波纹」(Breathing Waveform)
 
-**1. 背景：去除玫红雾，改为冷静深空**
-- `colors.deepBg.rose`：`from-stone-950 via-rose-950/30 to-stone-950` → `from-[#0B0D12] via-[#0F1218] to-[#0B0D12]`
-- 整屏改为近黑偏冷的中性渐变，让光球的玫红成为屏上唯一的暖色
+参考 ChatGPT Voice / Siri / Apple Intelligence 的处理：中心元素不应该是"按钮的复制品"，而应该是**抽象的声音可视化**。
 
-**2. 光球：缩小光晕影响范围、收敛色相**
-- 外层 blur 光晕：`blur-2xl` → `blur-xl`，opacity 从 25/60 → 15/35，让玫红只在光球周围 1 个直径内有感，不再"血染半屏"
-- 光球本体渐变改柔：`hsl(350 95% 78%)` → `hsl(350 85% 72%)`，降饱和约 10%，更高级
-- 取消 idle 状态下的外层 blur 光晕动画（`pulse-slow`），只保留本体呼吸，减少弥漫感
+**新视觉**：
+- 移除 rose 实心圆球
+- 改为**3 条横向流动的细线波纹**（gradient stroke），状态驱动颜色与振幅：
+  - `idle`：3 条灰白细线缓慢横向呼吸（amplitude 微小，opacity 30%）
+  - `assistant-speaking`：玫红渐变线条按音节起伏（amplitude 大，流动动画）
+  - `user-speaking`：青蓝渐变线条向中心收敛（emerald-400）
+- 用 SVG path + CSS 动画实现，无第三方库，整体高度仅 80px
+- 颜色与底部 PTT 按钮**完全脱钩**：PTT 仍是红色（动作语义），中央波纹是冷色基调（声音可视化语义），消除重复感
 
-**3. 挂断按钮：从红色 → 玻璃灰**
-- 当前 `bg-red-500/20 text-red-400` → 改为 `bg-white/8 text-white/75 hover:bg-white/15 hover:text-white`，去掉图标背景的红色
-- 挂断不再是"红色警告"，而是和顶栏融为一体的中性 chip
-- 这样屏上只剩**光球 + PTT 按钮**两处玫红，焦点立即清晰
+#### 二、接通后 AI 主动用用户名打招呼
 
-**4. PTT 按钮：保留玫红但收敛、与光球同源**
-- `PushToTalkButton.tsx` 当前 `bg-rose-500`，改为更深的 `bg-rose-600` + 内层渐变 `from-rose-500 to-rose-700`，带轻微立体感
-- 按下时（红色脉冲）保持现有逻辑
-- 按钮本身仍是主操作（必须有色彩感），但比光球更深一档（rose-600 vs 光球 rose-400），形成"光球=声音、按钮=动作"的色阶层次
+**改造位置**：`src/components/coach/CoachVoiceChat.tsx` 连接成功 (`status === 'connected'`) 后
 
-**5. 字幕颜色微调**
-- AI 字幕 `text-rose-100` → `text-white/95`，让字幕回归"内容而非装饰"，符合 ChatGPT/Gemini 字幕一律用白色的惯例
-- 用户字幕 `text-white/55` 保持不变
+1. 从 `profiles` 表读取 `nickname / display_name`（fallback 到「朋友」）
+2. 检查是否有历史对话（查 `emotion_briefings` 或 `conversation_logs` 最近 7 天）：
+   - **首次/无记忆**："{nickname}，我在呢，今天想聊点什么？"
+   - **有历史**："{nickname}，又见面啦。上次我们聊到{最近主题}，今天感觉怎么样？"
+3. 通过 `chatRef.current.sendTextMessage(greeting)` 主动触发 AI 用语音说出（已有现成机制，AI 来电模式就在用）
+4. 仅在非 `isIncomingCall` 模式下注入（来电模式有自己的 openingMessage）
 
-**6. 顶栏积分图标颜色降饱和**
-- 8点的 `text-amber-400/90` → `text-amber-300/70`，更克制
-- Coins 图标尺寸保持 w-3 h-3
+#### 三、智能场景提示芯片 (Suggestion Chips)
+
+替换字幕区空闲态的"按住下方按钮·和教练说说"灰字。
+
+**布局**：在波纹下方、PTT 按钮上方，渲染 3 个**横向滚动的小芯片**（玻璃质感，rounded-full，px-4 py-2）：
+
+```
+┌────────────────────────────────────────────┐
+│  [≈≈≈ 波纹 ≈≈≈]                            │
+│                                            │
+│  💭 最近睡不好    🌊 工作压力大    💛 想聊聊关系  │ ← 滚动
+│                                            │
+│  「按住下方说话」                          │
+│                                            │
+│  [PTT 按钮]                                │
+└────────────────────────────────────────────┘
+```
+
+**芯片来源（智能分级）**：
+- **有历史对话**：从最近 5 条 `emotion_briefings.emotion_theme` 取 top 3，例如「继续聊：失眠」「回顾：工作焦虑」「跟进：和妈妈的对话」
+- **无历史**：用静态推荐池随机 3 条（睡不好 / 工作压力 / 关系困扰 / 自我怀疑 / 没动力 / 想被看见）
+- **正在对话中**（已有 latestUserLine）：芯片消失，让位字幕
+
+**点击行为**：
+- 点击芯片 = 直接通过 `sendTextMessage` 把该话题作为用户发言发给 AI，AI 立即开口回应
+- 等价于"语音说出该话题"，省去用户思考"我该说什么"
+
+#### 四、字幕区视觉微调
+
+- 用户字幕从 `text-white/55` 提升到 `text-white/65`，缩短前置等待感
+- AI 字幕保留 `text-white/95`，光标动画从 rose-200 改为 rose-300/80（与新波纹色阶呼应）
 
 ### 改造后视觉层次
 
 ```
-背景：冷黑（#0B0D12）— 完全无色
-└─ 光球：柔和玫红，光晕收敛在小范围 — 唯一焦点
-└─ 字幕：纯白 — 信息载体
-└─ PTT 按钮：深玫红 — 唯一操作
-└─ 顶栏 / 挂断：白色玻璃 — 系统级 chrome
+┌─ 顶栏：返回 · 时长 · 余额 · 挂断（玻璃灰）
+│
+│         ≈≈≈≈≈≈≈≈≈≈           ← 新：3 条流动波纹（替代红球）
+│         ≈≈≈≈≈≈≈≈≈≈
+│
+│         {AI 字幕：白色，是焦点}
+│         {用户字幕：浅灰}
+│
+│    [💭 失眠]  [🌊 压力]  [💛 关系]   ← 新：智能场景芯片（仅空闲）
+│
+│
+│              ●  ← PTT 红按钮（唯一红色，动作语义清晰）
+│           按住说话
+└──────────────────────────────
 ```
 
 ### 涉及文件
-- `src/components/coach/CoachVoiceChat.tsx`（colorMap.rose.deepBg、光球光晕参数、挂断按钮 className、AI 字幕颜色、积分颜色）
-- `src/components/coach/PushToTalkButton.tsx`（按钮渐变背景）
+
+- `src/components/coach/CoachVoiceChat.tsx`：
+  - 用 `<VoiceWaveformVisualizer />` 替代当前 PTT 模式光球 div（lines ~2160-2206）
+  - 新增 `useEffect` 监听 `status === 'connected'` 且非来电模式 → 拉取 nickname + 最近主题 → `sendTextMessage(greeting)`
+  - 新增 `<SuggestionChips />` 区块在字幕区上方
+- 新建 `src/components/coach/VoiceWaveformVisualizer.tsx`（SVG 波纹组件，接收 `state: 'idle' | 'user' | 'assistant'` 与 `colorTheme`）
+- 新建 `src/components/coach/VoiceSuggestionChips.tsx`（智能芯片组件，接收 `userId`、`onPick(text)`、`primaryColor`）
+- 新建 `src/hooks/useVoiceGreeting.ts`：封装"取昵称 + 取最近主题 + 拼接问候语"逻辑
 
 ### 不动
-- 布局结构、PTT 录音逻辑、字幕逻辑、网络徽章逻辑、计费、连接流程
+
+- PTT 按钮本体颜色与逻辑（保持红色作为唯一动作色）
+- 计费、连接、字幕、网络徽章
 - 非 PTT 模式分支
-- 其它教练（绿/蓝/紫等）的 colorMap
+- AI 来电（isIncomingCall）的 openingMessage 注入逻辑
 
 ### 验证
-- [ ] 屏幕背景为冷静深黑，无粉灰雾感
-- [ ] 光球玫红仅在小范围光晕内，不再染整个上半屏
-- [ ] 屏上只有光球和 PTT 按钮带玫红，挂断按钮变玻璃灰
-- [ ] AI 字幕变纯白，可读性提升
-- [ ] 整体观感接近 ChatGPT Voice / Gemini Live 的克制美学
+
+- [ ] 中央不再是红圈，而是冷色调流动波纹，与底部红按钮形成"声音/动作"两级
+- [ ] 接通 1 秒内 AI 主动用昵称打招呼（"小明，我在呢…"）
+- [ ] 二次接通时 AI 提到上次话题（"上次我们聊到失眠，今天怎么样？"）
+- [ ] 空闲态显示 3 个可点击场景芯片，点击即触发 AI 回应
+- [ ] 一旦开始说话，芯片消失，字幕成为唯一焦点
 
