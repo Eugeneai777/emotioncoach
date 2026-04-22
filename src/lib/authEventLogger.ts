@@ -55,19 +55,19 @@ function detectPlatform(): string {
 
 export async function logAuthEvent(payload: AuthEventInput): Promise<void> {
   try {
-    await supabase.from('monitor_auth_events').insert({
+    await supabase.from('monitor_auth_events').insert([{
       event_type: payload.event_type,
       auth_method: payload.auth_method,
-      user_id: payload.user_id ?? null,
-      phone: payload.phone ?? null,
-      email: payload.email ?? null,
-      error_message: payload.error_message ?? null,
-      error_code: payload.error_code ?? null,
+      user_id: payload.user_id ?? undefined,
+      phone: payload.phone ?? undefined,
+      email: payload.email ?? undefined,
+      error_message: payload.error_message ?? undefined,
+      error_code: payload.error_code ?? undefined,
       platform: detectPlatform(),
-      user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
-      referer: typeof document !== 'undefined' ? document.referrer || null : null,
-      extra: payload.extra ?? {},
-    });
+      user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined,
+      referer: typeof document !== 'undefined' ? document.referrer || undefined : undefined,
+      extra: (payload.extra ?? {}) as Record<string, unknown>,
+    }]);
   } catch (err) {
     console.warn('[authEventLogger] log failed:', err);
   }
