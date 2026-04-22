@@ -177,21 +177,15 @@ serve(async (req) => {
         .maybeSingle();
 
       if (mapping?.system_user_id) {
-        // 🚫 一致性校验：如果当前请求自带 JWT，且 JWT user 与 openId 反查 user 不一致，
-        //    拒绝下单，强制前端弹出"账号与微信不一致"提示，防止订单错挂他人账户。
+        // ✅ 优先归属到当前登录用户（JWT），避免订单错挂到 openId 历史绑定的其他账号。
+        //    若无 JWT（真匿名游客），才回落到 openId 反查到的用户。
         if (jwtUserId && jwtUserId !== mapping.system_user_id) {
-          console.warn('[CreateOrder] AUTH_MISMATCH: jwtUser', jwtUserId, '!= openId-bound user', mapping.system_user_id, 'openId:', openId);
-          return new Response(
-            JSON.stringify({
-              success: false,
-              code: 'AUTH_MISMATCH',
-              error: '当前微信已绑定其他账号，订单可能错挂。请刷新页面或重新登录后再试。',
-            }),
-            { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
+          finalUserId = jwtUserId;
+          console.log('[CreateOrder] openId bound to other user, but JWT present → using jwtUserId:', jwtUserId, '(openId-bound:', mapping.system_user_id, ')');
+        } else {
+          finalUserId = mapping.system_user_id;
+          console.log('[CreateOrder] Guest with openId → bound user:', openId, '->', finalUserId);
         }
-        finalUserId = mapping.system_user_id;
-        console.log('[CreateOrder] Guest with openId → bound user:', openId, '->', finalUserId, 'jwtUserId:', jwtUserId);
       } else if (jwtUserId) {
         // openId 未绑定任何 user，但当前请求有 JWT user → 直接归属到 JWT user
         finalUserId = jwtUserId;

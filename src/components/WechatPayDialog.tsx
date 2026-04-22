@@ -1027,14 +1027,6 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
         },
       });
 
-      // 🚫 后端检测到账号与微信不一致 → toast 友好提示并阻断
-      if (data?.code === 'AUTH_MISMATCH') {
-        toast.error(data.error || '当前微信已绑定其他账号，请刷新或重新登录');
-        setStatus('failed');
-        setErrorMessage(data.error || '账号与当前微信不一致');
-        return;
-      }
-
       if (error) throw error;
       if (!data.success) throw new Error(data.error || '创建订单失败');
 
@@ -1827,7 +1819,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
           {(status === 'failed' || status === 'expired') && (
             <Button type="button" onClick={handleRetry} className="gap-2 bg-green-600 hover:bg-green-700 text-white">
               <RefreshCw className="h-4 w-4" />
-              重新生成二维码
+              重新发起支付
             </Button>
           )}
 
