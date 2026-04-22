@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
 import { useAuth } from "@/hooks/useAuth";
 import { getSavedVoiceType } from "@/config/voiceTypeConfig";
+import { toast } from "@/hooks/use-toast";
 import {
   preheatTokenEndpoint,
   prefetchToken,
@@ -21,6 +22,9 @@ const TOPIC_TO_SCENARIO_KEY: Record<string, string> = {
   exam: "考试焦虑",
   social: "社交困扰",
 };
+
+// 已知 topic 白名单（与 MiniAppEntry useCases 必须一致）
+const KNOWN_TOPICS = Object.keys(TOPIC_TO_SCENARIO_KEY);
 
 const LifeCoachVoice = () => {
   const navigate = useNavigate();
