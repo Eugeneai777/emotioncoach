@@ -1,26 +1,39 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
 import { useXiaojinQuota } from "@/hooks/useXiaojinQuota";
+import { useAuth } from "@/hooks/useAuth";
 import { PurchaseOnboardingDialog } from "@/components/onboarding/PurchaseOnboardingDialog";
 
 export default function XiaojinVoice() {
   const navigate = useNavigate();
-  const { remaining, deduct, canAfford, refresh } = useXiaojinQuota();
+  const { user, loading: authLoading } = useAuth();
+  const { deduct, canAfford, refresh, isGuest } = useXiaojinQuota();
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [allowed, setAllowed] = useState(false);
   const billingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const initRef = useRef(false);
 
-  // 进入前检查点数 + 预扣第一分钟
+  // 登录态决定计费路径：
+  // - 游客：保留本地 100 点 + 前端 setInterval 自扣
+  // - 登录用户：交给 CoachVoiceChat 内置 useVoiceBilling，自动按 8 点/分钟扣 user_accounts
   useEffect(() => {
+    if (authLoading || initRef.current) return;
+    initRef.current = true;
+
+    if (!isGuest) {
+      // 登录用户：直接放行进入 CoachVoiceChat，由其内置预检与扣点逻辑接管
+      setAllowed(true);
+      return;
+    }
+
+    // 游客分支：保留原 100 点本地试用逻辑
     if (!canAfford(8)) {
       setShowUpgrade(true);
       return;
     }
-    // 预扣第一分钟
     if (deduct(8)) {
       setAllowed(true);
-      // 每60秒扣一次
       billingTimerRef.current = setInterval(() => {
         if (!deduct(8)) {
           if (billingTimerRef.current) clearInterval(billingTimerRef.current);
@@ -36,7 +49,11 @@ export default function XiaojinVoice() {
       if (billingTimerRef.current) clearInterval(billingTimerRef.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [authLoading, isGuest]);
+
+  if (authLoading) {
+    return <div className="min-h-screen flex items-center justify-center text-muted-foreground">加载中...</div>;
+  }
 
   if (!allowed) {
     return (
@@ -46,7 +63,6 @@ export default function XiaojinVoice() {
           setShowUpgrade(open);
           if (!open) navigate("/xiaojin");
         }}
-        defaultPackage="member365"
         triggerFeature="语音通话需要至少 8 点"
         onSuccess={() => {
           setShowUpgrade(false);
@@ -70,16 +86,17 @@ export default function XiaojinVoice() {
         tokenEndpoint="vibrant-life-realtime-token"
         mode="teen"
         featureKey="realtime_voice_teen"
-        skipBilling={true}
+        skipBilling={isGuest}
       />
 
-      <PurchaseOnboardingDialog
-        open={showUpgrade}
-        onOpenChange={setShowUpgrade}
-        defaultPackage="member365"
-        triggerFeature="免费体验点数已用完"
-        onSuccess={() => setShowUpgrade(false)}
-      />
+      {isGuest && (
+        <PurchaseOnboardingDialog
+          open={showUpgrade}
+          onOpenChange={setShowUpgrade}
+          triggerFeature="免费体验点数已用完"
+          onSuccess={() => setShowUpgrade(false)}
+        />
+      )}
     </>
   );
 }

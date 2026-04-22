@@ -1,40 +1,10 @@
-import { useState, useCallback } from 'react';
+import { useUnifiedQuota } from './useUnifiedQuota';
 
-const STORAGE_KEY = 'dajin_quota';
-const INITIAL_QUOTA = 100;
-
-function getStoredQuota(): number {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored === null) {
-      localStorage.setItem(STORAGE_KEY, String(INITIAL_QUOTA));
-      return INITIAL_QUOTA;
-    }
-    return Math.max(0, parseInt(stored, 10) || 0);
-  } catch {
-    return INITIAL_QUOTA;
-  }
-}
-
+/**
+ * 大劲 AI 配额 hook（中老年专区）
+ * 已委托给 useUnifiedQuota：游客本地 100 点 / 登录用户走 user_accounts。
+ * 对外 API 完全兼容历史调用方。
+ */
 export function useDajinQuota() {
-  const [remaining, setRemaining] = useState<number>(getStoredQuota);
-
-  const deduct = useCallback((cost: number): boolean => {
-    const current = getStoredQuota();
-    if (current < cost) return false;
-    const next = current - cost;
-    localStorage.setItem(STORAGE_KEY, String(next));
-    setRemaining(next);
-    return true;
-  }, []);
-
-  const canAfford = useCallback((cost: number): boolean => {
-    return getStoredQuota() >= cost;
-  }, []);
-
-  const refresh = useCallback(() => {
-    setRemaining(getStoredQuota());
-  }, []);
-
-  return { remaining, deduct, canAfford, refresh };
+  return useUnifiedQuota('dajin');
 }
