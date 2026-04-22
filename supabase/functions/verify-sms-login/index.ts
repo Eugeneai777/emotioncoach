@@ -324,6 +324,21 @@ Deno.serve(async (req) => {
         );
       }
 
+      await logAuthEvent(req, {
+        event_type: 'register_success',
+        auth_method: 'sms',
+        user_id: finalUserId,
+        phone,
+        email: placeholderEmail,
+      });
+      await logAuthEvent(req, {
+        event_type: 'login_success',
+        auth_method: 'sms',
+        user_id: finalUserId,
+        phone,
+        email: placeholderEmail,
+        extra: { auto_register: true },
+      });
       return new Response(
         JSON.stringify({ success: true, isNewUser, session: signInData.session }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -331,6 +346,13 @@ Deno.serve(async (req) => {
     }
   } catch (error) {
     console.error('Verify SMS login error:', error);
+    await logAuthEvent(req, {
+      event_type: 'login_failed',
+      auth_method: 'sms',
+      phone: phoneForLog,
+      error_message: error instanceof Error ? error.message : '验证失败',
+      error_code: 'exception',
+    });
     return new Response(
       JSON.stringify({ error: '验证失败，请稍后重试' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
