@@ -2041,7 +2041,7 @@ export const CoachVoiceChat = ({
           <span className="text-white text-sm font-medium">余额不足，继续请前往充值</span>
           <Button
             size="sm"
-            onClick={() => navigate('/packages')}
+            onClick={() => setShowRechargeDialog(true)}
             className={`bg-white ${colors.bannerText} hover:bg-white/90 font-medium px-4 shadow-sm`}
           >
             前往充值
