@@ -2031,6 +2031,15 @@ export const CoachVoiceChat = ({
           variant="ghost"
           size="icon"
           onClick={(e) => {
+            e.stopPropagation();
+            // 🔧 PTT 模式：返回 = 强制断开，避免卡在异步流程
+            if (pttMode) {
+              try { chatRef.current?.disconnect(); } catch(err) { console.warn(err); }
+              try { if (durationRef.current) clearInterval(durationRef.current); } catch(err) { console.warn(err); }
+              releaseLock();
+              onClose();
+              return;
+            }
             if (status === 'idle' || status === 'disconnected' || status === 'error') {
               onClose();
             } else {
