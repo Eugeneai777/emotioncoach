@@ -323,12 +323,14 @@ export class MiniProgramAudioClient {
 
         // 把 voice_type / instructions 一起发给 relay，确保 relay 能正确选择音色
         const voiceType = (this.config.extraBody as any)?.voice_type;
-        if ((this.cachedInstructions || voiceType) && this.ws) {
-          console.log('[MiniProgramAudio] Sending session_config (instructions + voice_type)', { hasInstructions: !!this.cachedInstructions, voiceType });
+        if ((this.cachedInstructions || voiceType || this.pttPreset) && this.ws) {
+          console.log('[MiniProgramAudio] Sending session_config (instructions + voice_type + ptt)', { hasInstructions: !!this.cachedInstructions, voiceType, ptt: this.pttPreset });
           this.ws.send(JSON.stringify({
             type: 'session_config',
             instructions: this.cachedInstructions ?? undefined,
             voice_type: voiceType,
+            // 🎙️ PTT 模式：通知 relay 关闭服务端 VAD（turn_detection: null）
+            turn_detection: this.pttPreset ? null : undefined,
           }));
         }
 
