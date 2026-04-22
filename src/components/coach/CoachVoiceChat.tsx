@@ -1433,6 +1433,11 @@ export const CoachVoiceChat = ({
         // 🔧 所有模式（含情绪教练）优先使用 OpenAI Realtime，失败后降级豆包
         let chat: AudioClient;
         const realtimeChat = new RealtimeChat(handleVoiceMessage, handleStatusChange, handleTranscript, tokenEndpoint, mode, scenario, { ...extraBody, voice_type: voiceType }, preAcquiredStream);
+        // 🎙️ PTT 预设：在 init 之前声明，确保 dc 一打开就关闭服务端 VAD 并静音麦克风
+        // 修复"小程序里直接说话也能被识别、PTT 失效"的根因
+        if (pttMode && typeof (realtimeChat as any).presetPushToTalk === 'function') {
+          try { (realtimeChat as any).presetPushToTalk(true); } catch (e) { console.warn('[PTT] preset failed', e); }
+        }
         chat = realtimeChat;
         chatRef.current = chat;
         
