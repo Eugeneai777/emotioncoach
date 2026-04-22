@@ -351,7 +351,6 @@ export default function PromoMidlife25to45Women399() {
                 points: [
                   "教练 + AI + 实物胶囊 + 私密社群",
                   "一支口红的钱，拿到 ¥3,980 闭门计划同款核心",
-                  "7 天无理由全额退款",
                 ],
               },
             ].map((adv, i) => (
