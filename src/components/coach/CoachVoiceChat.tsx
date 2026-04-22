@@ -2201,22 +2201,7 @@ export const CoachVoiceChat = ({
                 }}
               />
 
-                style={{
-                  width: 80,
-                  height: 80,
-                  filter: speakingStatus === 'idle' ? 'saturate(0.85)' : 'saturate(1.15)',
-                  animation:
-                    speakingStatus === 'idle'
-                      ? 'pulse-slow 2.4s ease-in-out infinite'
-                      : speakingStatus === 'assistant-speaking'
-                      ? 'pulse-slow 0.9s ease-in-out infinite'
-                      : undefined,
-                  transform: speakingStatus === 'user-speaking' ? 'scale(1.08)' : undefined,
-                  background: !colors.from
-                    ? 'radial-gradient(circle at 30% 30%, hsl(350 90% 75%), hsl(345 80% 50%))'
-                    : undefined,
-                }}
-              />
+
             </div>
 
             {/* 字幕区 — 视觉重心 */}
