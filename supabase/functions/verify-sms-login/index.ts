@@ -48,6 +48,13 @@ Deno.serve(async (req) => {
 
     if (codeError || !codes || codes.length === 0) {
       console.error('Code verification failed:', { codeError, codesFound: codes?.length });
+      await logAuthEvent(req, {
+        event_type: 'login_failed',
+        auth_method: 'sms',
+        phone,
+        error_message: '验证码无效或已过期',
+        error_code: 'invalid_code',
+      });
       return new Response(
         JSON.stringify({ error: '验证码无效或已过期' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
