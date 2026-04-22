@@ -458,6 +458,9 @@ export class RealtimeChat {
   // 🔧 Safari 兼容：支持接收预获取的 MediaStream，跳过内部 getUserMedia
   private preAcquiredStream: MediaStream | null = null;
 
+  // 🚀 快路径：服务端 token 函数返回的延迟 session 配置（在 datachannel open 后推送）
+  private pendingSessionConfig: any = null;
+
   constructor(
     private onMessage: (message: any) => void,
     private onStatusChange: (status: 'connecting' | 'connected' | 'disconnected' | 'error') => void,
