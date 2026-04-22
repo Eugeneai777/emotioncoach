@@ -370,7 +370,8 @@ export class MiniProgramAudioClient {
       // 监听录音帧数据
       this.recorder.onFrameRecorded((res: { frameBuffer: ArrayBuffer; isLastFrame: boolean }) => {
         if (this.ws?.readyState === WebSocket.OPEN && res.frameBuffer) {
-          // 将音频数据转为 Base64 并发送
+          // 🎙️ PTT 闸门：未按住时不发送本地音频，避免 relay/远端 VAD 收到声音
+          if (this.pttPreset && this.pttMuted) return;
           const base64Audio = wx.arrayBufferToBase64?.(res.frameBuffer) || '';
           if (base64Audio) {
             const chunk: AudioChunk = {
