@@ -332,19 +332,10 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
       }
 
       console.log('[Payment] Redirecting to silent auth...');
-      
-      // 5秒超时：如果页面仍在（重定向被拦截），回退到扫码支付
-      setTimeout(() => {
-        console.log('[Payment] Silent auth redirect timeout, falling back to native payment');
-        setIsRedirectingForOpenId(false);
-        silentAuthTriggeredRef.current = false;
-        sessionStorage.removeItem("pay_auth_in_progress");
-        sessionStorage.removeItem('pending_payment_package');
-        setOpenIdResolved(true);
-      }, 5000);
-      
+      // 跳转生效后让全局 fallbackTimer 继续守护（页面若被拦截留在原地，8s 兜底自动切扫码）
       window.location.href = data.authUrl;
     } catch (err) {
+      window.clearTimeout(fallbackTimer);
       console.error('[Payment] Silent auth error:', err);
       setIsRedirectingForOpenId(false);
       silentAuthTriggeredRef.current = false;
