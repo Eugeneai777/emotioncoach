@@ -66,7 +66,7 @@ export async function logAuthEvent(payload: AuthEventInput): Promise<void> {
       platform: detectPlatform(),
       user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined,
       referer: typeof document !== 'undefined' ? document.referrer || undefined : undefined,
-      extra: (payload.extra ?? {}) as Record<string, unknown>,
+      extra: (payload.extra ?? {}) as never,
     }]);
   } catch (err) {
     console.warn('[authEventLogger] log failed:', err);
