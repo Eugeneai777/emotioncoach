@@ -463,10 +463,23 @@ const Auth = () => {
               password,
             });
             if (phoneError) {
+              await logAuthEvent({
+                event_type: 'login_failed',
+                auth_method: 'phone_password',
+                phone,
+                error_message: phoneError.message,
+                error_code: 'invalid_credentials',
+              });
               throw new Error('手机号或密码错误');
             }
           }
         }
+
+        await logAuthEvent({
+          event_type: 'login_success',
+          auth_method: 'phone_password',
+          phone,
+        });
         
         // 记住账号
         if (rememberMe) {
