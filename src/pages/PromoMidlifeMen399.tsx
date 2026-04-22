@@ -425,8 +425,8 @@ export default function PromoMidlifeMen399() {
           </div>
         </Section>
 
-        {/* ============ 06 同龄人证言 ============ */}
-        <Section index={6} eyebrow="先走一步的他们，说了这些" title="同龄人，不是鸡汤">
+        {/* ============ 07 同龄人证言 ============ */}
+        <Section index={7} eyebrow="先走一步的他们，说了这些" title="同龄人，不是鸡汤">
           <div className="space-y-4">
             {[
               {
@@ -458,8 +458,8 @@ export default function PromoMidlifeMen399() {
           </div>
         </Section>
 
-        {/* ============ 07 FAQ ============ */}
-        <Section index={7} eyebrow="解决最后顾虑" title="你可能想问的 4 个问题">
+        {/* ============ 08 FAQ ============ */}
+        <Section index={8} eyebrow="解决最后顾虑" title="你可能想问的 4 个问题">
           <div
             className="rounded-xl overflow-hidden"
             style={{ background: C.bgCard, border: `1px solid ${C.divider}` }}
@@ -514,7 +514,7 @@ export default function PromoMidlifeMen399() {
         <section className="px-6 py-12">
           <div className="flex items-center gap-3 mb-3">
             <span className="text-xs tracking-[0.2em] font-mono" style={{ color: C.gold }}>
-              08 / 08
+              09 / 09
             </span>
             <div className="flex-1 h-px" style={{ background: C.divider }} />
           </div>
