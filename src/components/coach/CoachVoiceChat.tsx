@@ -1978,6 +1978,34 @@ export const CoachVoiceChat = ({
 
   // 🔧 连接中显示进度
   if (isCheckingQuota || status === 'connecting') {
+    // PTT 模式：极简接通画面（呼吸光圈 + 正在接通… + 取消）
+    if (pttMode) {
+      return (
+        <div className={`fixed inset-0 z-50 bg-gradient-to-b ${colors.deepBg} flex flex-col items-center justify-center`}>
+          <div className="relative">
+            <div className={`absolute inset-0 ${colors.bg} opacity-20 rounded-full blur-2xl animate-pulse`} />
+            <div className={`relative w-24 h-24 rounded-full ${colors.bg} opacity-40 animate-ping`} />
+          </div>
+          <p className="mt-8 text-white/70 text-sm tracking-wide">正在接通…</p>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              try { chatRef.current?.disconnect(); } catch {}
+              try { localStorage.removeItem(SESSION_STORAGE_KEY); } catch {}
+              stopConnectionTimer();
+              stopMonitoring();
+              releaseLock();
+              onClose();
+            }}
+            className="mt-10 text-white/40 hover:text-white/80"
+          >
+            取消
+          </Button>
+        </div>
+      );
+    }
+
     return (
       <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col items-center justify-center">
         <div className="text-6xl mb-6">{coachEmoji}</div>
@@ -2036,6 +2064,7 @@ export const CoachVoiceChat = ({
             if (pttMode) {
               try { chatRef.current?.disconnect(); } catch(err) { console.warn(err); }
               try { if (durationRef.current) clearInterval(durationRef.current); } catch(err) { console.warn(err); }
+              try { localStorage.removeItem(SESSION_STORAGE_KEY); } catch {}
               releaseLock();
               onClose();
               return;
@@ -2086,6 +2115,7 @@ export const CoachVoiceChat = ({
             if (pttMode || isEnding) {
               try { chatRef.current?.disconnect(); } catch(err) { console.warn(err); }
               try { if (durationRef.current) clearInterval(durationRef.current); } catch(err) { console.warn(err); }
+              try { localStorage.removeItem(SESSION_STORAGE_KEY); } catch {}
               releaseLock();
               onClose();
               return;
