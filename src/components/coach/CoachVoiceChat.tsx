@@ -7,6 +7,9 @@ import { Phone, PhoneOff, Mic, Volume2, Loader2, Coins, MapPin, Search, X, Heart
 import { PointsRulesDialog } from '@/components/PointsRulesDialog';
 import { AudioWaveform } from './AudioWaveform';
 import { PushToTalkButton } from './PushToTalkButton';
+import { VoiceWaveformVisualizer } from './VoiceWaveformVisualizer';
+import { VoiceSuggestionChips } from './VoiceSuggestionChips';
+import { useVoiceGreeting } from '@/hooks/useVoiceGreeting';
 import { RealtimeChat } from '@/utils/RealtimeAudio';
 import { DoubaoRealtimeChat } from '@/utils/DoubaoRealtimeAudio';
 import { MiniProgramAudioClient, ConnectionStatus as MiniProgramStatus } from '@/utils/MiniProgramAudio';
@@ -140,6 +143,37 @@ export const CoachVoiceChat = ({
   const isUnmountedRef = useRef(false);
   const startAttemptRef = useRef(0);
   const [useMiniProgramMode, setUseMiniProgramMode] = useState(false);  // 是否使用小程序模式
+  const hasGreetedRef = useRef(false);  // 🔧 PTT 模式：仅注入一次主动问候
+
+  // 🔧 PTT 模式接通后主动问候：拉取昵称 + 最近 7 天主题
+  const { greeting: voiceGreeting, recentThemes } = useVoiceGreeting(
+    userId,
+    Boolean(pttMode && !isIncomingCall && userId)
+  );
+
+  // 🔧 接通后 1 秒注入主动问候（仅 PTT 非来电模式，且仅一次）
+  useEffect(() => {
+    if (!pttMode || isIncomingCall) return;
+    if (status !== 'connected') return;
+    if (!voiceGreeting) return;
+    if (hasGreetedRef.current) return;
+    const t = setTimeout(() => {
+      try {
+        chatRef.current?.sendTextMessage?.(voiceGreeting);
+        hasGreetedRef.current = true;
+      } catch (e) {
+        console.warn('[VoiceChat] proactive greeting failed:', e);
+      }
+    }, 800);
+    return () => clearTimeout(t);
+  }, [status, voiceGreeting, pttMode, isIncomingCall]);
+
+  // 接通断开重置问候标记
+  useEffect(() => {
+    if (status === 'idle' || status === 'disconnected') {
+      hasGreetedRef.current = false;
+    }
+  }, [status]);
   // 🔧 连接进度追踪
   const [connectionPhase, setConnectionPhase] = useState<ConnectionPhase>('preparing');
   const [connectionElapsedTime, setConnectionElapsedTime] = useState(0);
@@ -2158,63 +2192,27 @@ export const CoachVoiceChat = ({
       <div className="flex-1 flex flex-col items-center px-6 pt-[8vh]">
         {pttMode ? (
           <>
-            {/* 动态光球 — 唯一视觉焦点（替代头像/音波/状态文字） */}
-            <div className="relative mb-10 flex items-center justify-center" style={{ width: 120, height: 120 }}>
-              {/* 外层光晕 */}
-              <span
-                className={`absolute rounded-full blur-xl transition-all duration-500 ${
+            {/* 抽象声音可视化 — 流动波纹（替代红圈，与底部 PTT 红按钮脱钩） */}
+            <div className="mb-8 flex items-center justify-center" style={{ height: 80 }}>
+              <VoiceWaveformVisualizer
+                state={
                   speakingStatus === 'user-speaking'
-                    ? 'bg-emerald-400/25'
+                    ? 'user'
                     : speakingStatus === 'assistant-speaking'
-                    ? `${colors.bg} opacity-35`
-                    : `${colors.bg} opacity-15`
-                }`}
-                style={{
-                  width: speakingStatus === 'idle' ? 110 : 140,
-                  height: speakingStatus === 'idle' ? 110 : 140,
-                }}
+                    ? 'assistant'
+                    : 'idle'
+                }
+                colorTheme={primaryColor}
+                width={280}
+                height={80}
               />
-              {/* 涟漪环 */}
-              {speakingStatus === 'assistant-speaking' && (
-                <>
-                  <span className={`absolute inset-0 rounded-full border ${colors.border} opacity-50 animate-ping`} />
-                  <span className={`absolute -inset-3 rounded-full border ${colors.border} opacity-25 animate-ping [animation-delay:0.4s]`} />
-                </>
-              )}
-              {speakingStatus === 'user-speaking' && (
-                <span className="absolute -inset-2 rounded-full border border-emerald-400/60 animate-ping" />
-              )}
-              {/* 光球本体 */}
-              <div
-                className="relative rounded-full shadow-2xl transition-all duration-300"
-                style={{
-                  width: 80,
-                  height: 80,
-                  filter: speakingStatus === 'idle' ? 'saturate(0.85)' : 'saturate(1.15)',
-                  animation:
-                    speakingStatus === 'idle'
-                      ? 'pulse-slow 2.4s ease-in-out infinite'
-                      : speakingStatus === 'assistant-speaking'
-                      ? 'pulse-slow 0.9s ease-in-out infinite'
-                      : undefined,
-                  transform: speakingStatus === 'user-speaking' ? 'scale(1.08)' : undefined,
-                  background: 'radial-gradient(circle at 30% 30%, hsl(350 85% 72%), hsl(345 75% 48%))',
-                }}
-              />
-
-
             </div>
 
             {/* 字幕区 — 视觉重心 */}
-            <div className="w-full max-w-md space-y-3 px-2 min-h-[120px]">
-              {!latestUserLine && !latestAiLine && status === 'connected' && (
-                <p className="text-center text-white/35 text-sm leading-relaxed">
-                  按住下方按钮 · 和教练说说
-                </p>
-              )}
+            <div className="w-full max-w-md space-y-3 px-2 min-h-[110px]">
               {latestUserLine && (
                 <div className="animate-in fade-in slide-in-from-bottom-1 duration-300">
-                  <p className="text-white/55 text-sm leading-relaxed line-clamp-2 text-center">
+                  <p className="text-white/65 text-sm leading-relaxed line-clamp-2 text-center">
                     {latestUserLine}
                   </p>
                 </div>
@@ -2224,12 +2222,29 @@ export const CoachVoiceChat = ({
                   <p className="text-white/95 text-[17px] font-medium leading-relaxed line-clamp-5 text-center">
                     {latestAiLine}
                     {speakingStatus === 'assistant-speaking' && (
-                      <span className="inline-block w-[3px] h-4 ml-1 bg-rose-200 align-middle animate-pulse rounded-sm" />
+                      <span className="inline-block w-[3px] h-4 ml-1 bg-rose-300/80 align-middle animate-pulse rounded-sm" />
                     )}
                   </p>
                 </div>
               )}
             </div>
+
+            {/* 智能场景芯片 — 仅空闲且尚未对话时显示 */}
+            {status === 'connected' && !latestUserLine && !latestAiLine && (
+              <div className="w-full mt-4 animate-in fade-in duration-500">
+                <VoiceSuggestionChips
+                  recentThemes={recentThemes}
+                  onPick={(text) => {
+                    try {
+                      chatRef.current?.sendTextMessage?.(text);
+                      setLatestUserLine(text);
+                    } catch (e) {
+                      console.warn('[VoiceChat] chip pick send failed:', e);
+                    }
+                  }}
+                />
+              </div>
+            )}
           </>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center w-full">
