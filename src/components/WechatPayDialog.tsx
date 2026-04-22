@@ -289,11 +289,24 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
       }
     }
 
+    // 🔍 埋点：微信授权流程触发
+    trackPaymentEvent('wechat_auth_triggered', {
+      metadata: {
+        scenario: 'silent_auth_for_openid',
+        isWechat: isWeChatBrowser(),
+        isMiniProgram: isWeChatMiniProgram(),
+      },
+    });
+
     // 🆕 全局兜底：8 秒内若仍未跳转（invoke 卡住或被微信浏览器拦截），自动回退扫码
     // 鸿蒙微信浏览器对跨域 fetch 行为有差异，invoke 可能永久挂起且不抛错
     const fallbackTimer = window.setTimeout(() => {
       if (!silentAuthTriggeredRef.current) return;
       console.warn('[Payment] Silent auth global fallback (8s) triggered — switching to QR code');
+      trackPaymentEvent('wechat_auth_timeout', {
+        errorMessage: 'Silent auth fallback after 8s',
+        metadata: { fallbackTo: 'qr_code' },
+      });
       setIsRedirectingForOpenId(false);
       silentAuthTriggeredRef.current = false;
       sessionStorage.removeItem("pay_auth_in_progress");
