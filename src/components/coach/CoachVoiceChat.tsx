@@ -2771,13 +2771,13 @@ export const CoachVoiceChat = ({
 
       {/* 底部操作区 — PTT 模式上移到拇指区 */}
       <div className={`px-6 flex flex-col items-center gap-3 ${pttMode && status === 'connected' ? 'pb-[14vh] pt-2' : 'p-6 pb-safe'}`}>
-        {pttMode && status !== 'connecting' ? (
+        {pttMode && statusRef.current !== 'connecting' ? (
           <PushToTalkButton
             primaryColor={primaryColor}
             colors={colors}
             onStart={() => {
               if (shouldDelayMiniProgramPttConnect && !chatRef.current && status !== 'connected') {
-                if (status === 'connecting') return;
+                if (statusRef.current === 'connecting') return;
                 pendingPttStartRef.current = true;
                 armPendingPttReleaseWatch();
                 startCall();
