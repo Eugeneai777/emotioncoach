@@ -458,6 +458,8 @@ export class MiniProgramAudioClient {
         }
         const base64Audio = btoa(binary);
         
+        // 🎙️ PTT 闸门：未按住时不送出音频
+        if (this.pttPreset && this.pttMuted) return;
         // 发送到服务器
         const audioChunk: AudioChunk = {
           type: 'audio_input',
