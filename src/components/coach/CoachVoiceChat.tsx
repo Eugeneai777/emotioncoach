@@ -2597,8 +2597,8 @@ export const CoachVoiceChat = ({
         )}
       </div>
 
-      {/* 底部操作区 */}
-      <div className="p-6 pb-safe flex flex-col items-center gap-3">
+      {/* 底部操作区 — PTT 模式上移到拇指区 */}
+      <div className={`px-6 flex flex-col items-center gap-3 ${pttMode && status === 'connected' ? 'pb-[14vh] pt-2' : 'p-6 pb-safe'}`}>
         {pttMode && status === 'connected' ? (
           <PushToTalkButton
             primaryColor={primaryColor}
