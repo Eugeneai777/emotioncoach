@@ -464,6 +464,18 @@ export class RealtimeChat {
   // 🎬 场景开场白：PTT 模式下，进入 PTT 后由 AI 主动播报第一句
   private scenarioOpening: string | null = null;
 
+  // 🎙️ PTT 预设：在 init 之前由外部声明，确保 dc 一打开就立刻关闭 VAD 并静音麦克风
+  // 修复"小程序里 PTT 不生效、直接说话也能被识别"的根因（VAD 默认仍开启）
+  private pttPreset: boolean = false;
+  public presetPushToTalk(enabled: boolean): void {
+    this.pttPreset = enabled;
+    this.pttMode = enabled;
+    // 若流已就绪，立刻静音；否则会在 addTrack 后立即静音
+    if (enabled && this.localStream) {
+      try { this.setMicMuted(true); } catch {}
+    }
+  }
+
   constructor(
     private onMessage: (message: any) => void,
     private onStatusChange: (status: 'connecting' | 'connected' | 'disconnected' | 'error') => void,
