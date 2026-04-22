@@ -707,6 +707,11 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     openIdFetchedRef.current = false; // 重置 openId 获取标记
     silentAuthTriggeredRef.current = false; // 重置静默授权标记
     codeExchangedRef.current = false; // 重置 code 换取标记
+    // 🆕 取消进行中的 invoke 请求（防止关闭弹窗后请求继续在飞导致二次点击卡住）
+    try { abortRef.current?.abort(); } catch {}
+    abortRef.current = null;
+    // 🆕 清理 sessionStorage 防抖标记（resetState 中补漏，避免二次点击跳过授权卡死）
+    sessionStorage.removeItem('pay_auth_in_progress');
     // 🆕 保留 sessionStorage 中缓存的 openId，防止循环授权
     const cachedId = propOpenId || urlOpenId || getCachedPaymentOpenId();
     setUserOpenId(cachedId);
@@ -976,6 +981,13 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
       console.log('[Payment] createOrder skipped, current status:', status);
       return;
     }
+
+    // 🆕 若上一笔 invoke 仍在飞，先中断再继续
+    if (abortRef.current && !abortRef.current.signal.aborted) {
+      try { abortRef.current.abort(); } catch {}
+      await new Promise((r) => setTimeout(r, 100));
+    }
+    abortRef.current = new AbortController();
 
     // 仅合伙人套餐验证条款
     if (needsTerms && !agreedTerms) {
