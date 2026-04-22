@@ -1067,9 +1067,18 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
           idCardName: shippingInfo?.idCardName,
           idCardNumber: shippingInfo?.idCardNumber,
         },
+        // @ts-ignore - supabase v2 透传 fetch options
+        signal: abortRef.current?.signal,
       });
 
-      if (error) throw error;
+      if (error) {
+        // 用户中途关闭弹窗导致的中断不当作错误抛出
+        if ((error as any)?.name === 'AbortError' || abortRef.current?.signal.aborted) {
+          console.log('[Payment] createOrder aborted (dialog closed)');
+          return;
+        }
+        throw error;
+      }
       if (!data.success) throw new Error(data.error || '创建订单失败');
 
       // 🆕 处理后端返回的 alreadyPaid 响应（用户已购买）
