@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Helmet } from "react-helmet";
-import { ShieldCheck, Lock, MessageCircle, Quote, Users, Wind, Pill, Truck, Heart, Clock, Gem } from "lucide-react";
+import { ShieldCheck, Lock, MessageCircle, Quote, Users, Wind, BookOpen, Truck, Heart, Clock, Gem, Calendar } from "lucide-react";
 import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
 import { usePaymentCallback } from "@/hooks/usePaymentCallback";
 import { usePackageByKey } from "@/hooks/usePackages";
@@ -134,7 +134,7 @@ export default function PromoMidlife25to45Women399() {
         <title>25–45 岁，请为自己留 7 天 ｜ ¥399 喘息计划</title>
         <meta
           name="description"
-          content="25–45 岁女性的 7 天喘息计划。同龄姐妹海沃塔 + AI 女性教练 + 知乐胶囊 + 私密女性社群。一支口红的钱，让自己被好好照顾一次。"
+          content="25–45 岁女性的 7 天喘息计划。7 天打卡训练营 + 每日真人冥想 + 每日课程推荐 + 海沃塔团队教练辅导。一支口红的钱，让自己被好好照顾一次。"
         />
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
       </Helmet>
@@ -220,28 +220,28 @@ export default function PromoMidlife25to45Women399() {
           <div className="space-y-4">
             {[
               {
-                Icon: Users,
-                tag: "权益 01 · 同龄姐妹海沃塔小组",
-                title: "终于可以说真话的地方",
-                desc: "1 场同龄 3 人小组，由女性教练带场。和姐妹 1 对 1 配对深度对话，不是被建议，是被听见。",
+                Icon: Calendar,
+                tag: "权益 01 · 7 天打卡训练营",
+                title: "陪你把这 7 天走完",
+                desc: "每日打卡节奏，跟着 7 天解压训练营走一遍，把身体和情绪重新调回稳定的轨道。不打鸡血，只陪你按节奏完成。",
               },
               {
                 Icon: Wind,
-                tag: "权益 02 · 24h AI 女性教练 + 每日 10 分钟静心",
-                title: "深夜不必假装坚强",
-                desc: "真人录制 10 分钟静心音频 · 哄睡 / 通勤随时听。AI 女性教练 24h 在线，深夜想哭一下、想骂两句，都可以。",
+                tag: "权益 02 · 每日真人 10 分钟静心冥想",
+                title: "深夜也能稳稳入睡",
+                desc: "真人录制 10 分钟静心音频，哄睡 / 通勤 / 午休随时听。专为高压女性设计的呼吸与放松引导，0 副作用、不依赖。",
               },
               {
-                Icon: Pill,
-                tag: "权益 03 · 1 瓶知乐胶囊体验装",
-                title: "身体兜底 · 先把睡眠还给自己",
-                desc: "GABA + L-茶氨酸 + 酸枣仁 + 镁。白天稳情绪，晚上沉得住睡眠。0 褪黑素，不依赖。顺丰到家。",
+                Icon: BookOpen,
+                tag: "权益 03 · 每日课程推荐 / 学习内容",
+                title: "每天 15 分钟，听一段值得听的",
+                desc: "围绕情绪、关系、自我照顾的精选课程内容，每日按你的状态推送。碎片化学习，不焦虑不内卷。",
               },
               {
                 Icon: Users,
-                tag: "权益 04 · 专属女性私密社群",
-                title: "不进朋友圈 · 不被同事看到",
-                desc: "全是 25–45 岁同龄女性，实名审核入群。没有打鸡血，没有微商，只是一群可以说真话的姐妹。",
+                tag: "权益 04 · 海沃塔团队教练辅导",
+                title: "一群人，比一个人走得更远",
+                desc: "由女性教练带场的海沃塔团队教练辅导：社群陪伴 + 团队带练 + 同龄姐妹 1 对 1 配对深度对话。不是被建议，是被听见。",
               },
             ].map((card, i) => (
               <div
