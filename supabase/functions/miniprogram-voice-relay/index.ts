@@ -95,7 +95,12 @@ Deno.serve(async (req) => {
   let healthCheckInterval: ReturnType<typeof setInterval> | null = null;
   let clientInstructions: string | null = null;
   let clientVoiceType: string | null = null;
+  // PTT 模式：客户端可在建连后立即下发 turn_detection: null
+  // 使用三态：undefined = 客户端尚未下发；null = 显式关闭 VAD（PTT）；对象 = 自定义 VAD
+  let clientTurnDetection: any = undefined;
+  let clientTurnDetectionReceived = false;
   let instructionsResolve: ((value: string | null) => void) | null = null;
+  let turnDetectionResolve: ((value: any) => void) | null = null;
 
   // 🔧 定期检查 OpenAI 连接健康状态
   const startHealthCheck = () => {
