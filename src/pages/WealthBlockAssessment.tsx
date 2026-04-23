@@ -353,10 +353,12 @@ export default function WealthBlockAssessmentPage() {
     }
     setPayDialogInstanceKey((prev) => prev + 1);
     setShowPayDialog(false);
-    // 下一帧再开，确保 React 真正 unmount 旧实例
-    requestAnimationFrame(() => {
+    // 跨 React tick 重建：在安卓微信 X5/TBS bfcache 还原场景下，
+    // requestAnimationFrame 可能被合批，导致 unmount/mount 在同一 tick 被吞掉。
+    // setTimeout(0) 强制让 false 先 commit，再下一个事件循环开 true。
+    setTimeout(() => {
       setShowPayDialog(true);
-    });
+    }, 0);
   };
 
   // 处理支付按钮点击
