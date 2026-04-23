@@ -261,6 +261,16 @@ Deno.serve(async (req) => {
             instructionsResolve = null;
           }
         }
+        // 接收 turn_detection 配置（包含 null 表示 PTT 模式）
+        if (Object.prototype.hasOwnProperty.call(message, 'turn_detection')) {
+          clientTurnDetection = message.turn_detection;
+          clientTurnDetectionReceived = true;
+          console.log('[Relay] Received client turn_detection:', clientTurnDetection);
+          if (turnDetectionResolve) {
+            turnDetectionResolve(clientTurnDetection);
+            turnDetectionResolve = null;
+          }
+        }
         return;
       }
 
