@@ -12,11 +12,26 @@ import '@/utils/platform';
 
 export type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
 
+export interface PttDiagnostics {
+  wsOpen: boolean;
+  recorderSource: 'web_audio' | 'wx_recorder' | 'none';
+  pttConfigApplied: boolean;       // 收到 relay 的 ptt_config_applied
+  serverTurnDetectionNull: boolean; // 服务端确认 turn_detection 为 null
+  isPressing: boolean;             // 当前是否处于按下状态
+  micEnergyDetected: boolean;      // 当前按下期间是否采到过音频能量
+  outboundChunks: number;          // 当前按下期间已发送的音频帧数
+  lastCommitAt: number | null;     // 最近一次松手 commit 的时间戳
+  firstUserTranscriptAt: number | null;
+  firstAiReplyAt: number | null;
+  lastError: string | null;
+}
+
 export interface MiniProgramAudioConfig {
   onMessage: (message: any) => void;
   onStatusChange: (status: ConnectionStatus) => void;
   onTranscript: (text: string, isFinal: boolean, role: 'user' | 'assistant') => void;
   onUsageUpdate?: (usage: { input_tokens: number; output_tokens: number }) => void;
+  onDiagnostic?: (diag: PttDiagnostics) => void;
   tokenEndpoint: string;
   mode: string;
   scenario?: string; // 场景名称，如 "睡不着觉"
