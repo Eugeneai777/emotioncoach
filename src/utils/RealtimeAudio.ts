@@ -1194,6 +1194,8 @@ export class RealtimeChat {
   private pttMode: boolean = false;
   private pttRecordingStart: number = 0;
   private static readonly PTT_MIN_RECORDING_MS = 300;
+  // 🔇 PTT 抢话打断：按下时静音音频元素（保留文字气泡），下一次 response.created 时复位
+  private audioMutedUntilNextResponse: boolean = false;
 
   /** 设置麦克风轨道启用/禁用（不停止流） */
   private setMicMuted(muted: boolean): void {
