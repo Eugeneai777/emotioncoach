@@ -194,6 +194,19 @@ export class MiniProgramAudioClient {
     }
     const duration = Date.now() - this.pttRecordingStart;
     this.pttMuted = true;
+    this.pttStopAt = Date.now();
+    // 🛡️ 兜底：若 2s 内仍未收到 response.created / audio_output，强制解除静音，
+    // 防止因服务端某些边缘场景未发 response.created 而导致永久听不见 AI
+    if (this.pttUnmuteFallbackTimer) {
+      clearTimeout(this.pttUnmuteFallbackTimer);
+    }
+    this.pttUnmuteFallbackTimer = setTimeout(() => {
+      if (this.audioMutedUntilNextResponse) {
+        this.audioMutedUntilNextResponse = false;
+        console.log('[MiniProgramAudio][PTT] audio unmuted by fallback timer');
+      }
+      this.pttUnmuteFallbackTimer = null;
+    }, MiniProgramAudioClient.PTT_UNMUTE_FALLBACK_MS);
     if (duration < MiniProgramAudioClient.PTT_MIN_RECORDING_MS) {
       try {
         this.ws?.readyState === WebSocket.OPEN && this.ws.send(JSON.stringify({ type: 'input_audio_buffer.clear' }));
