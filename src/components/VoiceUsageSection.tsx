@@ -278,6 +278,9 @@ export const VoiceUsageSection: React.FC<Props> = ({ userId }) => {
       </div>
 
       {/* 流水列表 */}
+      <p className="px-1 mb-1.5 text-[11px] text-muted-foreground/80">
+        语音通话按 8 点 / 分钟实时扣费，明细已按"单次通话"聚合显示
+      </p>
       <Card className="border-border/40 bg-card/80">
         <CardContent className="p-0 divide-y divide-border/30">
           {visible.length === 0 ? (
@@ -286,8 +289,13 @@ export const VoiceUsageSection: React.FC<Props> = ({ userId }) => {
             visible.map((t) => {
               const isPositive = t.amount > 0;
               const isZero = t.amount === 0;
+              const isExpanded = expandedIds.has(t.id);
+              const aggMinutes = t.isAggregated ? t.duration_minutes ?? 0 : 0;
               // 优先使用后端 description（已含具体场景），兜底用 SOURCE_LABELS
-              const displayDesc = humanizeDescription(t.description, t.source) || getSourceLabel(t.source);
+              const baseDesc = humanizeDescription(t.description, t.source) || getSourceLabel(t.source);
+              const displayDesc = t.isAggregated
+                ? `${getSourceLabel(t.source)} · ${aggMinutes}分钟通话`
+                : baseDesc;
               return (
                 <div key={t.id} className="p-4 space-y-1">
                   <div className="flex items-center justify-between">
@@ -302,6 +310,11 @@ export const VoiceUsageSection: React.FC<Props> = ({ userId }) => {
                       <Badge variant="secondary" className="text-xs">
                         {getSourceLabel(t.source)}
                       </Badge>
+                      {t.isAggregated && (
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4">
+                          {aggMinutes}分钟
+                        </Badge>
+                      )}
                     </div>
                     <span
                       className={`text-xs font-semibold ${
@@ -326,6 +339,39 @@ export const VoiceUsageSection: React.FC<Props> = ({ userId }) => {
                       <span>{new Date(t.created_at).toLocaleDateString("zh-CN")}</span>
                     </span>
                   </div>
+
+                  {t.isAggregated && t.raw_items && t.raw_items.length > 1 && (
+                    <div className="pt-1">
+                      <button
+                        onClick={() => toggleExpand(t.id)}
+                        className="text-[11px] text-primary/80 hover:text-primary inline-flex items-center gap-0.5"
+                      >
+                        {isExpanded ? "收起分钟明细" : `查看分钟明细（${t.raw_items.length} 条）`}
+                        <ChevronDown
+                          className={`w-3 h-3 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                        />
+                      </button>
+                      {isExpanded && (
+                        <ul className="mt-1.5 ml-1 border-l border-border/40 pl-3 space-y-0.5">
+                          {t.raw_items.map((r) => (
+                            <li
+                              key={r.id}
+                              className="flex items-center justify-between text-[11px] text-muted-foreground/90"
+                            >
+                              <span>
+                                {new Date(r.created_at).toLocaleTimeString("zh-CN", {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                  second: "2-digit",
+                                })}
+                              </span>
+                              <span className="text-red-400/90">{r.amount} 点</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })
