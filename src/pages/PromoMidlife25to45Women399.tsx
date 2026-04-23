@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Helmet } from "react-helmet";
-import { ShieldCheck, Lock, MessageCircle, Quote, Users, Wind, BookOpen, Truck, Heart, Clock, Gem, Calendar } from "lucide-react";
+import { Lock, MessageCircle, Quote, Users, Wind, BookOpen, Heart, Clock, Gem, Calendar } from "lucide-react";
 import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
 import { usePaymentCallback } from "@/hooks/usePaymentCallback";
 import { usePackageByKey } from "@/hooks/usePackages";
@@ -15,7 +15,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import zhileCapsules from "@/assets/zhile-capsules.jpeg";
+// removed zhile-capsules image import (no physical product in delivery)
 import coachDaixi from "@/assets/coach-daixi.jpg";
 import coachXiaoyi from "@/assets/coach-xiaoyi.png";
 import coachAmy from "@/assets/coach-amy.jpg";
