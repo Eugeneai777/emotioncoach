@@ -122,7 +122,10 @@ export default function WealthBlockAssessmentPage() {
             .maybeSingle();
           
           if (existingOrder) {
-            toast.success('欢迎回来！正在恢复测评...');
+            // 已购买：清除待付费标记，避免后续 effect 再次拉起付费弹窗
+            sessionStorage.removeItem('wealth_block_pending_pay');
+            setShowPayDialog(false);
+            toast.success('已购买，正在进入测评...');
             setShowIntro(false);
           }
         }
