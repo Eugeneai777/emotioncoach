@@ -262,6 +262,25 @@ export function getPlatformInfo(): {
 }
 
 /**
+ * 检测是否为桌面端（鼠标 + 键盘环境）
+ * 判定逻辑：无触屏 + 支持 hover + 精细指针
+ * - iPad/触屏笔记本：有 touch → 归为移动端（PTT 模式）
+ * - 微信小程序 WebView：有 touch → 归为移动端（PTT 模式）
+ * - 二合一 Surface 外接键鼠：按 hover+fine pointer 判定为桌面
+ */
+export function isDesktop(): boolean {
+  try {
+    if (isWeChatMiniProgram()) return false;
+    const hasTouch = 'ontouchstart' in window || (navigator.maxTouchPoints ?? 0) > 0;
+    if (hasTouch) return false;
+    const hoverFine = window.matchMedia?.('(hover: hover) and (pointer: fine)').matches;
+    return !!hoverFine;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * 等待微信小程序 JS-SDK (wx.miniProgram) 加载完成
  * 用于确保在调用 navigateTo 等 API 前 SDK 已就绪
  */

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useContext } from 'react';
 import { GlobalVoiceContext } from '@/components/voice/GlobalVoiceProvider';
 import { useNavigate } from 'react-router-dom';
@@ -14,7 +14,7 @@ import { RealtimeChat } from '@/utils/RealtimeAudio';
 import { DoubaoRealtimeChat } from '@/utils/DoubaoRealtimeAudio';
 import { MiniProgramAudioClient, ConnectionStatus as MiniProgramStatus, type PttDiagnostics } from '@/utils/MiniProgramAudio';
 import { PttDiagnosticsPanel } from './PttDiagnosticsPanel';
-import { isWeChatMiniProgram, supportsWebRTC, getPlatformInfo } from '@/utils/platform';
+import { isWeChatMiniProgram, supportsWebRTC, getPlatformInfo, isDesktop } from '@/utils/platform';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -92,11 +92,22 @@ export const CoachVoiceChat = ({
   extraBody,
   maxDurationOverride,
   skipBilling = false,
-  pttMode = false
+  pttMode: pttModeProp = false
 }: CoachVoiceChatProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const globalVoice = useContext(GlobalVoiceContext);
+  // 🖥️ 自适应 PTT：电脑端（鼠标+键盘）改用连续通话模式，手机/小程序保持长按 PTT
+  // URL `?force=ptt` / `?force=continuous` 可强制覆盖（便于客服/演示）
+  const pttMode = useMemo(() => {
+    if (!pttModeProp) return false;
+    try {
+      const force = new URLSearchParams(window.location.search).get('force');
+      if (force === 'ptt') return true;
+      if (force === 'continuous') return false;
+    } catch {}
+    return !isDesktop();
+  }, [pttModeProp]);
   const [status, setStatus] = useState<ConnectionStatus>('idle');
   const [speakingStatus, setSpeakingStatus] = useState<SpeakingStatus>('idle');
   const [transcript, setTranscript] = useState('');
