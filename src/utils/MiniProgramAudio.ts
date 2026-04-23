@@ -102,7 +102,12 @@ export class MiniProgramAudioClient {
   private pttRecordingStart: number = 0;
   // 🔇 PTT 抢话打断：按下时丢弃尚未播放的 AI 音频，下一次 response.created 时复位
   private audioMutedUntilNextResponse: boolean = false;
+  private pttStopAt: number = 0;        // 最近一次 pttStop 时间戳，用于音频解锁兜底
+  private pttUnmuteFallbackTimer: ReturnType<typeof setTimeout> | null = null;
+  // 📡 通道存活信号：最近一次收到 transcript / 音频帧的时间，用于错误分级判断
+  private lastInboundAt: number = 0;
   private static readonly PTT_MIN_RECORDING_MS = 300;
+  private static readonly PTT_UNMUTE_FALLBACK_MS = 2000;
   private recorderRunning = false;
 
   // 🩺 PTT 诊断指标
