@@ -709,13 +709,28 @@ export class MiniProgramAudioClient {
         case 'transcript':
           // 处理转录文本
           if (message.text) {
-            this.config.onTranscript(
-              message.text,
-              message.isFinal ?? true,
-              message.role ?? 'assistant'
-            );
+            const role = message.role ?? 'assistant';
+            if (role === 'user' && !this.diag.firstUserTranscriptAt) {
+              this.diag.firstUserTranscriptAt = Date.now();
+              this.emitDiag();
+            }
+            if (role === 'assistant' && !this.diag.firstAiReplyAt) {
+              this.diag.firstAiReplyAt = Date.now();
+              this.emitDiag();
+            }
+            this.config.onTranscript(message.text, message.isFinal ?? true, role);
           }
           break;
+
+        case 'ptt_config_applied': {
+          const td = (message as any).turn_detection;
+          this.diag.pttConfigApplied = true;
+          this.diag.serverTurnDetectionNull = td === null;
+          console.log('[MiniProgramAudio] ptt_config_applied:', td);
+          this.emitDiag();
+          this.config.onMessage(message);
+          break;
+        }
 
         case 'audio_output':
           // 处理音频输出
