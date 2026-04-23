@@ -24,6 +24,8 @@ interface ClientMessage {
   text?: string;
   instructions?: string;
   voice_type?: string;
+  // PTT 模式：客户端可显式传 turn_detection: null 关闭服务端 VAD
+  turn_detection?: any;
 }
 
 // ElevenLabs 音色 ID -> OpenAI Realtime voice 名称
