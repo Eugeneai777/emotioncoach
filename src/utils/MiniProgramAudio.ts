@@ -86,6 +86,7 @@ export class MiniProgramAudioClient {
   private pttMuted: boolean = true;     // PTT 模式下默认静音，按住时打开
   private pttRecordingStart: number = 0;
   private static readonly PTT_MIN_RECORDING_MS = 300;
+  private recorderRunning = false;
 
   /** 在 connect() 之前调用：声明 PTT 模式，使 ws open 时立刻通知 relay 关闭 VAD，并启用音频闸门 */
   public presetPushToTalk(enabled: boolean): void {
@@ -96,6 +97,17 @@ export class MiniProgramAudioClient {
   /** 按住说话：打开闸门，让本地音频开始流向 relay */
   public pttStart(): { ok: boolean; reason?: string } {
     if (!this.pttPreset) return { ok: false, reason: 'not_in_ptt_mode' };
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+      return { ok: false, reason: 'channel_not_open' };
+    }
+    if (!this.useWebAudioFallback && this.recorder && !this.recorderRunning) {
+      try {
+        this.startRecording();
+      } catch (error) {
+        console.error('[MiniProgramAudio][PTT] Failed to start recorder on press:', error);
+        return { ok: false, reason: 'start_failed' };
+      }
+    }
     if (this.webAudioContext && this.webAudioContext.state !== 'running') {
       void this.webAudioContext.resume().catch((error) => {
         console.warn('[MiniProgramAudio][PTT] Failed to resume recording context:', error);
@@ -214,11 +226,16 @@ export class MiniProgramAudioClient {
       return;
     }
 
+    if (this.recorderRunning) {
+      return;
+    }
+
     const wx = window.wx;
     if (!wx) return;
 
     // ✅ 修复：duration 从 60000ms 增加到 600000ms（10分钟）
     // 小程序 recorderManager 最长支持 10 分钟录音
+    this.recorderRunning = true;
     this.recorder.start({
       duration: 600000, // 最长 10 分钟（从 60 秒增加）
       sampleRate: 24000, // 24kHz 采样率（OpenAI 要求）
@@ -241,6 +258,7 @@ export class MiniProgramAudioClient {
     
     if (this.recorder) {
       try {
+        this.recorderRunning = false;
         this.recorder.stop();
       } catch (e) {
         // Ignore stop errors
@@ -416,13 +434,19 @@ export class MiniProgramAudioClient {
 
       // 监听录音错误
       this.recorder.onError((error: any) => {
+        this.recorderRunning = false;
         console.error('[MiniProgramAudio] Recorder error:', error);
       });
 
       // 监听录音结束
       this.recorder.onStop(() => {
+        this.recorderRunning = false;
         console.log('[MiniProgramAudio] Recording stopped');
       });
+
+      if (this.pttPreset) {
+        this.startRecording();
+      }
       
       return;
     }
