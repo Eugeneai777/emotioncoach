@@ -151,6 +151,12 @@ export class MiniProgramAudioClient {
     }
     this.pttMuted = false;
     this.pttRecordingStart = Date.now();
+    // 重置当次按下的诊断指标
+    this.diag.isPressing = true;
+    this.diag.micEnergyDetected = false;
+    this.diag.outboundChunks = 0;
+    this.diag.lastError = null;
+    this.emitDiag();
     // 通知 relay 清空缓冲
     try {
       this.ws?.readyState === WebSocket.OPEN && this.ws.send(JSON.stringify({ type: 'input_audio_buffer.clear' }));
@@ -161,8 +167,11 @@ export class MiniProgramAudioClient {
   /** 松开发送：关闭闸门，commit 缓冲并请求响应 */
   public pttStop(): { ok: boolean; reason?: string } {
     if (!this.pttPreset) return { ok: false, reason: 'not_in_ptt_mode' };
+    this.diag.isPressing = false;
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
       this.pttMuted = true;
+      this.diag.lastError = 'channel_not_open';
+      this.emitDiag();
       return { ok: false, reason: 'channel_not_open' };
     }
     const duration = Date.now() - this.pttRecordingStart;
@@ -171,12 +180,19 @@ export class MiniProgramAudioClient {
       try {
         this.ws?.readyState === WebSocket.OPEN && this.ws.send(JSON.stringify({ type: 'input_audio_buffer.clear' }));
       } catch {}
+      this.diag.lastError = 'too_short';
+      this.emitDiag();
       return { ok: false, reason: 'too_short' };
+    }
+    // 若按住期间没有任何能量或没发出帧，标记 mic_silent，但仍尝试 commit（让服务端给出权威反馈）
+    if (!this.diag.micEnergyDetected || this.diag.outboundChunks === 0) {
+      this.diag.lastError = 'mic_silent';
     }
     try {
       if (this.ws?.readyState === WebSocket.OPEN) {
         this.ws.send(JSON.stringify({ type: 'input_audio_buffer.commit' }));
         this.ws.send(JSON.stringify({ type: 'response.create' }));
+        this.diag.lastCommitAt = Date.now();
       }
     } catch (e) {
       console.warn('[MiniProgramAudio][PTT] commit failed:', e);
