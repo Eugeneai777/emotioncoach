@@ -329,7 +329,7 @@ export default function PromoMidlife25to45Women399() {
                 Icon: Gem,
                 title: "高性价比体验",
                 points: [
-                  "教练 + AI + 实物胶囊 + 私密社群",
+                  "打卡训练营 + 真人冥想 + 课程 + 海沃塔团队教练",
                   "一支口红的钱，拿到 ¥3,980 闭门计划同款核心",
                 ],
               },
