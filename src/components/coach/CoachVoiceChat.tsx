@@ -14,7 +14,7 @@ import { RealtimeChat } from '@/utils/RealtimeAudio';
 import { DoubaoRealtimeChat } from '@/utils/DoubaoRealtimeAudio';
 import { MiniProgramAudioClient, ConnectionStatus as MiniProgramStatus, type PttDiagnostics } from '@/utils/MiniProgramAudio';
 import { PttDiagnosticsPanel } from './PttDiagnosticsPanel';
-import { isWeChatMiniProgram, supportsWebRTC, getPlatformInfo, isDesktop } from '@/utils/platform';
+import { isWeChatMiniProgram, supportsWebRTC, getPlatformInfo, isDesktop, getPreferredVoiceInteraction } from '@/utils/platform';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
