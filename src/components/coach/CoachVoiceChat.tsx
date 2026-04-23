@@ -14,7 +14,7 @@ import { RealtimeChat } from '@/utils/RealtimeAudio';
 import { DoubaoRealtimeChat } from '@/utils/DoubaoRealtimeAudio';
 import { MiniProgramAudioClient, ConnectionStatus as MiniProgramStatus, type PttDiagnostics } from '@/utils/MiniProgramAudio';
 import { PttDiagnosticsPanel } from './PttDiagnosticsPanel';
-import { isWeChatMiniProgram, supportsWebRTC, getPlatformInfo, isDesktop } from '@/utils/platform';
+import { isWeChatMiniProgram, supportsWebRTC, getPlatformInfo, isDesktop, getPreferredVoiceInteraction } from '@/utils/platform';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -106,7 +106,8 @@ export const CoachVoiceChat = ({
       if (force === 'ptt') return true;
       if (force === 'continuous') return false;
     } catch {}
-    return !isDesktop();
+    // 使用统一的桌面/移动判定（getPreferredVoiceInteraction），避免 Windows 触屏笔电误判
+    return getPreferredVoiceInteraction() === 'ptt';
   }, [pttModeProp]);
   const [status, setStatus] = useState<ConnectionStatus>('idle');
   const [speakingStatus, setSpeakingStatus] = useState<SpeakingStatus>('idle');
@@ -973,13 +974,20 @@ export const CoachVoiceChat = ({
               setSpeakingStatus('user-speaking');
             }
           }, 80);
-          } else {
-            const activeClient = chatRef.current as any;
-            if (useMiniProgramMode && typeof activeClient?.stopRecording === 'function') {
-              setTimeout(() => {
-                try { activeClient.stopRecording(); } catch (e) { console.warn('[PTT] stop idle mini program recorder failed', e); }
-              }, 50);
-            }
+        } else {
+          const activeClient = chatRef.current as any;
+          if (useMiniProgramMode && typeof activeClient?.stopRecording === 'function') {
+            setTimeout(() => {
+              try { activeClient.stopRecording(); } catch (e) { console.warn('[PTT] stop idle mini program recorder failed', e); }
+            }, 50);
+          }
+        }
+      } else {
+        // 🔧 连续通话模式：连接成功后兜底确保麦克风启用
+        // 修复 Windows 触屏笔电、缓存流复用等场景下 track.enabled=false 导致 AI 听不到声音
+        const client = chatRef.current as any;
+        if (client && typeof client.ensureMicEnabled === 'function') {
+          try { client.ensureMicEnabled(); } catch (e) { console.warn('[Mic] ensureMicEnabled failed', e); }
         }
       }
     } else if (mappedStatus === 'disconnected' || mappedStatus === 'error') {

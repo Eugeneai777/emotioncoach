@@ -31,8 +31,12 @@ function isStreamAlive(stream: MediaStream): boolean {
  * - 否则正常请求（触发一次弹窗，之后缓存）
  */
 export async function acquireMicrophone(): Promise<MediaStream> {
-  // 返回缓存的活跃流
+  // 返回缓存的活跃流（强制开麦自愈：防止上次 PTT 把 track.enabled 设为 false 后被复用，
+  // 导致后续连续通话场景拿到一个"活着但静音"的流，AI 收不到声音）
   if (cachedStream && isStreamAlive(cachedStream)) {
+    try {
+      cachedStream.getAudioTracks().forEach(t => { t.enabled = true; });
+    } catch {}
     return cachedStream;
   }
 
