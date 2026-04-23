@@ -2787,6 +2787,11 @@ export const CoachVoiceChat = ({
         )}
       </div>
 
+      {/* 🩺 PTT 诊断面板 - 仅在小程序 + PTT 模式显示 */}
+      {pttMode && isWeChatMiniProgram() && (
+        <PttDiagnosticsPanel diag={pttDiag} />
+      )}
+
       {/* 底部操作区 — PTT 模式上移到拇指区 */}
       <div className={`px-6 flex flex-col items-center gap-3 ${pttMode && status === 'connected' ? 'pb-[14vh] pt-2' : 'p-6 pb-safe'}`}>
         {pttMode && statusRef.current !== 'connecting' ? (
