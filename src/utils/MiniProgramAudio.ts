@@ -405,18 +405,23 @@ export class MiniProgramAudioClient {
       this.ws.onopen = () => {
         clearTimeout(timeout);
         console.log('[MiniProgramAudio] WebSocket connected');
+        this.diag.wsOpen = true;
+        this.emitDiag();
 
-        // 把 voice_type / instructions 一起发给 relay，确保 relay 能正确选择音色
+        // 把 voice_type / instructions / turn_detection 一起发给 relay
         const voiceType = (this.config.extraBody as any)?.voice_type;
+        const payload: Record<string, unknown> = {
+          type: 'session_config',
+          instructions: this.cachedInstructions ?? undefined,
+          voice_type: voiceType,
+        };
+        // 🎙️ PTT 模式：必须显式传 null 才能被 JSON 序列化保留（undefined 会被 stringify 丢掉）
+        if (this.pttPreset) {
+          payload.turn_detection = null;
+        }
         if ((this.cachedInstructions || voiceType || this.pttPreset) && this.ws) {
-          console.log('[MiniProgramAudio] Sending session_config (instructions + voice_type + ptt)', { hasInstructions: !!this.cachedInstructions, voiceType, ptt: this.pttPreset });
-          this.ws.send(JSON.stringify({
-            type: 'session_config',
-            instructions: this.cachedInstructions ?? undefined,
-            voice_type: voiceType,
-            // 🎙️ PTT 模式：通知 relay 关闭服务端 VAD（turn_detection: null）
-            turn_detection: this.pttPreset ? null : undefined,
-          }));
+          console.log('[MiniProgramAudio] Sending session_config', { hasInstructions: !!this.cachedInstructions, voiceType, ptt: this.pttPreset });
+          this.ws.send(JSON.stringify(payload));
         }
 
         resolve();
