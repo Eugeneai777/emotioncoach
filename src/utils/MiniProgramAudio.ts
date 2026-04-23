@@ -464,6 +464,8 @@ export class MiniProgramAudioClient {
     // 仅在 H5 / Web Audio 不可用时才回退到 wx 原生录音器
     if (wx?.getRecorderManager) {
       console.log('[MiniProgramAudio] Using wx.getRecorderManager');
+      this.diag.recorderSource = 'wx_recorder';
+      this.emitDiag();
       
       // 请求录音权限
       const hasPermission = await this.requestRecordPermission();
@@ -483,7 +485,7 @@ export class MiniProgramAudioClient {
       // 监听录音帧数据
       this.recorder.onFrameRecorded((res: { frameBuffer: ArrayBuffer; isLastFrame: boolean }) => {
         if (this.ws?.readyState === WebSocket.OPEN && res.frameBuffer) {
-          // 🎙️ PTT 闸门：未按住时不发送本地音频，避免 relay/远端 VAD 收到声音
+          // 🎙️ PTT 闸门：未按住时不发送本地音频
           if (this.pttPreset && this.pttMuted) return;
           const base64Audio = wx.arrayBufferToBase64?.(res.frameBuffer) || '';
           if (base64Audio) {
@@ -492,6 +494,12 @@ export class MiniProgramAudioClient {
               audio: base64Audio,
             };
             this.ws.send(JSON.stringify(chunk));
+            // 诊断：wx 录音器我们无法直接看到 PCM 能量，但只要有 frame 就视为有能量
+            if (this.diag.isPressing) {
+              this.diag.outboundChunks++;
+              this.diag.micEnergyDetected = true;
+              this.emitDiag();
+            }
           }
         }
       });
