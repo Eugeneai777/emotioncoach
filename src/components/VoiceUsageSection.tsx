@@ -111,6 +111,16 @@ export const VoiceUsageSection: React.FC<Props> = ({ userId }) => {
   const [filter, setFilter] = useState<FilterMode>("all");
   const [showRules, setShowRules] = useState(false);
   const [showRecharge, setShowRecharge] = useState(false);
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+
+  const toggleExpand = (id: string) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   useEffect(() => {
     const load = async () => {
