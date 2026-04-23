@@ -73,10 +73,15 @@ export function UnifiedPayDialog({
   const isMiniProgram = isWeChatMiniProgram();
   const [payMethod, setPayMethod] = useState<PayMethod>(getDefaultPayMethod);
   const [stage, setStage] = useState<Stage>('pay');
+  // 🆕 每次 open 由 false→true 时自增的实例 key，强制 unmount 上一次的支付弹窗实例，
+  // 彻底重置内部 state/refs（避免取消支付后第二次点击时残留状态导致卡在「正在调起支付」）
+  const [instanceKey, setInstanceKey] = useState(0);
+  const prevOpenRef = useRef(false);
 
   // Reset when dialog opens
   useEffect(() => {
-    if (open) {
+    if (open && !prevOpenRef.current) {
+      setInstanceKey((k) => k + 1);
       setPayMethod(getDefaultPayMethod());
       setStage('pay');
       // 埋点：支付弹窗打开
@@ -91,6 +96,7 @@ export function UnifiedPayDialog({
         metadata: { payMethod: getDefaultPayMethod(), packageKey: packageInfo?.key },
       });
     }
+    prevOpenRef.current = open;
   }, [open, packageInfo]);
 
   const handleSelect = useCallback((method: PayMethod) => {
