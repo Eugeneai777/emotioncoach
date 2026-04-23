@@ -1221,6 +1221,16 @@ export class RealtimeChat {
   }
 
   /**
+   * 公开的"确保麦克风开启"方法
+   * 用于连续通话模式下，外部组件强制启用麦克风轨道，
+   * 防止某些浏览器在 addTrack 后保持静音或缓存流被上次 PTT 残留状态污染。
+   */
+  public ensureMicEnabled(): void {
+    if (this.pttMode || this.pttPreset) return; // PTT 模式下不要强制开麦
+    try { this.setMicMuted(false); } catch {}
+  }
+
+  /**
    * 切换 Push-to-Talk 模式
    * - enabled=true: 关闭服务端 VAD，麦克风默认静音
    * - enabled=false: 恢复服务端 VAD，麦克风启用
