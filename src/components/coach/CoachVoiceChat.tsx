@@ -144,6 +144,7 @@ export const CoachVoiceChat = ({
   const isUnmountedRef = useRef(false);
   const startAttemptRef = useRef(0);
   const [useMiniProgramMode, setUseMiniProgramMode] = useState(false);  // 是否使用小程序模式
+  const [pttDiag, setPttDiag] = useState<PttDiagnostics | null>(null); // 🩺 PTT 诊断（仅小程序+PTT 显示）
   const hasGreetedRef = useRef(false);  // 🔧 PTT 模式：仅注入一次主动问候
   const shouldDelayMiniProgramPttConnect = pttMode && isWeChatMiniProgram();
   const pendingPttStartRef = useRef(false);
