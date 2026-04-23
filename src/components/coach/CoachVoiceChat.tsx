@@ -12,7 +12,8 @@ import { VoiceSuggestionChips } from './VoiceSuggestionChips';
 import { useVoiceGreeting } from '@/hooks/useVoiceGreeting';
 import { RealtimeChat } from '@/utils/RealtimeAudio';
 import { DoubaoRealtimeChat } from '@/utils/DoubaoRealtimeAudio';
-import { MiniProgramAudioClient, ConnectionStatus as MiniProgramStatus } from '@/utils/MiniProgramAudio';
+import { MiniProgramAudioClient, ConnectionStatus as MiniProgramStatus, type PttDiagnostics } from '@/utils/MiniProgramAudio';
+import { PttDiagnosticsPanel } from './PttDiagnosticsPanel';
 import { isWeChatMiniProgram, supportsWebRTC, getPlatformInfo } from '@/utils/platform';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -143,6 +144,7 @@ export const CoachVoiceChat = ({
   const isUnmountedRef = useRef(false);
   const startAttemptRef = useRef(0);
   const [useMiniProgramMode, setUseMiniProgramMode] = useState(false);  // 是否使用小程序模式
+  const [pttDiag, setPttDiag] = useState<PttDiagnostics | null>(null); // 🩺 PTT 诊断（仅小程序+PTT 显示）
   const hasGreetedRef = useRef(false);  // 🔧 PTT 模式：仅注入一次主动问候
   const shouldDelayMiniProgramPttConnect = pttMode && isWeChatMiniProgram();
   const pendingPttStartRef = useRef(false);
@@ -1477,6 +1479,7 @@ export const CoachVoiceChat = ({
           onStatusChange: handleStatusChange,
           onTranscript: handleTranscript,
           onUsageUpdate: (usage) => setApiUsage(prev => ({ inputTokens: prev.inputTokens + usage.input_tokens, outputTokens: prev.outputTokens + usage.output_tokens })),
+          onDiagnostic: (d) => setPttDiag(d),
           tokenEndpoint,
           mode,
           scenario,
@@ -1589,6 +1592,7 @@ export const CoachVoiceChat = ({
               inputTokens: prev.inputTokens + usage.input_tokens,
               outputTokens: prev.outputTokens + usage.output_tokens
             })),
+            onDiagnostic: (d) => setPttDiag(d),
             tokenEndpoint,
             mode,
             scenario,
@@ -2782,6 +2786,11 @@ export const CoachVoiceChat = ({
           </div>
         )}
       </div>
+
+      {/* 🩺 PTT 诊断面板 - 仅在小程序 + PTT 模式显示 */}
+      {pttMode && isWeChatMiniProgram() && (
+        <PttDiagnosticsPanel diag={pttDiag} />
+      )}
 
       {/* 底部操作区 — PTT 模式上移到拇指区 */}
       <div className={`px-6 flex flex-col items-center gap-3 ${pttMode && status === 'connected' ? 'pb-[14vh] pt-2' : 'p-6 pb-safe'}`}>
