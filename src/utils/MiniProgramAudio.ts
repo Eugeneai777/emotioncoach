@@ -741,6 +741,7 @@ export class MiniProgramAudioClient {
           // 处理转录文本
           if (message.text) {
             const role = message.role ?? 'assistant';
+            this.lastInboundAt = Date.now();
             if (role === 'user' && !this.diag.firstUserTranscriptAt) {
               this.diag.firstUserTranscriptAt = Date.now();
               this.emitDiag();
@@ -769,11 +770,27 @@ export class MiniProgramAudioClient {
             this.audioMutedUntilNextResponse = false;
             console.log('[MiniProgramAudio][PTT] audio unmuted on response.created');
           }
+          if (this.pttUnmuteFallbackTimer) {
+            clearTimeout(this.pttUnmuteFallbackTimer);
+            this.pttUnmuteFallbackTimer = null;
+          }
           this.config.onMessage(message);
           break;
 
         case 'audio_output':
+        case 'response.audio.delta':
           // 处理音频输出
+          this.lastInboundAt = Date.now();
+          // 🛡️ 解锁兜底：若距 pttStop 已超 1.5s 仍未通过 response.created 解锁，
+          // 此时新音频帧到达说明已经是新一轮 response,强制解除静音
+          if (this.audioMutedUntilNextResponse && this.pttStopAt > 0 && Date.now() - this.pttStopAt > 1500) {
+            this.audioMutedUntilNextResponse = false;
+            if (this.pttUnmuteFallbackTimer) {
+              clearTimeout(this.pttUnmuteFallbackTimer);
+              this.pttUnmuteFallbackTimer = null;
+            }
+            console.log('[MiniProgramAudio][PTT] audio unmuted on first audio frame after pttStop');
+          }
           if (message.audio) {
             this.queueAudio(message.audio);
           }
@@ -786,10 +803,31 @@ export class MiniProgramAudioClient {
           }
           break;
 
-        case 'error':
-          console.error('[MiniProgramAudio] Server error:', message.error);
-          this.updateStatus('error');
+        case 'error': {
+          // ⚠️ 错误分级：避免单次非致命错误（rate_limit / 单帧解码 / 单 response 错误）
+          // 误报为"连接失败"。仅当 WebSocket 真正关闭 / 鉴权失效 / 麦克风权限被拒
+          // 时才把 status 切到 error。
+          const errAny: any = (message as any).error;
+          const errStr = typeof errAny === 'string' ? errAny : JSON.stringify(errAny ?? '');
+          const errCode = (errAny && typeof errAny === 'object' && (errAny.code || errAny.type)) || '';
+          const fatalCodes = ['session_expired', 'auth_failed', 'invalid_token', 'unauthorized', 'permission_denied', 'mic_permission_denied'];
+          const isFatalCode = typeof errCode === 'string' && fatalCodes.some(c => errCode.toLowerCase().includes(c));
+          const wsClosed = !this.ws || this.ws.readyState !== WebSocket.OPEN;
+          const channelAlive = !wsClosed && (Date.now() - this.lastInboundAt < 3000);
+          const isFatal = isFatalCode || wsClosed;
+          if (isFatal && !channelAlive) {
+            console.error('[MiniProgramAudio] Fatal server error:', errStr);
+            this.diag.lastError = errStr.slice(0, 120);
+            this.updateStatus('error');
+          } else {
+            console.warn('[MiniProgramAudio] Non-fatal server error (downgraded):', errStr);
+            this.diag.lastError = errStr.slice(0, 120);
+            this.emitDiag();
+          }
+          // 始终把原始 error 透传给上层,便于日志/统计
+          this.config.onMessage(message);
           break;
+        }
 
         case 'speech_started':
           // 用户开始说话 → 立即停止 AI 音频播放（实现打断）
