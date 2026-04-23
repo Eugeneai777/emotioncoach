@@ -263,21 +263,59 @@ export function getPlatformInfo(): {
 
 /**
  * 检测是否为桌面端（鼠标 + 键盘环境）
- * 判定逻辑：无触屏 + 支持 hover + 精细指针
- * - iPad/触屏笔记本：有 touch → 归为移动端（PTT 模式）
- * - 微信小程序 WebView：有 touch → 归为移动端（PTT 模式）
- * - 二合一 Surface 外接键鼠：按 hover+fine pointer 判定为桌面
+ *
+ * 🔧 v2 重写：彻底放弃 `ontouchstart` / `maxTouchPoints` 作为"非桌面"硬条件，
+ * 因为 Windows Chrome/Edge 在很多触屏笔电（Surface、ThinkPad、戴尔）上
+ * 默认 `maxTouchPoints > 0`，会被误判为移动端，导致语音强制走 PTT 模式
+ * 并把麦克风 track.enabled 设为 false → AI 听不到用户。
+ *
+ * 新判定顺序：
+ * 1. 微信小程序 → 非桌面
+ * 2. 移动端 UA（iPhone/Android phone/Mobile）→ 非桌面
+ * 3. iPad → 非桌面（保持触屏 PTT）
+ * 4. (hover: hover) 且 (pointer: fine) → 桌面（鼠标设备）
+ * 5. 仅 (pointer: coarse) 无 fine → 非桌面（纯触屏）
+ * 6. 兜底：window.innerWidth >= 1024 视为桌面
  */
 export function isDesktop(): boolean {
   try {
     if (isWeChatMiniProgram()) return false;
-    const hasTouch = 'ontouchstart' in window || (navigator.maxTouchPoints ?? 0) > 0;
-    if (hasTouch) return false;
-    const hoverFine = window.matchMedia?.('(hover: hover) and (pointer: fine)').matches;
-    return !!hoverFine;
+
+    const ua = navigator.userAgent || '';
+    // 明确移动端 UA（不依赖 touch 信号）
+    if (/iPhone|iPod|Android.*Mobile|Mobile.*Android|BlackBerry|Opera Mini|IEMobile/i.test(ua)) {
+      return false;
+    }
+    // iPad（含桌面伪装的 iPadOS）
+    if (/iPad/i.test(ua)) return false;
+    if (navigator.platform === 'MacIntel' && (navigator.maxTouchPoints ?? 0) > 1) return false;
+
+    const mm = window.matchMedia;
+    if (typeof mm === 'function') {
+      // 鼠标 + 悬停设备 → 桌面（即使有触屏也算，如二合一笔电外接键鼠）
+      if (mm('(hover: hover) and (pointer: fine)').matches) return true;
+      // 仅有粗指针、无精细指针 → 纯触屏设备
+      const coarseOnly = mm('(pointer: coarse)').matches && !mm('(pointer: fine)').matches;
+      if (coarseOnly) return false;
+    }
+
+    // 兜底：按窗口宽度判断
+    return (window.innerWidth || 0) >= 1024;
   } catch {
-    return false;
+    // 出错时倾向桌面，避免静音 bug 在异常环境下复现
+    return true;
   }
+}
+
+/**
+ * 获取当前环境推荐的语音交互方式
+ * - 'continuous'：连续通话（VAD 自动检测）
+ * - 'ptt'：长按说话
+ *
+ * 全站统一调用此函数决定是否启用 PTT，避免各页面用不同的判定条件。
+ */
+export function getPreferredVoiceInteraction(): 'continuous' | 'ptt' {
+  return isDesktop() ? 'continuous' : 'ptt';
 }
 
 /**
