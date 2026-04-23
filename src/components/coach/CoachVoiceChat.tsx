@@ -2787,8 +2787,9 @@ export const CoachVoiceChat = ({
         )}
       </div>
 
-      {/* 🩺 PTT 诊断面板 - 仅在小程序 + PTT 模式显示 */}
-      {pttMode && isWeChatMiniProgram() && (
+      {/* 🩺 PTT 诊断面板 - 仅在小程序 + PTT 模式 + URL 带 ?debug=ptt 时显示（运营排障专用） */}
+      {pttMode && isWeChatMiniProgram() && typeof window !== 'undefined' &&
+        new URLSearchParams(window.location.search).get('debug') === 'ptt' && (
         <PttDiagnosticsPanel diag={pttDiag} />
       )}
 
