@@ -12,11 +12,26 @@ import '@/utils/platform';
 
 export type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
 
+export interface PttDiagnostics {
+  wsOpen: boolean;
+  recorderSource: 'web_audio' | 'wx_recorder' | 'none';
+  pttConfigApplied: boolean;       // 收到 relay 的 ptt_config_applied
+  serverTurnDetectionNull: boolean; // 服务端确认 turn_detection 为 null
+  isPressing: boolean;             // 当前是否处于按下状态
+  micEnergyDetected: boolean;      // 当前按下期间是否采到过音频能量
+  outboundChunks: number;          // 当前按下期间已发送的音频帧数
+  lastCommitAt: number | null;     // 最近一次松手 commit 的时间戳
+  firstUserTranscriptAt: number | null;
+  firstAiReplyAt: number | null;
+  lastError: string | null;
+}
+
 export interface MiniProgramAudioConfig {
   onMessage: (message: any) => void;
   onStatusChange: (status: ConnectionStatus) => void;
   onTranscript: (text: string, isFinal: boolean, role: 'user' | 'assistant') => void;
   onUsageUpdate?: (usage: { input_tokens: number; output_tokens: number }) => void;
+  onDiagnostic?: (diag: PttDiagnostics) => void;
   tokenEndpoint: string;
   mode: string;
   scenario?: string; // 场景名称，如 "睡不着觉"
@@ -88,6 +103,25 @@ export class MiniProgramAudioClient {
   private static readonly PTT_MIN_RECORDING_MS = 300;
   private recorderRunning = false;
 
+  // 🩺 PTT 诊断指标
+  private diag: PttDiagnostics = {
+    wsOpen: false,
+    recorderSource: 'none',
+    pttConfigApplied: false,
+    serverTurnDetectionNull: false,
+    isPressing: false,
+    micEnergyDetected: false,
+    outboundChunks: 0,
+    lastCommitAt: null,
+    firstUserTranscriptAt: null,
+    firstAiReplyAt: null,
+    lastError: null,
+  };
+
+  private emitDiag(): void {
+    try { this.config.onDiagnostic?.({ ...this.diag }); } catch {}
+  }
+
   /** 在 connect() 之前调用：声明 PTT 模式，使 ws open 时立刻通知 relay 关闭 VAD，并启用音频闸门 */
   public presetPushToTalk(enabled: boolean): void {
     this.pttPreset = enabled;
@@ -98,6 +132,8 @@ export class MiniProgramAudioClient {
   public pttStart(): { ok: boolean; reason?: string } {
     if (!this.pttPreset) return { ok: false, reason: 'not_in_ptt_mode' };
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+      this.diag.lastError = 'channel_not_open';
+      this.emitDiag();
       return { ok: false, reason: 'channel_not_open' };
     }
     if (!this.useWebAudioFallback && this.recorder && !this.recorderRunning) {
@@ -115,6 +151,12 @@ export class MiniProgramAudioClient {
     }
     this.pttMuted = false;
     this.pttRecordingStart = Date.now();
+    // 重置当次按下的诊断指标
+    this.diag.isPressing = true;
+    this.diag.micEnergyDetected = false;
+    this.diag.outboundChunks = 0;
+    this.diag.lastError = null;
+    this.emitDiag();
     // 通知 relay 清空缓冲
     try {
       this.ws?.readyState === WebSocket.OPEN && this.ws.send(JSON.stringify({ type: 'input_audio_buffer.clear' }));
@@ -125,8 +167,11 @@ export class MiniProgramAudioClient {
   /** 松开发送：关闭闸门，commit 缓冲并请求响应 */
   public pttStop(): { ok: boolean; reason?: string } {
     if (!this.pttPreset) return { ok: false, reason: 'not_in_ptt_mode' };
+    this.diag.isPressing = false;
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
       this.pttMuted = true;
+      this.diag.lastError = 'channel_not_open';
+      this.emitDiag();
       return { ok: false, reason: 'channel_not_open' };
     }
     const duration = Date.now() - this.pttRecordingStart;
@@ -135,17 +180,27 @@ export class MiniProgramAudioClient {
       try {
         this.ws?.readyState === WebSocket.OPEN && this.ws.send(JSON.stringify({ type: 'input_audio_buffer.clear' }));
       } catch {}
+      this.diag.lastError = 'too_short';
+      this.emitDiag();
       return { ok: false, reason: 'too_short' };
+    }
+    // 若按住期间没有任何能量或没发出帧，标记 mic_silent，但仍尝试 commit（让服务端给出权威反馈）
+    if (!this.diag.micEnergyDetected || this.diag.outboundChunks === 0) {
+      this.diag.lastError = 'mic_silent';
     }
     try {
       if (this.ws?.readyState === WebSocket.OPEN) {
         this.ws.send(JSON.stringify({ type: 'input_audio_buffer.commit' }));
         this.ws.send(JSON.stringify({ type: 'response.create' }));
+        this.diag.lastCommitAt = Date.now();
       }
     } catch (e) {
       console.warn('[MiniProgramAudio][PTT] commit failed:', e);
+      this.diag.lastError = 'send_failed';
+      this.emitDiag();
       return { ok: false, reason: 'send_failed' };
     }
+    this.emitDiag();
     return { ok: true };
   }
 
@@ -350,18 +405,23 @@ export class MiniProgramAudioClient {
       this.ws.onopen = () => {
         clearTimeout(timeout);
         console.log('[MiniProgramAudio] WebSocket connected');
+        this.diag.wsOpen = true;
+        this.emitDiag();
 
-        // 把 voice_type / instructions 一起发给 relay，确保 relay 能正确选择音色
+        // 把 voice_type / instructions / turn_detection 一起发给 relay
         const voiceType = (this.config.extraBody as any)?.voice_type;
+        const payload: Record<string, unknown> = {
+          type: 'session_config',
+          instructions: this.cachedInstructions ?? undefined,
+          voice_type: voiceType,
+        };
+        // 🎙️ PTT 模式：必须显式传 null 才能被 JSON 序列化保留（undefined 会被 stringify 丢掉）
+        if (this.pttPreset) {
+          payload.turn_detection = null;
+        }
         if ((this.cachedInstructions || voiceType || this.pttPreset) && this.ws) {
-          console.log('[MiniProgramAudio] Sending session_config (instructions + voice_type + ptt)', { hasInstructions: !!this.cachedInstructions, voiceType, ptt: this.pttPreset });
-          this.ws.send(JSON.stringify({
-            type: 'session_config',
-            instructions: this.cachedInstructions ?? undefined,
-            voice_type: voiceType,
-            // 🎙️ PTT 模式：通知 relay 关闭服务端 VAD（turn_detection: null）
-            turn_detection: this.pttPreset ? null : undefined,
-          }));
+          console.log('[MiniProgramAudio] Sending session_config', { hasInstructions: !!this.cachedInstructions, voiceType, ptt: this.pttPreset });
+          this.ws.send(JSON.stringify(payload));
         }
 
         resolve();
@@ -404,6 +464,8 @@ export class MiniProgramAudioClient {
     // 仅在 H5 / Web Audio 不可用时才回退到 wx 原生录音器
     if (wx?.getRecorderManager) {
       console.log('[MiniProgramAudio] Using wx.getRecorderManager');
+      this.diag.recorderSource = 'wx_recorder';
+      this.emitDiag();
       
       // 请求录音权限
       const hasPermission = await this.requestRecordPermission();
@@ -423,7 +485,7 @@ export class MiniProgramAudioClient {
       // 监听录音帧数据
       this.recorder.onFrameRecorded((res: { frameBuffer: ArrayBuffer; isLastFrame: boolean }) => {
         if (this.ws?.readyState === WebSocket.OPEN && res.frameBuffer) {
-          // 🎙️ PTT 闸门：未按住时不发送本地音频，避免 relay/远端 VAD 收到声音
+          // 🎙️ PTT 闸门：未按住时不发送本地音频
           if (this.pttPreset && this.pttMuted) return;
           const base64Audio = wx.arrayBufferToBase64?.(res.frameBuffer) || '';
           if (base64Audio) {
@@ -432,6 +494,12 @@ export class MiniProgramAudioClient {
               audio: base64Audio,
             };
             this.ws.send(JSON.stringify(chunk));
+            // 诊断：wx 录音器我们无法直接看到 PCM 能量，但只要有 frame 就视为有能量
+            if (this.diag.isPressing) {
+              this.diag.outboundChunks++;
+              this.diag.micEnergyDetected = true;
+              this.emitDiag();
+            }
           }
         }
       });
@@ -461,6 +529,8 @@ export class MiniProgramAudioClient {
   private async initWebAudioRecorder(): Promise<void> {
     console.log('[MiniProgramAudio] Using Web Audio API recorder');
     this.useWebAudioFallback = true;
+    this.diag.recorderSource = 'web_audio';
+    this.emitDiag();
 
     try {
       if (this.preAcquiredStream?.active) {
@@ -506,6 +576,10 @@ export class MiniProgramAudioClient {
         if (maxAmplitude > 0.001) {
           this.lastAudioEnergyTime = Date.now();
           this.silentFrameCount = 0;
+          if (this.diag.isPressing && !this.diag.micEnergyDetected) {
+            this.diag.micEnergyDetected = true;
+            this.emitDiag();
+          }
         } else {
           this.silentFrameCount++;
         }
@@ -532,6 +606,11 @@ export class MiniProgramAudioClient {
           audio: base64Audio,
         };
         this.ws?.send(JSON.stringify(audioChunk));
+        if (this.diag.isPressing) {
+          this.diag.outboundChunks++;
+          // 节流：每 5 帧推一次
+          if (this.diag.outboundChunks % 5 === 0) this.emitDiag();
+        }
       };
 
       this.webSource.connect(this.webProcessor);
@@ -630,13 +709,28 @@ export class MiniProgramAudioClient {
         case 'transcript':
           // 处理转录文本
           if (message.text) {
-            this.config.onTranscript(
-              message.text,
-              message.isFinal ?? true,
-              message.role ?? 'assistant'
-            );
+            const role = message.role ?? 'assistant';
+            if (role === 'user' && !this.diag.firstUserTranscriptAt) {
+              this.diag.firstUserTranscriptAt = Date.now();
+              this.emitDiag();
+            }
+            if (role === 'assistant' && !this.diag.firstAiReplyAt) {
+              this.diag.firstAiReplyAt = Date.now();
+              this.emitDiag();
+            }
+            this.config.onTranscript(message.text, message.isFinal ?? true, role);
           }
           break;
+
+        case 'ptt_config_applied': {
+          const td = (message as any).turn_detection;
+          this.diag.pttConfigApplied = true;
+          this.diag.serverTurnDetectionNull = td === null;
+          console.log('[MiniProgramAudio] ptt_config_applied:', td);
+          this.emitDiag();
+          this.config.onMessage(message);
+          break;
+        }
 
         case 'audio_output':
           // 处理音频输出
