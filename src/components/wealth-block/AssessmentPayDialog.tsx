@@ -932,7 +932,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
             if (!isPaymentSessionActive(sessionId)) return;
             console.log("[Payment] JSAPI pay error:", jsapiError?.message);
             if (jsapiError?.message === "用户取消支付") {
-              console.log("[Payment] JSAPI payment cancelled by user, resetting dialog for retry");
+              console.log("[Payment] JSAPI payment cancelled by user, closing dialog and resetting state");
               stopPolling();
               setOrderNo("");
               setQrCodeDataUrl("");
@@ -942,8 +942,9 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
               setIsForceChecking(false);
               createOrderCalledRef.current = false;
               createOrderRetriedRef.current = false;
-              toast.info("支付已取消，可重新点击立即测评");
               setStatus("idle");
+              onOpenChange(false);
+              toast.info("支付已取消，可重新点击立即测评");
               return;
             }
 
