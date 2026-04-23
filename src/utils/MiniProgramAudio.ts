@@ -529,6 +529,8 @@ export class MiniProgramAudioClient {
   private async initWebAudioRecorder(): Promise<void> {
     console.log('[MiniProgramAudio] Using Web Audio API recorder');
     this.useWebAudioFallback = true;
+    this.diag.recorderSource = 'web_audio';
+    this.emitDiag();
 
     try {
       if (this.preAcquiredStream?.active) {
