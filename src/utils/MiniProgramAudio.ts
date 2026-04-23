@@ -798,6 +798,10 @@ export class MiniProgramAudioClient {
   }
 
   private queueAudio(base64Audio: string): void {
+    // 🔇 PTT 抢话打断期间：丢弃尚未播放的 AI 音频帧（保留文本气泡）
+    if (this.audioMutedUntilNextResponse) {
+      return;
+    }
     this.audioQueue.push(base64Audio);
     if (!this.isPlaying) {
       this.playNextInQueue();
