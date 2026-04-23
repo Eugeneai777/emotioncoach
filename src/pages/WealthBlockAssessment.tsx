@@ -135,20 +135,63 @@ export default function WealthBlockAssessmentPage() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // 登录回跳后自动拉付费弹窗（未付费用户从 /auth 回到本页时无缝续付费）
+  // 登录回跳后：先做一次"权威"购买状态检查（直查 orders），
+  // 已购买 → 直接关闭支付弹窗 + 进入答题，不再走创建订单/微信授权链路；
+  // 未购买 → 才拉起支付弹窗。
   useEffect(() => {
-    if (authLoading || isPurchaseLoading) return;
+    if (authLoading) return;
     if (!user) return;
     const pending = sessionStorage.getItem('wealth_block_pending_pay');
     if (pending !== '1') return;
     sessionStorage.removeItem('wealth_block_pending_pay');
-    if (hasPurchased || isBloomPartner) {
+
+    // 绽放合伙人直接放行
+    if (isBloomPartner) {
+      setShowPayDialog(false);
       setShowIntro(false);
       return;
     }
-    console.log('[WealthBlock] Resume after login → opening pay dialog');
-    openWealthPayDialog();
-  }, [user, authLoading, isPurchaseLoading, hasPurchased, isBloomPartner]);
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data: existingOrder } = await supabase
+          .from('orders')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('package_key', 'wealth_block_assessment')
+          .eq('status', 'paid')
+          .limit(1)
+          .maybeSingle();
+
+        if (cancelled) return;
+
+        if (existingOrder || hasPurchased) {
+          console.log('[WealthBlock] Resume after login → already purchased, skip pay dialog');
+          setShowPayDialog(false);
+          setShowIntro(false);
+          return;
+        }
+
+        console.log('[WealthBlock] Resume after login → not purchased, opening pay dialog');
+        openWealthPayDialog();
+      } catch (err) {
+        console.error('[WealthBlock] Resume purchase check failed:', err);
+        if (cancelled) return;
+        // 查询失败时回退到原逻辑：若 hook 已知已购买就放行，否则拉付费
+        if (hasPurchased) {
+          setShowPayDialog(false);
+          setShowIntro(false);
+        } else {
+          openWealthPayDialog();
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user, authLoading, isBloomPartner]);
 
   // 检测是否为微信浏览器（非小程序）
   const isWeChatBrowserEnv = typeof window !== 'undefined' && 
