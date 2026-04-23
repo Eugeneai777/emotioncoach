@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Helmet } from "react-helmet";
-import { ShieldCheck, Lock, MessageCircle, Quote, Users, Wind, Pill, Truck, Heart, Clock, Gem } from "lucide-react";
+import { Lock, MessageCircle, Quote, Users, Wind, BookOpen, Heart, Clock, Gem, Calendar } from "lucide-react";
 import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
 import { usePaymentCallback } from "@/hooks/usePaymentCallback";
 import { usePackageByKey } from "@/hooks/usePackages";
@@ -15,7 +15,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import zhileCapsules from "@/assets/zhile-capsules.jpeg";
+// removed zhile-capsules image import (no physical product in delivery)
 import coachDaixi from "@/assets/coach-daixi.jpg";
 import coachXiaoyi from "@/assets/coach-xiaoyi.png";
 import coachAmy from "@/assets/coach-amy.jpg";
@@ -134,7 +134,7 @@ export default function PromoMidlife25to45Women399() {
         <title>25–45 岁，请为自己留 7 天 ｜ ¥399 喘息计划</title>
         <meta
           name="description"
-          content="25–45 岁女性的 7 天喘息计划。同龄姐妹海沃塔 + AI 女性教练 + 知乐胶囊 + 私密女性社群。一支口红的钱，让自己被好好照顾一次。"
+          content="25–45 岁女性的 7 天喘息计划。7 天打卡训练营 + 每日真人冥想 + 每日课程推荐 + 海沃塔团队教练辅导。一支口红的钱，让自己被好好照顾一次。"
         />
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
       </Helmet>
@@ -220,28 +220,28 @@ export default function PromoMidlife25to45Women399() {
           <div className="space-y-4">
             {[
               {
-                Icon: Users,
-                tag: "权益 01 · 同龄姐妹海沃塔小组",
-                title: "终于可以说真话的地方",
-                desc: "1 场同龄 3 人小组，由女性教练带场。和姐妹 1 对 1 配对深度对话，不是被建议，是被听见。",
+                Icon: Calendar,
+                tag: "权益 01 · 7 天打卡训练营",
+                title: "陪你把这 7 天走完",
+                desc: "每日打卡节奏，跟着 7 天解压训练营走一遍，把身体和情绪重新调回稳定的轨道。不打鸡血，只陪你按节奏完成。",
               },
               {
                 Icon: Wind,
-                tag: "权益 02 · 24h AI 女性教练 + 每日 10 分钟静心",
-                title: "深夜不必假装坚强",
-                desc: "真人录制 10 分钟静心音频 · 哄睡 / 通勤随时听。AI 女性教练 24h 在线，深夜想哭一下、想骂两句，都可以。",
+                tag: "权益 02 · 每日真人 10 分钟静心冥想",
+                title: "深夜也能稳稳入睡",
+                desc: "真人录制 10 分钟静心音频，哄睡 / 通勤 / 午休随时听。专为高压女性设计的呼吸与放松引导，0 副作用、不依赖。",
               },
               {
-                Icon: Pill,
-                tag: "权益 03 · 1 瓶知乐胶囊体验装",
-                title: "身体兜底 · 先把睡眠还给自己",
-                desc: "GABA + L-茶氨酸 + 酸枣仁 + 镁。白天稳情绪，晚上沉得住睡眠。0 褪黑素，不依赖。顺丰到家。",
+                Icon: BookOpen,
+                tag: "权益 03 · 每日课程推荐 / 学习内容",
+                title: "每天 15 分钟，听一段值得听的",
+                desc: "围绕情绪、关系、自我照顾的精选课程内容，每日按你的状态推送。碎片化学习，不焦虑不内卷。",
               },
               {
                 Icon: Users,
-                tag: "权益 04 · 专属女性私密社群",
-                title: "不进朋友圈 · 不被同事看到",
-                desc: "全是 25–45 岁同龄女性，实名审核入群。没有打鸡血，没有微商，只是一群可以说真话的姐妹。",
+                tag: "权益 04 · 海沃塔团队教练辅导",
+                title: "一群人，比一个人走得更远",
+                desc: "由女性教练带场的海沃塔团队教练辅导：社群陪伴 + 团队带练 + 同龄姐妹 1 对 1 配对深度对话。不是被建议，是被听见。",
               },
             ].map((card, i) => (
               <div
@@ -296,32 +296,12 @@ export default function PromoMidlife25to45Women399() {
                   </div>
                 )}
 
-                {i === 2 && (
-                  <div
-                    className="mt-4 rounded-lg overflow-hidden"
-                    style={{ border: `1px solid ${C.divider}` }}
-                  >
-                    <img
-                      src={zhileCapsules}
-                      alt="知乐胶囊产品实拍"
-                      className="w-full object-cover"
-                    />
-                  </div>
-                )}
               </div>
             ))}
-
-            <div
-              className="flex items-start gap-2 px-4 py-3 rounded-lg"
-              style={{ background: `${C.primarySoft}1c`, border: `1px dashed ${C.divider}` }}
-            >
-              <Truck className="w-3.5 h-3.5 mt-0.5 shrink-0" style={{ color: C.accent }} />
-              <p className="text-[11.5px]" style={{ color: C.accent, lineHeight: 1.65 }}>
-                实物由「有劲生活馆」统一发货 · 顺丰包邮 · 下单后 48h 内寄出
-              </p>
-            </div>
           </div>
         </Section>
+
+{/* removed: physical shipping notice (no physical product in delivery now) */}
 
         {/* ============ 04 3 大优势 ============ */}
         <Section index={4} eyebrow="为什么是这 ¥399" title="选择我们的 3 个理由">
@@ -349,7 +329,7 @@ export default function PromoMidlife25to45Women399() {
                 Icon: Gem,
                 title: "高性价比体验",
                 points: [
-                  "教练 + AI + 实物胶囊 + 私密社群",
+                  "打卡训练营 + 真人冥想 + 课程 + 海沃塔团队教练",
                   "一支口红的钱，拿到 ¥3,980 闭门计划同款核心",
                 ],
               },
@@ -565,19 +545,19 @@ export default function PromoMidlife25to45Women399() {
               {[
                 {
                   q: "课程线上还是线下？时间怎么安排？",
-                  a: "全程线上。海沃塔团队对话固定 1 场（晚上 8 点开播，约 75 分钟），错过支持回放。每日静心和 AI 教练 24h 随时用，每天约 15 分钟，不耽误工作和带娃。",
+                  a: "全程线上。海沃塔团队对话固定 1 场（晚上 8 点开播，约 75 分钟），错过支持回放。每日静心冥想与课程随时听，每天约 15 分钟，不耽误工作和带娃。",
                 },
                 {
-                  q: "AI 教练随时能聊吗？真人教练会一对一回应吗？",
-                  a: "AI 女性教练 24h 在线，深夜也能聊，不留浏览记录。海沃塔场内由女性总教练带场。报名后专属助教会加你单独沟通入营事项，全程不打官腔、不卖课。",
+                  q: "海沃塔团队教练是怎么陪我的？",
+                  a: "由女性教练带场，社群陪伴 + 团队带练 + 同龄姐妹 1 对 1 配对深度对话。报名后专属助教会加你单独沟通入营事项，全程不打官腔、不卖课。",
                 },
                 {
                   q: "孩子哭闹 / 加班错过怎么办？",
-                  a: "完全不用焦虑。海沃塔团队对话支持完整回放；每日静心音频和 AI 女性教练 24h 在线，娃睡了再做也来得及。没有打卡排名，只跟着自己的节奏走。",
+                  a: "完全不用焦虑。海沃塔团队对话支持完整回放；每日冥想音频与课程内容长期可学，娃睡了再做也来得及。没有打卡排名，只跟着自己的节奏走。",
                 },
                 {
                   q: "家人会知道吗？我先生 / 婆婆会看到吗？",
-                  a: "不会。全程匿名昵称，社群实名审核仅平台后台可见。课程链接绑定你的账号，不可转发。物流外包装无任何敏感字样，由「有劲生活馆」名义寄出，家人看了也只会以为是一瓶普通保健品。",
+                  a: "不会。全程匿名昵称，社群实名审核仅平台后台可见。课程链接绑定你的账号，不可转发。沟通仅你与教练可见，不会出现在朋友圈与家人视野。",
                 },
               ].map((item, i, arr) => (
                 <AccordionItem
