@@ -2423,6 +2423,27 @@ export const CoachVoiceChat = ({
               )}
             </div>
 
+            {/* PTT 模式：余额胶囊（始终显示，连接中/失败/已连接均可见） */}
+            {!skipBilling && remainingQuota !== null && (
+              <div className="w-full max-w-md mt-3 flex items-center justify-center gap-2 flex-wrap">
+                <span className={`text-[11px] ${remainingQuota < POINTS_PER_MINUTE * 3 ? 'text-red-400' : 'text-white/55'}`}>
+                  {POINTS_PER_MINUTE}点/分钟 · 余额 {remainingQuota} 点（约 {Math.max(0, Math.floor(remainingQuota / POINTS_PER_MINUTE))} 分钟）
+                </span>
+                {remainingQuota < POINTS_PER_MINUTE * 3 && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowRechargeDialog(true);
+                    }}
+                    className="px-2 py-0.5 rounded-full bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 text-[11px] font-medium border border-rose-400/30 transition-colors"
+                  >
+                    充值
+                  </button>
+                )}
+              </div>
+            )}
+
             {/* 智能场景芯片 — 仅空闲且尚未对话时显示 */}
             {status === 'connected' && !latestUserLine && (
               <div className="w-full mt-4 animate-in fade-in duration-500">
