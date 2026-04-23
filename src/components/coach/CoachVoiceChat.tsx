@@ -1595,6 +1595,9 @@ export const CoachVoiceChat = ({
             extraBody: { ...extraBody, voice_type: voiceType },
             preAcquiredStream,
           });
+          if (pttMode && typeof (miniProgramClient as any).presetPushToTalk === 'function') {
+            try { (miniProgramClient as any).presetPushToTalk(true); } catch (e) { console.warn('[PTT] miniprogram fallback preset failed', e); }
+          }
           chatRef.current = miniProgramClient;
           await miniProgramClient.connect();
           updateConnectionPhase('connected');
