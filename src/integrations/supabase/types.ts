@@ -61,6 +61,63 @@ export type Database = {
           },
         ]
       }
+      admin_quota_recharges: {
+        Row: {
+          admin_user_id: string
+          after_total_quota: number | null
+          applied_at: string | null
+          before_total_quota: number | null
+          created_at: string
+          error_message: string | null
+          expiry_days: number | null
+          id: string
+          notes: string | null
+          package_type: string
+          quantity: number
+          remaining_quota_after: number | null
+          request_id: string
+          status: string
+          target_user_id: string
+          updated_at: string
+        }
+        Insert: {
+          admin_user_id: string
+          after_total_quota?: number | null
+          applied_at?: string | null
+          before_total_quota?: number | null
+          created_at?: string
+          error_message?: string | null
+          expiry_days?: number | null
+          id?: string
+          notes?: string | null
+          package_type?: string
+          quantity: number
+          remaining_quota_after?: number | null
+          request_id: string
+          status?: string
+          target_user_id: string
+          updated_at?: string
+        }
+        Update: {
+          admin_user_id?: string
+          after_total_quota?: number | null
+          applied_at?: string | null
+          before_total_quota?: number | null
+          created_at?: string
+          error_message?: string | null
+          expiry_days?: number | null
+          id?: string
+          notes?: string | null
+          package_type?: string
+          quantity?: number
+          remaining_quota_after?: number | null
+          request_id?: string
+          status?: string
+          target_user_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ai_coach_calls: {
         Row: {
           call_status: string
@@ -11954,6 +12011,34 @@ export type Database = {
           message: string
           new_remaining_quota: number
           success: boolean
+        }[]
+      }
+      admin_apply_quota_recharge: {
+        Args: {
+          p_admin_user_id: string
+          p_expiry_days?: number
+          p_notes?: string
+          p_package_type?: string
+          p_quantity: number
+          p_request_id: string
+          p_target_user_id: string
+        }
+        Returns: {
+          already_processed: boolean
+          error_message: string
+          new_remaining_quota: number
+          new_total_quota: number
+          status: string
+        }[]
+      }
+      admin_get_quota_recharge_status: {
+        Args: { p_request_id: string }
+        Returns: {
+          error_message: string
+          found: boolean
+          new_remaining_quota: number
+          new_total_quota: number
+          status: string
         }[]
       }
       check_and_lock_broadcast: { Args: never; Returns: boolean }
