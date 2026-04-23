@@ -2291,7 +2291,7 @@ export const CoachVoiceChat = ({
         </Button>
 
         {/* 中间：通话信息 - 极简单行 */}
-        <div className="text-white/55 text-xs flex items-center gap-2">
+        <div className="text-white/55 text-xs flex items-center gap-2 flex-wrap justify-center max-w-[60%]">
           {status === 'connected' && (
             <>
               <span className="font-mono tabular-nums">{formatDuration(duration)}</span>
@@ -2318,7 +2318,28 @@ export const CoachVoiceChat = ({
               </button>
             </>
           )}
-          {status === 'error' && <span className="text-red-400">连接失败</span>}
+          {/* 余额胶囊：连接中 / 失败时也显示,让用户始终看到余额 */}
+          {(status === 'connecting' || status === 'error') && !skipBilling && remainingQuota !== null && (
+            <span className={`flex items-center gap-0.5 ${remainingQuota < POINTS_PER_MINUTE * 3 ? 'text-red-400' : 'text-amber-300/70'}`}>
+              <Coins className="w-3 h-3" />
+              余额 {remainingQuota} 点（约 {Math.max(0, Math.floor(remainingQuota / POINTS_PER_MINUTE))} 分钟）
+            </span>
+          )}
+          {status === 'error' && (
+            <>
+              <span className="text-red-400">连接失败</span>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  startCall();
+                }}
+                className="ml-1 px-2 py-0.5 rounded-full bg-white/10 hover:bg-white/20 text-white/85 text-[11px] font-medium transition-colors"
+              >
+                重连
+              </button>
+            </>
+          )}
           {status === 'disconnected' && <span className="text-white/40">已断开</span>}
         </div>
 
