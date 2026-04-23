@@ -1592,6 +1592,7 @@ export const CoachVoiceChat = ({
               inputTokens: prev.inputTokens + usage.input_tokens,
               outputTokens: prev.outputTokens + usage.output_tokens
             })),
+            onDiagnostic: (d) => setPttDiag(d),
             tokenEndpoint,
             mode,
             scenario,
