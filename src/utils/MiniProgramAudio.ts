@@ -100,6 +100,8 @@ export class MiniProgramAudioClient {
   private pttPreset: boolean = false;
   private pttMuted: boolean = true;     // PTT 模式下默认静音，按住时打开
   private pttRecordingStart: number = 0;
+  // 🔇 PTT 抢话打断：按下时丢弃尚未播放的 AI 音频，下一次 response.created 时复位
+  private audioMutedUntilNextResponse: boolean = false;
   private static readonly PTT_MIN_RECORDING_MS = 300;
   private recorderRunning = false;
 
