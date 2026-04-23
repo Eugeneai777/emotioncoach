@@ -753,6 +753,10 @@ export class RealtimeChat {
       // 🎙️ PTT 预设：addTrack 后立即静音，避免远端 VAD 收到任何声音
       if (this.pttPreset) {
         try { this.setMicMuted(true); } catch {}
+      } else {
+        // 🔧 连续通话兜底：显式 enable，防止部分浏览器（Windows Chrome/Edge 触屏笔电）
+        // 在 addTrack 后保持 track.enabled=false 或缓存流被上一次 PTT 静音后未恢复
+        try { this.ensureMicEnabled(); } catch {}
       }
 
       // 设置数据通道
