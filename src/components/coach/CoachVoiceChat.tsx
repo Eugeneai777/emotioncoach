@@ -106,7 +106,8 @@ export const CoachVoiceChat = ({
       if (force === 'ptt') return true;
       if (force === 'continuous') return false;
     } catch {}
-    return !isDesktop();
+    // 使用统一的桌面/移动判定（getPreferredVoiceInteraction），避免 Windows 触屏笔电误判
+    return getPreferredVoiceInteraction() === 'ptt';
   }, [pttModeProp]);
   const [status, setStatus] = useState<ConnectionStatus>('idle');
   const [speakingStatus, setSpeakingStatus] = useState<SpeakingStatus>('idle');
