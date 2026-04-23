@@ -9,7 +9,7 @@
  * - 桌面端 → 默认微信支付
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { startPaymentFlow, trackPaymentEvent, endPaymentFlow, getCurrentFlowId } from '@/utils/paymentFlowTracker';
 import { WechatPayDialog, type WechatPayDialogProps } from './WechatPayDialog';
 import { AlipayPayDialog, type AlipayPayDialogProps } from './AlipayPayDialog';
