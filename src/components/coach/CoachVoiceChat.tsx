@@ -2794,6 +2794,9 @@ export const CoachVoiceChat = ({
 
       {/* 底部操作区 — PTT 模式上移到拇指区 */}
       <div className={`px-6 flex flex-col items-center gap-3 ${pttMode && status === 'connected' ? 'pb-[14vh] pt-2' : 'p-6 pb-safe'}`}>
+        {pttMode && statusRef.current === 'connected' && (
+          <p className="text-[11px] text-white/60">按通话时长计费 · 8 点/分钟</p>
+        )}
         {pttMode && statusRef.current !== 'connecting' ? (
           <PushToTalkButton
             primaryColor={primaryColor}
