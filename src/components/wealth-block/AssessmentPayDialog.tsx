@@ -931,45 +931,59 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
           } catch (jsapiError: any) {
             if (!isPaymentSessionActive(sessionId)) return;
             console.log("[Payment] JSAPI pay error:", jsapiError?.message);
-            if (jsapiError?.message !== "用户取消支付") {
-              // JSAPI 失败，降级到扫码模式
-              console.log("[Payment] JSAPI failed, falling back to native payment");
-              toast.info("支付弹窗调起失败，已切换为扫码支付");
+            if (jsapiError?.message === "用户取消支付") {
+              console.log("[Payment] JSAPI payment cancelled by user, resetting dialog for retry");
+              stopPolling();
+              setOrderNo("");
+              setQrCodeDataUrl("");
+              setPayUrl("");
+              setErrorMessage("");
+              setPollingTimeout(false);
+              setIsForceChecking(false);
+              createOrderCalledRef.current = false;
+              createOrderRetriedRef.current = false;
+              toast.info("支付已取消，可重新点击立即测评");
+              setStatus("idle");
+              return;
+            }
 
-              // 使用已有的订单号，生成二维码供用户扫码
-                try {
-                  const { data: nativeData, error: nativeError } = await supabase.functions.invoke(
-                    "create-wechat-order",
-                    {
-                      body: {
-                        packageKey: packageKey,
-                        packageName: packageName,
-                        amount: assessmentPrice,
-                        userId: userId || "guest",
-                        payType: "native",
-                        existingOrderNo: data.orderNo,
-                      },
-                    },
-                  );
+            // JSAPI 失败，降级到扫码模式
+            console.log("[Payment] JSAPI failed, falling back to native payment");
+            toast.info("支付弹窗调起失败，已切换为扫码支付");
 
-                if (nativeError || !nativeData?.success) {
-                  throw new Error(nativeData?.error || "降级失败");
-                }
+            // 使用已有的订单号，生成二维码供用户扫码
+            try {
+              const { data: nativeData, error: nativeError } = await supabase.functions.invoke(
+                "create-wechat-order",
+                {
+                  body: {
+                    packageKey: packageKey,
+                    packageName: packageName,
+                    amount: assessmentPrice,
+                    userId: userId || "guest",
+                    payType: "native",
+                    existingOrderNo: data.orderNo,
+                  },
+                },
+              );
 
-                const qrDataUrl = await QRCode.toDataURL(nativeData.qrCodeUrl || nativeData.payUrl, {
-                  width: 200,
-                  margin: 2,
-                  color: { dark: "#000000", light: "#ffffff" },
-                });
-                if (!isPaymentSessionActive(sessionId)) return;
-                setQrCodeDataUrl(qrDataUrl);
-                setPayUrl(nativeData.qrCodeUrl || nativeData.payUrl);
-                setPayType("native");
-                setStatus("pending");
-              } catch (fallbackError: any) {
-                console.error("[Payment] Fallback to native payment failed:", fallbackError);
-                toast.error("支付初始化失败，请刷新重试");
+              if (nativeError || !nativeData?.success) {
+                throw new Error(nativeData?.error || "降级失败");
               }
+
+              const qrDataUrl = await QRCode.toDataURL(nativeData.qrCodeUrl || nativeData.payUrl, {
+                width: 200,
+                margin: 2,
+                color: { dark: "#000000", light: "#ffffff" },
+              });
+              if (!isPaymentSessionActive(sessionId)) return;
+              setQrCodeDataUrl(qrDataUrl);
+              setPayUrl(nativeData.qrCodeUrl || nativeData.payUrl);
+              setPayType("native");
+              setStatus("pending");
+            } catch (fallbackError: any) {
+              console.error("[Payment] Fallback to native payment failed:", fallbackError);
+              toast.error("支付初始化失败，请刷新重试");
             }
           }
         } else {
