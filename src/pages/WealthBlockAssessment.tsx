@@ -299,6 +299,21 @@ export default function WealthBlockAssessmentPage() {
     };
   }, [authLoading, isPurchaseLoading, hasPurchased, isBloomPartner, isMiniProgram, showPayDialog]);
 
+  // 🆕 bfcache 还原兜底：安卓微信 X5/TBS 在用户从微信收银台「返回」时会
+  // 把整页（含 showPayDialog=true 与 dialog 内部 createOrderCalledRef）原样恢复，
+  // 导致下次点击「立即测评」无法触发重建。pageshow.persisted 时主动复位，
+  // 让 openWealthPayDialog() 的 false→true 循环一定能触发 React re-mount。
+  useEffect(() => {
+    const handleBfcacheRestore = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        console.log('[WealthBlock] bfcache restored, resetting pay dialog state');
+        setShowPayDialog(false);
+      }
+    };
+    window.addEventListener('pageshow', handleBfcacheRestore);
+    return () => window.removeEventListener('pageshow', handleBfcacheRestore);
+  }, []);
+
   // 微信浏览器未登录时，点击支付前先触发静默授权（自动登录/注册）
   const triggerWeChatSilentAuth = async () => {
     console.log('[WealthBlock] Triggering WeChat silent auth for login/register');
