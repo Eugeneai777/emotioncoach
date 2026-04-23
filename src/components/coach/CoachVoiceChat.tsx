@@ -2319,7 +2319,7 @@ export const CoachVoiceChat = ({
             </>
           )}
           {/* 余额胶囊：连接中 / 失败时也显示,让用户始终看到余额 */}
-          {(status === 'connecting' || status === 'error') && !skipBilling && remainingQuota !== null && (
+          {((status as string) === 'connecting' || status === 'error') && !skipBilling && remainingQuota !== null && (
             <span className={`flex items-center gap-0.5 ${remainingQuota < POINTS_PER_MINUTE * 3 ? 'text-red-400' : 'text-amber-300/70'}`}>
               <Coins className="w-3 h-3" />
               余额 {remainingQuota} 点（约 {Math.max(0, Math.floor(remainingQuota / POINTS_PER_MINUTE))} 分钟）
