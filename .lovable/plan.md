@@ -1,125 +1,51 @@
 
-## 这次不再用“感觉修好了”来判断
 
-### 目标
-把这次问题改成“可证明已修复”：
-1. 真正修掉小程序 PTT 链路里的确定性问题  
-2. 给出手机端可见的验证信号  
-3. 只有满足明确验收条件，才算解决
+## 目标
+把 `/promo/midlife-women-399`（女版）的"用户权益交付内容"与男版【7 天有劲训练营】完全对齐，**去掉 AI 教练相关交付**，便于做纯 A/B 文案/人群测试，排除产品差异变量。
 
-### 已确认的两个高风险点
-1. `supabase/functions/miniprogram-voice-relay/index.ts` 当前会无视客户端发来的 `turn_detection: null`，仍然固定给远端会话启用 `server_vad`。  
-   这意味着“小程序 PTT 模式”在服务端并没有被真正执行。
+## 背景前置
+- 男版（`/promo/synergy` 系列，基准）：交付 = 7 天解压打卡 + 真人冥想 + 课程 + 海沃塔团队教练（无 AI 教练作为核心权益项）
+- 女版当前页面：除上述外，权益清单/卖点中**额外强调了 AI 教练（黛汐 / AI 情绪教练）作为核心交付**
+- 业务目的：A/B 测的是"人群定位 + 文案"，不是"产品形态"，因此交付必须一致
 
-2. `src/utils/MiniProgramAudio.ts` 当前会优先走 Web Audio 录音链路；在小程序 WebView 里，这条链路即使“连接成功”，也可能出现“按钮有状态、但没有实际音频帧发出去”的静默失败。  
-   之前多次修复都缺少端到端证据，所以容易误判。
+## 实施范围（仅改文案/卖点呈现，不动后端权益与打卡链路）
 
-## 实施方案
+### 一、移除 AI 教练相关权益项
+在 `src/pages/PromoMidlife25to45Women399.tsx` 中，从以下位置移除"AI 教练 / AI 情绪教练 / 黛汐 AI 对话 / AI 语音陪伴"等表述：
+- 顶部 Hero 卖点 bullet
+- "你将获得"/"权益清单"区块
+- 中部"交付内容"卡片组
+- FAQ 中涉及 AI 教练的问答
+- 底部价值锚点区（如 "¥XX AI 教练" 这类拆解项）
 
-### 一、先把 PTT 协议真正打通
-修改 `supabase/functions/miniprogram-voice-relay/index.ts`：
-- 接收并保存客户端 `session_config.turn_detection`
-- 在创建远端 realtime session 时，按客户端配置设置
-  - PTT：`turn_detection: null`
-  - 非 PTT：保留 `server_vad`
-- 首次建连后，向客户端回传一个轻量确认事件，例如：
-  - `ptt_config_applied`
-  - 包含实际生效的 `turn_detection` 值
+### 二、对齐男版交付清单
+统一为以下 4 项核心交付（与 `/promo/synergy` 一致）：
+1. 7 天打卡训练营（`emotion_stress_7`）
+2. 每日真人 10 分钟静心冥想
+3. 每日课程推荐 / 学习内容
+4. 海沃塔团队教练辅导（社群 + 团队带练，遵循 `delivery-model-shift` 标准）
 
-这样可以明确知道：这次到底有没有真的切到 PTT，而不是只在前端“以为”切了。
+价值拆解（"原价 ¥X" 这类锚点）相应去掉 AI 教练那一行，重新加总。
 
-### 二、给小程序端加“端到端可见状态”
-修改 `src/utils/MiniProgramAudio.ts`：
-- 增加 PTT 调试状态回调，输出以下事实信号：
-  - WebSocket 是否 open
-  - 当前录音源：`web_audio` / `wx_recorder`
-  - 按下后是否检测到本地音频能量
-  - 已发送音频帧数量
-  - 是否收到 relay 的 `ptt_config_applied`
-  - 松手后是否发送了 `commit`
-  - 是否收到首个用户转写 / AI 响应
-- 若按住后在限定时间内没有任何音频能量或没有发送帧：
-  - 明确标记为 `mic_silent`
-  - 不再只显示“连接成功”
+### 三、不动的部分（重要）
+- 不改后端权益逻辑：`emotion_stress_7` 营本身打卡页（`CampCheckIn.tsx`）现有的"情绪教练对话入口"等功能**保留**，因为那是营内自有功能，不是该落地页的对外承诺
+- 不改购买链路：维持你上一轮已暂停的"有赞 + 兑换码"方向（这次不动，等之后再启动）
+- 不改人群定位文案、不改主视觉、不改价格 ¥399
+- 不动男版页面
 
-### 三、在 UI 上做一个临时可见的 PTT 健康面板
-修改 `src/components/coach/CoachVoiceChat.tsx`：
-- 仅在小程序 + PTT 模式下显示一块小型状态面板
-- 用非技术化文案展示 5 个关键状态：
-  - 通道已连接
-  - 按钮已按下
-  - 麦克风已采到声音
-  - 声音已发送
-  - 已收到回复
-- 若失败，直接显示失败环节：
-  - “按钮按下了，但没有采到声音”
-  - “采到声音了，但没有发出去”
-  - “已发出去，但服务器仍是自动监听模式”
-  - “已提交，但没有生成回复”
-
-这样用户在手机上就能一眼看出卡在哪一段，而不是继续黑盒试错。
-
-### 四、修正录音链路选择策略
-修改 `src/utils/MiniProgramAudio.ts`：
-- 不再把“Web Audio 可用”直接等同于“Web Audio 可靠”
-- 保留当前录音源，但加入健康检查门槛：
-  - 按住后若无音频能量 / 无 outbound chunk，则判定当前录音源无效
-- 为无效链路打出明确错误码，供 UI 展示
-- 避免再次出现“代码逻辑看起来对，但手机上仍然无声”的情况
-
-### 五、把验收标准改成“证据链”
-这次验收不再用“按钮会变红 / build 成功 / 我改了逻辑”判断，而是以下 5 条必须全部成立：
-
-#### 1. 未按按钮时
-- 用户直接说话
-- 不应出现用户转写
-- 不应触发 AI 打断或回复
-
-#### 2. 按住按钮时
-- 状态面板显示“麦克风已采到声音”
-- 音频帧计数持续增加
-
-#### 3. 松开按钮后
-- 状态面板显示“已发送”
-- 触发 `commit + response.create`
-
-#### 4. 1-2 秒内
-- 出现用户转写或 AI 回复
-- 说明整条链路通了，而不只是前端按钮动了
-
-#### 5. 服务端配置确认
-- 状态面板或日志明确显示当前会话是 `turn_detection: null`
-- 证明服务端已真正进入 PTT，而不是还在自动监听
+## 验收标准
+1. `/promo/midlife-women-399` 全页搜索"AI 教练"、"AI 情绪"、"黛汐 AI"、"AI 语音"等关键词 → 0 命中
+2. 权益清单 4 项与 `/promo/synergy` 完全一致（顺序、措辞同步）
+3. 价值锚点加总数与男版一致（或保持女版独立但不含 AI 教练子项）
+4. 页面在 1085 宽度与移动端 375 宽度下排版无空洞、无残留分隔线
+5. 男版 `/promo/synergy` 不受影响
 
 ## 涉及文件
-- `supabase/functions/miniprogram-voice-relay/index.ts`
-- `src/utils/MiniProgramAudio.ts`
-- `src/components/coach/CoachVoiceChat.tsx`
+- `src/pages/PromoMidlife25to45Women399.tsx`（唯一改动）
 
-### 可选
-- `src/components/coach/PushToTalkButton.tsx`  
-仅在需要补充“按下中 / 等待连接 / 录音失败”视觉状态时调整
+## 不涉及
+- `src/pages/CampCheckIn.tsx`
+- 任何 hooks（`useCampEntitlement` / `useCampPurchase`）
+- 任何 edge function
+- `/promo/synergy` 男版页
 
-## 技术细节
-```text
-按下按钮
-  -> PTT start
-  -> 本地检测到音频能量
-  -> outbound chunk count 增长
-  -> 松手
-  -> commit
-  -> response.create
-  -> transcript / AI reply
-
-任何一步失败，都要在 UI 上显示失败点
-```
-
-## 这次的完成定义
-只有当“小程序真机上”看到以下组合证据，才算解决：
-- 服务端确认已应用 `turn_detection: null`
-- 按住时本地有音频能量
-- 按住时音频帧数增长
-- 松手后成功 commit
-- 随后收到转写或 AI 回复
-
-如果缺少其中任意一项，这次就不标记为“已修复”。
