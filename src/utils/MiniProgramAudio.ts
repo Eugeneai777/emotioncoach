@@ -103,6 +103,25 @@ export class MiniProgramAudioClient {
   private static readonly PTT_MIN_RECORDING_MS = 300;
   private recorderRunning = false;
 
+  // 🩺 PTT 诊断指标
+  private diag: PttDiagnostics = {
+    wsOpen: false,
+    recorderSource: 'none',
+    pttConfigApplied: false,
+    serverTurnDetectionNull: false,
+    isPressing: false,
+    micEnergyDetected: false,
+    outboundChunks: 0,
+    lastCommitAt: null,
+    firstUserTranscriptAt: null,
+    firstAiReplyAt: null,
+    lastError: null,
+  };
+
+  private emitDiag(): void {
+    try { this.config.onDiagnostic?.({ ...this.diag }); } catch {}
+  }
+
   /** 在 connect() 之前调用：声明 PTT 模式，使 ws open 时立刻通知 relay 关闭 VAD，并启用音频闸门 */
   public presetPushToTalk(enabled: boolean): void {
     this.pttPreset = enabled;
@@ -113,6 +132,8 @@ export class MiniProgramAudioClient {
   public pttStart(): { ok: boolean; reason?: string } {
     if (!this.pttPreset) return { ok: false, reason: 'not_in_ptt_mode' };
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+      this.diag.lastError = 'channel_not_open';
+      this.emitDiag();
       return { ok: false, reason: 'channel_not_open' };
     }
     if (!this.useWebAudioFallback && this.recorder && !this.recorderRunning) {
