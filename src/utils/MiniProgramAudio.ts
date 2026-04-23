@@ -576,6 +576,10 @@ export class MiniProgramAudioClient {
         if (maxAmplitude > 0.001) {
           this.lastAudioEnergyTime = Date.now();
           this.silentFrameCount = 0;
+          if (this.diag.isPressing && !this.diag.micEnergyDetected) {
+            this.diag.micEnergyDetected = true;
+            this.emitDiag();
+          }
         } else {
           this.silentFrameCount++;
         }
@@ -602,6 +606,11 @@ export class MiniProgramAudioClient {
           audio: base64Audio,
         };
         this.ws?.send(JSON.stringify(audioChunk));
+        if (this.diag.isPressing) {
+          this.diag.outboundChunks++;
+          // 节流：每 5 帧推一次
+          if (this.diag.outboundChunks % 5 === 0) this.emitDiag();
+        }
       };
 
       this.webSource.connect(this.webProcessor);
