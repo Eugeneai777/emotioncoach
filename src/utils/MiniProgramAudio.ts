@@ -125,6 +125,10 @@ export class MiniProgramAudioClient {
   /** 松开发送：关闭闸门，commit 缓冲并请求响应 */
   public pttStop(): { ok: boolean; reason?: string } {
     if (!this.pttPreset) return { ok: false, reason: 'not_in_ptt_mode' };
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+      this.pttMuted = true;
+      return { ok: false, reason: 'channel_not_open' };
+    }
     const duration = Date.now() - this.pttRecordingStart;
     this.pttMuted = true;
     if (duration < MiniProgramAudioClient.PTT_MIN_RECORDING_MS) {
