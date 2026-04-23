@@ -1,51 +1,52 @@
 
 
 ## 目标
-把 `/promo/midlife-women-399`（女版）的"用户权益交付内容"与男版【7 天有劲训练营】完全对齐，**去掉 AI 教练相关交付**，便于做纯 A/B 文案/人群测试，排除产品差异变量。
+修复 PTT 抢话 Bug + 增加计费透明文案。**关键调整**：用户按下时只打断"语音播放"，但保留"文本气泡完整显示"，让用户能回看 AI 已经说过的内容。
 
-## 背景前置
-- 男版（`/promo/synergy` 系列，基准）：交付 = 7 天解压打卡 + 真人冥想 + 课程 + 海沃塔团队教练（无 AI 教练作为核心权益项）
-- 女版当前页面：除上述外，权益清单/卖点中**额外强调了 AI 教练（黛汐 / AI 情绪教练）作为核心交付**
-- 业务目的：A/B 测的是"人群定位 + 文案"，不是"产品形态"，因此交付必须一致
+## 一、PTT 抢话打断（精细化方案）
 
-## 实施范围（仅改文案/卖点呈现，不动后端权益与打卡链路）
+**文件**：`src/utils/RealtimeAudio.ts` + `src/components/coach/CoachVoiceChat.tsx`
 
-### 一、移除 AI 教练相关权益项
-在 `src/pages/PromoMidlife25to45Women399.tsx` 中，从以下位置移除"AI 教练 / AI 情绪教练 / 黛汐 AI 对话 / AI 语音陪伴"等表述：
-- 顶部 Hero 卖点 bullet
-- "你将获得"/"权益清单"区块
-- 中部"交付内容"卡片组
-- FAQ 中涉及 AI 教练的问答
-- 底部价值锚点区（如 "¥XX AI 教练" 这类拆解项）
+用户按下按钮（`startRecording` 触发瞬间）执行：
 
-### 二、对齐男版交付清单
-统一为以下 4 项核心交付（与 `/promo/synergy` 一致）：
-1. 7 天打卡训练营（`emotion_stress_7`）
-2. 每日真人 10 分钟静心冥想
-3. 每日课程推荐 / 学习内容
-4. 海沃塔团队教练辅导（社群 + 团队带练，遵循 `delivery-model-shift` 标准）
+1. **打断音频播放**（要做）
+   - 本地：停止当前音频队列播放（清空 AudioContext queue / pause audio element）
+   - 远端：发送 `output_audio_buffer.clear` → 让服务端停止继续推送剩余音频帧
 
-价值拆解（"原价 ¥X" 这类锚点）相应去掉 AI 教练那一行，重新加总。
+2. **保留文本输出**（关键差异）
+   - **不发送** `response.cancel`（如果发了，服务端会停止生成，文本也会断在半句）
+   - 让 AI 当前这轮 response 在后台继续生成文本 delta
+   - 前端继续接收 `response.text.delta` / `response.audio_transcript.delta` 事件，把完整文本写入聊天气泡
+   - 但音频帧（`response.audio.delta`）到达时直接丢弃，不入播放队列
 
-### 三、不动的部分（重要）
-- 不改后端权益逻辑：`emotion_stress_7` 营本身打卡页（`CampCheckIn.tsx`）现有的"情绪教练对话入口"等功能**保留**，因为那是营内自有功能，不是该落地页的对外承诺
-- 不改购买链路：维持你上一轮已暂停的"有赞 + 兑换码"方向（这次不动，等之后再启动）
-- 不改人群定位文案、不改主视觉、不改价格 ¥399
-- 不动男版页面
+3. **状态标记**
+   - 在 `RealtimeChat` 里加一个 `audioMutedUntilNextResponse` 标记，按下时置 true，下一次 `response.created` 时复位
+   - 音频帧入队前判断该标记，true 则丢弃
 
-## 验收标准
-1. `/promo/midlife-women-399` 全页搜索"AI 教练"、"AI 情绪"、"黛汐 AI"、"AI 语音"等关键词 → 0 命中
-2. 权益清单 4 项与 `/promo/synergy` 完全一致（顺序、措辞同步）
-3. 价值锚点加总数与男版一致（或保持女版独立但不含 AI 教练子项）
-4. 页面在 1085 宽度与移动端 375 宽度下排版无空洞、无残留分隔线
-5. 男版 `/promo/synergy` 不受影响
+**效果**：用户一按下 → AI 立即闭嘴 → 但聊天框里 AI 那条气泡的文字会继续补完 → 用户松开后 AI 正常回复新内容。
+
+## 二、计费透明文案
+
+**文件**：`src/components/coach/CoachVoiceChat.tsx`（PTT 模式分支）
+
+在 PTT 按钮上方加一行小字（小字号、白色 60% 透明度）：
+> 按通话时长计费 · 8 点/分钟
+
+仅 PTT 模式显示，不影响普通语音通话。
+
+## 验收
+1. AI 正在说话 → 长按语音条 → **声音立刻停止**，但聊天气泡里那段话的**文字继续补全**到完整
+2. 松开后 AI 正常回复新内容，前一条文本完整保留可回看
+3. PTT 界面能看到"按通话时长计费 · 8 点/分钟"
+4. 普通语音通话模式行为不变
 
 ## 涉及文件
-- `src/pages/PromoMidlife25to45Women399.tsx`（唯一改动）
+- `src/utils/RealtimeAudio.ts`（增加音频静音标记 + 清空播放队列 + 发 output_audio_buffer.clear）
+- `src/components/coach/CoachVoiceChat.tsx`（PTT 模式调用打断 + 增加计费提示文案）
 
 ## 不涉及
-- `src/pages/CampCheckIn.tsx`
-- 任何 hooks（`useCampEntitlement` / `useCampPurchase`）
-- 任何 edge function
-- `/promo/synergy` 男版页
+- 后端计费逻辑（仍按总连接时长 8 点/分钟）
+- 普通语音通话模式
+- 其他教练页面
+- token 接口
 
