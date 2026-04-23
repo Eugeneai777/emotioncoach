@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useContext } from 'react';
 import { GlobalVoiceContext } from '@/components/voice/GlobalVoiceProvider';
 import { useNavigate } from 'react-router-dom';
