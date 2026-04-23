@@ -159,9 +159,20 @@ export class MiniProgramAudioClient {
     this.diag.outboundChunks = 0;
     this.diag.lastError = null;
     this.emitDiag();
-    // 通知 relay 清空缓冲
+    // 🔇 抢话打断：立刻停止当前 AI 语音播放，并丢弃后续到达的本轮音频帧
+    // 注意：不发 response.cancel，保留文本继续生成补全到聊天气泡
     try {
-      this.ws?.readyState === WebSocket.OPEN && this.ws.send(JSON.stringify({ type: 'input_audio_buffer.clear' }));
+      this.audioMutedUntilNextResponse = true;
+      this.stopAudioPlayback();
+    } catch (e) {
+      console.warn('[MiniProgramAudio][PTT] interrupt audio failed:', e);
+    }
+    // 通知 relay 清空缓冲 + 清空服务端尚未推送的音频
+    try {
+      if (this.ws?.readyState === WebSocket.OPEN) {
+        this.ws.send(JSON.stringify({ type: 'input_audio_buffer.clear' }));
+        this.ws.send(JSON.stringify({ type: 'output_audio_buffer.clear' }));
+      }
     } catch {}
     return { ok: true };
   }
