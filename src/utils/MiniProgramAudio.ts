@@ -196,8 +196,11 @@ export class MiniProgramAudioClient {
       }
     } catch (e) {
       console.warn('[MiniProgramAudio][PTT] commit failed:', e);
+      this.diag.lastError = 'send_failed';
+      this.emitDiag();
       return { ok: false, reason: 'send_failed' };
     }
+    this.emitDiag();
     return { ok: true };
   }
 
