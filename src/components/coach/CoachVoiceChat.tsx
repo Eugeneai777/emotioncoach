@@ -1479,6 +1479,7 @@ export const CoachVoiceChat = ({
           onStatusChange: handleStatusChange,
           onTranscript: handleTranscript,
           onUsageUpdate: (usage) => setApiUsage(prev => ({ inputTokens: prev.inputTokens + usage.input_tokens, outputTokens: prev.outputTokens + usage.output_tokens })),
+          onDiagnostic: (d) => setPttDiag(d),
           tokenEndpoint,
           mode,
           scenario,
