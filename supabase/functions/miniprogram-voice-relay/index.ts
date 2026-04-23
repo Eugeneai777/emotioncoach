@@ -161,8 +161,30 @@ Deno.serve(async (req) => {
           console.log('[Relay] Using pre-received client instructions');
         }
 
+        // 等待 turn_detection 配置（最多再 200ms，可能与 instructions 同消息已到达）
+        if (!clientTurnDetectionReceived) {
+          await Promise.race([
+            new Promise<any>((resolve) => { turnDetectionResolve = resolve; }),
+            new Promise<null>((resolve) => setTimeout(() => resolve(null), 200)),
+          ]);
+        }
+
         const resolvedVoice = mapVoiceTypeToOpenAIVoice(clientVoiceType, mode);
-        console.log('[Relay] Resolved voice for session:', { clientVoiceType, mode, resolvedVoice });
+        // 决定 turn_detection：客户端显式传 null → PTT；否则默认 server_vad
+        const defaultVad = {
+          type: 'server_vad',
+          threshold: 0.6,
+          prefix_padding_ms: 200,
+          silence_duration_ms: 1200,
+        };
+        const isPttMode = clientTurnDetectionReceived && clientTurnDetection === null;
+        const effectiveTurnDetection = isPttMode
+          ? null
+          : (clientTurnDetectionReceived && clientTurnDetection)
+            ? clientTurnDetection
+            : defaultVad;
+
+        console.log('[Relay] Session config:', { resolvedVoice, mode, isPttMode, turnDetection: effectiveTurnDetection });
 
         // 发送会话配置
         const sessionConfig = {
@@ -177,16 +199,24 @@ Deno.serve(async (req) => {
             input_audio_transcription: {
               model: 'whisper-1',
             },
-            turn_detection: {
-              type: 'server_vad',
-              threshold: 0.6,
-              prefix_padding_ms: 200,
-              silence_duration_ms: 1200,
-            },
+            turn_detection: effectiveTurnDetection,
           },
         };
 
         openaiSocket!.send(JSON.stringify(sessionConfig));
+
+        // 立即向客户端回传 PTT 配置确认事件，便于前端"证据链"展示
+        try {
+          if (clientSocket.readyState === WebSocket.OPEN) {
+            clientSocket.send(JSON.stringify({
+              type: 'ptt_config_applied',
+              turn_detection: effectiveTurnDetection,
+              ptt_mode: isPttMode,
+            }));
+          }
+        } catch (e) {
+          console.warn('[Relay] Failed to send ptt_config_applied:', e);
+        }
       };
 
       openaiSocket.onmessage = (event) => {
