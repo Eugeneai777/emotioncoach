@@ -960,14 +960,7 @@ export const CoachVoiceChat = ({
             try { client.setPushToTalkMode(true); } catch (e) { console.warn('[PTT] enable failed', e); }
           }, 400);
         }
-      } else {
-        // 🔧 连续通话模式：连接成功后兜底确保麦克风启用
-        // 修复 Windows 触屏笔电、缓存流复用等场景下 track.enabled=false 导致 AI 听不到声音
-        const client = chatRef.current as any;
-        if (client && typeof client.ensureMicEnabled === 'function') {
-          try { client.ensureMicEnabled(); } catch (e) { console.warn('[Mic] ensureMicEnabled failed', e); }
-        }
-      }
+
         if (pendingPttStartRef.current) {
           setTimeout(() => {
             if (!pendingPttStartRef.current) return;
@@ -981,13 +974,20 @@ export const CoachVoiceChat = ({
               setSpeakingStatus('user-speaking');
             }
           }, 80);
-          } else {
-            const activeClient = chatRef.current as any;
-            if (useMiniProgramMode && typeof activeClient?.stopRecording === 'function') {
-              setTimeout(() => {
-                try { activeClient.stopRecording(); } catch (e) { console.warn('[PTT] stop idle mini program recorder failed', e); }
-              }, 50);
-            }
+        } else {
+          const activeClient = chatRef.current as any;
+          if (useMiniProgramMode && typeof activeClient?.stopRecording === 'function') {
+            setTimeout(() => {
+              try { activeClient.stopRecording(); } catch (e) { console.warn('[PTT] stop idle mini program recorder failed', e); }
+            }, 50);
+          }
+        }
+      } else {
+        // 🔧 连续通话模式：连接成功后兜底确保麦克风启用
+        // 修复 Windows 触屏笔电、缓存流复用等场景下 track.enabled=false 导致 AI 听不到声音
+        const client = chatRef.current as any;
+        if (client && typeof client.ensureMicEnabled === 'function') {
+          try { client.ensureMicEnabled(); } catch (e) { console.warn('[Mic] ensureMicEnabled failed', e); }
         }
       }
     } else if (mappedStatus === 'disconnected' || mappedStatus === 'error') {
