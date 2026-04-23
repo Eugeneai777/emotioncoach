@@ -161,21 +161,29 @@ export const VoiceUsageSection: React.FC<Props> = ({ userId }) => {
 
   if (loading || (transactions.length === 0 && remainingQuota === null)) return null;
 
-  // 本月汇总
+  // 先聚合：同一次语音通话的多条按分钟扣费记录合并为一条
+  const aggregated = aggregateQuotaTransactions(transactions);
+
+  // 本月汇总（基于聚合后的记录，"通话次数"= 聚合后的语音消费条数）
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-  const monthTx = transactions.filter(
+  const monthTx = aggregated.filter(
     (t) => new Date(t.created_at) >= monthStart
   );
   const monthDeducted = monthTx
     .filter((t) => t.amount < 0)
     .reduce((sum, t) => sum + Math.abs(t.amount), 0);
   const monthCalls = monthTx.filter(
-    (t) => t.source && (t.source.includes("voice") || t.source.includes("coach") || t.source.includes("sage") || t.source.includes("mentor"))
+    (t) =>
+      t.source &&
+      (t.source.includes("voice") ||
+        t.source.includes("coach") ||
+        t.source.includes("sage") ||
+        t.source.includes("mentor"))
   ).length;
 
   // 筛选
-  const filtered = transactions.filter((t) => {
+  const filtered = aggregated.filter((t) => {
     if (filter === "consumption") return t.amount <= 0;
     if (filter === "recharge") return t.amount > 0;
     return true;
