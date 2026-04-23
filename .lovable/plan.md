@@ -1,52 +1,50 @@
 
 
-## 目标
-修复 PTT 抢话 Bug + 增加计费透明文案。**关键调整**：用户按下时只打断"语音播放"，但保留"文本气泡完整显示"，让用户能回看 AI 已经说过的内容。
+## 评估：PTT 健康状态诊断面板是否对用户显示
 
-## 一、PTT 抢话打断（精细化方案）
+### 这个面板是什么
+图中红框是 `PttDiagnosticsPanel`（`src/components/coach/PttDiagnosticsPanel.tsx`），实时显示 5 个技术状态：
+- 通道已连接 / 服务端 PTT 已生效 / 麦克风已采到声音 / 声音已发送（X 帧）/ 已收到回复
+- 右上角还有 `WebAudio · 帧 0` 这种内部技术指标
 
-**文件**：`src/utils/RealtimeAudio.ts` + `src/components/coach/CoachVoiceChat.tsx`
+### 对普通用户的价值评估
 
-用户按下按钮（`startRecording` 触发瞬间）执行：
+| 维度 | 结论 |
+|---|---|
+| 信息可理解性 | ❌ "通道"、"服务端 PTT"、"WebAudio"、"帧" 全是工程术语，普通用户看不懂 |
+| 操作指引价值 | ❌ 全部 ✅ 时无意义；某项 ❌ 时用户也无法自助修复 |
+| 视觉占用 | ❌ 占据字幕区下方约 25% 高度，挤压主视觉（波纹 + 字幕） |
+| 信任感影响 | ❌ 暴露"小程序调试"、"WebAudio"等开发字眼，反而降低产品成熟度感知 |
+| 对工程的价值 | ✅ 真出问题时，让用户截图回传可快速定位是通道/麦克风/服务端哪一环坏了 |
 
-1. **打断音频播放**（要做）
-   - 本地：停止当前音频队列播放（清空 AudioContext queue / pause audio element）
-   - 远端：发送 `output_audio_buffer.clear` → 让服务端停止继续推送剩余音频帧
+**结论**：对 99% 正常通话用户是**纯噪音**，但对线上排障有保留价值。**最佳方案是默认隐藏，保留隐藏入口供排障时打开**。
 
-2. **保留文本输出**（关键差异）
-   - **不发送** `response.cancel`（如果发了，服务端会停止生成，文本也会断在半句）
-   - 让 AI 当前这轮 response 在后台继续生成文本 delta
-   - 前端继续接收 `response.text.delta` / `response.audio_transcript.delta` 事件，把完整文本写入聊天气泡
-   - 但音频帧（`response.audio.delta`）到达时直接丢弃，不入播放队列
+### 改动方案（极简、零风险）
 
-3. **状态标记**
-   - 在 `RealtimeChat` 里加一个 `audioMutedUntilNextResponse` 标记，按下时置 true，下一次 `response.created` 时复位
-   - 音频帧入队前判断该标记，true 则丢弃
+**文件**：`src/components/coach/CoachVoiceChat.tsx`（PTT 模式渲染 `PttDiagnosticsPanel` 的位置）
 
-**效果**：用户一按下 → AI 立即闭嘴 → 但聊天框里 AI 那条气泡的文字会继续补完 → 用户松开后 AI 正常回复新内容。
+1. **默认隐藏**该面板（普通用户完全看不到）
+2. **保留隐藏开关**：URL 加 `?debug=ptt` 时显示
+   - 例：`/life-coach-voice?debug=ptt` → 自己排障时启用
+   - 用户截图反馈问题时，运营可让用户加这个参数复现
+3. **额外触发**（可选）：连续点击顶部"时长"标签 5 次也可打开，方便客服远程引导
 
-## 二、计费透明文案
+面板组件本身（`PttDiagnosticsPanel.tsx`）**不删除**，仅控制是否渲染。
 
-**文件**：`src/components/coach/CoachVoiceChat.tsx`（PTT 模式分支）
+### 与上一轮"余额可视化"方案的关系
+- 互不冲突，可同 PR 一起做
+- 隐藏诊断面板后，字幕区下方腾出空间，恰好留给"余额胶囊 + 充值按钮"，视觉更清爽
 
-在 PTT 按钮上方加一行小字（小字号、白色 60% 透明度）：
-> 按通话时长计费 · 8 点/分钟
+### 验收
+1. mini-app【有劲AI 生活教练】通话页面，**默认看不到** "PTT 健康状态" 面板
+2. 加 `?debug=ptt` 参数访问，面板正常显示（保留排障能力）
+3. 上一轮的余额显示和充值引导正常工作，整体界面更聚焦于"波纹 + 字幕 + 余额 + PTT 按钮"
 
-仅 PTT 模式显示，不影响普通语音通话。
+### 涉及文件
+- `src/components/coach/CoachVoiceChat.tsx`（PTT 分支增加 `searchParams.get('debug') === 'ptt'` 判断，默认不渲染 `PttDiagnosticsPanel`）
 
-## 验收
-1. AI 正在说话 → 长按语音条 → **声音立刻停止**，但聊天气泡里那段话的**文字继续补全**到完整
-2. 松开后 AI 正常回复新内容，前一条文本完整保留可回看
-3. PTT 界面能看到"按通话时长计费 · 8 点/分钟"
-4. 普通语音通话模式行为不变
-
-## 涉及文件
-- `src/utils/RealtimeAudio.ts`（增加音频静音标记 + 清空播放队列 + 发 output_audio_buffer.clear）
-- `src/components/coach/CoachVoiceChat.tsx`（PTT 模式调用打断 + 增加计费提示文案）
-
-## 不涉及
-- 后端计费逻辑（仍按总连接时长 8 点/分钟）
-- 普通语音通话模式
-- 其他教练页面
-- token 接口
+### 不涉及
+- 不删除 `PttDiagnosticsPanel.tsx` 组件文件
+- 不改诊断逻辑本身
+- 不影响普通语音通话模式
 
