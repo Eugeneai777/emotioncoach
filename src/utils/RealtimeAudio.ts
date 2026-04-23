@@ -971,6 +971,17 @@ export class RealtimeChat {
     this.onMessage(event);
 
     switch (event.type) {
+      case 'response.created':
+        // 🔇 新一轮 response 开始，恢复音频播放（PTT 打断后的下一句应该能听见）
+        if (this.audioMutedUntilNextResponse) {
+          this.audioMutedUntilNextResponse = false;
+          if (this.audioEl) {
+            try { this.audioEl.muted = false; } catch {}
+          }
+          console.log('[PTT] audio unmuted on response.created');
+        }
+        break;
+
       case 'response.audio.delta':
         // 处理音频数据（通过 WebRTC track 自动播放）
         break;
