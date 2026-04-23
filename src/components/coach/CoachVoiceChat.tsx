@@ -2291,7 +2291,7 @@ export const CoachVoiceChat = ({
         </Button>
 
         {/* 中间：通话信息 - 极简单行 */}
-        <div className="text-white/55 text-xs flex items-center gap-2">
+        <div className="text-white/55 text-xs flex items-center gap-2 flex-wrap justify-center max-w-[60%]">
           {status === 'connected' && (
             <>
               <span className="font-mono tabular-nums">{formatDuration(duration)}</span>
@@ -2318,7 +2318,28 @@ export const CoachVoiceChat = ({
               </button>
             </>
           )}
-          {status === 'error' && <span className="text-red-400">连接失败</span>}
+          {/* 余额胶囊：连接中 / 失败时也显示,让用户始终看到余额 */}
+          {((status as string) === 'connecting' || status === 'error') && !skipBilling && remainingQuota !== null && (
+            <span className={`flex items-center gap-0.5 ${remainingQuota < POINTS_PER_MINUTE * 3 ? 'text-red-400' : 'text-amber-300/70'}`}>
+              <Coins className="w-3 h-3" />
+              余额 {remainingQuota} 点（约 {Math.max(0, Math.floor(remainingQuota / POINTS_PER_MINUTE))} 分钟）
+            </span>
+          )}
+          {status === 'error' && (
+            <>
+              <span className="text-red-400">连接失败</span>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  startCall();
+                }}
+                className="ml-1 px-2 py-0.5 rounded-full bg-white/10 hover:bg-white/20 text-white/85 text-[11px] font-medium transition-colors"
+              >
+                重连
+              </button>
+            </>
+          )}
           {status === 'disconnected' && <span className="text-white/40">已断开</span>}
         </div>
 
@@ -2401,6 +2422,27 @@ export const CoachVoiceChat = ({
                 </div>
               )}
             </div>
+
+            {/* PTT 模式：余额胶囊（始终显示，连接中/失败/已连接均可见） */}
+            {!skipBilling && remainingQuota !== null && (
+              <div className="w-full max-w-md mt-3 flex items-center justify-center gap-2 flex-wrap">
+                <span className={`text-[11px] ${remainingQuota < POINTS_PER_MINUTE * 3 ? 'text-red-400' : 'text-white/55'}`}>
+                  {POINTS_PER_MINUTE}点/分钟 · 余额 {remainingQuota} 点（约 {Math.max(0, Math.floor(remainingQuota / POINTS_PER_MINUTE))} 分钟）
+                </span>
+                {remainingQuota < POINTS_PER_MINUTE * 3 && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowRechargeDialog(true);
+                    }}
+                    className="px-2 py-0.5 rounded-full bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 text-[11px] font-medium border border-rose-400/30 transition-colors"
+                  >
+                    充值
+                  </button>
+                )}
+              </div>
+            )}
 
             {/* 智能场景芯片 — 仅空闲且尚未对话时显示 */}
             {status === 'connected' && !latestUserLine && (
@@ -2795,8 +2837,8 @@ export const CoachVoiceChat = ({
 
       {/* 底部操作区 — PTT 模式上移到拇指区 */}
       <div className={`px-6 flex flex-col items-center gap-3 ${pttMode && status === 'connected' ? 'pb-[14vh] pt-2' : 'p-6 pb-safe'}`}>
-        {pttMode && statusRef.current === 'connected' && (
-          <p className="text-[11px] text-white/60">按通话时长计费 · 8 点/分钟</p>
+        {pttMode && status !== 'idle' && (
+          <p className="text-[11px] text-white/60">按通话时长计费 · {POINTS_PER_MINUTE} 点/分钟</p>
         )}
         {pttMode && statusRef.current !== 'connecting' ? (
           <PushToTalkButton
