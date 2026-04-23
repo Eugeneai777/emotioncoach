@@ -100,6 +100,8 @@ export class MiniProgramAudioClient {
   private pttPreset: boolean = false;
   private pttMuted: boolean = true;     // PTT 模式下默认静音，按住时打开
   private pttRecordingStart: number = 0;
+  // 🔇 PTT 抢话打断：按下时丢弃尚未播放的 AI 音频，下一次 response.created 时复位
+  private audioMutedUntilNextResponse: boolean = false;
   private static readonly PTT_MIN_RECORDING_MS = 300;
   private recorderRunning = false;
 
@@ -157,9 +159,20 @@ export class MiniProgramAudioClient {
     this.diag.outboundChunks = 0;
     this.diag.lastError = null;
     this.emitDiag();
-    // 通知 relay 清空缓冲
+    // 🔇 抢话打断：立刻停止当前 AI 语音播放，并丢弃后续到达的本轮音频帧
+    // 注意：不发 response.cancel，保留文本继续生成补全到聊天气泡
     try {
-      this.ws?.readyState === WebSocket.OPEN && this.ws.send(JSON.stringify({ type: 'input_audio_buffer.clear' }));
+      this.audioMutedUntilNextResponse = true;
+      this.stopAudioPlayback();
+    } catch (e) {
+      console.warn('[MiniProgramAudio][PTT] interrupt audio failed:', e);
+    }
+    // 通知 relay 清空缓冲 + 清空服务端尚未推送的音频
+    try {
+      if (this.ws?.readyState === WebSocket.OPEN) {
+        this.ws.send(JSON.stringify({ type: 'input_audio_buffer.clear' }));
+        this.ws.send(JSON.stringify({ type: 'output_audio_buffer.clear' }));
+      }
     } catch {}
     return { ok: true };
   }
@@ -732,6 +745,15 @@ export class MiniProgramAudioClient {
           break;
         }
 
+        case 'response.created':
+          // 🔇 新一轮 response 开始，恢复音频播放（PTT 打断后的下一句应能听见）
+          if (this.audioMutedUntilNextResponse) {
+            this.audioMutedUntilNextResponse = false;
+            console.log('[MiniProgramAudio][PTT] audio unmuted on response.created');
+          }
+          this.config.onMessage(message);
+          break;
+
         case 'audio_output':
           // 处理音频输出
           if (message.audio) {
@@ -785,6 +807,10 @@ export class MiniProgramAudioClient {
   }
 
   private queueAudio(base64Audio: string): void {
+    // 🔇 PTT 抢话打断期间：丢弃尚未播放的 AI 音频帧（保留文本气泡）
+    if (this.audioMutedUntilNextResponse) {
+      return;
+    }
     this.audioQueue.push(base64Audio);
     if (!this.isPlaying) {
       this.playNextInQueue();

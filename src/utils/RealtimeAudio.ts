@@ -971,6 +971,17 @@ export class RealtimeChat {
     this.onMessage(event);
 
     switch (event.type) {
+      case 'response.created':
+        // 🔇 新一轮 response 开始，恢复音频播放（PTT 打断后的下一句应该能听见）
+        if (this.audioMutedUntilNextResponse) {
+          this.audioMutedUntilNextResponse = false;
+          if (this.audioEl) {
+            try { this.audioEl.muted = false; } catch {}
+          }
+          console.log('[PTT] audio unmuted on response.created');
+        }
+        break;
+
       case 'response.audio.delta':
         // 处理音频数据（通过 WebRTC track 自动播放）
         break;
@@ -1194,6 +1205,8 @@ export class RealtimeChat {
   private pttMode: boolean = false;
   private pttRecordingStart: number = 0;
   private static readonly PTT_MIN_RECORDING_MS = 300;
+  // 🔇 PTT 抢话打断：按下时静音音频元素（保留文字气泡），下一次 response.created 时复位
+  private audioMutedUntilNextResponse: boolean = false;
 
   /** 设置麦克风轨道启用/禁用（不停止流） */
   private setMicMuted(muted: boolean): void {
@@ -1248,17 +1261,29 @@ export class RealtimeChat {
     }
   }
 
-  /** 按下说话：清空缓冲并开启麦克风 */
+  /** 按下说话：清空缓冲并开启麦克风；同时打断 AI 当前语音播放（保留文本继续显示） */
   public startRecording(): { ok: boolean; reason?: string } {
     if (!this.pttMode) return { ok: false, reason: 'not_in_ptt_mode' };
     if (!this.dc || this.dc.readyState !== 'open') {
       return { ok: false, reason: 'channel_not_open' };
     }
     try {
+      // 🔇 立刻打断 AI 语音播放（仅音频，不取消 response，文本继续生成补全到气泡）
+      try {
+        this.audioMutedUntilNextResponse = true;
+        if (this.audioEl) {
+          this.audioEl.muted = true;
+        }
+        // 远端：清空已发出但未播放的服务端音频缓冲
+        this.dc.send(JSON.stringify({ type: 'output_audio_buffer.clear' }));
+      } catch (e) {
+        console.warn('[PTT] interrupt audio failed:', e);
+      }
+
       this.dc.send(JSON.stringify({ type: 'input_audio_buffer.clear' }));
       this.pttRecordingStart = Date.now();
       this.setMicMuted(false);
-      console.log('[PTT] startRecording');
+      console.log('[PTT] startRecording (audio interrupted, text preserved)');
       return { ok: true };
     } catch (e) {
       console.error('[PTT] startRecording error:', e);
