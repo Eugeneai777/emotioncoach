@@ -745,6 +745,15 @@ export class MiniProgramAudioClient {
           break;
         }
 
+        case 'response.created':
+          // 🔇 新一轮 response 开始，恢复音频播放（PTT 打断后的下一句应能听见）
+          if (this.audioMutedUntilNextResponse) {
+            this.audioMutedUntilNextResponse = false;
+            console.log('[MiniProgramAudio][PTT] audio unmuted on response.created');
+          }
+          this.config.onMessage(message);
+          break;
+
         case 'audio_output':
           // 处理音频输出
           if (message.audio) {
