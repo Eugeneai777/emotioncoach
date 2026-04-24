@@ -89,6 +89,39 @@ const CustomerSupport = () => {
     };
   }, []);
 
+  // 支付成功庆祝气泡：监听独立 sessionStorage key（与支付主流程完全隔离）
+  // 用一次即清，静默降级，不写任何业务状态
+  useEffect(() => {
+    const KEY = 'support_payment_celebration';
+    let cancelled = false;
+    try {
+      const raw = sessionStorage.getItem(KEY);
+      if (!raw) return;
+      sessionStorage.removeItem(KEY);
+      const info = JSON.parse(raw) as { packageName?: string; route?: string; orderId?: string };
+      if (!info?.packageName) return;
+      // 延迟 600ms 让欢迎语先出，更自然
+      const t = setTimeout(() => {
+        if (cancelled) return;
+        setMessages(prev => [...prev, {
+          role: 'assistant',
+          content: `✅ 已成功开通「${info.packageName}」，可以直接进入使用啦～`,
+          recommendations: info.route
+            ? { navigations: [{ page_type: '__celebration__', title: `进入「${info.packageName}」`, reason: '支付成功' }] }
+            : undefined,
+        }]);
+        // 把 route 临时塞进 ref 给 safeNavigate 用
+        celebrationRouteRef.current = info.route ?? null;
+      }, 600);
+      return () => { cancelled = true; clearTimeout(t); };
+    } catch {
+      // 损坏数据静默丢弃
+    }
+  }, []);
+
+  // 支付庆祝跳转目的地（独立于 PAGE_ROUTES，避免污染既有路由表）
+  const celebrationRouteRef = useRef<string | null>(null);
+
   const sendMessage = async (messageText: string) => {
     if (!messageText.trim() || isLoading) return;
 
