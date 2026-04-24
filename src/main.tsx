@@ -70,6 +70,21 @@ window.addEventListener("load", () => {
   try { sessionStorage.removeItem(CHUNK_RELOAD_KEY); } catch { /* ignore */ }
 });
 
+// 🎤 全局兜底：页面/进程退出时硬释放麦克风，确保 iOS / Android 状态栏录音红点消失
+const hardKillMic = () => {
+  try { forceReleaseMicrophone(); } catch { /* ignore */ }
+};
+window.addEventListener("pagehide", hardKillMic);
+window.addEventListener("beforeunload", hardKillMic);
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden") {
+    // 仅当不在通话中才硬释放，避免误杀正在进行的会话（例如临时切到后台接电话）
+    try {
+      if (!hasActiveSession()) hardKillMic();
+    } catch { /* ignore */ }
+  }
+});
+
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <App />
