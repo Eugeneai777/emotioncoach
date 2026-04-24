@@ -424,23 +424,43 @@ export default function WealthBlockAssessmentPage() {
 
   // 处理支付按钮点击
   const handlePayClick = async () => {
-    console.log('[WealthBlock] handlePayClick called, user:', user?.id, 'isWeChatBrowser:', isWeChatBrowserEnv, 'showPayDialog(before):', showPayDialog);
+    const clickTs = new Date().toISOString();
+    const clickContext = {
+      ts: clickTs,
+      userId: user?.id || null,
+      hasUser: !!user,
+      isWeChatBrowser: isWeChatBrowserEnv,
+      isMiniProgram,
+      showPayDialog,
+      showIntro,
+      hasPurchased,
+      isBloomPartner,
+      payDialogInstanceKey,
+      mpPostCancelFlag: sessionStorage.getItem(MP_POST_CANCEL_FLAG_KEY),
+      mpPendingPayment: sessionStorage.getItem(MP_PENDING_PAYMENT_STORAGE_KEY),
+      mpDismissed: sessionStorage.getItem(MP_PENDING_PAYMENT_DISMISSED_KEY),
+      cachedOpenId: !!(
+        sessionStorage.getItem('wechat_payment_openid')
+        || localStorage.getItem('cached_payment_openid_gzh')
+        || sessionStorage.getItem('cached_payment_openid_gzh')
+      ),
+      url: window.location.href,
+      ua: navigator.userAgent.slice(0, 200),
+    };
+    console.log('[WealthBlock][PayClick] 立即测评 clicked →', clickContext);
 
     // 🆕 埋点：记录每次点击「立即测评」按钮，包含当前状态便于排查"按钮无反应"问题
     trackPaymentEvent('payment_button_clicked', {
       metadata: {
         source: 'wealth_block_intro',
         packageKey: 'wealth_block_assessment',
-        showPayDialog,
-        isWeChatBrowser: isWeChatBrowserEnv,
-        isMiniProgram,
-        hasUser: !!user,
-        ua: navigator.userAgent.slice(0, 200),
+        ...clickContext,
       },
     });
 
     // 微信浏览器内且未登录：先触发静默授权（自动登录/注册）
     if (isWeChatBrowserEnv && !user) {
+      console.log('[WealthBlock][PayClick] → branch: wechat silent auth (未登录)');
       triggerWeChatSilentAuth();
       return;
     }
