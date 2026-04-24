@@ -1,0 +1,1 @@
+ALTER TABLE public.support_conversations ADD COLUMN IF NOT EXISTS last_intent text;

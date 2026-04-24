@@ -13,6 +13,7 @@ import { SupportCampCard } from "@/components/customer-support/SupportCampCard";
 import { SupportNavigationCard } from "@/components/customer-support/SupportNavigationCard";
 import { SupportTicketCard } from "@/components/customer-support/SupportTicketCard";
 import { QiWeiQRCard } from "@/components/customer-support/QiWeiQRCard";
+import { HistoryDrawer } from "@/components/customer-support/HistoryDrawer";
 import { PointsRulesCard } from "@/components/PointsRulesCard";
 import FeedbackFloatingButton from "@/components/FeedbackFloatingButton";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
@@ -87,6 +88,39 @@ const CustomerSupport = () => {
       window.removeEventListener('offline', onOffline);
     };
   }, []);
+
+  // 支付成功庆祝气泡：监听独立 sessionStorage key（与支付主流程完全隔离）
+  // 用一次即清，静默降级，不写任何业务状态
+  useEffect(() => {
+    const KEY = 'support_payment_celebration';
+    let cancelled = false;
+    try {
+      const raw = sessionStorage.getItem(KEY);
+      if (!raw) return;
+      sessionStorage.removeItem(KEY);
+      const info = JSON.parse(raw) as { packageName?: string; route?: string; orderId?: string };
+      if (!info?.packageName) return;
+      // 延迟 600ms 让欢迎语先出，更自然
+      const t = setTimeout(() => {
+        if (cancelled) return;
+        setMessages(prev => [...prev, {
+          role: 'assistant',
+          content: `✅ 已成功开通「${info.packageName}」，可以直接进入使用啦～`,
+          recommendations: info.route
+            ? { navigations: [{ page_type: '__celebration__', title: `进入「${info.packageName}」`, reason: '支付成功' }] }
+            : undefined,
+        }]);
+        // 把 route 临时塞进 ref 给 safeNavigate 用
+        celebrationRouteRef.current = info.route ?? null;
+      }, 600);
+      return () => { cancelled = true; clearTimeout(t); };
+    } catch {
+      // 损坏数据静默丢弃
+    }
+  }, []);
+
+  // 支付庆祝跳转目的地（独立于 PAGE_ROUTES，避免污染既有路由表）
+  const celebrationRouteRef = useRef<string | null>(null);
 
   const sendMessage = async (messageText: string) => {
     if (!messageText.trim() || isLoading) return;
@@ -170,6 +204,15 @@ const CustomerSupport = () => {
     }
   };
 
+  // 从历史抽屉恢复会话
+  const handleRestoreHistory = (restored: Array<{ role: 'user' | 'assistant'; content: string }>, restoredSessionId: string) => {
+    setMessages([
+      { role: 'assistant', content: '已恢复历史会话，可以接着聊 🌿' },
+      ...restored,
+    ]);
+    sessionId.current = restoredSessionId;
+  };
+
   return (
     <>
       <DynamicOGMeta pageKey="customerSupport" />
@@ -179,21 +222,24 @@ const CustomerSupport = () => {
         <PageHeader
           title="有劲AI客服"
           rightActions={
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate('/my-tickets')}
-              className="relative gap-1 px-2 text-xs"
-              aria-label="我的工单"
-            >
-              <Inbox className="w-4 h-4" />
-              <span className="hidden sm:inline">我的工单</span>
-              {unreadCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] px-1 rounded-full bg-destructive text-white text-[10px] font-medium flex items-center justify-center">
-                  {unreadCount > 9 ? '9+' : unreadCount}
-                </span>
-              )}
-            </Button>
+            <div className="flex items-center gap-1">
+              <HistoryDrawer onRestore={handleRestoreHistory} />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate('/my-tickets')}
+                className="relative gap-1 px-2 text-xs"
+                aria-label="我的工单"
+              >
+                <Inbox className="w-4 h-4" />
+                <span className="hidden sm:inline">我的工单</span>
+                {unreadCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] px-1 rounded-full bg-destructive text-white text-[10px] font-medium flex items-center justify-center">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
+              </Button>
+            </div>
           }
         />
 
@@ -315,6 +361,21 @@ const CustomerSupport = () => {
                             </Card>
                           )}
                           {message.recommendations.navigations?.map((nav, idx) => {
+                            // 支付庆祝伪 page_type：使用 ref 中暂存的目标路由
+                            if (nav.page_type === '__celebration__') {
+                              const route = celebrationRouteRef.current || '/my-page';
+                              return (
+                                <SupportNavigationCard
+                                  key={idx}
+                                  emoji="✨"
+                                  title={nav.title}
+                                  subtitle="点击进入"
+                                  route={route}
+                                  reason={nav.reason}
+                                  onNavigate={() => safeNavigate(route)}
+                                />
+                              );
+                            }
                             const pageInfo = PAGE_ROUTES[nav.page_type];
                             if (!pageInfo) return null;
                             return (
