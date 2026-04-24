@@ -513,8 +513,16 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
         }
 
         console.log("WeixinJSBridge ready, invoking getBrandWCPayRequest");
+        // 🆕 埋点：即将调起 JSAPI
+        trackPaymentEvent("payment_jsapi_invoking", {
+          metadata: { packageKey, hasParams: !!params },
+        });
         window.WeixinJSBridge.invoke("getBrandWCPayRequest", params, (res) => {
           console.log("WeixinJSBridge payment result:", res.err_msg);
+          // 🆕 埋点：JSAPI 回调结果
+          trackPaymentEvent("payment_jsapi_response", {
+            metadata: { packageKey, errMsg: res.err_msg },
+          });
           if (res.err_msg === "get_brand_wcpay_request:ok") {
             resolve();
           } else if (res.err_msg === "get_brand_wcpay_request:cancel") {
