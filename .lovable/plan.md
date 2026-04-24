@@ -1,106 +1,126 @@
 
 
-## 客服模块剩余优化盘点（截至当前进度）
-
-从 14:44 起到现在已完成：路由真相源、多端兼容、二维码降级、工单消息流（DB+边缘函数+用户端列表/详情/红点）、快速选项精简、AI 回带 ticket_id。
-
-下面是**仍未完成**的优化清单，按价值/紧迫度分四档。
+## 收尾工作范围澄清 + P2 影响评估
 
 ---
 
-## 一、P0 闭环必须做（不做就断链）
+## 一、上一轮"收尾 4 步"实际是什么
 
-### 1. 管理员后台改造为对话面板 ⚠️ 关键缺口
-当前 `CustomerServiceManagement.tsx` 仍是"标记已解决"的旧 UI，**客服没有地方回复**，用户提的工单悬空。
-- 工单详情弹窗改为对话流（消息气泡 + 回复输入框）
-- 接 `ticket-reply` edge function（已写好但无人调用）
-- 增加「指派给我」「标记处理中/已解决/已关闭」「转交企微」按钮
-- 后台未读数 `unread_admin_count` 红点 + realtime 订阅
-- 列表按"待处理 / 处理中 / 已解决"分 Tab
+上一轮我说的 4 步收尾，**不是 P2/P3**，而是上一轮 P0+P1 中**还没真正接通的最后一公里**：
 
-### 2. AI 主动播报未读工单（方案已批未实施）
-- `customer-support` 边缘函数 system prompt 注入：检测 `unread_user_count > 0` 时首句直接说"工单 #xxx 已回复"
-- 前端在打开页面时自动注入一条 AI 气泡 + `SupportTicketCard`，零摩擦触达
+| 步骤 | 归属 | 状态 |
+|---|---|---|
+| 1. `submit_ticket_recall` 工具逻辑落地 | P0 #2 AI 主动播报（已写定义未写实现） | 未完成 |
+| 2. `support_conversations` upsert + 写 title | P1 #5 历史抽屉（已建组件未写存储） | 未完成 |
+| 3. `<HistoryDrawer />` 接入 PageHeader + 恢复会话 | P1 #5 历史抽屉前端接入 | 未完成 |
+| 4. 部署 `customer-support` 边缘函数 | 上述后端改动生效 | 未完成 |
 
----
-
-## 二、P1 体验提速（用户感知最强）
-
-### 3. SSE 流式回复
-当前用户发问后要等 2-3s 整段才出现，体感"卡死"。
-- 后端 `customer-support` 改 `text/event-stream` 逐 token 推
-- 前端 `fetch + ReadableStream`，先占位"正在思考…"，token 流式渲染
-- 保留 `?stream=0` 兼容小程序 WebView 降级
-
-### 4. 网络异常降级
-- `useOnlineStatus` 顶部黄条「网络断开」
-- AI 报错气泡内嵌「🔄 重新发送」按钮
-- 5xx 自动追加 `QiWeiQRCard`
-
-### 5. `support_conversations` 改 upsert + 7 天历史抽屉
-- 一条 SQL 完成读+写
-- PageHeader 右上「历史」按钮 → Sheet 列出近 7 天最多 10 条会话
-- 点击恢复 messages 继续聊（淘宝旺旺范式）
+**结论**：这 4 步是 P0+P1 的闭环，必须做，不做则 AI 主动播报和历史抽屉都是死代码。
 
 ---
 
-## 三、P2 商业转化补强
+## 二、P2 / P3 当前定位
 
-### 6. 支付成功气泡回执
-- 套餐/训练营支付成功后，客服气泡自动追加「✅ 已开通 XX，点这里进入」
-- 让客服成为转化闭环的最后一环，而不是付款后用户自己找入口
-
-### 7. 意图打点（仅后端，无 UI）
-- `support_conversations` 新增 `last_intent text` 字段
-- 每轮记录触发的工具名，沉淀热门问题数据，反向迭代 quick options
-
-### 8. 用户端工单内回复入口
-当前 `MyTicketDetail.tsx` 展示对话流，但**用户能否在详情页继续追问**需要核对；如果不能，要补输入框 + 写入 `customer_ticket_messages`，触发 `unread_admin_count +1`
+- **P3（图片附件 / SLA / 评分 / 看板）**：✅ 按你要求本轮不执行
+- **P2 第 6 项 支付成功气泡回执**：需要影响评估（见下）
+- **P2 第 7 项 意图打点**：纯后端写字段，零影响，可顺手做
+- **P2 第 8 项 用户端工单内回复输入框**：`MyTicketDetail.tsx` 已经实现了输入框 + `customer_ticket_messages` 写入 + 触发 `unread_admin_count`，**实际已完成**，无需再做
 
 ---
 
-## 四、P3 长期可选（本轮不建议做）
-- 工单图片/语音附件
-- 客服 SLA 自动派单 + 评分
-- 工单分类筛选 / 关键字搜索
-- 智能客服转人工评分
-- 意图统计可视化看板
+## 三、P2 第 6 项「支付成功气泡回执」影响评估
+
+### 改动设想
+在客服页 `CustomerSupport.tsx` 监听 `sessionStorage` 中的 `pending_order_id`，支付完成回跳后自动追加一条 AI 气泡：「✅ 已开通 XX 套餐，[点这里进入]」。
+
+### 对其他模块的影响分析
+
+| 受影响模块 | 影响点 | 风险 | 结论 |
+|---|---|---|---|
+| `UnifiedPayDialog` 支付主流程 | 不修改任何支付代码 | 无 | ✅ 安全 |
+| `check-order-status` 边缘函数 | 不修改 | 无 | ✅ 安全 |
+| 微信小程序 H5 支付自愈（`miniprogram-h5-resumption-standard-zh`）| 它本身已用 `sessionStorage` 做支付恢复，新增读取 `pending_order_id` 是只读，**不会**抢占或破坏现有 key | 需用独立 key（如 `support_payment_celebration`），不复用支付主流程 key | ⚠️ 必须用独立 key |
+| 微信支付重定向自愈（`payment-resumption-pattern-zh`）| 同上，用独立 key 隔离 | 无 | ✅ 安全 |
+| 通用合伙人归因（`GlobalRefTracker`）| 完全无关 | 无 | ✅ 安全 |
+| 训练营自愈逻辑（`camp-self-healing`）| 完全无关，气泡只读不写 | 无 | ✅ 安全 |
+| 「我的订单」/「订单管理」UI | 完全无关 | 无 | ✅ 安全 |
+| 微信公众号/小程序模板消息 | 不触发 | 无 | ✅ 安全 |
+
+### 设计原则（避免污染）
+1. **只读，不写**：客服气泡只查询 `orders` 表已存在的成功订单，不做任何状态变更
+2. **独立 sessionStorage key**：`support_payment_celebration`，与 `MP_PENDING_ORDER_STORAGE_KEY` 完全隔离
+3. **一次性**：展示后立即清除 key，避免重复触发
+4. **降级安静**：查不到订单不报错，静默不展示气泡
+5. **入口跳转复用**：直接跳已存在的训练营/套餐入口，不新建路由
+
+### 结论
+✅ **可以做，对其他支付/跳转逻辑零影响**，关键是 sessionStorage key 严格隔离。
 
 ---
 
-## 推荐本轮做哪些
+## 四、本轮收尾建议执行清单
 
-**强烈建议本轮一次性合并 P0 + P1（共 5 项）**：
+### 必做（P0+P1 闭环）
+1. 实现 `submit_ticket_recall` 工具：边缘函数中根据 ticket_id 查 `customer_tickets`，把工单卡片塞回 `recommendations`
+2. `support_conversations` 改 `upsert`，写入 `title`（首条用户消息前 24 字）和 `last_message_at`
+3. `CustomerSupport.tsx` PageHeader 右侧加「历史」按钮 → 接入 `<HistoryDrawer />`，点击会话恢复 messages
+4. 部署 `customer-support` 边缘函数
 
-1. ✅ 管理员后台对话面板（不做工单就是死信）
-2. ✅ AI 主动播报未读工单（已批未做）
-3. ✅ SSE 流式回复
-4. ✅ 网络异常降级 + 重试按钮
-5. ✅ 7 天历史会话抽屉 + upsert
+### 顺手做（P2 零风险项）
+5. **意图打点**：`support_conversations` 加 `last_intent text` 字段（迁移），边缘函数每轮写入触发的工具名
 
-P2 的「支付成功回执」「意图打点」可以并入做，加量不加价。
-P3 单独排期，不影响主链路。
+### 评估通过后可做（P2 商业转化）
+6. **支付成功气泡回执**：`CustomerSupport.tsx` 监听独立 key `support_payment_celebration`，查 `orders` 成功订单 → 追加 AI 气泡 + 入口卡片
 
----
-
-## 验收标准
-
-| 场景 | 期望 |
-|---|---|
-| 管理员后台 | 进工单 → 对话面板 → 输入回复 → 用户秒收红点+模板消息 |
-| 用户进客服 | 有未读工单时 AI 第一句主动播报 + 卡片直达 |
-| 桌面/手机发问 | 500ms 内出现首字，逐 token 流式 |
-| 断网 | 顶部黄条 + 错误气泡可一键重发 |
-| 顶部「历史」 | 抽屉显示近 7 天最多 10 条会话，点击恢复 |
-| 支付成功 | 客服气泡自动出现「已开通」入口 |
+### 跳过
+- P2 第 8 项（已完成）
+- P3 全部（按你要求）
 
 ---
 
-## 落地顺序
+## 五、改动文件清单
 
-1. 管理员对话面板（断链最严重）
-2. AI 主动播报未读
-3. SSE 流式 + 网络降级
-4. 7 天历史抽屉
-5. 支付回执 + 意图打点
+**数据库迁移**
+- `support_conversations` 新增 `last_intent text`
+
+**边缘函数**
+- `supabase/functions/customer-support/index.ts`：
+  - `submit_ticket_recall` 实现
+  - `support_conversations` upsert + title + last_intent 写入
+
+**前端**
+- `src/pages/CustomerSupport.tsx`：
+  - PageHeader 右侧接入 `<HistoryDrawer />` 按钮
+  - 会话恢复逻辑（点历史 → 灌回 messages）
+  - 监听 `support_payment_celebration` sessionStorage key → 追加气泡
+- `src/components/UnifiedPayDialog.tsx`（或对应支付成功回调）：支付成功时**新增**写入 `support_payment_celebration` key（不动现有 key）
+
+---
+
+## 六、验收标准
+
+| 场景 | 期望 | 涉及模块隔离 |
+|---|---|---|
+| 用户进客服 | AI 检测未读工单首句直接播报 + 卡片 | 不影响支付 |
+| 顶部「历史」按钮 | 抽屉显示近 7 天最多 10 条会话 | 不影响支付 |
+| 点击历史会话 | 恢复 messages 继续聊 | 不影响支付 |
+| 支付成功跳回客服 | 气泡显示「✅ 已开通 XX」 + 入口 | sessionStorage key 完全隔离支付主流程 |
+| 微信小程序 H5 支付 | 原有自愈逻辑不变 | 用独立 key 验证无干扰 |
+| 测试用例 | 不支付时进客服无任何"已开通"误报 | 静默降级 |
+
+---
+
+## 七、不在本轮做
+- P3 全部项（图片附件 / SLA / 评分 / 看板 / 搜索）
+- 客服 UI 视觉重做
+- 工单分类体系
+
+---
+
+## 八、落地顺序
+1. DB 迁移（`last_intent` 字段）
+2. 边缘函数 3 处改动 + 部署
+3. 前端历史抽屉接入 + 会话恢复
+4. 支付成功气泡（独立 key 严格隔离）
+5. 端到端验证：支付一笔 → 跳客服 → 看到气泡 → 不污染下一次支付
 
