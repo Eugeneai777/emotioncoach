@@ -117,6 +117,8 @@ const Introduction = lazyRetry(() => import("./pages/Introduction"));
 const UserManual = lazyRetry(() => import("./pages/UserManual"));
 const Courses = lazyRetry(() => import("./pages/Courses"));
 const MyPage = lazyRetry(() => import("./pages/MyPage"));
+const MyTickets = lazyRetry(() => import("./pages/MyTickets"));
+const MyTicketDetail = lazyRetry(() => import("./pages/MyTicketDetail"));
 
 // 合伙人相关
 const Partner = lazyRetry(() => import("./pages/Partner"));
@@ -450,6 +452,8 @@ const App = () => (
               <Route path="/video-generator" element={<VideoGenerator />} />
               <Route path="/poster-center" element={<PosterCenter />} />
               <Route path="/customer-support" element={<CustomerSupport />} />
+              <Route path="/my-tickets" element={<MyTickets />} />
+              <Route path="/my-tickets/:id" element={<MyTicketDetail />} />
               <Route path="/human-coaches" element={<HumanCoaches />} />
               <Route path="/human-coaches/:id" element={<HumanCoachDetail />} />
               <Route path="/my-appointments" element={<MyAppointments />} />

@@ -1,11 +1,13 @@
-import { Copy, MessageSquare, Ticket } from "lucide-react";
+import { Copy, MessageSquare, Ticket, ChevronRight } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 
 interface SupportTicketCardProps {
   ticket_no: string;
   subject?: string;
+  ticket_id?: string;
   onContactQiWei?: () => void;
 }
 
@@ -13,8 +15,9 @@ interface SupportTicketCardProps {
  * 工单创建后的可视化卡片：可复制单号 + 一键联系企微
  * 替代原本仅在 AI 文本里口播工单号的弱反馈
  */
-export const SupportTicketCard = ({ ticket_no, subject, onContactQiWei }: SupportTicketCardProps) => {
+export const SupportTicketCard = ({ ticket_no, subject, ticket_id, onContactQiWei }: SupportTicketCardProps) => {
   const [copied, setCopied] = useState(false);
+  const navigate = useNavigate();
 
   const handleCopy = async () => {
     try {
@@ -51,17 +54,29 @@ export const SupportTicketCard = ({ ticket_no, subject, onContactQiWei }: Suppor
               {copied ? "已复制" : "复制"}
             </button>
           </div>
-          {onContactQiWei && (
+          <div className="mt-3 flex flex-wrap items-center gap-2">
             <Button
               size="sm"
-              variant="outline"
-              className="mt-3 h-8 text-xs border-amber-300 text-amber-700 hover:bg-amber-100"
-              onClick={onContactQiWei}
+              className="h-8 text-xs bg-amber-500 hover:bg-amber-600 text-white"
+              onClick={() =>
+                ticket_id ? navigate(`/my-tickets/${ticket_id}`) : navigate(`/my-tickets`)
+              }
             >
-              <MessageSquare className="w-3 h-3 mr-1" />
-              联系企微人工
+              查看进度
+              <ChevronRight className="w-3 h-3 ml-0.5" />
             </Button>
-          )}
+            {onContactQiWei && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 text-xs border-amber-300 text-amber-700 hover:bg-amber-100"
+                onClick={onContactQiWei}
+              >
+                <MessageSquare className="w-3 h-3 mr-1" />
+                联系企微人工
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     </div>
