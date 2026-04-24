@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -72,6 +72,7 @@ export default function WealthBlockAssessmentPage() {
   const [miniProgramPayReturnSignal, setMiniProgramPayReturnSignal] = useState(0);
   // 正在跳转微信授权中
   const [isRedirectingForAuth, setIsRedirectingForAuth] = useState(false);
+  const payDialogReopenTimerRef = useRef<number | null>(null);
   
   // 历史记录
   const [historyRecords, setHistoryRecords] = useState<HistoryRecord[]>([]);
@@ -346,6 +347,14 @@ export default function WealthBlockAssessmentPage() {
     };
   }, [authLoading, isPurchaseLoading, hasPurchased, isBloomPartner, isMiniProgram, showPayDialog]);
 
+  useEffect(() => {
+    return () => {
+      if (payDialogReopenTimerRef.current) {
+        window.clearTimeout(payDialogReopenTimerRef.current);
+      }
+    };
+  }, []);
+
   // 🆕 bfcache 还原兜底：安卓微信 X5/TBS 在用户从微信收银台「返回」时会
   // 把整页（含 showPayDialog=true 与 dialog 内部 createOrderCalledRef）原样恢复，
   // 导致下次点击「立即测评」无法触发重建。pageshow.persisted 时主动复位，
@@ -435,14 +444,18 @@ export default function WealthBlockAssessmentPage() {
       console.log('[WealthBlock] MP user click: hard-reset mp pay cache and remount dialog');
       setMiniProgramPayReturnSignal(Date.now());
     }
-    setPayDialogInstanceKey((prev) => prev + 1);
+    if (payDialogReopenTimerRef.current) {
+      window.clearTimeout(payDialogReopenTimerRef.current);
+      payDialogReopenTimerRef.current = null;
+    }
     setShowPayDialog(false);
-    // 跨 React tick 重建：在安卓微信 X5/TBS bfcache 还原场景下，
-    // requestAnimationFrame 可能被合批，导致 unmount/mount 在同一 tick 被吞掉。
-    // setTimeout(0) 强制让 false 先 commit，再下一个事件循环开 true。
-    setTimeout(() => {
+    setPayDialogInstanceKey((prev) => prev + 1);
+    // 安卓微信/X5 下 0ms 重开仍可能被和 close 合并；留一个更稳的卸载窗口。
+    const reopenDelay = isMiniProgram ? 120 : 80;
+    payDialogReopenTimerRef.current = window.setTimeout(() => {
       setShowPayDialog(true);
-    }, 0);
+      payDialogReopenTimerRef.current = null;
+    }, reopenDelay);
   };
 
   // 处理支付按钮点击
