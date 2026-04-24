@@ -1578,8 +1578,8 @@ export const CoachVoiceChat = ({
           // 🔧 OpenAI Realtime 失败 → 降级豆包实时语音（全站所有语音模式）
           console.log('[VoiceChat] 🎯 Fallback: Trying Doubao Realtime');
           toast({
-            title: "正在切换通道",
-            description: "正在使用豆包语音通道...",
+            title: "正在切换备用通道",
+            description: "请稍候...",
           });
           try {
             const doubaoChat = new DoubaoRealtimeChat(handleVoiceMessage, handleStatusChange, handleTranscript, preAcquiredStream, voiceType);
