@@ -193,6 +193,7 @@ export default function BecomeCoach() {
 
       const coachPayload = {
         name: basicInfo.displayName,
+        phone: basicInfo.phone,
         bio: basicInfo.bio,
         avatar_url: basicInfo.avatarUrl,
         specialties: basicInfo.specialties,
