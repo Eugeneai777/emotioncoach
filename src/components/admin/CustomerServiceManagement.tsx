@@ -80,7 +80,6 @@ export default function CustomerServiceManagement() {
   
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [selectedFeedback, setSelectedFeedback] = useState<Feedback | null>(null);
-  const [resolution, setResolution] = useState("");
   const [adminNote, setAdminNote] = useState("");
 
   // 客服设置状态
