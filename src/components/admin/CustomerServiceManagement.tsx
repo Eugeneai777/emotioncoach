@@ -93,6 +93,25 @@ export default function CustomerServiceManagement() {
   useEffect(() => {
     loadData();
     loadServiceConfig();
+
+    // realtime：工单或消息有更新即刷新列表（admin 视角的红点同步）
+    const channel = supabase
+      .channel("admin_tickets_realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "customer_tickets" },
+        () => loadData(),
+      )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "customer_ticket_messages" },
+        () => loadData(),
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const loadServiceConfig = async () => {
