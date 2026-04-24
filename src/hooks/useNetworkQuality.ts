@@ -116,9 +116,9 @@ export function useNetworkQuality(): UseNetworkQualityReturn {
     // If we have RTT measurement, use it as primary indicator
     // 阈值已根据中国互联网现实放宽：家庭宽带/4G/5G 实测 STUN RTT 通常 200-400ms
     if (measuredRtt !== null) {
-      if (measuredRtt < 200) return 'excellent';
-      if (measuredRtt < 400) return 'good';
-      if (measuredRtt < 800) return 'fair';
+      if (measuredRtt < 400) return 'excellent';
+      if (measuredRtt < 800) return 'good';
+      if (measuredRtt < 1500) return 'fair';
       return 'poor';
     }
 
