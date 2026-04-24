@@ -1,210 +1,183 @@
 
-## 目标
-把客服入口从“能聊”提升为“能解决问题、能把人带到正确页面、第一次就答对”。
 
-## 已确认的问题
+## 客服入口 · 第二轮深度优化方案
 
-### 1) 感恩教练入口跳错到 404
-当前客服链路里至少存在一组错误/不一致的路由映射：
+上一轮修复了「感恩教练 404」与「首轮先寒暄」两个止损项。但从商业架构师视角看，当前 `/customer-support` 在**用户体验、跨端流畅度、稳定性**上仍有 8 类未优化的遗留问题。本轮聚焦「真正交付到手机/电脑/小程序里都不卡、不崩、能闭环」。
 
-- `src/pages/CustomerSupport.tsx`
-  - `gratitude_coach` 被写成 `'/gratitude-coach'`
-- `supabase/functions/life-coach-tools/index.ts`
-  - 感恩教练也写成 `'/gratitude-coach'`
-- 但实际前端已存在的可用入口是：
-  - `'/coach/gratitude_coach'`（代码里明确使用）
-- 同时客服教练卡 `SupportCoachCard` 实际点击的是数据库 `coach_templates.page_route`，这说明数据库里如果也存了旧路由，同样会继续跳错。
+---
 
-结论：这是“客服路由源不统一”导致的入口故障，不只是一个前端按钮问题。
+## 一、已修复（不再处理）
+- 感恩教练路由 404
+- 首轮欢迎语污染上下文
+- AI 先寒暄不答题
+- 快速选项贴近真实问法
 
-### 2) 客服首轮回复逻辑不合理
-当前 `/customer-support` 默认塞了一条欢迎语到 `messages` 里，并且发请求时把这条欢迎语也一并传给后端。  
-再叠加边缘函数 prompt 没有强约束“用户已提问时必须直接回答”，会导致：
+## 二、本轮要解决的 8 类遗留问题
 
-- 用户第一次已经问了明确问题
-- AI 仍然先寒暄/打招呼
-- 用户还得再问一遍才进入正题
+### 1. 路由真相源仍有遗漏 ⚠️
+- `PAGE_ROUTES.gratitude`（感恩日记）写死 `/gratitude-journal`，但全站感恩入口已统一到 `/coach/gratitude_coach`，需核对实际路由是否存在
+- `parent_coach` → `/parent-coach`、`communication_coach` → `/communication-coach`、`story_coach` → `/story-coach`：这些独立路由是否仍有效，需逐一核验，避免下一次又出现 404
+- AI 工具 enum 里有 13 个 page_type，但前端 `PAGE_ROUTES` 与之是否完全对齐，需建立**单一映射表**，避免 enum 与前端再次走偏
 
-这会直接拉低客服可信度和转化效率。
+### 2. 工单创建后没有"确认反馈" ⚠️
+现在 `submit_ticket` 工单号只在 AI 文本里口播，用户无法点击查看进度、无法复制工单号、无法进入「我的工单」。商业上等于"提了等于没提"。
 
-## 商业架构视角下的优化方向
+### 3. 移动端体验断点 📱
+- 输入框用 `Textarea`，移动端键盘弹起时**会顶到屏幕外**（没有 `keyboardWillShow` 兼容）
+- 快速选项区在小屏幕（375px 以下，如 iPhone SE）一行只能放 2 个，9 个选项会撑成 5 行，把聊天区压得只剩 2 个气泡可见
+- `h-[calc(100dvh-60px)]` 在 iOS Safari 老版本不支持 `dvh`，会出现底部输入条被地址栏盖住
+- `WebkitOverflowScrolling: 'touch'` 用在外层容器，但内部 `ScrollArea` 是 Radix 实现，会导致**双层滚动冲突**，iOS 上经常出现"滑不动"
 
-客服不是“陪聊入口”，而是“问题分发与转化中枢”。  
-优化目标应是：
+### 4. 微信小程序 WebView 稳定性 🟢
+- `/customer-support` 没有针对微信小程序环境做适配：
+  - 推荐卡片里 `navigate(pageInfo.route)` 在 MP 内调用 `react-router` 跳转 `/coach/xxx`，部分场景会触发 WebView 白屏
+  - 企微二维码 `QiWeiQRCard` 在小程序内**无法长按识别**（小程序 WebView 不支持 `wx.previewImage`），需要降级为"复制企微号"或"显示官方二维码图"
+  - `[QIWEI_QR]` 标记是字符串匹配，AI 偶尔会写成 `【QIWEI_QR】`/`(QIWEI_QR)` 等变体，导致二维码不显示
 
-1. 首轮即解决：先答问题，不重复寒暄
-2. 单一真相路由：所有客服推荐入口跳同一套 canonical route
-3. 工具优先：能跳页面就给卡片，能建单就建单，能展示规则就直接展示
-4. 语言分层：
-   - 默认：用户语言、口语化、低负担
-   - 涉及规则/退款/支付：官方表达，但仍保持易懂
-5. 结果导向：每次回复都要有“答案 + 下一步”
+### 5. 性能与流畅度 ⚡
+- 后端每次请求都跑 5 张表全量 `SELECT *`（`packages / coach_templates / camp_templates / video_courses / support_knowledge_base`），每条消息都重查，**单轮延迟 1.5-3s**
+- `support_conversations` 历史保存用 `select * .single()` + `update`，每次都是 1 次读 + 1 次写，应改为 `upsert`
+- 消息每次都把全部历史拼进 prompt，10 轮后 token 翻倍，回复会越来越慢；缺**滑窗截断**（保留最近 10 轮 + 首条用户消息）
+- 前端没有**乐观渲染 + 流式回复**，用户发完消息要等 2-3s 整段才出现，体感"卡死"
 
-## 实施方案
+### 6. 错误处理与降级 🛡️
+- AI 后端报错只返回兜底文案，**不显示工单号、不提供重试按钮、不引导企微**
+- 前端 `error` 时只 push 一条文本，没有「重新发送」按钮
+- 网络断开（移动端/小程序常见）时没有提示，用户以为自己消息发出去了
 
-### 一、统一客服入口路由源，修复感恩教练 404
+### 7. 商业转化未闭环 💰
+- 推荐套餐卡片 `SupportPackageCard` 点击后是否能直接进支付？需要核对，目前看仅显示信息
+- 推荐训练营卡片是否能进 `StartCampDialog`？同上
+- 客服里没有**「我的会话历史」入口**，用户每次进来都是 new session，付费意愿被中断
 
-#### 1.1 设定感恩教练唯一标准路由
-统一使用：
-- `'/coach/gratitude_coach'`
+### 8. 双客服组件并存的污染源 🔁
+`src/components/TextCustomerSupport.tsx` 是另一个独立的客服弹窗组件，目前我搜了一圈，**主路径已不引用它**，但代码还在，且首条欢迎语写法和后端契约都已陈旧。留着会让下一次有人再"复制粘贴它"，导致退化。
 
-#### 1.2 修正所有硬编码错误入口
-需要检查并修正这些位置：
-- `src/pages/CustomerSupport.tsx`
-  - `PAGE_ROUTES.gratitude_coach`
-- `supabase/functions/life-coach-tools/index.ts`
-  - gratitude route
-- 代码中其他遗留的 `'/gratitude-coach'` / `'/coach/gratitude'` 相关映射
+---
 
-#### 1.3 修正数据库中的教练入口
-`SupportCoachCard` 依赖 `coach_templates.page_route`，所以还要同步修正数据库里 `gratitude_coach` 的 `page_route`。  
-这一步需要通过迁移或数据库更新来做，避免线上继续返回旧链接。
+## 三、本轮实施方案（按优先级 P0→P2）
 
-#### 1.4 做一次“客服入口一致性清理”
-顺手核对这些客服常用跳转项是否都指向现有真实路由：
-- 感恩教练
-- 沟通教练
-- 亲子教练
-- 有劲生活教练
-- 训练营
-- 我的订单
-- 个人设置
+### P0 · 立即修（兼容多端 + 止损）
 
-避免后续再出现“客服说得对，但链接打不开”。
+#### A. 路由一致性硬约束
+- 在 `src/config/customerSupportRoutes.ts` 中新建 **唯一真相表**，导出 `PAGE_ROUTES` 和 `pageTypeEnum`
+- `CustomerSupport.tsx` 只 import 这张表
+- `supabase/functions/customer-support/index.ts` 的 `navigate_to_page.enum` 通过注释强制对齐这张表
+- 跑一次 `gratitude / parent_coach / communication_coach / story_coach / community / packages` 路由健康检查，凡是不存在的统一指向 `/coach/<key>` 或 `/camps`
 
-## 二、重构首轮回复逻辑，让 AI 第一句就进入正题
+#### B. 移动端 / 小程序 / iOS Safari 三端兼容
+- 高度计算改为 `min-h-[100svh]` + `max-h-[100dvh]` 双兜底，老 iOS 用 `100vh - env(safe-area-inset-bottom)`
+- 输入区加 `pb-[env(safe-area-inset-bottom)]`，键盘弹起时容器加 `scroll-padding-bottom`
+- 快速选项改为**横向滚动条**（`overflow-x-auto snap-x`），固定一行；不再多行撑高
+- 移除外层 `WebkitOverflowScrolling: 'touch'`，让 `ScrollArea` 独占滚动
+- 检测 `isWeChatMiniProgram()`：
+  - 二维码卡片改为「展示二维码图 + 提示用户截屏 + 复制企微号」
+  - 跳转前对 `/coach/*` / `/camps` 等做 try-catch，失败回退到 `window.location.href`
 
-### 2.1 前端：把欢迎语改成“展示文案”，不再污染真实对话上下文
-当前首条 assistant 欢迎语被带入了后端 `messages`。  
-优化为：
+#### C. AI 标记容错
+- 把 `[QIWEI_QR]` 检测改为正则 `/[【\[(（]\s*QIWEI[_-]?QR\s*[\])）】]/i`
+- 同时在 `systemPrompt` 加一句"必须严格使用 `[QIWEI_QR]` 这 11 个字符"
 
-- UI 仍可展示欢迎语
-- 但首次用户提问时，传给后端的对话历史应从“用户问题”开始
-- 只有 AI 真正生成的 assistant 回复才进入会话历史
+#### D. 删掉 `TextCustomerSupport.tsx`（确认无引用后），消除污染源
 
-这样能显著减少“再次打招呼”的倾向。
+---
 
-涉及：
-- `src/pages/CustomerSupport.tsx`
-- `src/components/TextCustomerSupport.tsx`（若仍在使用，需同步）
+### P1 · 体验与转化闭环（一周内）
 
-### 2.2 后端：强化客服回复规则
-在 `supabase/functions/customer-support/index.ts` 的系统提示词中增加明确约束：
+#### E. 工单可视化
+- `submit_ticket` 后，前端**自动渲染一张「工单已创建」卡片**，包含：
+  - 工单号（可一键复制）
+  - 「查看进度」按钮 → 跳 `/my-tickets`（如果不存在则建一个最小列表页）
+  - 「联系企微」按钮 → 直接展开 QR 卡片
+- 后端在 `recommendations` 里新增 `ticket: { ticket_no, subject }`
 
-- 若用户最后一条消息是具体问题，第一句必须直接回答问题
-- 不得重复自我介绍
-- 不得只回复寒暄
-- 若需要推荐入口，先回答，再给卡片/下一步
-- 若问题信息不足，只能补一个最小必要追问，不能先泛泛欢迎
+#### F. 流式回复 + 乐观渲染
+- 改用 `fetch` + ReadableStream（Lovable AI Gateway 支持 SSE），首字 < 500ms
+- 前端先在用户消息下方占位 "正在思考…"，AI 一边吐 token 一边渲染
+- 这是最直接拉升「电脑/手机流畅度」感知的一步
 
-### 2.3 建立客服固定回复结构
-建议统一为 3 段式：
+#### G. 上下文截断 + 套餐缓存
+- 边缘函数新增 `recentMessages = messages.slice(-10)`
+- 套餐/教练/训练营查询结果用 `Deno KV` 或 in-memory cache，TTL 60s（同一进程内复用，不每次走 DB）
+- `support_conversations` 用 `upsert` 一条 SQL 搞定
 
-1. 直接答案
-2. 可执行下一步（卡片/入口/操作）
-3. 必要补充（规则、人工、工单）
+#### H. 网络异常降级
+- 检测 `navigator.onLine === false` → 顶部黄条提示「网络断开，请检查」
+- AI 报错时插入「🔄 重试此消息」按钮，点击重发上一条 user message
+- 5xx 错误自动展示 `QiWeiQRCard`
 
-示例：
-```text
-感恩教练入口在这里，我已经给你放在下方卡片了。
+---
 
-点击后会进入感恩教练页面，帮助你做日常感恩练习。
+### P2 · 商业化与回访（两周内）
 
-如果你点开仍有异常，我可以继续帮你转人工处理。
-```
+#### I. 套餐/训练营卡片直达支付
+- `SupportPackageCard` 点击 → `UnifiedPayDialog`
+- `SupportCampCard` 点击 → `StartCampDialog`
+- 转化路径从「客服 → 套餐页 → 详情 → 支付」缩短为「客服 → 直接支付」
 
-## 三、提升客服准确率与体验的一轮优化
+#### J. 会话历史入口
+- 顶部 PageHeader 右侧加「历史对话」按钮，从 `support_conversations` 拉用户最近 5 条会话
+- 未登录用户用 `localStorage` 存 `sessionId`，登录后自动绑定 `user_id`
 
-### 3.1 从“关键词客服”升级到“意图客服”
-在现有 tool calling 基础上，重点优化几类高频意图：
-- 找入口
-- 查订单
-- 查套餐
-- 查积分/点数
-- 报问题
-- 提建议
-- 联系人工
+#### K. 意图统计看板（仅后端打点，不做 UI）
+- 在 `support_conversations` 上加触发器或扩字段 `last_intent`，记录每轮触发的工具名
+- 后续可用于热门问题排行榜，反向优化 quick options
 
-要求 AI 对这些高频问题：
-- 优先识别意图
-- 优先调用对应工具
-- 不绕弯子
+---
 
-### 3.2 语言策略：用户语言优先，官方语言兜底
-建议规则：
-- 默认使用用户语言风格，简洁、自然、像人在说话
-- 只有涉及：
-  - 支付
-  - 退款
-  - 有效期
-  - 规则说明
-  - 工单处理
-  才切到较正式、官方但易懂的表达
+## 四、改动清单
 
-也就是说，客服整体应是：
-- “像用户语言”
-- 但“关键规则像官方”
-- 不是全程客服套话
+**前端**
+- 新增 `src/config/customerSupportRoutes.ts`（路由真相表）
+- 新增 `src/components/customer-support/SupportTicketCard.tsx`（工单卡片）
+- 新增 `src/components/customer-support/SupportRetryButton.tsx`
+- 改 `src/pages/CustomerSupport.tsx`：
+  - 引入真相表
+  - 高度 / safe-area / 横向滚动选项 / 流式回复 / 重试 / 网络降级
+  - 小程序环境检测与跳转兜底
+  - QIWEI_QR 正则匹配
+- 改 `src/components/customer-support/QiWeiQRCard.tsx`：小程序内降级提示
+- 改 `SupportPackageCard` / `SupportCampCard`：点击直达支付/激活
+- 删 `src/components/TextCustomerSupport.tsx`（确认无引用）
 
-### 3.3 快速选项与真实问题保持一致
-现在 quick options 文案偏泛。可后续优化为更接近用户真实问法，例如：
-- “感恩教练入口”
-- “我的订单在哪看”
-- “积分为什么扣了”
-- “联系人工客服”
-- “我点不开页面”
+**后端**
+- 改 `supabase/functions/customer-support/index.ts`：
+  - SSE 流式输出
+  - 知识库 60s in-memory 缓存
+  - `recentMessages` 滑窗
+  - `support_conversations` 改 `upsert`
+  - `recommendations.ticket` 新增字段
+  - `systemPrompt` 加 QIWEI_QR 严格化、加「触发哪些工具→只能触发哪些 enum」对齐
 
-这样会提升客服首轮命中率与转化效率。
+**新增页面（最小化）**
+- `/my-tickets`：用户工单列表（如已存在跳过）
 
-## 四、实施清单
+---
 
-### 代码修改
-- `src/pages/CustomerSupport.tsx`
-  - 修正错误路由
-  - 首轮欢迎语与真实会话历史解耦
-  - 可顺带优化首屏 quick options
-- `src/components/TextCustomerSupport.tsx`
-  - 同步首轮消息策略，避免旧组件继续复现问题
-- `supabase/functions/customer-support/index.ts`
-  - 增强首轮直答规则
-  - 优化语气与结构化回复规范
-- `supabase/functions/life-coach-tools/index.ts`
-  - 修正感恩教练旧路由
+## 五、不在本轮做
+- 多 Agent 架构 / RAG 升级
+- 客服 UI 视觉重做
+- 教练页面本身的业务逻辑
+- 未确认存在的路由不主动新建页面
 
-### 数据修正
-- 更新 `coach_templates` 中 `gratitude_coach.page_route`
-- 如发现其他客服常用入口也有旧路由，一并修正
+---
 
-## 五、验收标准
+## 六、验收标准
 
-### 场景 A：从“我的”进入客服，问“感恩教练入口在哪”
-预期：
-1. AI 第一条就直接回答，不再先寒暄
-2. 下方展示可点击入口卡片
-3. 点击后进入真实有效页面
-4. 不再跳到 `/gratitude-coach` 的 404
+| 场景 | 期望 |
+|---|---|
+| iPhone SE（375px） | 快速选项一行横滑、聊天区不被压扁、键盘不遮挡 |
+| 微信小程序 WebView | 跳转教练页不白屏；二维码可截屏保存；网络抖动有提示 |
+| 桌面 Chrome | AI 回复 500ms 内开始流式输出；连发 10 条不卡顿 |
+| 弱网/断网 | 顶部红条提示，发送失败可重试 |
+| 工单流程 | 创建后立刻看到工单号 + 复制 + 查看进度 + 转企微 |
+| 套餐推荐 | 卡片点击直接进支付，不再二跳 |
+| 路由 | 任意推荐入口都不再 404 |
 
-### 场景 B：用户点“报问题”
-预期：
-1. AI 不先打招呼
-2. 先识别问题，再创建工单/引导人工
-3. 紧急问题可展示企微客服二维码
-
-### 场景 C：用户问规则类问题
-预期：
-1. 语言更清楚、更官方但不僵硬
-2. 优先直接回答
-3. 必要时附规则卡片/入口卡片
-
-## 六、这次不做
-- 不重做整套客服 UI
-- 不新增复杂多 Agent 架构
-- 不改动全站教练业务逻辑
-- 不改动非客服页面的主流程
+---
 
 ## 推荐落地顺序
-1. 先修路由真相源（代码 + 数据）
-2. 再修首轮回复逻辑（前端上下文 + 后端 prompt）
-3. 最后优化客服语言与高频意图命中策略
+1. **P0 一次性合并**（路由真相表 + 三端兼容 + 标记容错 + 删旧组件）
+2. **P1 流式 + 工单卡 + 缓存**（用户感知最强）
+3. **P2 卡片直达支付 + 会话历史**（直接拉转化）
 
-这样可以先止损 404 和“先打招呼”的核心问题，再提升整体体验与商业转化。
