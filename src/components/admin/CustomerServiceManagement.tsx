@@ -27,6 +27,9 @@ interface Ticket {
   resolution: string | null;
   created_at: string;
   user_id: string | null;
+  unread_admin_count?: number | null;
+  last_message_at?: string | null;
+  assigned_to?: string | null;
 }
 
 interface Feedback {
