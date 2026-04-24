@@ -39,10 +39,16 @@ export default function TextCustomerSupport({ onClose }: TextCustomerSupportProp
     setIsLoading(true);
 
     try {
+      // 剥离首条欢迎语，避免污染对话上下文导致 AI 重复寒暄
+      const realHistory = messages
+        .filter((m, idx) => !(idx === 0 && m.role === 'assistant'))
+        .map(m => ({ role: m.role, content: m.content }));
+
       const { data, error } = await supabase.functions.invoke('customer-support', {
         body: {
           message: userMessage,
-          conversationHistory: messages.map(m => ({ role: m.role, content: m.content })),
+          conversationHistory: realHistory,
+          messages: [...realHistory, { role: 'user', content: userMessage }],
         },
       });
 

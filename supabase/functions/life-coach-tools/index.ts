@@ -997,7 +997,7 @@ function recommendCoach(coachType: string, reason: string) {
     },
     gratitude: {
       name: '感恩教练',
-      route: '/gratitude-coach',
+      route: '/coach/gratitude_coach',
       description: '帮助你发现生活中的美好，培养感恩的心态'
     }
   };
