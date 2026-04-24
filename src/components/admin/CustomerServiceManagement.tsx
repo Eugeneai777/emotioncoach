@@ -13,6 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Search, MessageSquare, AlertCircle, Lightbulb, CheckCircle, Clock, XCircle, Settings, Headphones, MessageCircle } from "lucide-react";
 import { format } from "date-fns";
+import AdminTicketDialog from "./AdminTicketDialog";
 
 interface Ticket {
   id: string;
@@ -26,6 +27,9 @@ interface Ticket {
   resolution: string | null;
   created_at: string;
   user_id: string | null;
+  unread_admin_count?: number | null;
+  last_message_at?: string | null;
+  assigned_to?: string | null;
 }
 
 interface Feedback {
@@ -79,7 +83,6 @@ export default function CustomerServiceManagement() {
   
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [selectedFeedback, setSelectedFeedback] = useState<Feedback | null>(null);
-  const [resolution, setResolution] = useState("");
   const [adminNote, setAdminNote] = useState("");
 
   // 客服设置状态
@@ -93,6 +96,25 @@ export default function CustomerServiceManagement() {
   useEffect(() => {
     loadData();
     loadServiceConfig();
+
+    // realtime：工单或消息有更新即刷新列表（admin 视角的红点同步）
+    const channel = supabase
+      .channel("admin_tickets_realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "customer_tickets" },
+        () => loadData(),
+      )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "customer_ticket_messages" },
+        () => loadData(),
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const loadServiceConfig = async () => {
@@ -159,27 +181,7 @@ export default function CustomerServiceManagement() {
     setLoading(false);
   };
 
-  const handleUpdateTicket = async (ticketId: string, status: string) => {
-    const updates: Record<string, unknown> = { status };
-    if (status === 'resolved' && resolution) {
-      updates.resolution = resolution;
-      updates.resolved_at = new Date().toISOString();
-    }
-    
-    const { error } = await supabase
-      .from('customer_tickets')
-      .update(updates)
-      .eq('id', ticketId);
-    
-    if (error) {
-      toast.error('更新失败');
-    } else {
-      toast.success('更新成功');
-      loadData();
-      setSelectedTicket(null);
-      setResolution("");
-    }
-  };
+  // 旧的 handleUpdateTicket 已迁移至 AdminTicketDialog 组件内部
 
   const handleUpdateFeedback = async (feedbackId: string, status: string) => {
     const updates: Record<string, unknown> = { 
@@ -353,8 +355,17 @@ export default function CustomerServiceManagement() {
                       const statusConf = ticketStatusConfig[ticket.status as keyof typeof ticketStatusConfig];
                       const priorityConf = priorityConfig[ticket.priority as keyof typeof priorityConfig];
                       return (
-                        <TableRow key={ticket.id}>
-                          <TableCell className="font-mono text-sm">{ticket.ticket_no}</TableCell>
+                        <TableRow key={ticket.id} className={ticket.unread_admin_count ? "bg-amber-50/50" : ""}>
+                          <TableCell className="font-mono text-sm">
+                            <div className="flex items-center gap-1.5">
+                              {ticket.ticket_no}
+                              {!!ticket.unread_admin_count && ticket.unread_admin_count > 0 && (
+                                <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-destructive text-white text-[10px] font-medium">
+                                  {ticket.unread_admin_count > 9 ? "9+" : ticket.unread_admin_count}
+                                </span>
+                              )}
+                            </div>
+                          </TableCell>
                           <TableCell>
                             <div className="font-medium">{ticket.subject}</div>
                             <div className="text-xs text-muted-foreground line-clamp-1">{ticket.description}</div>
@@ -366,11 +377,11 @@ export default function CustomerServiceManagement() {
                             <Badge className={statusConf?.color}>{statusConf?.label}</Badge>
                           </TableCell>
                           <TableCell className="text-sm">
-                            {format(new Date(ticket.created_at), 'MM-dd HH:mm')}
+                            {format(new Date(ticket.last_message_at || ticket.created_at), 'MM-dd HH:mm')}
                           </TableCell>
                           <TableCell>
                             <Button variant="ghost" size="sm" onClick={() => setSelectedTicket(ticket)}>
-                              处理
+                              {ticket.unread_admin_count && ticket.unread_admin_count > 0 ? "回复" : "处理"}
                             </Button>
                           </TableCell>
                         </TableRow>
@@ -583,49 +594,14 @@ export default function CustomerServiceManagement() {
         </TabsContent>
       </Tabs>
 
-      {/* 工单详情弹窗 */}
-      <Dialog open={!!selectedTicket} onOpenChange={() => setSelectedTicket(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>处理工单 {selectedTicket?.ticket_no}</DialogTitle>
-          </DialogHeader>
-          {selectedTicket && (
-            <div className="space-y-4">
-              <div>
-                <div className="text-sm text-muted-foreground">主题</div>
-                <div className="font-medium">{selectedTicket.subject}</div>
-              </div>
-              <div>
-                <div className="text-sm text-muted-foreground">描述</div>
-                <div className="text-sm whitespace-pre-wrap bg-muted p-3 rounded-lg">{selectedTicket.description}</div>
-              </div>
-              {selectedTicket.status !== 'resolved' && selectedTicket.status !== 'closed' && (
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">解决方案</label>
-                  <Textarea
-                    value={resolution}
-                    onChange={(e) => setResolution(e.target.value)}
-                    placeholder="填写处理结果或解决方案..."
-                    rows={3}
-                  />
-                </div>
-              )}
-              <div className="flex gap-2 justify-end">
-                {selectedTicket.status === 'open' && (
-                  <Button variant="outline" onClick={() => handleUpdateTicket(selectedTicket.id, 'in_progress')}>
-                    开始处理
-                  </Button>
-                )}
-                {(selectedTicket.status === 'open' || selectedTicket.status === 'in_progress') && (
-                  <Button onClick={() => handleUpdateTicket(selectedTicket.id, 'resolved')}>
-                    标记已解决
-                  </Button>
-                )}
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* 工单对话面板（新版） */}
+      <AdminTicketDialog
+        ticket={selectedTicket}
+        onClose={() => setSelectedTicket(null)}
+        onUpdated={() => {
+          loadData();
+        }}
+      />
 
       {/* 建议详情弹窗 */}
       <Dialog open={!!selectedFeedback} onOpenChange={() => setSelectedFeedback(null)}>

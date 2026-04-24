@@ -57,6 +57,24 @@ serve(async (req) => {
       return tail;
     })();
 
+    // 检测当前用户未读工单回复（用于 AI 主动播报）
+    let unreadTickets: Array<{ ticket_no: string; subject: string; ticket_id: string; unread: number }> = [];
+    if (userId) {
+      const { data: unreadRows } = await supabase
+        .from('customer_tickets')
+        .select('id, ticket_no, subject, unread_user_count')
+        .eq('user_id', userId)
+        .gt('unread_user_count', 0)
+        .order('last_message_at', { ascending: false })
+        .limit(3);
+      unreadTickets = (unreadRows ?? []).map((t: any) => ({
+        ticket_no: t.ticket_no,
+        subject: t.subject,
+        ticket_id: t.id,
+        unread: t.unread_user_count,
+      }));
+    }
+
     // 读取（带缓存）
     const { packagesRes, coachesRes, campsRes, knowledgeRes } = await loadKnowledgeBase(supabase);
 
@@ -81,6 +99,16 @@ serve(async (req) => {
     
     const policyContent = knowledgeRes.data?.filter(k => k.category === 'policy')
       .map(k => `【${k.title}】\n${k.content}`).join('\n\n') || '';
+
+    // 未读工单注入提示（仅当首轮且用户没问具体问题才主动播报，避免打断用户）
+    const isFirstUserTurn = Array.isArray(messages) && messages.filter((m: any) => m.role === 'user').length <= 1;
+    const unreadBroadcastBlock = (unreadTickets.length > 0 && isFirstUserTurn)
+      ? `\n\n## 🔔 未读工单回复（必须主动播报）
+当前用户有 ${unreadTickets.length} 个工单收到了客服回复但还未查看：
+${unreadTickets.map(t => `- 工单 ${t.ticket_no}「${t.subject}」未读 ${t.unread} 条`).join('\n')}
+
+【铁律】你的第一句话必须主动告知用户："你之前的工单 ${unreadTickets[0].ticket_no} 客服已回复，点下方卡片查看"，并立刻调用 submit_ticket_recall 工具展示该工单卡片（不要重新建工单，只是展示已有的）。然后再处理用户当前问题。如果用户当前消息确实需要新建工单，先播报已有工单，再处理。`
+      : '';
 
 const systemPrompt = `你是"有劲"智能客服。定位是【问题分发与转化中枢】，不是陪聊入口。
 
@@ -165,7 +193,10 @@ ${policyContent}
 • ❤️有劲生活教练(vibrant_life)：智能总入口
 • 📖故事教练(story_coach)：英雄之旅创作
 • 🏕️训练营(training_camps)：21天系统化训练
-• 🌈社区(community)：分享与交流`;
+• 🌈社区(community)：分享与交流${unreadBroadcastBlock}`;
+
+    // 把未读工单暴露给 recall 工具用
+    const _unreadCtx = unreadTickets;
 
     const tools = [
       {
@@ -378,7 +409,23 @@ ${policyContent}
             required: ['navigations']
           }
         }
-      }
+      },
+      {
+        type: 'function',
+        function: {
+          name: 'submit_ticket_recall',
+          description: '当用户有未读工单回复时调用此工具，展示已存在的工单卡片（不创建新工单）。仅用于主动播报场景。',
+          parameters: {
+            type: 'object',
+            properties: {
+              ticket_no: { type: 'string' },
+              ticket_id: { type: 'string' },
+              subject: { type: 'string' },
+            },
+            required: ['ticket_no', 'ticket_id'],
+          },
+        },
+      },
     ];
 
     // 调用AI
