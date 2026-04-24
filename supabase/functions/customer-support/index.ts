@@ -556,6 +556,26 @@ ${policyContent}
             recommendations.navigations = args.navigations;
             result = `已为用户展示页面导航卡片：${args.navigations.map((n: any) => n.page_type).join('、')}`;
             break;
+
+          case 'submit_ticket_recall': {
+            // 仅展示已有工单卡片，不创建新工单
+            let subject = args.subject;
+            if (!subject && args.ticket_id) {
+              const { data: t } = await supabase
+                .from('customer_tickets')
+                .select('subject')
+                .eq('id', args.ticket_id)
+                .maybeSingle();
+              subject = t?.subject;
+            }
+            recommendations.ticket = {
+              ticket_no: args.ticket_no,
+              subject,
+              ticket_id: args.ticket_id,
+            };
+            result = `已为用户展示已存在的工单卡片：${args.ticket_no}`;
+            break;
+          }
         }
 
         toolResults.push({
@@ -588,31 +608,20 @@ ${policyContent}
       const finalData = await finalResponse.json();
       const finalMessage = finalData.choices[0].message.content;
 
-      // 保存对话历史
-      if (sessionId) {
-        const { data: existingConv } = await supabase
-          .from('support_conversations')
-          .select('*')
-          .eq('session_id', sessionId)
-          .single();
+      // 收集触发的工具名作为 last_intent
+      const toolIntents = assistantMessage.tool_calls
+        .map((t: any) => t.function?.name)
+        .filter(Boolean)
+        .join(',');
 
-        const newMessages = [
-          ...messages,
-          { role: 'assistant', content: finalMessage }
-        ];
-
-        if (existingConv) {
-          await supabase.from('support_conversations')
-            .update({ messages: newMessages, user_id: userId })
-            .eq('session_id', sessionId);
-        } else {
-          await supabase.from('support_conversations').insert({
-            session_id: sessionId,
-            user_id: userId,
-            messages: newMessages,
-          });
-        }
-      }
+      await persistConversation({
+        supabase,
+        sessionId,
+        userId,
+        messages,
+        finalContent: finalMessage,
+        lastIntent: toolIntents || null,
+      });
 
       return new Response(JSON.stringify({ 
         reply: finalMessage,
@@ -625,31 +634,14 @@ ${policyContent}
     // 无工具调用，直接返回回复
     const reply = assistantMessage.content;
 
-    // 保存对话历史
-    if (sessionId) {
-      const { data: existingConv } = await supabase
-        .from('support_conversations')
-        .select('*')
-        .eq('session_id', sessionId)
-        .single();
-
-      const newMessages = [
-        ...messages,
-        { role: 'assistant', content: reply }
-      ];
-
-      if (existingConv) {
-        await supabase.from('support_conversations')
-          .update({ messages: newMessages, user_id: userId })
-          .eq('session_id', sessionId);
-      } else {
-        await supabase.from('support_conversations').insert({
-          session_id: sessionId,
-          user_id: userId,
-          messages: newMessages,
-        });
-      }
-    }
+    await persistConversation({
+      supabase,
+      sessionId,
+      userId,
+      messages,
+      finalContent: reply,
+      lastIntent: null,
+    });
 
     return new Response(JSON.stringify({ reply }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
