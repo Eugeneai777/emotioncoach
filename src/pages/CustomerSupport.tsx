@@ -361,6 +361,21 @@ const CustomerSupport = () => {
                             </Card>
                           )}
                           {message.recommendations.navigations?.map((nav, idx) => {
+                            // 支付庆祝伪 page_type：使用 ref 中暂存的目标路由
+                            if (nav.page_type === '__celebration__') {
+                              const route = celebrationRouteRef.current || '/my-page';
+                              return (
+                                <SupportNavigationCard
+                                  key={idx}
+                                  emoji="✨"
+                                  title={nav.title}
+                                  subtitle="点击进入"
+                                  route={route}
+                                  reason={nav.reason}
+                                  onNavigate={() => safeNavigate(route)}
+                                />
+                              );
+                            }
                             const pageInfo = PAGE_ROUTES[nav.page_type];
                             if (!pageInfo) return null;
                             return (
