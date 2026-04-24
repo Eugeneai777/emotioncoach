@@ -584,49 +584,14 @@ export default function CustomerServiceManagement() {
         </TabsContent>
       </Tabs>
 
-      {/* 工单详情弹窗 */}
-      <Dialog open={!!selectedTicket} onOpenChange={() => setSelectedTicket(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>处理工单 {selectedTicket?.ticket_no}</DialogTitle>
-          </DialogHeader>
-          {selectedTicket && (
-            <div className="space-y-4">
-              <div>
-                <div className="text-sm text-muted-foreground">主题</div>
-                <div className="font-medium">{selectedTicket.subject}</div>
-              </div>
-              <div>
-                <div className="text-sm text-muted-foreground">描述</div>
-                <div className="text-sm whitespace-pre-wrap bg-muted p-3 rounded-lg">{selectedTicket.description}</div>
-              </div>
-              {selectedTicket.status !== 'resolved' && selectedTicket.status !== 'closed' && (
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">解决方案</label>
-                  <Textarea
-                    value={resolution}
-                    onChange={(e) => setResolution(e.target.value)}
-                    placeholder="填写处理结果或解决方案..."
-                    rows={3}
-                  />
-                </div>
-              )}
-              <div className="flex gap-2 justify-end">
-                {selectedTicket.status === 'open' && (
-                  <Button variant="outline" onClick={() => handleUpdateTicket(selectedTicket.id, 'in_progress')}>
-                    开始处理
-                  </Button>
-                )}
-                {(selectedTicket.status === 'open' || selectedTicket.status === 'in_progress') && (
-                  <Button onClick={() => handleUpdateTicket(selectedTicket.id, 'resolved')}>
-                    标记已解决
-                  </Button>
-                )}
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* 工单对话面板（新版） */}
+      <AdminTicketDialog
+        ticket={selectedTicket}
+        onClose={() => setSelectedTicket(null)}
+        onUpdated={() => {
+          loadData();
+        }}
+      />
 
       {/* 建议详情弹窗 */}
       <Dialog open={!!selectedFeedback} onOpenChange={() => setSelectedFeedback(null)}>
