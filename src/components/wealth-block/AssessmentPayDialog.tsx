@@ -39,6 +39,8 @@ interface AssessmentPayDialogProps {
 
 type PaymentStatus = "idle" | "creating" | "pending" | "polling" | "paid" | "registering" | "error";
 
+const WEALTH_PAY_HOTFIX_VERSION = "hotfix-2026-04-24-0329";
+
 const MP_PENDING_PAYMENT_STORAGE_KEY = "wealth_assessment_mp_pending_payment";
 const MP_PENDING_PAYMENT_DISMISSED_KEY = "wealth_assessment_mp_pending_payment_dismissed";
 
@@ -230,9 +232,11 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
     paymentSessionIdRef.current += 1;
     if (open) {
       closeInProgressRef.current = false;
+      console.log("[AssessmentPay] Loaded build:", WEALTH_PAY_HOTFIX_VERSION);
       // 🆕 埋点：弹窗实际挂载并被父级标记为 open
       trackPaymentEvent("payment_dialog_opened", {
         metadata: {
+          hotfixVersion: WEALTH_PAY_HOTFIX_VERSION,
           source: "AssessmentPayDialog",
           packageKey,
           isWechat: envFlags.isWechat,
@@ -513,9 +517,9 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
       const timeoutId = window.setTimeout(() => {
         if (settled) return;
         settled = true;
-        console.warn("[Payment] JSAPI no response within 8s, treating as silent failure");
+        console.warn("[Payment] JSAPI no response within 8s, treating as silent failure", WEALTH_PAY_HOTFIX_VERSION);
         trackPaymentEvent("payment_jsapi_no_response", {
-          metadata: { packageKey, timeoutMs: NO_RESPONSE_TIMEOUT_MS },
+          metadata: { packageKey, timeoutMs: NO_RESPONSE_TIMEOUT_MS, hotfixVersion: WEALTH_PAY_HOTFIX_VERSION },
         });
         reject(new Error("用户取消支付"));
       }, NO_RESPONSE_TIMEOUT_MS);
