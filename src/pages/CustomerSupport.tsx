@@ -67,7 +67,7 @@ const quickOptions = [
 const CustomerSupport = () => {
   const navigate = useNavigate();
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', content: '您好！我是有劲AI客服 🌿\n\n产品刚上线，您的每一条反馈对我们都特别珍贵！\n\n无论是使用建议、功能需求还是问题反馈，都欢迎告诉我。您也可以点击上方的快速选项 💬' }
+    { role: 'assistant', content: '直接说你想解决的问题就行 🌿\n\n比如「感恩教练入口在哪」、「我的订单在哪看」、「积分为什么扣了」。\n你也可以点上方快速选项，我会第一时间给你答案和入口卡片。' }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
