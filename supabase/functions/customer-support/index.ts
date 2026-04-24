@@ -193,7 +193,10 @@ ${policyContent}
 • ❤️有劲生活教练(vibrant_life)：智能总入口
 • 📖故事教练(story_coach)：英雄之旅创作
 • 🏕️训练营(training_camps)：21天系统化训练
-• 🌈社区(community)：分享与交流`;
+• 🌈社区(community)：分享与交流${unreadBroadcastBlock}`;
+
+    // 把未读工单暴露给 recall 工具用
+    const _unreadCtx = unreadTickets;
 
     const tools = [
       {
