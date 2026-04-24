@@ -862,8 +862,33 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
       clearTimeout(timeoutId);
 
       if (!isPaymentSessionActive(sessionId)) return;
-      if (error) throw error;
-      if (!data?.success) throw new Error(data?.error || "创建订单失败，请稍后重试");
+      if (error) {
+        // 🆕 埋点：创建订单失败
+        trackPaymentEvent("payment_order_create_failed", {
+          errorMessage: error?.message || String(error),
+          metadata: { selectedPayType, packageKey },
+        });
+        throw error;
+      }
+      if (!data?.success) {
+        trackPaymentEvent("payment_order_create_failed", {
+          errorMessage: data?.error || "创建订单失败",
+          metadata: { selectedPayType, packageKey },
+        });
+        throw new Error(data?.error || "创建订单失败,请稍后重试");
+      }
+
+      // 🆕 埋点:订单创建成功(在 alreadyPaid 分支处理之前先记录)
+      trackPaymentEvent("payment_order_created", {
+        metadata: {
+          selectedPayType,
+          orderNo: data.orderNo,
+          alreadyPaid: !!data.alreadyPaid,
+          hasJsapiParams: !!data.jsapiPayParams,
+          hasMiniProgramParams: !!data.miniprogramPayParams,
+          packageKey,
+        },
+      });
 
       // 🆕 处理后端返回的 alreadyPaid 响应（用户已购买）
       if (data.alreadyPaid) {
