@@ -39,6 +39,7 @@ import { usePaymentCallback } from "@/hooks/usePaymentCallback";
 import { isWeChatMiniProgram } from "@/utils/platform";
 import { useAssessmentPurchase } from "@/hooks/useAssessmentPurchase";
 import { trackPaymentEvent } from "@/utils/paymentFlowTracker";
+import { setPostAuthRedirect } from "@/lib/postAuthRedirect";
 
 const MP_PENDING_PAYMENT_STORAGE_KEY = 'wealth_assessment_mp_pending_payment';
 const MP_PENDING_PAYMENT_DISMISSED_KEY = 'wealth_assessment_mp_pending_payment_dismissed';
@@ -1150,9 +1151,14 @@ export default function WealthBlockAssessmentPage() {
                   onStart={() => {
                     // 🔒 付费墙守门：未登录跳登录、未付费拉支付、绽放合伙人/已付费才放行
                     if (!user) {
+                      // 标记登录后需要自动拉起支付
                       sessionStorage.setItem('wealth_block_pending_pay', '1');
+                      // 双保险：URL ?redirect= + setPostAuthRedirect 兜底，
+                      // 确保不论 /auth 走哪条登录路径都能回到本页触发自动支付
+                      const currentPath = window.location.pathname + window.location.search;
+                      setPostAuthRedirect(currentPath);
                       toast.info("请先登录");
-                      navigate("/auth?redirect=/wealth-block");
+                      navigate(`/auth?redirect=${encodeURIComponent(currentPath)}`);
                       return;
                     }
                     if (!hasPurchased && !isBloomPartner) {
@@ -1165,7 +1171,11 @@ export default function WealthBlockAssessmentPage() {
                     console.log('[WealthBlock] User clicked start, hiding intro');
                     setShowIntro(false);
                   }}
-                  onLogin={() => navigate("/auth?redirect=/wealth-block")}
+                  onLogin={() => {
+                    const currentPath = window.location.pathname + window.location.search;
+                    setPostAuthRedirect(currentPath);
+                    navigate(`/auth?redirect=${encodeURIComponent(currentPath)}`);
+                  }}
                   onPay={handlePayClick}
                 />
               ) : showResult && currentResult ? (
@@ -1210,7 +1220,11 @@ export default function WealthBlockAssessmentPage() {
                   <p className="text-sm text-muted-foreground mb-4">
                     登录后可以保存测评结果并查看历史趋势
                   </p>
-                  <Button onClick={() => navigate("/auth?redirect=/wealth-block")}>
+                  <Button onClick={() => {
+                    const currentPath = window.location.pathname + window.location.search;
+                    setPostAuthRedirect(currentPath);
+                    navigate(`/auth?redirect=${encodeURIComponent(currentPath)}`);
+                  }}>
                     去登录
                   </Button>
                 </div>
