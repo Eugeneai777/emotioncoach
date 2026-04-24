@@ -72,6 +72,7 @@ export default function WealthBlockAssessmentPage() {
   const [miniProgramPayReturnSignal, setMiniProgramPayReturnSignal] = useState(0);
   // 正在跳转微信授权中
   const [isRedirectingForAuth, setIsRedirectingForAuth] = useState(false);
+  const payDialogReopenTimerRef = useRef<number | null>(null);
   
   // 历史记录
   const [historyRecords, setHistoryRecords] = useState<HistoryRecord[]>([]);
