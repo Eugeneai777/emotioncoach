@@ -401,6 +401,30 @@ export default function WealthBlockAssessmentPage() {
     // 🆕 双保险：清理 pay_auth_in_progress 防抖标记，避免上一次失败/取消的残留导致下次点击被静默忽略
     sessionStorage.removeItem('pay_auth_in_progress');
 
+    // 🆕 用户再次点击「立即测评」=> 视为放弃上一轮支付流程：
+    // 1) 异步取消上一笔 pending 订单（不阻塞 UI）
+    // 2) 清理所有可能让弹窗复用旧订单/旧 prepay_id 的本地缓存
+    // 3) 通过 bump payDialogInstanceKey + false→true 强制 unmount + 重新挂载，
+    //    把 AssessmentPayDialog 内部 createOrderCalledRef / mpPayParams / status 等彻底重置
+    try {
+      const cachedRaw = sessionStorage.getItem(MP_PENDING_PAYMENT_STORAGE_KEY);
+      const cached = cachedRaw ? JSON.parse(cachedRaw) : null;
+      const staleOrderNo = cached?.orderNo;
+      if (staleOrderNo) {
+        console.log('[WealthBlock] Re-click detected, cancelling previous pending order:', staleOrderNo);
+        // fire-and-forget：失败也不阻塞用户
+        supabase.functions
+          .invoke('cancel-pending-order', { body: { orderNo: staleOrderNo } })
+          .catch((err) => console.warn('[WealthBlock] cancel previous pending order failed:', err));
+      }
+    } catch (err) {
+      console.warn('[WealthBlock] parse cached pending payment failed:', err);
+    }
+    // 清理所有跨弹窗实例的支付状态缓存
+    sessionStorage.removeItem(MP_PENDING_PAYMENT_STORAGE_KEY);
+    sessionStorage.removeItem(MP_POST_CANCEL_FLAG_KEY);
+    sessionStorage.removeItem('wechat_mp_pending_order');
+
     // 🔧 全平台强制重建弹窗实例
     // 解决场景：用户从支付宝/微信支付页用「返回」按钮回到本页（bfcache 恢复），
     // showPayDialog 仍为 true，setShowPayDialog(true) 不触发 re-render，
@@ -408,8 +432,6 @@ export default function WealthBlockAssessmentPage() {
     // bump key + 先 false 再 true：强制 unmount + 重建，重置所有内部 refs。
     if (isMiniProgram) {
       console.log('[WealthBlock] MP user click: hard-reset mp pay cache and remount dialog');
-      sessionStorage.removeItem(MP_PENDING_PAYMENT_STORAGE_KEY);
-      sessionStorage.removeItem(MP_POST_CANCEL_FLAG_KEY);
       setMiniProgramPayReturnSignal(Date.now());
     }
     setPayDialogInstanceKey((prev) => prev + 1);

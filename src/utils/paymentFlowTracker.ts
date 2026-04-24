@@ -68,8 +68,14 @@ export async function trackPaymentEvent(
 ): Promise<void> {
   try {
     const flowId = getCurrentFlowId();
-    if (!flowId && eventType !== "payment_intent") {
-      // 没有活跃的流程且不是发起事件，跳过
+    // 允许「发起类」事件在没有活跃 flow 时仍然记录，
+    // 否则用户从「立即测评」入口直接点击时这条关键日志会丢失。
+    const STARTABLE_EVENTS = new Set([
+      "payment_intent",
+      "payment_button_clicked",
+      "checkout_opened",
+    ]);
+    if (!flowId && !STARTABLE_EVENTS.has(eventType)) {
       return;
     }
 
