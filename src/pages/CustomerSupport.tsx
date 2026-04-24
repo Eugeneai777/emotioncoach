@@ -204,6 +204,15 @@ const CustomerSupport = () => {
     }
   };
 
+  // 从历史抽屉恢复会话
+  const handleRestoreHistory = (restored: Array<{ role: 'user' | 'assistant'; content: string }>, restoredSessionId: string) => {
+    setMessages([
+      { role: 'assistant', content: '已恢复历史会话，可以接着聊 🌿' },
+      ...restored,
+    ]);
+    sessionId.current = restoredSessionId;
+  };
+
   return (
     <>
       <DynamicOGMeta pageKey="customerSupport" />
@@ -213,21 +222,24 @@ const CustomerSupport = () => {
         <PageHeader
           title="有劲AI客服"
           rightActions={
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate('/my-tickets')}
-              className="relative gap-1 px-2 text-xs"
-              aria-label="我的工单"
-            >
-              <Inbox className="w-4 h-4" />
-              <span className="hidden sm:inline">我的工单</span>
-              {unreadCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] px-1 rounded-full bg-destructive text-white text-[10px] font-medium flex items-center justify-center">
-                  {unreadCount > 9 ? '9+' : unreadCount}
-                </span>
-              )}
-            </Button>
+            <div className="flex items-center gap-1">
+              <HistoryDrawer onRestore={handleRestoreHistory} />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate('/my-tickets')}
+                className="relative gap-1 px-2 text-xs"
+                aria-label="我的工单"
+              >
+                <Inbox className="w-4 h-4" />
+                <span className="hidden sm:inline">我的工单</span>
+                {unreadCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] px-1 rounded-full bg-destructive text-white text-[10px] font-medium flex items-center justify-center">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
+              </Button>
+            </div>
           }
         />
 

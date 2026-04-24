@@ -121,6 +121,19 @@ export function UnifiedPayDialog({
       metadata: { packageKey: packageInfo?.key, payMethod },
     });
     endPaymentFlow();
+    // 🆕 写入客服庆祝独立 key（与支付主流程 sessionStorage key 完全隔离）
+    // CustomerSupport.tsx 会读取并展示气泡，用一次即清，零业务影响
+    try {
+      if (packageInfo?.name) {
+        sessionStorage.setItem('support_payment_celebration', JSON.stringify({
+          packageName: packageInfo.name,
+          packageKey: packageInfo.key,
+          ts: Date.now(),
+        }));
+      }
+    } catch {
+      // sessionStorage 不可用时静默
+    }
     onSuccess();
   }, [onSuccess, packageInfo, payMethod]);
 
