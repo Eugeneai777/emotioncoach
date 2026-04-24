@@ -3,8 +3,9 @@ import { useNavigate } from "react-router-dom";
 import {
   Package, ChevronRight, ChevronDown,
   Info, Bell, MessageSquare, LogOut, Truck,
-  Settings, Headphones, FlaskConical
+  Settings, Headphones, FlaskConical, Inbox
 } from "lucide-react";
+import { useUnreadTickets } from "@/hooks/useUnreadTickets";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";

@@ -62,6 +62,7 @@ const quickOptions = [
 
 const CustomerSupport = () => {
   const navigate = useNavigate();
+  const { unreadCount } = useUnreadTickets();
   const [messages, setMessages] = useState<Message[]>([
     { role: 'assistant', content: '直接说你想解决的问题就行 🌿\n\n比如「感恩教练入口在哪」、「我的订单在哪看」、「积分为什么扣了」。\n你也可以点上方快速选项，我会第一时间给你答案和入口卡片。' }
   ]);
@@ -175,7 +176,26 @@ const CustomerSupport = () => {
       <div
         className="min-h-[100vh] [min-height:100svh] bg-gradient-to-b from-teal-50 via-cyan-50 to-blue-50"
       >
-        <PageHeader title="有劲AI客服" />
+        <PageHeader
+          title="有劲AI客服"
+          rightActions={
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/my-tickets')}
+              className="relative gap-1 px-2 text-xs"
+              aria-label="我的工单"
+            >
+              <Inbox className="w-4 h-4" />
+              <span className="hidden sm:inline">我的工单</span>
+              {unreadCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] px-1 rounded-full bg-destructive text-white text-[10px] font-medium flex items-center justify-center">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </Button>
+          }
+        />
 
         {/* 网络断开提示 */}
         {!isOnline && (
@@ -251,6 +271,7 @@ const CustomerSupport = () => {
                           <SupportTicketCard
                             ticket_no={message.recommendations.ticket.ticket_no}
                             subject={message.recommendations.ticket.subject}
+                            ticket_id={message.recommendations.ticket.ticket_id}
                           />
                         </div>
                       )}
