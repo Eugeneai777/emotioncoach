@@ -505,10 +505,29 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
     return new Promise<void>((resolve, reject) => {
       console.log("Invoking JSAPI pay with WeixinJSBridge");
 
+      // 🆕 8 秒无回调兜底：某些机型（已知 Redmi K30 5G + XWEB）取消后再次 invoke
+      // 微信会静默吞掉回调，前端永远拿不到 ok/cancel/fail，按钮看似"没反应"。
+      // 超时后视为本次拉起失败，让上层走"取消"分支，重置状态、关弹窗、提示再点一次。
+      let settled = false;
+      const NO_RESPONSE_TIMEOUT_MS = 8000;
+      const timeoutId = window.setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        console.warn("[Payment] JSAPI no response within 8s, treating as silent failure");
+        trackPaymentEvent("payment_jsapi_no_response", {
+          metadata: { packageKey, timeoutMs: NO_RESPONSE_TIMEOUT_MS },
+        });
+        reject(new Error("用户取消支付"));
+      }, NO_RESPONSE_TIMEOUT_MS);
+
       const onBridgeReady = () => {
         if (!window.WeixinJSBridge) {
           console.error("WeixinJSBridge is not available");
-          reject(new Error("WeixinJSBridge 未初始化，请在微信中打开"));
+          if (!settled) {
+            settled = true;
+            clearTimeout(timeoutId);
+            reject(new Error("WeixinJSBridge 未初始化，请在微信中打开"));
+          }
           return;
         }
 
@@ -518,6 +537,9 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
           metadata: { packageKey, hasParams: !!params },
         });
         window.WeixinJSBridge.invoke("getBrandWCPayRequest", params, (res) => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(timeoutId);
           console.log("WeixinJSBridge payment result:", res.err_msg);
           // 🆕 埋点：JSAPI 回调结果
           trackPaymentEvent("payment_jsapi_response", {
