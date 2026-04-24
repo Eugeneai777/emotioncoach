@@ -59,6 +59,7 @@ const MyPage: React.FC = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { toast } = useToast();
+  const { unreadCount: ticketUnread } = useUnreadTickets();
   const [showAllOrders, setShowAllOrders] = useState(false);
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [orders, setOrders] = useState<OrderData[]>([]);
@@ -115,6 +116,9 @@ const MyPage: React.FC = () => {
 
   const handleSettingsClick = async (label: string) => {
     switch (label) {
+      case "我的工单":
+        navigate("/my-tickets");
+        break;
       case "提醒设置":
         navigate("/settings?view=reminders");
         break;
@@ -133,9 +137,10 @@ const MyPage: React.FC = () => {
   };
 
   const SETTINGS_ITEMS = [
+    { icon: Inbox, label: "我的工单", badge: ticketUnread },
+    { icon: Headphones, label: "联系客服" },
     { icon: Bell, label: "提醒设置" },
     { icon: MessageSquare, label: "通知偏好" },
-    { icon: Headphones, label: "联系客服" },
     { icon: LogOut, label: "退出登录" },
   ];
 
@@ -254,13 +259,20 @@ const MyPage: React.FC = () => {
                   <button
                     key={item.label}
                     onClick={() => handleSettingsClick(item.label)}
-                    className={`flex flex-col items-center gap-1.5 px-2 py-3 rounded-xl hover:bg-accent/50 active:scale-[0.97] transition-all text-foreground ${
+                    className={`relative flex flex-col items-center gap-1.5 px-2 py-3 rounded-xl hover:bg-accent/50 active:scale-[0.97] transition-all text-foreground ${
                       item.label === "退出登录" ? "text-destructive" : ""
                     }`}
                   >
-                    <item.icon className={`w-5 h-5 ${
-                      item.label === "退出登录" ? "text-destructive" : "text-muted-foreground"
-                    }`} />
+                    <div className="relative">
+                      <item.icon className={`w-5 h-5 ${
+                        item.label === "退出登录" ? "text-destructive" : "text-muted-foreground"
+                      }`} />
+                      {(item as any).badge > 0 && (
+                        <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-[16px] px-1 rounded-full bg-destructive text-white text-[10px] font-medium flex items-center justify-center">
+                          {(item as any).badge > 9 ? '9+' : (item as any).badge}
+                        </span>
+                      )}
+                    </div>
                     <span className="text-xs text-center">{item.label}</span>
                   </button>
                 ))}
