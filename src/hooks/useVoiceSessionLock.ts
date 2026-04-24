@@ -13,6 +13,19 @@ const notifyListeners = () => {
   listeners.forEach(listener => listener());
 };
 
+/**
+ * 释放语音会话锁时联动硬释放麦克风。
+ * 动态 import 避免循环依赖 + 在 SSR / 测试环境优雅降级。
+ */
+const hardReleaseMicrophone = () => {
+  // 异步触发，不阻塞锁释放主流程
+  import('@/utils/microphoneManager')
+    .then(mod => {
+      try { mod.forceReleaseMicrophone?.(); } catch (e) { console.warn('[VoiceSessionLock] mic hard release failed:', e); }
+    })
+    .catch(() => {});
+};
+
 // 获取当前活跃会话
 export const getActiveSession = () => ({
   sessionId: activeSessionId,
@@ -45,6 +58,7 @@ export const releaseSessionLock = (sessionId: string): boolean => {
   activeSessionId = null;
   activeSessionComponent = null;
   notifyListeners();
+  hardReleaseMicrophone(); // 🎤 联动：会话结束 → 硬释放麦克风
   return true;
 };
 
@@ -56,6 +70,7 @@ export const forceReleaseSessionLock = () => {
   activeSessionId = null;
   activeSessionComponent = null;
   notifyListeners();
+  hardReleaseMicrophone(); // 🎤 联动：强制释放 → 硬释放麦克风
 };
 
 // ✅ 新增：安全释放锁（如果存在）—— 用于取消弹框等场景
@@ -65,6 +80,7 @@ export const safeReleaseSessionLock = () => {
     activeSessionId = null;
     activeSessionComponent = null;
     notifyListeners();
+    hardReleaseMicrophone(); // 🎤 联动
   }
 };
 

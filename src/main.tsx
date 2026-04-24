@@ -7,6 +7,8 @@ import { installApiErrorTracker } from "./lib/apiErrorTracker";
 import { installStabilityCollector } from "./lib/stabilityDataCollector";
 import { installMonitorReporter } from "./lib/monitorReporter";
 import { CHUNK_RELOAD_KEY } from "./utils/lazyRetry";
+import { forceReleaseMicrophone } from "./utils/microphoneManager";
+import { hasActiveSession } from "./hooks/useVoiceSessionLock";
 
 // Install global frontend error tracker
 installErrorTracker();
