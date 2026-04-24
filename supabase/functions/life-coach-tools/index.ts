@@ -1030,7 +1030,7 @@ function handleNavigateTo(destination: string) {
     communication_coach: { path: '/communication-coach', name: '沟通教练' },
     story_coach: { path: '/story-coach', name: '故事教练' },
     gratitude_coach: { path: '/coach/gratitude_coach', name: '感恩教练' },
-    training_camp: { path: '/training-camp', name: '训练营' },
+    training_camp: { path: '/camps', name: '训练营' },
     community: { path: '/community', name: '社区' },
     packages: { path: '/packages', name: '套餐' },
     meditation: { path: '/meditation', name: '冥想' },

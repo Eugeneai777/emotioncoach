@@ -6,6 +6,24 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
+// 60s in-memory 知识库缓存（同一进程内复用，减少每条消息 5 张表全量 SELECT）
+const KB_CACHE_TTL_MS = 60_000;
+let kbCache: { ts: number; data: any } | null = null;
+
+async function loadKnowledgeBase(supabase: any) {
+  if (kbCache && Date.now() - kbCache.ts < KB_CACHE_TTL_MS) return kbCache.data;
+  const [packagesRes, coachesRes, campsRes, videosRes, knowledgeRes] = await Promise.all([
+    supabase.from('packages').select('*').eq('is_active', true).order('display_order'),
+    supabase.from('coach_templates').select('*').eq('is_active', true).order('display_order'),
+    supabase.from('camp_templates').select('*').eq('is_active', true).order('display_order'),
+    supabase.from('video_courses').select('id, title, description, category, keywords').limit(50),
+    supabase.from('support_knowledge_base').select('*').eq('is_active', true).order('display_order'),
+  ]);
+  const data = { packagesRes, coachesRes, campsRes, videosRes, knowledgeRes };
+  kbCache = { ts: Date.now(), data };
+  return data;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -13,29 +31,34 @@ serve(async (req) => {
 
   try {
     const { messages, sessionId } = await req.json();
-    
+
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const lovableApiKey = Deno.env.get('LOVABLE_API_KEY')!;
-    
+
     const supabase = createClient(supabaseUrl, supabaseKey);
-    
+
     // 获取用户信息（可选）
-    let userId = null;
+    let userId: string | null = null;
     const authHeader = req.headers.get('Authorization');
     if (authHeader) {
       const { data: { user } } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
-      userId = user?.id;
+      userId = user?.id ?? null;
     }
 
-    // 实时查询动态数据
-    const [packagesRes, coachesRes, campsRes, videosRes, knowledgeRes] = await Promise.all([
-      supabase.from('packages').select('*').eq('is_active', true).order('display_order'),
-      supabase.from('coach_templates').select('*').eq('is_active', true).order('display_order'),
-      supabase.from('camp_templates').select('*').eq('is_active', true).order('display_order'),
-      supabase.from('video_courses').select('id, title, description, category, keywords').limit(50),
-      supabase.from('support_knowledge_base').select('*').eq('is_active', true).order('display_order'),
-    ]);
+    // 滑窗：保留首条 user 消息（锚定意图）+ 最近 10 条
+    const truncatedMessages = (() => {
+      if (!Array.isArray(messages) || messages.length <= 11) return messages;
+      const firstUserIdx = messages.findIndex((m: any) => m.role === 'user');
+      const tail = messages.slice(-10);
+      if (firstUserIdx >= 0 && firstUserIdx < messages.length - 10) {
+        return [messages[firstUserIdx], ...tail];
+      }
+      return tail;
+    })();
+
+    // 读取（带缓存）
+    const { packagesRes, coachesRes, campsRes, knowledgeRes } = await loadKnowledgeBase(supabase);
 
     // 构建知识库内容
     const packagesInfo = packagesRes.data?.map(p => 
