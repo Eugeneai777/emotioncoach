@@ -2212,7 +2212,7 @@ export const CoachVoiceChat = ({
     // PTT 模式：极简接通画面（呼吸光圈 + 正在接通… + 取消）
     if (pttMode) {
       return (
-        <div className={`fixed inset-0 z-50 bg-gradient-to-b ${colors.deepBg} flex flex-col items-center justify-center`}>
+        <div className={`fixed inset-0 z-[60] bg-gradient-to-b ${colors.deepBg} flex flex-col items-center justify-center`}>
           <div className="relative">
             <div className={`absolute inset-0 ${colors.bg} opacity-20 rounded-full blur-2xl animate-pulse`} />
             <div className={`relative w-24 h-24 rounded-full ${colors.bg} opacity-40 animate-ping`} />
