@@ -518,7 +518,9 @@ export default function WealthBlockAssessmentPage() {
     }
 
     // 已登录或非微信环境：直接打开支付弹窗
+    console.log('[WealthBlock][PayClick] → branch: openWealthPayDialog (已登录/非微信)');
     openWealthPayDialog();
+    console.log('[WealthBlock][PayClick] openWealthPayDialog dispatched, instanceKey will increment');
   };
 
   // 用户选择"切换回原账号"：登出后重新走微信静默授权
