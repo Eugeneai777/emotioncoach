@@ -67,7 +67,7 @@ export async function trackPaymentEvent(
   }
 ): Promise<void> {
   try {
-    const flowId = getCurrentFlowId();
+    let flowId = getCurrentFlowId();
     // 允许「发起类」事件在没有活跃 flow 时仍然记录，
     // 否则用户从「立即测评」入口直接点击时这条关键日志会丢失。
     const STARTABLE_EVENTS = new Set([
@@ -79,7 +79,19 @@ export async function trackPaymentEvent(
       return;
     }
 
-    const activeFlowId = flowId || generateFlowId();
+    // 🆕 关键修复：发起类事件如果没有活跃 flow，必须真正 startPaymentFlow（持久化到 sessionStorage），
+    // 否则只是临时生成 flowId 写一条日志，后续 payment_dialog_opened / payment_jsapi_* 等事件
+    // 拿不到 flowId 会被静默丢弃，导致整条支付链路日志只有一条孤零零的 payment_button_clicked。
+    if (!flowId && STARTABLE_EVENTS.has(eventType)) {
+      flowId = startPaymentFlow({
+        productName: extra?.metadata?.packageName,
+        amount: extra?.metadata?.amount,
+        packageKey: extra?.metadata?.packageKey,
+        sourcePageUrl: window.location.href,
+      });
+    }
+
+    const activeFlowId = flowId!;
     const flowMeta = sessionStorage.getItem(FLOW_META_KEY);
     const parsedMeta = flowMeta ? JSON.parse(flowMeta) : {};
 
