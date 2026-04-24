@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Send, Loader2, RotateCcw, WifiOff } from "lucide-react";
+import { Send, Loader2, RotateCcw, WifiOff, Inbox } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -18,6 +18,7 @@ import FeedbackFloatingButton from "@/components/FeedbackFloatingButton";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { PAGE_ROUTES } from "@/config/customerSupportRoutes";
 import { isWeChatMiniProgram } from "@/utils/platform";
+import { useUnreadTickets } from "@/hooks/useUnreadTickets";
 
 interface Navigation {
   page_type: string;
@@ -28,6 +29,7 @@ interface Navigation {
 interface TicketRef {
   ticket_no: string;
   subject?: string;
+  ticket_id?: string;
 }
 
 interface Message {
@@ -47,16 +49,14 @@ interface Message {
 // 兼容 [QIWEI_QR] / 【QIWEI_QR】 / (QIWEI-QR) 等多种 AI 写法
 const QIWEI_QR_REGEX = /[【[(（]\s*QIWEI[_-]?QR\s*[\])）】]/i;
 
-// quick options：贴近用户真实问法，提升首轮命中率
+// quick options：商业化精简至 6 项，按转化优先级排序
+// 转化项前置（套餐/训练营/教练）→ 防流失（积分）→ 反馈合并 → 兜底人工
 const quickOptions = [
-  { id: 'gratitude_entry', emoji: '💖', title: '感恩教练入口', prompt: '感恩教练入口在哪？' },
-  { id: 'orders', emoji: '📋', title: '我的订单', prompt: '我的订单在哪里查看？' },
-  { id: 'points', emoji: '🎯', title: '积分扣费', prompt: '我的积分/点数是怎么扣的？' },
-  { id: 'packages', emoji: '📦', title: '查套餐', prompt: '我想了解会员套餐的详情' },
-  { id: 'camps', emoji: '🏕️', title: '训练营', prompt: '介绍一下有劲的训练营' },
-  { id: 'page_broken', emoji: '🔧', title: '点不开页面', prompt: '我点某个页面打不开，请帮我处理' },
-  { id: 'issue', emoji: '🐛', title: '报问题', prompt: '我遇到了一个具体问题需要反馈' },
-  { id: 'suggestion', emoji: '💡', title: '提建议', prompt: '我想给有劲提一个建议' },
+  { id: 'packages', emoji: '🎯', title: '看看有什么套餐', prompt: '我想了解会员套餐的详情' },
+  { id: 'camps', emoji: '🔥', title: '训练营怎么选', prompt: '介绍一下有劲的训练营，我该选哪个' },
+  { id: 'gratitude_entry', emoji: '💝', title: '找教练入口', prompt: '我想找各类教练的入口在哪里' },
+  { id: 'points', emoji: '💰', title: '积分/点数问题', prompt: '我的积分/点数是怎么扣的？' },
+  { id: 'issue', emoji: '🐛', title: '报问题/提建议', prompt: '我遇到了一个问题或想给有劲提个建议' },
   { id: 'human', emoji: '👤', title: '联系人工', prompt: '我想联系人工客服' },
 ];
 
