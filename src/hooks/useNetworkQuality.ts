@@ -20,10 +20,12 @@ interface UseNetworkQualityReturn {
   stopMonitoring: () => void;
 }
 
-// STUN servers for testing
+// STUN servers for testing — 优先国内可达节点，避免在中国大陆因 GFW 干扰 Google STUN
+// 而导致 RTT 误判（国内访问 Google STUN 普遍 300-800ms，但实际通话链路完全不同）
 const STUN_SERVERS = [
+  'stun:stun.miwifi.com',
+  'stun:stun.qq.com:3478',
   'stun:stun.l.google.com:19302',
-  'stun:stun1.l.google.com:19302',
 ];
 
 export function useNetworkQuality(): UseNetworkQualityReturn {
