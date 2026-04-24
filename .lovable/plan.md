@@ -1,68 +1,210 @@
 
+## 目标
+把客服入口从“能聊”提升为“能解决问题、能把人带到正确页面、第一次就答对”。
 
-## 问题确认
+## 已确认的问题
 
-截图所示页面是 **DynamicCoach（动态文字教练）** 页面用户点击「语音通话」后弹出的 `CoachVoiceChat` 全屏覆盖层。
+### 1) 感恩教练入口跳错到 404
+当前客服链路里至少存在一组错误/不一致的路由映射：
 
-底部的「今天心情 / 人际关系 / 压力 / 自我成长」场景胶囊与「分享你的想法…」文字输入框，**是底层文字教练页面的 `CoachInputFooter` 组件**，它没有被语音覆盖层挡住，反而盖住了语音页底部的红色挂断按钮。
+- `src/pages/CustomerSupport.tsx`
+  - `gratitude_coach` 被写成 `'/gratitude-coach'`
+- `supabase/functions/life-coach-tools/index.ts`
+  - 感恩教练也写成 `'/gratitude-coach'`
+- 但实际前端已存在的可用入口是：
+  - `'/coach/gratitude_coach'`（代码里明确使用）
+- 同时客服教练卡 `SupportCoachCard` 实际点击的是数据库 `coach_templates.page_route`，这说明数据库里如果也存了旧路由，同样会继续跳错。
 
-## 根因（已查实）
+结论：这是“客服路由源不统一”导致的入口故障，不只是一个前端按钮问题。
 
-- `CoachVoiceChat` 根容器：`fixed inset-0 z-50`（src/components/coach/CoachVoiceChat.tsx:2273）
-- `CoachInputFooter` 根容器：`fixed bottom-0 ... z-50`（src/components/coach/CoachInputFooter.tsx:121）
+### 2) 客服首轮回复逻辑不合理
+当前 `/customer-support` 默认塞了一条欢迎语到 `messages` 里，并且发请求时把这条欢迎语也一并传给后端。  
+再叠加边缘函数 prompt 没有强约束“用户已提问时必须直接回答”，会导致：
 
-两者 **z-index 相同（都是 z-50）**，由于 `CoachInputFooter` 在 DOM 中位于 `CoachVoiceChat` 之后渲染（`CoachLayout` 内嵌套层级更深），后绘制者覆盖先绘制者 → 文字底栏盖住红色挂断按钮，用户无法点击挂断/通话/PTT 按钮。
+- 用户第一次已经问了明确问题
+- AI 仍然先寒暄/打招呼
+- 用户还得再问一遍才进入正题
 
-同样的问题在 `CommunicationCoach`、`WealthCoachChat` 等同类型动态教练页都存在（都用 `CoachLayout` + `CoachVoiceChat` 组合）。
+这会直接拉低客服可信度和转化效率。
 
-## 修复方案
+## 商业架构视角下的优化方向
 
-### 方案 A（推荐 · 最小改动）：提升 `CoachVoiceChat` 的 z-index
+客服不是“陪聊入口”，而是“问题分发与转化中枢”。  
+优化目标应是：
 
-把 `CoachVoiceChat` 全屏容器的 `z-50` 提升到 `z-[60]`（或 `z-[100]`），让语音页稳定盖在所有底栏之上。
+1. 首轮即解决：先答问题，不重复寒暄
+2. 单一真相路由：所有客服推荐入口跳同一套 canonical route
+3. 工具优先：能跳页面就给卡片，能建单就建单，能展示规则就直接展示
+4. 语言分层：
+   - 默认：用户语言、口语化、低负担
+   - 涉及规则/退款/支付：官方表达，但仍保持易懂
+5. 结果导向：每次回复都要有“答案 + 下一步”
 
-**改动 1 处**：
-- `src/components/coach/CoachVoiceChat.tsx:2215`（PTT 接通画面）
-- `src/components/coach/CoachVoiceChat.tsx:2242`（连接中画面）  
-- `src/components/coach/CoachVoiceChat.tsx:2273`（主对话画面）
+## 实施方案
 
-把这 3 处的 `z-50` 改为 `z-[60]`。
+### 一、统一客服入口路由源，修复感恩教练 404
 
-**优点**：
-- 一处改动，覆盖 DynamicCoach / CommunicationCoach / WealthCoachChat 等所有调用方
-- 不影响 `CoachInputFooter` 在文字模式下的层级（toast `z-[100]`、弹窗 `z-[60]` 仍然能正常盖在语音页上）
-- 不动业务逻辑
+#### 1.1 设定感恩教练唯一标准路由
+统一使用：
+- `'/coach/gratitude_coach'`
 
-### 方案 B（治本 · 二选一）：打开语音覆盖时隐藏底层文字底栏
+#### 1.2 修正所有硬编码错误入口
+需要检查并修正这些位置：
+- `src/pages/CustomerSupport.tsx`
+  - `PAGE_ROUTES.gratitude_coach`
+- `supabase/functions/life-coach-tools/index.ts`
+  - gratitude route
+- 代码中其他遗留的 `'/gratitude-coach'` / `'/coach/gratitude'` 相关映射
 
-在 `DynamicCoach.tsx` / `CommunicationCoach.tsx` / `WealthCoachChat.tsx` 里，把 `showVoiceChat` 状态透传给 `CoachLayout`，当其为 `true` 时不渲染 `CoachInputFooter`：
-- `CoachLayout` 增加 `hideFooter?: boolean` prop
-- 调用方：`hideFooter={showVoiceChat}`
+#### 1.3 修正数据库中的教练入口
+`SupportCoachCard` 依赖 `coach_templates.page_route`，所以还要同步修正数据库里 `gratitude_coach` 的 `page_route`。  
+这一步需要通过迁移或数据库更新来做，避免线上继续返回旧链接。
 
-**优点**：从根上消除两层 fixed 元素叠加，避免任何点击穿透/无障碍朗读混乱。
-**缺点**：要改 4 个文件，工作量稍大。
+#### 1.4 做一次“客服入口一致性清理”
+顺手核对这些客服常用跳转项是否都指向现有真实路由：
+- 感恩教练
+- 沟通教练
+- 亲子教练
+- 有劲生活教练
+- 训练营
+- 我的订单
+- 个人设置
 
-### 推荐
-**采用方案 A**：单点修复立即解决问题；同时把方案 B 作为后续优化预留（不在本次提交内）。
+避免后续再出现“客服说得对，但链接打不开”。
 
-## 改动清单（方案 A）
+## 二、重构首轮回复逻辑，让 AI 第一句就进入正题
 
-- `src/components/coach/CoachVoiceChat.tsx`：
-  - 第 2215 行 `z-50` → `z-[60]`
-  - 第 2242 行 `z-50` → `z-[60]`
-  - 第 2273 行 `z-50` → `z-[60]`
+### 2.1 前端：把欢迎语改成“展示文案”，不再污染真实对话上下文
+当前首条 assistant 欢迎语被带入了后端 `messages`。  
+优化为：
 
-## 不改动
+- UI 仍可展示欢迎语
+- 但首次用户提问时，传给后端的对话历史应从“用户问题”开始
+- 只有 AI 真正生成的 assistant 回复才进入会话历史
 
-- `CoachInputFooter` 仍保持 `z-50`（文字模式下与系统其他 sticky 元素的层级关系不变）
-- 业务逻辑、计费、麦克风释放、PTT 模式等均不动
-- 弹窗 / Toast / Sheet（默认 `z-[100]`）仍然能正常覆盖语音页
+这样能显著减少“再次打招呼”的倾向。
 
-## 验证方式
+涉及：
+- `src/pages/CustomerSupport.tsx`
+- `src/components/TextCustomerSupport.tsx`（若仍在使用，需同步）
 
-1. 打开 `/coach/vibrant_life_sage`（情绪教练）→ 点击「语音通话」
-2. 红色挂断按钮应在最上层，可正常点击挂断
-3. 底层「今天心情 / 人际…」胶囊与「分享你的想法…」输入框应被语音页完全遮盖（不可见、不可点）
-4. 在 `/coach/communication`、`/coach/wealth_*` 等同类页面同样验证
-5. 通话中弹出的余额不足横幅、点数规则弹窗、Recharge 弹窗仍能正常显示（z-[100] > z-[60]）
+### 2.2 后端：强化客服回复规则
+在 `supabase/functions/customer-support/index.ts` 的系统提示词中增加明确约束：
 
+- 若用户最后一条消息是具体问题，第一句必须直接回答问题
+- 不得重复自我介绍
+- 不得只回复寒暄
+- 若需要推荐入口，先回答，再给卡片/下一步
+- 若问题信息不足，只能补一个最小必要追问，不能先泛泛欢迎
+
+### 2.3 建立客服固定回复结构
+建议统一为 3 段式：
+
+1. 直接答案
+2. 可执行下一步（卡片/入口/操作）
+3. 必要补充（规则、人工、工单）
+
+示例：
+```text
+感恩教练入口在这里，我已经给你放在下方卡片了。
+
+点击后会进入感恩教练页面，帮助你做日常感恩练习。
+
+如果你点开仍有异常，我可以继续帮你转人工处理。
+```
+
+## 三、提升客服准确率与体验的一轮优化
+
+### 3.1 从“关键词客服”升级到“意图客服”
+在现有 tool calling 基础上，重点优化几类高频意图：
+- 找入口
+- 查订单
+- 查套餐
+- 查积分/点数
+- 报问题
+- 提建议
+- 联系人工
+
+要求 AI 对这些高频问题：
+- 优先识别意图
+- 优先调用对应工具
+- 不绕弯子
+
+### 3.2 语言策略：用户语言优先，官方语言兜底
+建议规则：
+- 默认使用用户语言风格，简洁、自然、像人在说话
+- 只有涉及：
+  - 支付
+  - 退款
+  - 有效期
+  - 规则说明
+  - 工单处理
+  才切到较正式、官方但易懂的表达
+
+也就是说，客服整体应是：
+- “像用户语言”
+- 但“关键规则像官方”
+- 不是全程客服套话
+
+### 3.3 快速选项与真实问题保持一致
+现在 quick options 文案偏泛。可后续优化为更接近用户真实问法，例如：
+- “感恩教练入口”
+- “我的订单在哪看”
+- “积分为什么扣了”
+- “联系人工客服”
+- “我点不开页面”
+
+这样会提升客服首轮命中率与转化效率。
+
+## 四、实施清单
+
+### 代码修改
+- `src/pages/CustomerSupport.tsx`
+  - 修正错误路由
+  - 首轮欢迎语与真实会话历史解耦
+  - 可顺带优化首屏 quick options
+- `src/components/TextCustomerSupport.tsx`
+  - 同步首轮消息策略，避免旧组件继续复现问题
+- `supabase/functions/customer-support/index.ts`
+  - 增强首轮直答规则
+  - 优化语气与结构化回复规范
+- `supabase/functions/life-coach-tools/index.ts`
+  - 修正感恩教练旧路由
+
+### 数据修正
+- 更新 `coach_templates` 中 `gratitude_coach.page_route`
+- 如发现其他客服常用入口也有旧路由，一并修正
+
+## 五、验收标准
+
+### 场景 A：从“我的”进入客服，问“感恩教练入口在哪”
+预期：
+1. AI 第一条就直接回答，不再先寒暄
+2. 下方展示可点击入口卡片
+3. 点击后进入真实有效页面
+4. 不再跳到 `/gratitude-coach` 的 404
+
+### 场景 B：用户点“报问题”
+预期：
+1. AI 不先打招呼
+2. 先识别问题，再创建工单/引导人工
+3. 紧急问题可展示企微客服二维码
+
+### 场景 C：用户问规则类问题
+预期：
+1. 语言更清楚、更官方但不僵硬
+2. 优先直接回答
+3. 必要时附规则卡片/入口卡片
+
+## 六、这次不做
+- 不重做整套客服 UI
+- 不新增复杂多 Agent 架构
+- 不改动全站教练业务逻辑
+- 不改动非客服页面的主流程
+
+## 推荐落地顺序
+1. 先修路由真相源（代码 + 数据）
+2. 再修首轮回复逻辑（前端上下文 + 后端 prompt）
+3. 最后优化客服语言与高频意图命中策略
+
+这样可以先止损 404 和“先打招呼”的核心问题，再提升整体体验与商业转化。
