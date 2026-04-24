@@ -9,6 +9,7 @@ import { QuickRegisterStep } from "@/components/onboarding/QuickRegisterStep";
 import QRCode from "qrcode";
 import { isWeChatMiniProgram, isWeChatBrowser } from "@/utils/platform";
 import { usePackages, getPackagePrice } from "@/hooks/usePackages";
+import { trackPaymentEvent } from "@/utils/paymentFlowTracker";
 
 // 声明 WeixinJSBridge 类型
 declare global {
@@ -229,6 +230,18 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
     paymentSessionIdRef.current += 1;
     if (open) {
       closeInProgressRef.current = false;
+      // 🆕 埋点：弹窗实际挂载并被父级标记为 open
+      trackPaymentEvent("payment_dialog_opened", {
+        metadata: {
+          source: "AssessmentPayDialog",
+          packageKey,
+          isWechat: envFlags.isWechat,
+          isMiniProgram: envFlags.isMiniProgram,
+          isMobile: envFlags.isMobile,
+          hasUser: !!userId && userId !== "guest",
+          hasOpenId: !!userOpenId,
+        },
+      });
     }
   }, [open]);
 
@@ -500,8 +513,16 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
         }
 
         console.log("WeixinJSBridge ready, invoking getBrandWCPayRequest");
+        // 🆕 埋点：即将调起 JSAPI
+        trackPaymentEvent("payment_jsapi_invoking", {
+          metadata: { packageKey, hasParams: !!params },
+        });
         window.WeixinJSBridge.invoke("getBrandWCPayRequest", params, (res) => {
           console.log("WeixinJSBridge payment result:", res.err_msg);
+          // 🆕 埋点：JSAPI 回调结果
+          trackPaymentEvent("payment_jsapi_response", {
+            metadata: { packageKey, errMsg: res.err_msg },
+          });
           if (res.err_msg === "get_brand_wcpay_request:ok") {
             resolve();
           } else if (res.err_msg === "get_brand_wcpay_request:cancel") {
@@ -849,8 +870,33 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
       clearTimeout(timeoutId);
 
       if (!isPaymentSessionActive(sessionId)) return;
-      if (error) throw error;
-      if (!data?.success) throw new Error(data?.error || "创建订单失败，请稍后重试");
+      if (error) {
+        // 🆕 埋点：创建订单失败
+        trackPaymentEvent("payment_order_create_failed", {
+          errorMessage: error?.message || String(error),
+          metadata: { selectedPayType, packageKey },
+        });
+        throw error;
+      }
+      if (!data?.success) {
+        trackPaymentEvent("payment_order_create_failed", {
+          errorMessage: data?.error || "创建订单失败",
+          metadata: { selectedPayType, packageKey },
+        });
+        throw new Error(data?.error || "创建订单失败,请稍后重试");
+      }
+
+      // 🆕 埋点:订单创建成功(在 alreadyPaid 分支处理之前先记录)
+      trackPaymentEvent("payment_order_created", {
+        metadata: {
+          selectedPayType,
+          orderNo: data.orderNo,
+          alreadyPaid: !!data.alreadyPaid,
+          hasJsapiParams: !!data.jsapiPayParams,
+          hasMiniProgramParams: !!data.miniprogramPayParams,
+          packageKey,
+        },
+      });
 
       // 🆕 处理后端返回的 alreadyPaid 响应（用户已购买）
       if (data.alreadyPaid) {
