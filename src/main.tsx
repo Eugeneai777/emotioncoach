@@ -7,6 +7,8 @@ import { installApiErrorTracker } from "./lib/apiErrorTracker";
 import { installStabilityCollector } from "./lib/stabilityDataCollector";
 import { installMonitorReporter } from "./lib/monitorReporter";
 import { CHUNK_RELOAD_KEY } from "./utils/lazyRetry";
+import { forceReleaseMicrophone } from "./utils/microphoneManager";
+import { hasActiveSession } from "./hooks/useVoiceSessionLock";
 
 // Install global frontend error tracker
 installErrorTracker();
@@ -66,6 +68,21 @@ window.addEventListener("unhandledrejection", (e) => {
 // Clear reload flags on successful page load so future deploys can trigger again
 window.addEventListener("load", () => {
   try { sessionStorage.removeItem(CHUNK_RELOAD_KEY); } catch { /* ignore */ }
+});
+
+// 🎤 全局兜底：页面/进程退出时硬释放麦克风，确保 iOS / Android 状态栏录音红点消失
+const hardKillMic = () => {
+  try { forceReleaseMicrophone(); } catch { /* ignore */ }
+};
+window.addEventListener("pagehide", hardKillMic);
+window.addEventListener("beforeunload", hardKillMic);
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden") {
+    // 仅当不在通话中才硬释放，避免误杀正在进行的会话（例如临时切到后台接电话）
+    try {
+      if (!hasActiveSession()) hardKillMic();
+    } catch { /* ignore */ }
+  }
 });
 
 createRoot(document.getElementById("root")!).render(
