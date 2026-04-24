@@ -230,6 +230,18 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
     paymentSessionIdRef.current += 1;
     if (open) {
       closeInProgressRef.current = false;
+      // 🆕 埋点：弹窗实际挂载并被父级标记为 open
+      trackPaymentEvent("payment_dialog_opened", {
+        metadata: {
+          source: "AssessmentPayDialog",
+          packageKey,
+          isWechat: envFlags.isWechat,
+          isMiniProgram: envFlags.isMiniProgram,
+          isMobile: envFlags.isMobile,
+          hasUser: !!userId && userId !== "guest",
+          hasOpenId: !!userOpenId,
+        },
+      });
     }
   }, [open]);
 
