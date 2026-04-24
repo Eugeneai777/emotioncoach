@@ -355,8 +355,17 @@ export default function CustomerServiceManagement() {
                       const statusConf = ticketStatusConfig[ticket.status as keyof typeof ticketStatusConfig];
                       const priorityConf = priorityConfig[ticket.priority as keyof typeof priorityConfig];
                       return (
-                        <TableRow key={ticket.id}>
-                          <TableCell className="font-mono text-sm">{ticket.ticket_no}</TableCell>
+                        <TableRow key={ticket.id} className={ticket.unread_admin_count ? "bg-amber-50/50" : ""}>
+                          <TableCell className="font-mono text-sm">
+                            <div className="flex items-center gap-1.5">
+                              {ticket.ticket_no}
+                              {!!ticket.unread_admin_count && ticket.unread_admin_count > 0 && (
+                                <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-destructive text-white text-[10px] font-medium">
+                                  {ticket.unread_admin_count > 9 ? "9+" : ticket.unread_admin_count}
+                                </span>
+                              )}
+                            </div>
+                          </TableCell>
                           <TableCell>
                             <div className="font-medium">{ticket.subject}</div>
                             <div className="text-xs text-muted-foreground line-clamp-1">{ticket.description}</div>
@@ -368,11 +377,11 @@ export default function CustomerServiceManagement() {
                             <Badge className={statusConf?.color}>{statusConf?.label}</Badge>
                           </TableCell>
                           <TableCell className="text-sm">
-                            {format(new Date(ticket.created_at), 'MM-dd HH:mm')}
+                            {format(new Date(ticket.last_message_at || ticket.created_at), 'MM-dd HH:mm')}
                           </TableCell>
                           <TableCell>
                             <Button variant="ghost" size="sm" onClick={() => setSelectedTicket(ticket)}>
-                              处理
+                              {ticket.unread_admin_count && ticket.unread_admin_count > 0 ? "回复" : "处理"}
                             </Button>
                           </TableCell>
                         </TableRow>
