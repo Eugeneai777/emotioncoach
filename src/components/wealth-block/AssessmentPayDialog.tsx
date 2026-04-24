@@ -509,19 +509,19 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
     return new Promise<void>((resolve, reject) => {
       console.log("Invoking JSAPI pay with WeixinJSBridge");
 
-      // 🆕 8 秒无回调兜底：某些机型（已知 Redmi K30 5G + XWEB）取消后再次 invoke
-      // 微信会静默吞掉回调，前端永远拿不到 ok/cancel/fail，按钮看似"没反应"。
-      // 超时后视为本次拉起失败，让上层走"取消"分支，重置状态、关弹窗、提示再点一次。
+      // 🆕 4 秒无回调兜底：某些机型（已知 Redmi K30 5G + XWEB）以及刚换登录会话后
+      // 第一次 jsapi 调用，微信会静默吞掉回调，前端永远拿不到 ok/cancel/fail。
+      // 超时后视为"静默超时"，让上层提示用户「请再次点击立即测评」并重置状态。
       let settled = false;
-      const NO_RESPONSE_TIMEOUT_MS = 8000;
+      const NO_RESPONSE_TIMEOUT_MS = 4000;
       const timeoutId = window.setTimeout(() => {
         if (settled) return;
         settled = true;
-        console.warn("[Payment] JSAPI no response within 8s, treating as silent failure", WEALTH_PAY_HOTFIX_VERSION);
+        console.warn("[Payment] JSAPI no response within 4s, treating as silent timeout", WEALTH_PAY_HOTFIX_VERSION);
         trackPaymentEvent("payment_jsapi_no_response", {
           metadata: { packageKey, timeoutMs: NO_RESPONSE_TIMEOUT_MS, hotfixVersion: WEALTH_PAY_HOTFIX_VERSION },
         });
-        reject(new Error("用户取消支付"));
+        reject(new Error("JSAPI_SILENT_TIMEOUT"));
       }, NO_RESPONSE_TIMEOUT_MS);
 
       const onBridgeReady = () => {
@@ -1003,8 +1003,9 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
           } catch (jsapiError: any) {
             if (!isPaymentSessionActive(sessionId)) return;
             console.log("[Payment] JSAPI pay error:", jsapiError?.message);
-            if (jsapiError?.message === "用户取消支付") {
-              console.log("[Payment] JSAPI payment cancelled by user, closing dialog and resetting state");
+            if (jsapiError?.message === "用户取消支付" || jsapiError?.message === "JSAPI_SILENT_TIMEOUT") {
+              const isSilent = jsapiError?.message === "JSAPI_SILENT_TIMEOUT";
+              console.log("[Payment] JSAPI payment cancelled/silent, closing dialog and resetting state", { isSilent });
               stopPolling();
               setOrderNo("");
               setQrCodeDataUrl("");
@@ -1016,7 +1017,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
               createOrderRetriedRef.current = false;
               setStatus("idle");
               onOpenChange(false);
-              toast.info("支付已取消，可重新点击立即测评");
+              toast.info(isSilent ? "微信支付响应较慢，请再次点击立即测评" : "支付已取消，可重新点击立即测评");
               return;
             }
 
@@ -1073,8 +1074,9 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
             } catch (jsapiError: any) {
               if (!isPaymentSessionActive(sessionId)) return;
               console.log("[Payment] JSAPI pay error:", jsapiError?.message);
-              if (jsapiError?.message === "用户取消支付") {
-                console.log("[Payment] JSAPI payment cancelled by user, closing dialog and resetting state");
+              if (jsapiError?.message === "用户取消支付" || jsapiError?.message === "JSAPI_SILENT_TIMEOUT") {
+                const isSilent = jsapiError?.message === "JSAPI_SILENT_TIMEOUT";
+                console.log("[Payment] JSAPI payment cancelled/silent (wechat browser), resetting", { isSilent });
                 stopPolling();
                 setOrderNo("");
                 setQrCodeDataUrl("");
@@ -1086,7 +1088,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
                 createOrderRetriedRef.current = false;
                 setStatus("idle");
                 onOpenChange(false);
-                toast.info("支付已取消，可重新点击立即测评");
+                toast.info(isSilent ? "微信支付响应较慢，请再次点击立即测评" : "支付已取消，可重新点击立即测评");
                 return;
               }
 
