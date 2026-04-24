@@ -34,33 +34,33 @@ interface Message {
   };
 }
 
+// 单一真相路由源：所有页面入口必须指向真实存在的前端路由
 const PAGE_ROUTES: Record<string, { route: string; emoji: string; title: string; subtitle: string }> = {
   orders: { route: '/settings?tab=account', emoji: '📋', title: '我的订单', subtitle: '查看购买记录和订单状态' },
   profile: { route: '/settings?tab=profile', emoji: '⚙️', title: '个人设置', subtitle: '修改个人信息和偏好' },
   emotion_button: { route: '/energy-studio', emoji: '🎯', title: '情绪按钮', subtitle: '9种情绪场景，即时疗愈' },
   gratitude: { route: '/gratitude-journal', emoji: '📝', title: '感恩日记', subtitle: '记录日常感恩，生成幸福报告' },
-  emotion_coach: { route: '/', emoji: '💙', title: '情绪教练', subtitle: '深度梳理情绪' },
+  emotion_coach: { route: '/coach/vibrant_life_sage', emoji: '💙', title: '情绪教练', subtitle: '深度梳理情绪' },
   parent_coach: { route: '/parent-coach', emoji: '💜', title: '亲子教练', subtitle: '亲子情绪沟通' },
   communication_coach: { route: '/communication-coach', emoji: '💬', title: '沟通教练', subtitle: '改善人际沟通' },
-  gratitude_coach: { route: '/gratitude-coach', emoji: '💖', title: '感恩教练', subtitle: '日常感恩练习' },
+  gratitude_coach: { route: '/coach/gratitude_coach', emoji: '💖', title: '感恩教练', subtitle: '日常感恩练习' },
   story_coach: { route: '/story-coach', emoji: '📖', title: '故事教练', subtitle: '英雄之旅创作' },
-  vibrant_life: { route: '/vibrant-life', emoji: '❤️', title: '有劲生活教练', subtitle: '智能总入口' },
-  training_camps: { route: '/training-camps', emoji: '🏕️', title: '训练营', subtitle: '21天系统化训练' },
+  vibrant_life: { route: '/coach/vibrant_life_sage', emoji: '❤️', title: '有劲生活教练', subtitle: '智能总入口' },
+  training_camps: { route: '/camps', emoji: '🏕️', title: '训练营', subtitle: '21天系统化训练' },
   community: { route: '/community', emoji: '🌈', title: '社区', subtitle: '分享与交流' },
   packages: { route: '/packages', emoji: '📦', title: '会员套餐', subtitle: '查看所有套餐' },
 };
 
+// quick options：贴近用户真实问法，提升首轮命中率
 const quickOptions = [
+  { id: 'gratitude_entry', emoji: '💖', title: '感恩教练入口', prompt: '感恩教练入口在哪？' },
+  { id: 'orders', emoji: '📋', title: '我的订单在哪看', prompt: '我的订单在哪里查看？' },
+  { id: 'points', emoji: '🎯', title: '积分为什么扣了', prompt: '我的积分/点数是怎么扣的？' },
   { id: 'packages', emoji: '📦', title: '查套餐', prompt: '我想了解会员套餐的详情' },
-  { id: 'points', emoji: '🎯', title: '积分规则', prompt: '请介绍一下积分规则和扣费标准' },
-  { id: 'orders', emoji: '📋', title: '我的订单', prompt: '我想查看我的订单记录' },
-  { id: 'profile', emoji: '⚙️', title: '修改信息', prompt: '我想修改我的个人信息' },
-  { id: 'coaches', emoji: '💚', title: '教练介绍', prompt: '有劲有哪些教练？分别有什么功能？' },
   { id: 'camps', emoji: '🏕️', title: '训练营', prompt: '介绍一下有劲的训练营' },
-  { id: 'guide', emoji: '🎓', title: '新手指引', prompt: '我是新用户，请介绍一下有劲的主要功能' },
-  { id: 'issue', emoji: '🔧', title: '报问题', prompt: '我遇到了一个问题需要帮助' },
+  { id: 'page_broken', emoji: '🔧', title: '我点不开页面', prompt: '我点某个页面打不开，请帮我处理' },
+  { id: 'issue', emoji: '🐛', title: '报问题', prompt: '我遇到了一个具体问题需要反馈' },
   { id: 'suggestion', emoji: '💡', title: '提建议', prompt: '我想给有劲提一个建议' },
-  { id: 'help', emoji: '❓', title: '求帮助', prompt: '我不太会用这个App，需要帮助' },
   { id: 'human', emoji: '👤', title: '联系人工', prompt: '我想联系人工客服' },
 ];
 
@@ -87,12 +87,15 @@ const CustomerSupport = () => {
     setIsLoading(true);
 
     try {
+      // 关键：剥离首条 UI 欢迎语，避免 AI 误把它当成"已经打过招呼了，现在该寒暄"
+      // 只把"真实的用户消息 + AI 回复"传给后端
+      const realHistory = messages
+        .filter((m, idx) => !(idx === 0 && m.role === 'assistant'))
+        .map(m => ({ role: m.role, content: m.content }));
+
       const { data, error } = await supabase.functions.invoke('customer-support', {
         body: {
-          messages: [...messages, userMessage].map(m => ({
-            role: m.role,
-            content: m.content
-          })),
+          messages: [...realHistory, { role: userMessage.role, content: userMessage.content }],
           sessionId: sessionId.current
         }
       });
