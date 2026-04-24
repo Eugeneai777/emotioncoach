@@ -436,14 +436,18 @@ export default function WealthBlockAssessmentPage() {
       console.log('[WealthBlock] MP user click: hard-reset mp pay cache and remount dialog');
       setMiniProgramPayReturnSignal(Date.now());
     }
-    setPayDialogInstanceKey((prev) => prev + 1);
+    if (payDialogReopenTimerRef.current) {
+      window.clearTimeout(payDialogReopenTimerRef.current);
+      payDialogReopenTimerRef.current = null;
+    }
     setShowPayDialog(false);
-    // 跨 React tick 重建：在安卓微信 X5/TBS bfcache 还原场景下，
-    // requestAnimationFrame 可能被合批，导致 unmount/mount 在同一 tick 被吞掉。
-    // setTimeout(0) 强制让 false 先 commit，再下一个事件循环开 true。
-    setTimeout(() => {
+    setPayDialogInstanceKey((prev) => prev + 1);
+    // 安卓微信/X5 下 0ms 重开仍可能被和 close 合并；留一个更稳的卸载窗口。
+    const reopenDelay = isMiniProgram ? 120 : 80;
+    payDialogReopenTimerRef.current = window.setTimeout(() => {
       setShowPayDialog(true);
-    }, 0);
+      payDialogReopenTimerRef.current = null;
+    }, reopenDelay);
   };
 
   // 处理支付按钮点击
