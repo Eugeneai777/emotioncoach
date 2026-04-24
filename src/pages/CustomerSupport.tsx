@@ -13,6 +13,7 @@ import { SupportCampCard } from "@/components/customer-support/SupportCampCard";
 import { SupportNavigationCard } from "@/components/customer-support/SupportNavigationCard";
 import { SupportTicketCard } from "@/components/customer-support/SupportTicketCard";
 import { QiWeiQRCard } from "@/components/customer-support/QiWeiQRCard";
+import { HistoryDrawer } from "@/components/customer-support/HistoryDrawer";
 import { PointsRulesCard } from "@/components/PointsRulesCard";
 import FeedbackFloatingButton from "@/components/FeedbackFloatingButton";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
