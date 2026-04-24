@@ -3627,13 +3627,59 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_ticket_messages: {
+        Row: {
+          attachments: Json | null
+          content: string
+          created_at: string
+          id: string
+          read_by_admin: boolean
+          read_by_user: boolean
+          sender_id: string | null
+          sender_type: string
+          ticket_id: string
+        }
+        Insert: {
+          attachments?: Json | null
+          content: string
+          created_at?: string
+          id?: string
+          read_by_admin?: boolean
+          read_by_user?: boolean
+          sender_id?: string | null
+          sender_type: string
+          ticket_id: string
+        }
+        Update: {
+          attachments?: Json | null
+          content?: string
+          created_at?: string
+          id?: string
+          read_by_admin?: boolean
+          read_by_user?: boolean
+          sender_id?: string | null
+          sender_type?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_ticket_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "customer_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_tickets: {
         Row: {
+          assigned_to: string | null
           category: string | null
           contact_info: string | null
           created_at: string
           description: string
           id: string
+          last_message_at: string | null
           priority: string
           resolution: string | null
           resolved_at: string | null
@@ -3642,15 +3688,19 @@ export type Database = {
           subject: string
           ticket_no: string
           ticket_type: string
+          unread_admin_count: number
+          unread_user_count: number
           updated_at: string
           user_id: string | null
         }
         Insert: {
+          assigned_to?: string | null
           category?: string | null
           contact_info?: string | null
           created_at?: string
           description: string
           id?: string
+          last_message_at?: string | null
           priority?: string
           resolution?: string | null
           resolved_at?: string | null
@@ -3659,15 +3709,19 @@ export type Database = {
           subject: string
           ticket_no: string
           ticket_type?: string
+          unread_admin_count?: number
+          unread_user_count?: number
           updated_at?: string
           user_id?: string | null
         }
         Update: {
+          assigned_to?: string | null
           category?: string | null
           contact_info?: string | null
           created_at?: string
           description?: string
           id?: string
+          last_message_at?: string | null
           priority?: string
           resolution?: string | null
           resolved_at?: string | null
@@ -3676,6 +3730,8 @@ export type Database = {
           subject?: string
           ticket_no?: string
           ticket_type?: string
+          unread_admin_count?: number
+          unread_user_count?: number
           updated_at?: string
           user_id?: string | null
         }
@@ -9080,9 +9136,12 @@ export type Database = {
           created_at: string
           feedback_id: string | null
           id: string
+          last_message_at: string | null
+          last_user_message: string | null
           messages: Json | null
           session_id: string
           ticket_id: string | null
+          title: string | null
           updated_at: string
           user_id: string | null
         }
@@ -9090,9 +9149,12 @@ export type Database = {
           created_at?: string
           feedback_id?: string | null
           id?: string
+          last_message_at?: string | null
+          last_user_message?: string | null
           messages?: Json | null
           session_id: string
           ticket_id?: string | null
+          title?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -9100,9 +9162,12 @@ export type Database = {
           created_at?: string
           feedback_id?: string | null
           id?: string
+          last_message_at?: string | null
+          last_user_message?: string | null
           messages?: Json | null
           session_id?: string
           ticket_id?: string | null
+          title?: string | null
           updated_at?: string
           user_id?: string | null
         }

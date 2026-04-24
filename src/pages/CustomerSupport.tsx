@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Send, Loader2, RotateCcw, WifiOff } from "lucide-react";
+import { Send, Loader2, RotateCcw, WifiOff, Inbox } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -18,6 +18,7 @@ import FeedbackFloatingButton from "@/components/FeedbackFloatingButton";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { PAGE_ROUTES } from "@/config/customerSupportRoutes";
 import { isWeChatMiniProgram } from "@/utils/platform";
+import { useUnreadTickets } from "@/hooks/useUnreadTickets";
 
 interface Navigation {
   page_type: string;
@@ -28,6 +29,7 @@ interface Navigation {
 interface TicketRef {
   ticket_no: string;
   subject?: string;
+  ticket_id?: string;
 }
 
 interface Message {
@@ -47,21 +49,20 @@ interface Message {
 // 兼容 [QIWEI_QR] / 【QIWEI_QR】 / (QIWEI-QR) 等多种 AI 写法
 const QIWEI_QR_REGEX = /[【[(（]\s*QIWEI[_-]?QR\s*[\])）】]/i;
 
-// quick options：贴近用户真实问法，提升首轮命中率
+// quick options：商业化精简至 6 项，按转化优先级排序
+// 转化项前置（套餐/训练营/教练）→ 防流失（积分）→ 反馈合并 → 兜底人工
 const quickOptions = [
-  { id: 'gratitude_entry', emoji: '💖', title: '感恩教练入口', prompt: '感恩教练入口在哪？' },
-  { id: 'orders', emoji: '📋', title: '我的订单', prompt: '我的订单在哪里查看？' },
-  { id: 'points', emoji: '🎯', title: '积分扣费', prompt: '我的积分/点数是怎么扣的？' },
-  { id: 'packages', emoji: '📦', title: '查套餐', prompt: '我想了解会员套餐的详情' },
-  { id: 'camps', emoji: '🏕️', title: '训练营', prompt: '介绍一下有劲的训练营' },
-  { id: 'page_broken', emoji: '🔧', title: '点不开页面', prompt: '我点某个页面打不开，请帮我处理' },
-  { id: 'issue', emoji: '🐛', title: '报问题', prompt: '我遇到了一个具体问题需要反馈' },
-  { id: 'suggestion', emoji: '💡', title: '提建议', prompt: '我想给有劲提一个建议' },
+  { id: 'packages', emoji: '🎯', title: '看看有什么套餐', prompt: '我想了解会员套餐的详情' },
+  { id: 'camps', emoji: '🔥', title: '训练营怎么选', prompt: '介绍一下有劲的训练营，我该选哪个' },
+  { id: 'gratitude_entry', emoji: '💝', title: '找教练入口', prompt: '我想找各类教练的入口在哪里' },
+  { id: 'points', emoji: '💰', title: '积分/点数问题', prompt: '我的积分/点数是怎么扣的？' },
+  { id: 'issue', emoji: '🐛', title: '报问题/提建议', prompt: '我遇到了一个问题或想给有劲提个建议' },
   { id: 'human', emoji: '👤', title: '联系人工', prompt: '我想联系人工客服' },
 ];
 
 const CustomerSupport = () => {
   const navigate = useNavigate();
+  const { unreadCount } = useUnreadTickets();
   const [messages, setMessages] = useState<Message[]>([
     { role: 'assistant', content: '直接说你想解决的问题就行 🌿\n\n比如「感恩教练入口在哪」、「我的订单在哪看」、「积分为什么扣了」。\n你也可以点上方快速选项，我会第一时间给你答案和入口卡片。' }
   ]);
@@ -175,7 +176,26 @@ const CustomerSupport = () => {
       <div
         className="min-h-[100vh] [min-height:100svh] bg-gradient-to-b from-teal-50 via-cyan-50 to-blue-50"
       >
-        <PageHeader title="有劲AI客服" />
+        <PageHeader
+          title="有劲AI客服"
+          rightActions={
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/my-tickets')}
+              className="relative gap-1 px-2 text-xs"
+              aria-label="我的工单"
+            >
+              <Inbox className="w-4 h-4" />
+              <span className="hidden sm:inline">我的工单</span>
+              {unreadCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] px-1 rounded-full bg-destructive text-white text-[10px] font-medium flex items-center justify-center">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </Button>
+          }
+        />
 
         {/* 网络断开提示 */}
         {!isOnline && (
@@ -251,6 +271,7 @@ const CustomerSupport = () => {
                           <SupportTicketCard
                             ticket_no={message.recommendations.ticket.ticket_no}
                             subject={message.recommendations.ticket.subject}
+                            ticket_id={message.recommendations.ticket.ticket_id}
                           />
                         </div>
                       )}

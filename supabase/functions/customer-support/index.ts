@@ -417,6 +417,7 @@ ${policyContent}
       camps?: Array<{ camp_type: string; reason: string }>;
       points_rules?: { show_balance: boolean };
       navigations?: Array<{ page_type: string; title: string; reason?: string }>;
+      ticket?: { ticket_no: string; subject?: string; ticket_id?: string };
     } = {};
 
     // 处理工具调用
@@ -430,7 +431,7 @@ ${policyContent}
         switch (toolCall.function.name) {
           case 'submit_ticket':
             const ticketNo = `TK${Date.now()}`;
-            const { error: ticketError } = await supabase.from('customer_tickets').insert({
+            const { data: insertedTicket, error: ticketError } = await supabase.from('customer_tickets').insert({
               user_id: userId,
               ticket_no: ticketNo,
               ticket_type: args.ticket_type || 'issue',
@@ -438,10 +439,17 @@ ${policyContent}
               subject: args.subject,
               description: args.description,
               priority: args.priority || 'normal',
-            });
-            result = ticketError 
-              ? `工单创建失败：${ticketError.message}` 
-              : `工单已创建，编号：${ticketNo}。我们会尽快处理您的问题。`;
+            }).select('id').maybeSingle();
+            if (ticketError) {
+              result = `工单创建失败：${ticketError.message}`;
+            } else {
+              recommendations.ticket = {
+                ticket_no: ticketNo,
+                subject: args.subject,
+                ticket_id: insertedTicket?.id,
+              };
+              result = `工单已创建，编号：${ticketNo}。已为用户展示工单卡片，可点击「查看进度」查看回复。`;
+            }
             break;
 
           case 'submit_feedback':
