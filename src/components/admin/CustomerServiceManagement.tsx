@@ -13,6 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Search, MessageSquare, AlertCircle, Lightbulb, CheckCircle, Clock, XCircle, Settings, Headphones, MessageCircle } from "lucide-react";
 import { format } from "date-fns";
+import AdminTicketDialog from "./AdminTicketDialog";
 
 interface Ticket {
   id: string;
