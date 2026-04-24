@@ -258,7 +258,7 @@ const CustomerSupport = () => {
           <div className="mb-3 flex-shrink-0">
             <p className="text-xs text-muted-foreground mb-1.5">🎯 快速选项</p>
             <div
-              className="flex gap-1.5 overflow-x-auto pb-1 -mx-4 px-4 snap-x snap-proximity [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden"
+              className="flex gap-1.5 pb-1 overflow-x-auto md:overflow-x-visible md:flex-wrap -mx-4 px-4 md:mx-0 md:px-0 snap-x snap-proximity md:snap-none [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden"
               style={{ scrollbarWidth: 'none' }}
             >
               {quickOptions.map((option) => (
@@ -272,8 +272,8 @@ const CustomerSupport = () => {
                   <span className="font-medium whitespace-nowrap">{option.title}</span>
                 </button>
               ))}
-              {/* 末尾呼吸位：保证最后一项「联系人工」可完整滑出，且视觉提示已到底 */}
-              <div className="shrink-0 w-2" aria-hidden="true" />
+              {/* 末尾呼吸位：移动端保证最后一项「联系人工」可完整滑出；桌面端换行后无需 */}
+              <div className="shrink-0 w-2 md:hidden" aria-hidden="true" />
             </div>
           </div>
 
