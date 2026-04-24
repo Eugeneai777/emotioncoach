@@ -160,27 +160,7 @@ export default function CustomerServiceManagement() {
     setLoading(false);
   };
 
-  const handleUpdateTicket = async (ticketId: string, status: string) => {
-    const updates: Record<string, unknown> = { status };
-    if (status === 'resolved' && resolution) {
-      updates.resolution = resolution;
-      updates.resolved_at = new Date().toISOString();
-    }
-    
-    const { error } = await supabase
-      .from('customer_tickets')
-      .update(updates)
-      .eq('id', ticketId);
-    
-    if (error) {
-      toast.error('更新失败');
-    } else {
-      toast.success('更新成功');
-      loadData();
-      setSelectedTicket(null);
-      setResolution("");
-    }
-  };
+  // 旧的 handleUpdateTicket 已迁移至 AdminTicketDialog 组件内部
 
   const handleUpdateFeedback = async (feedbackId: string, status: string) => {
     const updates: Record<string, unknown> = { 
