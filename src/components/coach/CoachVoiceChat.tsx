@@ -2202,6 +2202,8 @@ export const CoachVoiceChat = ({
       // 🔧 组件卸载时释放全局语音锁
       pendingPttReleaseCleanupRef.current?.();
       releaseLock();
+      // 🎤 兜底：组件卸载时硬释放麦克风缓存，确保 iOS / Android 状态栏录音红点立刻消失
+      try { forceReleaseMicrophone(); } catch { /* ignore */ }
     };
   }, []);
 
@@ -2225,6 +2227,7 @@ export const CoachVoiceChat = ({
               stopConnectionTimer();
               stopMonitoring();
               releaseLock();
+              try { forceReleaseMicrophone(); } catch {}
               onClose();
             }}
             className="mt-10 text-white/40 hover:text-white/80"
