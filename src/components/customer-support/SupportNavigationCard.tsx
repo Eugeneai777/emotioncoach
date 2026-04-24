@@ -9,6 +9,8 @@ interface SupportNavigationCardProps {
   subtitle: string;
   route: string;
   reason?: string;
+  /** 自定义跳转（用于小程序兜底等场景），不传则使用 react-router */
+  onNavigate?: () => void;
 }
 
 export const SupportNavigationCard = ({
@@ -16,12 +18,21 @@ export const SupportNavigationCard = ({
   title,
   subtitle,
   route,
-  reason
+  reason,
+  onNavigate,
 }: SupportNavigationCardProps) => {
   const navigate = useNavigate();
 
   const handleClick = () => {
-    navigate(route);
+    if (onNavigate) {
+      onNavigate();
+      return;
+    }
+    try {
+      navigate(route);
+    } catch {
+      if (typeof window !== 'undefined') window.location.href = route;
+    }
   };
 
   return (

@@ -45,7 +45,7 @@ interface Message {
 }
 
 // 兼容 [QIWEI_QR] / 【QIWEI_QR】 / (QIWEI-QR) 等多种 AI 写法
-const QIWEI_QR_REGEX = /[【\[(（]\s*QIWEI[_-]?QR\s*[\])）】]/i;
+const QIWEI_QR_REGEX = /[【[(（]\s*QIWEI[_-]?QR\s*[\])）】]/i;
 
 // quick options：贴近用户真实问法，提升首轮命中率
 const quickOptions = [
@@ -173,13 +173,7 @@ const CustomerSupport = () => {
     <>
       <DynamicOGMeta pageKey="customerSupport" />
       <div
-        className="bg-gradient-to-b from-teal-50 via-cyan-50 to-blue-50"
-        style={{
-          // 老 iOS Safari fallback：先 100vh，再被 svh/dvh 覆盖
-          minHeight: '100vh',
-          // @ts-ignore: 浏览器自动忽略不支持的单位
-          minHeight: '100svh',
-        }}
+        className="min-h-[100vh] [min-height:100svh] bg-gradient-to-b from-teal-50 via-cyan-50 to-blue-50"
       >
         <PageHeader title="有劲AI客服" />
 
@@ -192,13 +186,7 @@ const CustomerSupport = () => {
         )}
 
         <div
-          className="max-w-2xl mx-auto px-4 py-4 flex flex-col"
-          style={{
-            // 双兜底高度：dvh > svh > vh，并预留底部安全区
-            height: 'calc(100vh - 60px)',
-            // @ts-ignore
-            height: 'calc(100dvh - 60px)',
-          }}
+          className="max-w-2xl mx-auto px-4 py-4 flex flex-col h-[calc(100vh-60px)] [height:calc(100dvh-60px)]"
         >
           {/* Quick Options：横向滚动，固定一行，不挤压聊天区 */}
           <div className="mb-3 flex-shrink-0">
