@@ -409,7 +409,23 @@ ${policyContent}
             required: ['navigations']
           }
         }
-      }
+      },
+      {
+        type: 'function',
+        function: {
+          name: 'submit_ticket_recall',
+          description: '当用户有未读工单回复时调用此工具，展示已存在的工单卡片（不创建新工单）。仅用于主动播报场景。',
+          parameters: {
+            type: 'object',
+            properties: {
+              ticket_no: { type: 'string' },
+              ticket_id: { type: 'string' },
+              subject: { type: 'string' },
+            },
+            required: ['ticket_no', 'ticket_id'],
+          },
+        },
+      },
     ];
 
     // 调用AI
