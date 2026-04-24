@@ -2239,7 +2239,7 @@ export const CoachVoiceChat = ({
     }
 
     return (
-      <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col items-center justify-center">
+      <div className="fixed inset-0 z-[60] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col items-center justify-center">
         <div className="text-6xl mb-6">{coachEmoji}</div>
         <h2 className="text-white text-xl font-medium mb-4">{coachTitle}</h2>
         <ConnectionProgress
@@ -2270,7 +2270,7 @@ export const CoachVoiceChat = ({
   // insufficientDuringCall banner is now rendered inside the main return below
 
   return (
-    <div className={`fixed inset-0 z-50 bg-gradient-to-b ${colors.deepBg} flex flex-col ${useMiniProgramMode ? 'pt-[env(safe-area-inset-top,20px)] pb-[env(safe-area-inset-bottom,0px)]' : ''}`}>
+    <div className={`fixed inset-0 z-[60] bg-gradient-to-b ${colors.deepBg} flex flex-col ${useMiniProgramMode ? 'pt-[env(safe-area-inset-top,20px)] pb-[env(safe-area-inset-bottom,0px)]' : ''}`}>
       {/* 余额不足横幅 */}
       {insufficientDuringCall && (
         <div className={`${colors.banner} py-3 px-4 flex items-center justify-between animate-in slide-in-from-top duration-300 shadow-lg`}>
