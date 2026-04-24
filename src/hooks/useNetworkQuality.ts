@@ -114,10 +114,11 @@ export function useNetworkQuality(): UseNetworkQualityReturn {
     networkDownlink: number | null
   ): NetworkQuality => {
     // If we have RTT measurement, use it as primary indicator
+    // 阈值已根据中国互联网现实放宽：家庭宽带/4G/5G 实测 STUN RTT 通常 200-400ms
     if (measuredRtt !== null) {
-      if (measuredRtt < 100) return 'excellent';
-      if (measuredRtt < 200) return 'good';
-      if (measuredRtt < 400) return 'fair';
+      if (measuredRtt < 200) return 'excellent';
+      if (measuredRtt < 400) return 'good';
+      if (measuredRtt < 800) return 'fair';
       return 'poor';
     }
 
@@ -145,7 +146,8 @@ export function useNetworkQuality(): UseNetworkQualityReturn {
       return 'poor';
     }
 
-    return 'unknown';
+    // 测量与系统信息均不可得（如微信 WebView）：默认按良好处理，避免空报警
+    return 'good';
   }, []);
 
   // Main check function
