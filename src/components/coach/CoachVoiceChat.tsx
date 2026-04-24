@@ -24,6 +24,7 @@ import { InCallNetworkHint, type NetworkWarningLevel } from './VoiceNetworkWarni
 import { useNetworkQuality } from '@/hooks/useNetworkQuality';
 import { ContinueCallDialog } from './ContinueCallDialog';
 import { QuotaRechargeDialog } from '@/components/QuotaRechargeDialog';
+import { forceReleaseMicrophone } from '@/utils/microphoneManager';
 
 export type VoiceChatMode = 'general' | 'parent_teen' | 'teen' | 'emotion';
 
