@@ -9136,6 +9136,7 @@ export type Database = {
           created_at: string
           feedback_id: string | null
           id: string
+          last_intent: string | null
           last_message_at: string | null
           last_user_message: string | null
           messages: Json | null
@@ -9149,6 +9150,7 @@ export type Database = {
           created_at?: string
           feedback_id?: string | null
           id?: string
+          last_intent?: string | null
           last_message_at?: string | null
           last_user_message?: string | null
           messages?: Json | null
@@ -9162,6 +9164,7 @@ export type Database = {
           created_at?: string
           feedback_id?: string | null
           id?: string
+          last_intent?: string | null
           last_message_at?: string | null
           last_user_message?: string | null
           messages?: Json | null
