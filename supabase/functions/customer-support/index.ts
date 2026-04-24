@@ -24,7 +24,50 @@ async function loadKnowledgeBase(supabase: any) {
   return data;
 }
 
-serve(async (req) => {
+// 持久化对话：upsert + title（首条 user 前 24 字）+ last_user_message + last_intent
+async function persistConversation(opts: {
+  supabase: any;
+  sessionId?: string | null;
+  userId: string | null;
+  messages: any[];
+  finalContent: string;
+  lastIntent: string | null;
+}) {
+  const { supabase, sessionId, userId, messages, finalContent, lastIntent } = opts;
+  if (!sessionId) return;
+  try {
+    const fullMessages = [...messages, { role: 'assistant', content: finalContent }];
+    const firstUser = messages.find((m: any) => m?.role === 'user');
+    const lastUserMsg = [...messages].reverse().find((m: any) => m?.role === 'user');
+    const titleSrc = (firstUser?.content ?? '').toString().trim();
+    const title = titleSrc ? titleSrc.slice(0, 24) : null;
+    const lastUserContent = (lastUserMsg?.content ?? '').toString().slice(0, 200) || null;
+
+    const { data: existing } = await supabase
+      .from('support_conversations')
+      .select('id')
+      .eq('session_id', sessionId)
+      .maybeSingle();
+
+    const payload: any = {
+      session_id: sessionId,
+      user_id: userId,
+      messages: fullMessages,
+      title,
+      last_user_message: lastUserContent,
+      last_message_at: new Date().toISOString(),
+      last_intent: lastIntent,
+    };
+
+    if (existing) {
+      await supabase.from('support_conversations').update(payload).eq('session_id', sessionId);
+    } else {
+      await supabase.from('support_conversations').insert(payload);
+    }
+  } catch (err) {
+    console.warn('[persistConversation] failed', err);
+  }
+}
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
