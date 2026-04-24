@@ -20,10 +20,12 @@ interface UseNetworkQualityReturn {
   stopMonitoring: () => void;
 }
 
-// STUN servers for testing
+// STUN servers for testing — 优先国内可达节点，避免在中国大陆因 GFW 干扰 Google STUN
+// 而导致 RTT 误判（国内访问 Google STUN 普遍 300-800ms，但实际通话链路完全不同）
 const STUN_SERVERS = [
+  'stun:stun.miwifi.com',
+  'stun:stun.qq.com:3478',
   'stun:stun.l.google.com:19302',
-  'stun:stun1.l.google.com:19302',
 ];
 
 export function useNetworkQuality(): UseNetworkQualityReturn {
@@ -112,10 +114,11 @@ export function useNetworkQuality(): UseNetworkQualityReturn {
     networkDownlink: number | null
   ): NetworkQuality => {
     // If we have RTT measurement, use it as primary indicator
+    // 阈值已根据中国互联网现实放宽：家庭宽带/4G/5G 实测 STUN RTT 通常 200-400ms
     if (measuredRtt !== null) {
-      if (measuredRtt < 100) return 'excellent';
-      if (measuredRtt < 200) return 'good';
-      if (measuredRtt < 400) return 'fair';
+      if (measuredRtt < 200) return 'excellent';
+      if (measuredRtt < 400) return 'good';
+      if (measuredRtt < 800) return 'fair';
       return 'poor';
     }
 
@@ -143,7 +146,8 @@ export function useNetworkQuality(): UseNetworkQualityReturn {
       return 'poor';
     }
 
-    return 'unknown';
+    // 测量与系统信息均不可得（如微信 WebView）：默认按良好处理，避免空报警
+    return 'good';
   }, []);
 
   // Main check function
