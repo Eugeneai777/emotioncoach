@@ -2928,12 +2928,18 @@ export const CoachVoiceChat = ({
                 endCall(e);
               }}
               size="lg"
-              className={`w-16 h-16 rounded-full bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-500/30 ${status === 'connected' ? 'ring-2 ring-red-400/30' : ''}`}
+              aria-label={isEnding ? '强制关闭' : status === 'connected' ? '挂断通话' : '开始通话'}
+              className={`w-16 h-16 rounded-full ${isEnding ? 'bg-red-600 hover:bg-red-700' : 'bg-red-500 hover:bg-red-600'} text-white shadow-lg shadow-red-500/30 ${status === 'connected' ? 'ring-2 ring-red-400/30' : ''}`}
             >
-              {status === 'connected' ? (
-                <PhoneOff className="w-6 h-6" />
-              ) : (
+              {isEnding ? (
+                <span className="relative inline-flex items-center justify-center">
+                  <Loader2 className="w-6 h-6 animate-spin" />
+                  <PhoneOff className="w-3 h-3 absolute" />
+                </span>
+              ) : status === 'connected' ? (
                 <Phone className="w-6 h-6" />
+              ) : (
+                <PhoneOff className="w-6 h-6" />
               )}
             </Button>
 
