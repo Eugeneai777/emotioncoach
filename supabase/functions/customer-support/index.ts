@@ -68,6 +68,8 @@ async function persistConversation(opts: {
     console.warn('[persistConversation] failed', err);
   }
 }
+
+serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
