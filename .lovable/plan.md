@@ -1,126 +1,47 @@
+## 客服快速选项截断修复 + 三端兼容核查
 
+### 问题根因
+截图显示「联系人工」chip 在桌面 919px 视口下被右侧截掉。当前实现：
+- 容器：`max-w-2xl mx-auto px-4`（左右各 16px 内边距）
+- 滚动条：`flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1 snap-x snap-mandatory`
+- 6 个 chip 总宽度 ≈ 700px+，在 ≥640px（sm）的窗口下刚好可能撑出容器但又没有足够的"露出半个"提示，且 `snap-mandatory` 会把末项 snap 到不完整位置
 
-## 收尾工作范围澄清 + P2 影响评估
+### 修复方案（单点改动，最小侵入）
 
----
+**改 `src/pages/CustomerSupport.tsx` Quick Options 区域（约 254-276 行）**：
 
-## 一、上一轮"收尾 4 步"实际是什么
+1. **末尾留出"露出"提示空间**：滚动容器内最后追加一个 `w-2 shrink-0` 的占位 spacer，保证末项右侧总有 8px 间隙，视觉提示"还有内容/已结束"
+2. **去掉强制 snap**：`snap-mandatory` 改为 `snap-proximity`，避免末项被强行 snap 到截断位置
+3. **滚动容器突破父级 padding**：改用 `-mx-4 px-4`（替代当前 `-mx-1 px-1`），让横滑区在视觉上贴边，使最后一项能真正滑到完全可见
+4. **隐藏 WebKit 滚动条**：补 `[&::-webkit-scrollbar]:hidden` 类，已有 `scrollbarWidth: 'none'` 只覆盖 Firefox
+5. **触摸滑动顺滑**：加 `[-webkit-overflow-scrolling:touch]` 提升 iOS Safari/小程序 WebView 惯性滚动
+6. **chip 文字防压缩**：当前已有 `whitespace-nowrap`，保持
 
-上一轮我说的 4 步收尾，**不是 P2/P3**，而是上一轮 P0+P1 中**还没真正接通的最后一公里**：
+### 三端兼容核查（无需额外改动，只验证）
 
-| 步骤 | 归属 | 状态 |
+| 端 | 检查点 | 现状 |
 |---|---|---|
-| 1. `submit_ticket_recall` 工具逻辑落地 | P0 #2 AI 主动播报（已写定义未写实现） | 未完成 |
-| 2. `support_conversations` upsert + 写 title | P1 #5 历史抽屉（已建组件未写存储） | 未完成 |
-| 3. `<HistoryDrawer />` 接入 PageHeader + 恢复会话 | P1 #5 历史抽屉前端接入 | 未完成 |
-| 4. 部署 `customer-support` 边缘函数 | 上述后端改动生效 | 未完成 |
+| 桌面 Chrome ≥1024px | 6 项一行可全显 | ✅ 修复后末项有右侧呼吸位 |
+| 桌面 919px（当前用户视口） | 横滑可见末项 | ✅ 修复后可完整滑到 |
+| 平板 768px | 横滑可见末项 | ✅ 同上 |
+| iPhone SE 375px | 默认露出前 3 项 + 半个提示 | ✅ 已有横滑结构 |
+| 微信小程序 WebView（iOS/Android） | 触摸惯性滑动 | ✅ 加 `-webkit-overflow-scrolling:touch` |
+| 微信公众号 H5 | 同上 | ✅ |
+| Safari iOS | 滚动条隐藏 | ✅ 加 `[&::-webkit-scrollbar]:hidden` |
 
-**结论**：这 4 步是 P0+P1 的闭环，必须做，不做则 AI 主动播报和历史抽屉都是死代码。
+### 改动文件清单
+- `src/pages/CustomerSupport.tsx`：仅 Quick Options 容器与末尾占位（约 5 行改动）
 
----
+### 不影响范围
+- 不动消息流、AI 边缘函数、工单系统、历史抽屉、支付气泡逻辑
+- 不动 PageHeader、其他客服组件
+- 不动其他页面的横向滚动样式
 
-## 二、P2 / P3 当前定位
-
-- **P3（图片附件 / SLA / 评分 / 看板）**：✅ 按你要求本轮不执行
-- **P2 第 6 项 支付成功气泡回执**：需要影响评估（见下）
-- **P2 第 7 项 意图打点**：纯后端写字段，零影响，可顺手做
-- **P2 第 8 项 用户端工单内回复输入框**：`MyTicketDetail.tsx` 已经实现了输入框 + `customer_ticket_messages` 写入 + 触发 `unread_admin_count`，**实际已完成**，无需再做
-
----
-
-## 三、P2 第 6 项「支付成功气泡回执」影响评估
-
-### 改动设想
-在客服页 `CustomerSupport.tsx` 监听 `sessionStorage` 中的 `pending_order_id`，支付完成回跳后自动追加一条 AI 气泡：「✅ 已开通 XX 套餐，[点这里进入]」。
-
-### 对其他模块的影响分析
-
-| 受影响模块 | 影响点 | 风险 | 结论 |
-|---|---|---|---|
-| `UnifiedPayDialog` 支付主流程 | 不修改任何支付代码 | 无 | ✅ 安全 |
-| `check-order-status` 边缘函数 | 不修改 | 无 | ✅ 安全 |
-| 微信小程序 H5 支付自愈（`miniprogram-h5-resumption-standard-zh`）| 它本身已用 `sessionStorage` 做支付恢复，新增读取 `pending_order_id` 是只读，**不会**抢占或破坏现有 key | 需用独立 key（如 `support_payment_celebration`），不复用支付主流程 key | ⚠️ 必须用独立 key |
-| 微信支付重定向自愈（`payment-resumption-pattern-zh`）| 同上，用独立 key 隔离 | 无 | ✅ 安全 |
-| 通用合伙人归因（`GlobalRefTracker`）| 完全无关 | 无 | ✅ 安全 |
-| 训练营自愈逻辑（`camp-self-healing`）| 完全无关，气泡只读不写 | 无 | ✅ 安全 |
-| 「我的订单」/「订单管理」UI | 完全无关 | 无 | ✅ 安全 |
-| 微信公众号/小程序模板消息 | 不触发 | 无 | ✅ 安全 |
-
-### 设计原则（避免污染）
-1. **只读，不写**：客服气泡只查询 `orders` 表已存在的成功订单，不做任何状态变更
-2. **独立 sessionStorage key**：`support_payment_celebration`，与 `MP_PENDING_ORDER_STORAGE_KEY` 完全隔离
-3. **一次性**：展示后立即清除 key，避免重复触发
-4. **降级安静**：查不到订单不报错，静默不展示气泡
-5. **入口跳转复用**：直接跳已存在的训练营/套餐入口，不新建路由
-
-### 结论
-✅ **可以做，对其他支付/跳转逻辑零影响**，关键是 sessionStorage key 严格隔离。
-
----
-
-## 四、本轮收尾建议执行清单
-
-### 必做（P0+P1 闭环）
-1. 实现 `submit_ticket_recall` 工具：边缘函数中根据 ticket_id 查 `customer_tickets`，把工单卡片塞回 `recommendations`
-2. `support_conversations` 改 `upsert`，写入 `title`（首条用户消息前 24 字）和 `last_message_at`
-3. `CustomerSupport.tsx` PageHeader 右侧加「历史」按钮 → 接入 `<HistoryDrawer />`，点击会话恢复 messages
-4. 部署 `customer-support` 边缘函数
-
-### 顺手做（P2 零风险项）
-5. **意图打点**：`support_conversations` 加 `last_intent text` 字段（迁移），边缘函数每轮写入触发的工具名
-
-### 评估通过后可做（P2 商业转化）
-6. **支付成功气泡回执**：`CustomerSupport.tsx` 监听独立 key `support_payment_celebration`，查 `orders` 成功订单 → 追加 AI 气泡 + 入口卡片
-
-### 跳过
-- P2 第 8 项（已完成）
-- P3 全部（按你要求）
-
----
-
-## 五、改动文件清单
-
-**数据库迁移**
-- `support_conversations` 新增 `last_intent text`
-
-**边缘函数**
-- `supabase/functions/customer-support/index.ts`：
-  - `submit_ticket_recall` 实现
-  - `support_conversations` upsert + title + last_intent 写入
-
-**前端**
-- `src/pages/CustomerSupport.tsx`：
-  - PageHeader 右侧接入 `<HistoryDrawer />` 按钮
-  - 会话恢复逻辑（点历史 → 灌回 messages）
-  - 监听 `support_payment_celebration` sessionStorage key → 追加气泡
-- `src/components/UnifiedPayDialog.tsx`（或对应支付成功回调）：支付成功时**新增**写入 `support_payment_celebration` key（不动现有 key）
-
----
-
-## 六、验收标准
-
-| 场景 | 期望 | 涉及模块隔离 |
-|---|---|---|
-| 用户进客服 | AI 检测未读工单首句直接播报 + 卡片 | 不影响支付 |
-| 顶部「历史」按钮 | 抽屉显示近 7 天最多 10 条会话 | 不影响支付 |
-| 点击历史会话 | 恢复 messages 继续聊 | 不影响支付 |
-| 支付成功跳回客服 | 气泡显示「✅ 已开通 XX」 + 入口 | sessionStorage key 完全隔离支付主流程 |
-| 微信小程序 H5 支付 | 原有自愈逻辑不变 | 用独立 key 验证无干扰 |
-| 测试用例 | 不支付时进客服无任何"已开通"误报 | 静默降级 |
-
----
-
-## 七、不在本轮做
-- P3 全部项（图片附件 / SLA / 评分 / 看板 / 搜索）
-- 客服 UI 视觉重做
-- 工单分类体系
-
----
-
-## 八、落地顺序
-1. DB 迁移（`last_intent` 字段）
-2. 边缘函数 3 处改动 + 部署
-3. 前端历史抽屉接入 + 会话恢复
-4. 支付成功气泡（独立 key 严格隔离）
-5. 端到端验证：支付一笔 → 跳客服 → 看到气泡 → 不污染下一次支付
-
+### 验收标准
+| 场景 | 期望 |
+|---|---|
+| 919px 桌面 | 「联系人工」chip 完整可见或可滑动到完整可见 |
+| 1366px 桌面 | 6 项全部一行可见 |
+| 375px 手机 | 默认露出 3 项+，左滑可完整看到「联系人工」 |
+| 微信小程序 | 横滑顺滑，无卡顿 |
+| 所有端 | 滚动条不可见，但仍可滑动 |

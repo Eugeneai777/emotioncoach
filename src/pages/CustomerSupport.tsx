@@ -254,11 +254,11 @@ const CustomerSupport = () => {
         <div
           className="max-w-2xl mx-auto px-4 py-4 flex flex-col h-[calc(100vh-60px)] [height:calc(100dvh-60px)]"
         >
-          {/* Quick Options：横向滚动，固定一行，不挤压聊天区 */}
+          {/* Quick Options：横向滚动，固定一行，不挤压聊天区；末尾留呼吸位避免被截断 */}
           <div className="mb-3 flex-shrink-0">
             <p className="text-xs text-muted-foreground mb-1.5">🎯 快速选项</p>
             <div
-              className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1 snap-x snap-mandatory"
+              className="flex gap-1.5 overflow-x-auto pb-1 -mx-4 px-4 snap-x snap-proximity [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden"
               style={{ scrollbarWidth: 'none' }}
             >
               {quickOptions.map((option) => (
@@ -272,6 +272,8 @@ const CustomerSupport = () => {
                   <span className="font-medium whitespace-nowrap">{option.title}</span>
                 </button>
               ))}
+              {/* 末尾呼吸位：保证最后一项「联系人工」可完整滑出，且视觉提示已到底 */}
+              <div className="shrink-0 w-2" aria-hidden="true" />
             </div>
           </div>
 
