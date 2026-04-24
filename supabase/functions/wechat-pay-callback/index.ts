@@ -299,9 +299,17 @@ serve(async (req) => {
           console.error('[WechatCallback] Lookup ai_quota error:', e);
         }
         if (quota > 0) {
+          // 同时取套餐有效期，用于延长到期日（不缩短）
+          const { data: pkgDur } = await supabase
+            .from('packages')
+            .select('duration_days')
+            .eq('package_key', order.package_key)
+            .maybeSingle();
+          const durationDays = pkgDur?.duration_days || 365;
+
           const { data: userAccount, error: accountError } = await supabase
             .from('user_accounts')
-            .select('total_quota, used_quota')
+            .select('total_quota, used_quota, quota_expires_at')
             .eq('user_id', order.user_id)
             .single();
 
@@ -309,10 +317,16 @@ serve(async (req) => {
             console.error('Query user account error:', accountError);
           } else if (userAccount) {
             const newTotalQuota = (userAccount.total_quota || 0) + quota;
+            const newExpires = new Date();
+            newExpires.setDate(newExpires.getDate() + durationDays);
+            const finalExpires = userAccount.quota_expires_at && new Date(userAccount.quota_expires_at) > newExpires
+              ? userAccount.quota_expires_at
+              : newExpires.toISOString();
             const { error: quotaError } = await supabase
               .from('user_accounts')
               .update({
                 total_quota: newTotalQuota,
+                quota_expires_at: finalExpires,
                 updated_at: new Date().toISOString()
               })
               .eq('user_id', order.user_id);

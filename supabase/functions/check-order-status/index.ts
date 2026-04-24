@@ -269,14 +269,26 @@ serve(async (req) => {
               .maybeSingle();
             if (pkgQuota?.ai_quota && pkgQuota.ai_quota > 0) quota = pkgQuota.ai_quota;
             if (quota > 0) {
+              const { data: pkgDur } = await supabase
+                .from('packages')
+                .select('duration_days')
+                .eq('package_key', order.package_key)
+                .maybeSingle();
+              const durationDays = pkgDur?.duration_days || 365;
               const { data: ua } = await supabase
                 .from('user_accounts')
-                .select('total_quota')
+                .select('total_quota, quota_expires_at')
                 .eq('user_id', order.user_id)
                 .single();
               if (ua) {
+                const newExpires = new Date();
+                newExpires.setDate(newExpires.getDate() + durationDays);
+                const finalExpires = ua.quota_expires_at && new Date(ua.quota_expires_at) > newExpires
+                  ? ua.quota_expires_at
+                  : newExpires.toISOString();
                 const { error: qErr } = await supabase.from('user_accounts').update({
                   total_quota: (ua.total_quota || 0) + quota,
+                  quota_expires_at: finalExpires,
                   updated_at: new Date().toISOString(),
                 }).eq('user_id', order.user_id);
                 if (qErr) {
@@ -424,14 +436,26 @@ serve(async (req) => {
                     console.error('[CheckOrder] Lookup ai_quota error:', e);
                   }
                   if (quota > 0) {
+                    const { data: pkgDur2 } = await supabase
+                      .from('packages')
+                      .select('duration_days')
+                      .eq('package_key', pkgKey)
+                      .maybeSingle();
+                    const durationDays2 = pkgDur2?.duration_days || 365;
                     const { data: ua } = await supabase
                       .from('user_accounts')
-                      .select('total_quota')
+                      .select('total_quota, quota_expires_at')
                       .eq('user_id', fullOrder.user_id)
                       .single();
                     if (ua) {
+                      const newExpires2 = new Date();
+                      newExpires2.setDate(newExpires2.getDate() + durationDays2);
+                      const finalExpires2 = ua.quota_expires_at && new Date(ua.quota_expires_at) > newExpires2
+                        ? ua.quota_expires_at
+                        : newExpires2.toISOString();
                       const { error: quotaErr } = await supabase.from('user_accounts').update({
                         total_quota: (ua.total_quota || 0) + quota,
+                        quota_expires_at: finalExpires2,
                         updated_at: new Date().toISOString(),
                       }).eq('user_id', fullOrder.user_id);
                       if (quotaErr) {

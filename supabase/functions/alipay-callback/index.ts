@@ -262,22 +262,42 @@ serve(async (req) => {
             .single();
 
           if (pkg) {
-            // 更新用户额度
-            const expiresAt = new Date();
-            expiresAt.setDate(expiresAt.getDate() + (pkg.duration_days || 365));
+            // 计算新的到期时间（基于本次套餐的有效期）
+            const newExpires = new Date();
+            newExpires.setDate(newExpires.getDate() + (pkg.duration_days || 365));
 
-            await supabase
+            // 查询现有账户：累加额度 + 取最大到期日（延长不缩短）
+            const { data: existing } = await supabase
               .from('user_accounts')
-              .upsert({
-                user_id: order.user_id,
-                total_quota: pkg.ai_quota || 0,
-                used_quota: 0,
-                quota_expires_at: expiresAt.toISOString(),
-              }, {
-                onConflict: 'user_id',
-              });
+              .select('total_quota, used_quota, quota_expires_at')
+              .eq('user_id', order.user_id)
+              .maybeSingle();
 
-            console.log('[AlipayCallback] User quota updated for:', order.user_id);
+            const finalExpires = existing?.quota_expires_at && new Date(existing.quota_expires_at) > newExpires
+              ? existing.quota_expires_at
+              : newExpires.toISOString();
+
+            if (existing) {
+              await supabase
+                .from('user_accounts')
+                .update({
+                  total_quota: (existing.total_quota || 0) + (pkg.ai_quota || 0),
+                  quota_expires_at: finalExpires,
+                  updated_at: new Date().toISOString(),
+                })
+                .eq('user_id', order.user_id);
+            } else {
+              await supabase
+                .from('user_accounts')
+                .insert({
+                  user_id: order.user_id,
+                  total_quota: pkg.ai_quota || 0,
+                  used_quota: 0,
+                  quota_expires_at: finalExpires,
+                });
+            }
+
+            console.log('[AlipayCallback] User quota updated for:', order.user_id, '+', pkg.ai_quota, 'expires:', finalExpires);
           }
         } catch (quotaError) {
           console.error('[AlipayCallback] Error updating user quota:', quotaError);
