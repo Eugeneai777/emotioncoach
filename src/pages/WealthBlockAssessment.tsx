@@ -347,6 +347,14 @@ export default function WealthBlockAssessmentPage() {
     };
   }, [authLoading, isPurchaseLoading, hasPurchased, isBloomPartner, isMiniProgram, showPayDialog]);
 
+  useEffect(() => {
+    return () => {
+      if (payDialogReopenTimerRef.current) {
+        window.clearTimeout(payDialogReopenTimerRef.current);
+      }
+    };
+  }, []);
+
   // 🆕 bfcache 还原兜底：安卓微信 X5/TBS 在用户从微信收银台「返回」时会
   // 把整页（含 showPayDialog=true 与 dialog 内部 createOrderCalledRef）原样恢复，
   // 导致下次点击「立即测评」无法触发重建。pageshow.persisted 时主动复位，
