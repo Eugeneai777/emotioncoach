@@ -203,11 +203,15 @@ serve(async (req) => {
         .single();
 
       if (existingAccount) {
+        // 取最大到期日：保留现有更晚的到期日，避免被短周期套餐缩短
+        const finalExpires = existingAccount.quota_expires_at && new Date(existingAccount.quota_expires_at) > endDate
+          ? existingAccount.quota_expires_at
+          : endDate.toISOString();
         await supabaseAdmin
           .from('user_accounts')
           .update({
             total_quota: existingAccount.total_quota + (packageData.ai_quota || 0),
-            quota_expires_at: endDate.toISOString()
+            quota_expires_at: finalExpires
           })
           .eq('user_id', userId);
       } else {
