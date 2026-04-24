@@ -9,6 +9,7 @@ import { QuickRegisterStep } from "@/components/onboarding/QuickRegisterStep";
 import QRCode from "qrcode";
 import { isWeChatMiniProgram, isWeChatBrowser } from "@/utils/platform";
 import { usePackages, getPackagePrice } from "@/hooks/usePackages";
+import { trackPaymentEvent } from "@/utils/paymentFlowTracker";
 
 // 声明 WeixinJSBridge 类型
 declare global {
