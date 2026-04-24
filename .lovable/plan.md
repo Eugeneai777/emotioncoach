@@ -1,183 +1,130 @@
 
 
-## 客服入口 · 第二轮深度优化方案
-
-上一轮修复了「感恩教练 404」与「首轮先寒暄」两个止损项。但从商业架构师视角看，当前 `/customer-support` 在**用户体验、跨端流畅度、稳定性**上仍有 8 类未优化的遗留问题。本轮聚焦「真正交付到手机/电脑/小程序里都不卡、不崩、能闭环」。
+## 工单回复入口 + 快速选项精简（商业视角）
 
 ---
 
-## 一、已修复（不再处理）
-- 感恩教练路由 404
-- 首轮欢迎语污染上下文
-- AI 先寒暄不答题
-- 快速选项贴近真实问法
+## 一、用户看工单回复进度的入口设计
 
-## 二、本轮要解决的 8 类遗留问题
+参考淘宝/京东客服模式，**工单入口必须分布在用户最自然会想起客服的 4 个位置**，不能只塞在一个地方。
 
-### 1. 路由真相源仍有遗漏 ⚠️
-- `PAGE_ROUTES.gratitude`（感恩日记）写死 `/gratitude-journal`，但全站感恩入口已统一到 `/coach/gratitude_coach`，需核对实际路由是否存在
-- `parent_coach` → `/parent-coach`、`communication_coach` → `/communication-coach`、`story_coach` → `/story-coach`：这些独立路由是否仍有效，需逐一核验，避免下一次又出现 404
-- AI 工具 enum 里有 13 个 page_type，但前端 `PAGE_ROUTES` 与之是否完全对齐，需建立**单一映射表**，避免 enum 与前端再次走偏
+### 入口 1：客服首页 PageHeader 右上角「我的工单」按钮 ⭐ 核心
+- 位置：`/customer-support` 顶部右侧，紧挨标题
+- 形态：`📋` 图标 + 文字「我的工单」+ **未读红点**（数字）
+- 行为：点击跳 `/my-tickets`
+- 商业意义：用户进客服第一眼就能看到"我之前提的问题有没有人回"，这是淘宝旺旺的核心范式
 
-### 2. 工单创建后没有"确认反馈" ⚠️
-现在 `submit_ticket` 工单号只在 AI 文本里口播，用户无法点击查看进度、无法复制工单号、无法进入「我的工单」。商业上等于"提了等于没提"。
+### 入口 2：「我的」页面 `/my-page` 增加「我的工单」菜单项
+- 位置：与「我的订单」「联系客服」并列
+- 形态：列表项 + 红点
+- 商业意义：用户解决问题的心智路径是「我的」→ 找记录，必须在这里有
 
-### 3. 移动端体验断点 📱
-- 输入框用 `Textarea`，移动端键盘弹起时**会顶到屏幕外**（没有 `keyboardWillShow` 兼容）
-- 快速选项区在小屏幕（375px 以下，如 iPhone SE）一行只能放 2 个，9 个选项会撑成 5 行，把聊天区压得只剩 2 个气泡可见
-- `h-[calc(100dvh-60px)]` 在 iOS Safari 老版本不支持 `dvh`，会出现底部输入条被地址栏盖住
-- `WebkitOverflowScrolling: 'touch'` 用在外层容器，但内部 `ScrollArea` 是 Radix 实现，会导致**双层滚动冲突**，iOS 上经常出现"滑不动"
+### 入口 3：客服气泡内"工单已创建"卡片直达
+- 现有 `SupportTicketCard` 「查看进度」按钮真正跳转 `/my-tickets/:id`
+- 商业意义：刚提工单的用户最关心进度，零跳转直达详情
 
-### 4. 微信小程序 WebView 稳定性 🟢
-- `/customer-support` 没有针对微信小程序环境做适配：
-  - 推荐卡片里 `navigate(pageInfo.route)` 在 MP 内调用 `react-router` 跳转 `/coach/xxx`，部分场景会触发 WebView 白屏
-  - 企微二维码 `QiWeiQRCard` 在小程序内**无法长按识别**（小程序 WebView 不支持 `wx.previewImage`），需要降级为"复制企微号"或"显示官方二维码图"
-  - `[QIWEI_QR]` 标记是字符串匹配，AI 偶尔会写成 `【QIWEI_QR】`/`(QIWEI_QR)` 等变体，导致二维码不显示
+### 入口 4：AI 主动播报
+- 用户进客服时，后端检测到有「待用户查看」的工单回复，AI 第一句直接说：
+  > "你之前提的工单 #T2024xxx 客服已回复，[查看回复] 👈"
+- 卡片直接跳详情页
+- 商业意义：主动触达，避免用户错过回复
 
-### 5. 性能与流畅度 ⚡
-- 后端每次请求都跑 5 张表全量 `SELECT *`（`packages / coach_templates / camp_templates / video_courses / support_knowledge_base`），每条消息都重查，**单轮延迟 1.5-3s**
-- `support_conversations` 历史保存用 `select * .single()` + `update`，每次都是 1 次读 + 1 次写，应改为 `upsert`
-- 消息每次都把全部历史拼进 prompt，10 轮后 token 翻倍，回复会越来越慢；缺**滑窗截断**（保留最近 10 轮 + 首条用户消息）
-- 前端没有**乐观渲染 + 流式回复**，用户发完消息要等 2-3s 整段才出现，体感"卡死"
-
-### 6. 错误处理与降级 🛡️
-- AI 后端报错只返回兜底文案，**不显示工单号、不提供重试按钮、不引导企微**
-- 前端 `error` 时只 push 一条文本，没有「重新发送」按钮
-- 网络断开（移动端/小程序常见）时没有提示，用户以为自己消息发出去了
-
-### 7. 商业转化未闭环 💰
-- 推荐套餐卡片 `SupportPackageCard` 点击后是否能直接进支付？需要核对，目前看仅显示信息
-- 推荐训练营卡片是否能进 `StartCampDialog`？同上
-- 客服里没有**「我的会话历史」入口**，用户每次进来都是 new session，付费意愿被中断
-
-### 8. 双客服组件并存的污染源 🔁
-`src/components/TextCustomerSupport.tsx` 是另一个独立的客服弹窗组件，目前我搜了一圈，**主路径已不引用它**，但代码还在，且首条欢迎语写法和后端契约都已陈旧。留着会让下一次有人再"复制粘贴它"，导致退化。
+### ❌ 不放在快速选项里
+快速选项是「**新问题分发器**」，不是「**历史查询入口**」。混在一起反而降低首次问题解决率。淘宝旺旺的快捷短语也只放高频问法，不放"我的订单"这种导航项。
 
 ---
 
-## 三、本轮实施方案（按优先级 P0→P2）
+## 二、快速选项商业化精简（9 → 6）
 
-### P0 · 立即修（兼容多端 + 止损）
+### 当前问题
+截图里 9 个选项排成 4 行，把聊天区压到只剩 1 张气泡可见。从商业漏斗看：
+- **「我的订单在哪看」「积分为什么扣了」**：是导航类问题，应该走「我的」页菜单，不是客服的高价值场景
+- **「我点不开页面」「报问题」「提建议」**：三者高度重叠，都属于"反馈型"
+- **「联系人工」**：必须保留但应放最后兜底
 
-#### A. 路由一致性硬约束
-- 在 `src/config/customerSupportRoutes.ts` 中新建 **唯一真相表**，导出 `PAGE_ROUTES` 和 `pageTypeEnum`
-- `CustomerSupport.tsx` 只 import 这张表
-- `supabase/functions/customer-support/index.ts` 的 `navigate_to_page.enum` 通过注释强制对齐这张表
-- 跑一次 `gratitude / parent_coach / communication_coach / story_coach / community / packages` 路由健康检查，凡是不存在的统一指向 `/coach/<key>` 或 `/camps`
+### 商业价值评估矩阵
 
-#### B. 移动端 / 小程序 / iOS Safari 三端兼容
-- 高度计算改为 `min-h-[100svh]` + `max-h-[100dvh]` 双兜底，老 iOS 用 `100vh - env(safe-area-inset-bottom)`
-- 输入区加 `pb-[env(safe-area-inset-bottom)]`，键盘弹起时容器加 `scroll-padding-bottom`
-- 快速选项改为**横向滚动条**（`overflow-x-auto snap-x`），固定一行；不再多行撑高
-- 移除外层 `WebkitOverflowScrolling: 'touch'`，让 `ScrollArea` 独占滚动
-- 检测 `isWeChatMiniProgram()`：
-  - 二维码卡片改为「展示二维码图 + 提示用户截屏 + 复制企微号」
-  - 跳转前对 `/coach/*` / `/camps` 等做 try-catch，失败回退到 `window.location.href`
+| 选项 | 用户场景 | 转化价值 | 处理方 | 决策 |
+|---|---|---|---|---|
+| 感恩教练入口 | 找不到入口 | 中（拉活） | AI 自助 | ✅ 保留 |
+| 我的订单在哪看 | 导航 | 低 | AI 自助 | ❌ 删，移至「我的」 |
+| 积分为什么扣了 | 客诉 | 中（防流失） | AI+工单 | ✅ 保留 |
+| 查套餐 | 转化 | **高** | AI 自助 | ✅ 保留并前置 |
+| 训练营 | 转化 | **高** | AI 自助 | ✅ 保留并前置 |
+| 我点不开页面 | 故障 | 低 | 工单 | 🔄 合并到「报问题」 |
+| 报问题 | 故障 | 中（防流失） | 工单 | ✅ 保留 |
+| 提建议 | 收集 | 低 | 工单 | 🔄 合并到「报问题」或删 |
+| 联系人工 | 兜底 | 高（救火） | 企微 | ✅ 保留并置末 |
 
-#### C. AI 标记容错
-- 把 `[QIWEI_QR]` 检测改为正则 `/[【\[(（]\s*QIWEI[_-]?QR\s*[\])）】]/i`
-- 同时在 `systemPrompt` 加一句"必须严格使用 `[QIWEI_QR]` 这 11 个字符"
+### 精简后 6 个选项（按商业优先级排序）
 
-#### D. 删掉 `TextCustomerSupport.tsx`（确认无引用后），消除污染源
+```
+🎯 看看有什么套餐    ← 转化前置
+🔥 训练营怎么选      ← 转化前置
+💝 找教练入口        ← 拉活
+💰 积分/点数问题      ← 防流失
+🐛 报问题/提建议     ← 反馈合并
+👤 联系人工          ← 兜底末位
+```
 
----
-
-### P1 · 体验与转化闭环（一周内）
-
-#### E. 工单可视化
-- `submit_ticket` 后，前端**自动渲染一张「工单已创建」卡片**，包含：
-  - 工单号（可一键复制）
-  - 「查看进度」按钮 → 跳 `/my-tickets`（如果不存在则建一个最小列表页）
-  - 「联系企微」按钮 → 直接展开 QR 卡片
-- 后端在 `recommendations` 里新增 `ticket: { ticket_no, subject }`
-
-#### F. 流式回复 + 乐观渲染
-- 改用 `fetch` + ReadableStream（Lovable AI Gateway 支持 SSE），首字 < 500ms
-- 前端先在用户消息下方占位 "正在思考…"，AI 一边吐 token 一边渲染
-- 这是最直接拉升「电脑/手机流畅度」感知的一步
-
-#### G. 上下文截断 + 套餐缓存
-- 边缘函数新增 `recentMessages = messages.slice(-10)`
-- 套餐/教练/训练营查询结果用 `Deno KV` 或 in-memory cache，TTL 60s（同一进程内复用，不每次走 DB）
-- `support_conversations` 用 `upsert` 一条 SQL 搞定
-
-#### H. 网络异常降级
-- 检测 `navigator.onLine === false` → 顶部黄条提示「网络断开，请检查」
-- AI 报错时插入「🔄 重试此消息」按钮，点击重发上一条 user message
-- 5xx 错误自动展示 `QiWeiQRCard`
+### 排版优化
+- 横向单行滚动（已在上轮 P0 实施），左滑可见全部
+- 默认露出前 3 个高价值转化项（套餐/训练营/教练），右侧露半个"露出有更多"
+- 总高度从 5 行压到 1 行，聊天区可见性 +400%
 
 ---
 
-### P2 · 商业化与回访（两周内）
+## 三、本轮改动清单
 
-#### I. 套餐/训练营卡片直达支付
-- `SupportPackageCard` 点击 → `UnifiedPayDialog`
-- `SupportCampCard` 点击 → `StartCampDialog`
-- 转化路径从「客服 → 套餐页 → 详情 → 支付」缩短为「客服 → 直接支付」
+### 数据库
+（沿用上轮已批准的工单消息流迁移，不重复）
 
-#### J. 会话历史入口
-- 顶部 PageHeader 右侧加「历史对话」按钮，从 `support_conversations` 拉用户最近 5 条会话
-- 未登录用户用 `localStorage` 存 `sessionId`，登录后自动绑定 `user_id`
+### 前端 - 新建
+- `src/pages/MyTickets.tsx`：工单列表（淘宝风格）
+- `src/pages/MyTicketDetail.tsx`：工单对话流详情
+- `src/hooks/useUnreadTickets.ts`：未读数 + realtime 订阅
 
-#### K. 意图统计看板（仅后端打点，不做 UI）
-- 在 `support_conversations` 上加触发器或扩字段 `last_intent`，记录每轮触发的工具名
-- 后续可用于热门问题排行榜，反向优化 quick options
+### 前端 - 修改
+- `src/pages/CustomerSupport.tsx`：
+  - PageHeader 右上加「我的工单」按钮 + 红点
+  - 快速选项数组改为 6 项（含 emoji 与新文案）
+  - 进入客服时检测未读工单回复 → 注入 AI 主动播报气泡
+- `src/pages/MyPage.tsx`：菜单加「我的工单」入口 + 红点
+- `src/components/customer-support/SupportTicketCard.tsx`：「查看进度」真跳转 `/my-tickets/:id`
+- `src/App.tsx`：注册 `/my-tickets`、`/my-tickets/:id`
+
+### 后端
+- 沿用上轮 `ticket-reply` edge function + `customer_ticket_messages` 表
+- `customer-support` 检测到该用户有 `unread_user_count > 0` 工单时，在 system prompt 注入提示，让 AI 首句主动播报
 
 ---
 
-## 四、改动清单
+## 四、验收标准
 
-**前端**
-- 新增 `src/config/customerSupportRoutes.ts`（路由真相表）
-- 新增 `src/components/customer-support/SupportTicketCard.tsx`（工单卡片）
-- 新增 `src/components/customer-support/SupportRetryButton.tsx`
-- 改 `src/pages/CustomerSupport.tsx`：
-  - 引入真相表
-  - 高度 / safe-area / 横向滚动选项 / 流式回复 / 重试 / 网络降级
-  - 小程序环境检测与跳转兜底
-  - QIWEI_QR 正则匹配
-- 改 `src/components/customer-support/QiWeiQRCard.tsx`：小程序内降级提示
-- 改 `SupportPackageCard` / `SupportCampCard`：点击直达支付/激活
-- 删 `src/components/TextCustomerSupport.tsx`（确认无引用）
-
-**后端**
-- 改 `supabase/functions/customer-support/index.ts`：
-  - SSE 流式输出
-  - 知识库 60s in-memory 缓存
-  - `recentMessages` 滑窗
-  - `support_conversations` 改 `upsert`
-  - `recommendations.ticket` 新增字段
-  - `systemPrompt` 加 QIWEI_QR 严格化、加「触发哪些工具→只能触发哪些 enum」对齐
-
-**新增页面（最小化）**
-- `/my-tickets`：用户工单列表（如已存在跳过）
+| 场景 | 期望 |
+|---|---|
+| 进客服首页 | 右上角「我的工单📋」可见，有回复时显红点 |
+| 「我的」菜单 | 「我的工单」与「我的订单」并列，红点同步 |
+| 提交工单后 | 卡片「查看进度」按钮可跳详情，不再是死按钮 |
+| 客服回复后 | 微信模板消息推送 + 进客服首句 AI 主动播报 |
+| 快速选项 | 1 行横滑 6 项，转化项（套餐/训练营/教练）排前 |
+| iPhone SE | 聊天区不被快速选项压扁，可见 ≥2 张气泡 |
 
 ---
 
 ## 五、不在本轮做
-- 多 Agent 架构 / RAG 升级
-- 客服 UI 视觉重做
-- 教练页面本身的业务逻辑
-- 未确认存在的路由不主动新建页面
+- 工单内文件/图片上传
+- 客服评分体系
+- 工单分类筛选/搜索
+- 智能客服转人工评分
 
 ---
 
-## 六、验收标准
-
-| 场景 | 期望 |
-|---|---|
-| iPhone SE（375px） | 快速选项一行横滑、聊天区不被压扁、键盘不遮挡 |
-| 微信小程序 WebView | 跳转教练页不白屏；二维码可截屏保存；网络抖动有提示 |
-| 桌面 Chrome | AI 回复 500ms 内开始流式输出；连发 10 条不卡顿 |
-| 弱网/断网 | 顶部红条提示，发送失败可重试 |
-| 工单流程 | 创建后立刻看到工单号 + 复制 + 查看进度 + 转企微 |
-| 套餐推荐 | 卡片点击直接进支付，不再二跳 |
-| 路由 | 任意推荐入口都不再 404 |
-
----
-
-## 推荐落地顺序
-1. **P0 一次性合并**（路由真相表 + 三端兼容 + 标记容错 + 删旧组件）
-2. **P1 流式 + 工单卡 + 缓存**（用户感知最强）
-3. **P2 卡片直达支付 + 会话历史**（直接拉转化）
+## 六、落地顺序
+1. DB 迁移（工单消息流，沿用上轮方案）
+2. `/my-tickets` 列表 + 详情对话页
+3. 客服首页顶部入口 + 红点 + 快速选项精简
+4. 「我的」菜单加入口
+5. AI 主动播报未读回复
+6. 管理员后台对话流改造（沿用上轮方案）
 
