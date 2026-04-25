@@ -287,6 +287,7 @@ export const WealthCoachDialog = ({
             primaryColor={primaryColor}
             messagesCount={messages.length}
             enableVoiceInput={true}
+            showVoiceInputSuccessToast={false}
             onHeightChange={setFooterHeight}
           />
         </motion.div>

@@ -262,6 +262,7 @@ export const WealthCoachEmbedded = ({
           primaryColor={primaryColor}
           messagesCount={messages.length}
           enableVoiceInput={true}
+          showVoiceInputSuccessToast={false}
           embedded={true}
         />
       </div>
