@@ -125,6 +125,7 @@ export const GratitudeQuickAdd = ({
           <VoiceInputButton 
             onTranscript={handleVoiceTranscript}
             disabled={loading}
+            showSuccessToast={false}
           />
           <div className="flex-1 relative">
             <Input
