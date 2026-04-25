@@ -1,102 +1,29 @@
-## 现状判断
+结论：电脑端正常、手机端点击无反应，主要是当前实现只依赖浏览器内置的 `SpeechRecognition / webkitSpeechRecognition`。这套 API 在桌面 Chrome 支持较好，但在 iOS/微信/HarmonyOS/部分安卓 WebView 上支持不稳定或不可用；另外移动端对麦克风启动要求必须紧贴用户点击手势，当前 hook 内部先执行 `stopListening()` 再创建并 `start()`，也可能在移动端被判定为非直接手势而静默失败。
 
-`/assessment-coach` 使用的是独立组件 `AssessmentCoachChat.tsx`，没有走财富文字教练使用的统一 `CoachLayout + CoachInputFooter + VoiceInputButton` 输入栏，所以第二张图的麦克风确实缺失。
+计划修复如下：
 
-财富文字教练 `/wealth-coach-chat` 已通过 `CoachInputFooter` 开启 `enableVoiceInput={true}`，旁边会显示麦克风。当前已有 `VoiceInputButton`，但它是“录一段 -> 停止 -> 后端识别”的批量转写，不是用户要求的“实时显示到输入框”。
+1. 优化 `useRealtimeSpeechInput`
+   - 保持 API 隔离，只服务情绪文字教练，不改动其他 AI 教练。
+   - 在点击事件同步链路内直接创建并启动识别对象，避免移动端丢失用户手势。
+   - 加入 `try/catch` 捕获 `start()` 的移动端异常，避免“点了没反应”。
+   - 加入错误状态回调，区分：不支持、权限拒绝、未检测到麦克风、麦克风被占用、网络/识别失败。
 
-## 优化目标
+2. 手机端降级策略
+   - 如果当前手机浏览器不支持 Web Speech API，不再只隐藏或无响应。
+   - 麦克风按钮仍展示，点击后给出中文提示：“当前浏览器暂不支持语音转文字，请在微信/系统浏览器开启麦克风权限，或先使用文字输入”。
+   - 如浏览器支持但启动失败，提示用户检查麦克风权限，而不是静默失败。
 
-1. 恢复 `/assessment-coach` 情绪文字教练输入框左侧麦克风，位置和财富文字教练一致。
-2. 点击麦克风后高亮绿色，开始监听用户语音。
-3. 语音内容实时转成文字，持续显示在输入框中。
-4. 再次点击麦克风取消高亮并停止读取语音。
-5. 不改动现有 AI 教练消息发送逻辑、训练营逻辑、财富教练逻辑和语音通话逻辑。
+3. 修复连续监听稳定性
+   - 移动端 `continuous=true` 容易自动结束；新增受控自动重启逻辑，仅在用户仍处于“正在听”状态时重启。
+   - 用户再次点击、发送消息、页面隐藏、组件卸载时明确停止，不后台占用麦克风。
 
-## 架构方案
+4. 更新 `AssessmentCoachChat.tsx` 的按钮逻辑
+   - 麦克风按钮点击时调用新的安全启动方法。
+   - 监听中保持绿色高亮；再次点击取消高亮并停止读取。
+   - 发送消息时自动停止语音输入，避免继续录音。
 
-新增一个独立、可复用的“实时语音输入 hook”，只负责“麦克风 -> 文字输入框”，不介入教练对话业务：
+5. 验证范围
+   - 运行 TypeScript 检查，确认不影响其他教练组件。
+   - 重点确认：桌面端仍可实时转文字；手机端即使不支持该 API，也会有明确反馈，不再表现为“没反应”。
 
-```text
-AssessmentCoachChat
-  input state
-  handleSend()
-  useRealtimeSpeechInput()
-        |
-        | onTranscript(text)
-        v
-  setInput(text)
-```
-
-### 1. 新增 `useRealtimeSpeechInput` hook
-
-职责：
-- 封装浏览器原生 SpeechRecognition / webkitSpeechRecognition。
-- 设置中文识别：`zh-CN`。
-- 开启 `continuous = true` 和 `interimResults = true`。
-- 把临时识别结果实时写入输入框，最终识别结果稳定追加。
-- 暴露状态：`isListening`、`isSupported`、`toggleListening()`、`stopListening()`。
-- 组件卸载、页面隐藏时自动停止识别，避免麦克风占用残留。
-
-优点：
-- 不依赖财富教练的业务逻辑。
-- 不影响 `CoachInputFooter` 当前已使用的语音输入。
-- 后续如果要把财富教练也升级为实时转写，可以复用同一个 hook。
-
-### 2. 在 `AssessmentCoachChat.tsx` 中恢复麦克风按钮
-
-在现有输入区域中，把结构从：
-
-```text
-[Textarea] [Send]
-```
-
-改为：
-
-```text
-[Mic] [Textarea] [Send]
-```
-
-交互样式：
-- 默认：浅色圆形按钮，灰色麦克风图标。
-- 监听中：绿色高亮背景/边框，麦克风图标绿色或白色，并轻微 pulse，表示正在收音。
-- 加载中或已生成简报后禁用/隐藏，保持现有对话流程不变。
-
-### 3. 输入框实时更新策略
-
-为避免“实时识别覆盖用户手动输入”，采用安全拼接策略：
-
-- 点击麦克风时记录当前输入框内容作为 `baseText`。
-- 识别过程中显示：`baseText + finalTranscript + interimTranscript`。
-- 用户再次点击停止后，保留最终文字在输入框。
-- 用户仍可手动编辑输入框，再点击发送走原有 `handleSend()`。
-
-### 4. 兼容与降级
-
-- 如果当前 WebView/浏览器不支持 SpeechRecognition，不显示麦克风按钮，避免出现无效按钮。
-- 如果用户拒绝麦克风权限，显示中文提示，不影响文字输入。
-- 微信内置浏览器支持情况不稳定：优先使用浏览器原生实时识别；不支持时自动降级为只显示文字输入框。
-
-### 5. 不影响其他 AI 教练的保护措施
-
-本次只改：
-- 新增独立 hook/组件（无副作用）。
-- 修改 `AssessmentCoachChat.tsx` 输入栏。
-
-不改：
-- `CoachLayout`。
-- `CoachInputFooter`。
-- `VoiceInputButton`。
-- `/wealth-coach-chat`。
-- `/coach/:coachKey` 动态教练。
-- AI 语音通话相关 `CoachVoiceChat`、RealtimeAudio、Doubao 备用通道。
-
-这样可以确保恢复情绪文字教练麦克风，同时不改变其他教练现有逻辑。
-
-## 验证计划
-
-实施后会检查：
-1. TypeScript 编译通过。
-2. `/assessment-coach` 输入框左侧出现麦克风。
-3. 点击后按钮高亮绿色，再次点击恢复普通状态。
-4. 输入框仍可手动输入、快捷选项仍可填入、发送按钮仍按原逻辑工作。
-5. `/wealth-coach-chat` 现有麦克风仍存在且不受影响。
+技术说明：这次不会改财富教练、语音通话教练、支付、训练营等逻辑；只改情绪文字教练使用的独立 hook 和入口按钮。
