@@ -72,7 +72,13 @@ export function AssessmentCoachChat({ pattern, blockedDimension, onComplete, res
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const sessionCompletedRef = useRef(false);
-  const { isListening, isSupported: isSpeechInputSupported, toggleListening, stopListening } = useRealtimeSpeechInput({
+  const {
+    isListening,
+    isProcessing: isSpeechProcessing,
+    isSupported: isSpeechInputSupported,
+    toggleListening,
+    stopListening,
+  } = useRealtimeSpeechInput({
     onTextChange: setInput,
     onError: (message) => toast.error(message),
   });
@@ -597,16 +603,18 @@ export function AssessmentCoachChat({ pattern, blockedDimension, onComplete, res
                 variant="ghost"
                 size="icon"
                 onClick={() => toggleListening(input)}
-                disabled={isLoading}
+                disabled={isLoading || isSpeechProcessing}
                 title={isListening ? "停止语音输入" : "开始语音输入"}
                 className={cn(
                   "h-11 w-11 min-w-[44px] rounded-full flex-shrink-0 transition-all",
                   isListening
                     ? "bg-primary/15 text-primary ring-2 ring-primary/35 animate-pulse"
+                    : isSpeechProcessing
+                      ? "bg-primary/10 text-primary"
                     : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
                 )}
               >
-                <Mic className="w-5 h-5" />
+                {isSpeechProcessing && !isListening ? <Loader2 className="w-5 h-5 animate-spin" /> : <Mic className="w-5 h-5" />}
               </Button>
             )}
             {!isSpeechInputSupported && (

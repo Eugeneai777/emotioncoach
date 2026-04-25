@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { audio } = await req.json();
+    const { audio, mimeType } = await req.json();
     
     if (!audio) {
       throw new Error('No audio data provided');
@@ -53,10 +53,18 @@ serve(async (req) => {
       bytes[i] = binaryString.charCodeAt(i);
     }
     
+    const safeMimeType = typeof mimeType === 'string' && mimeType.startsWith('audio/')
+      ? mimeType.split(';')[0]
+      : 'audio/webm';
+    const extension = safeMimeType.includes('mp4') || safeMimeType.includes('mpeg') ? 'mp4'
+      : safeMimeType.includes('wav') ? 'wav'
+      : safeMimeType.includes('ogg') ? 'ogg'
+      : 'webm';
+
     // Prepare form data
     const formData = new FormData();
-    const blob = new Blob([bytes.buffer], { type: 'audio/webm' });
-    formData.append('file', blob, 'audio.webm');
+    const blob = new Blob([bytes.buffer], { type: safeMimeType });
+    formData.append('file', blob, `audio.${extension}`);
     formData.append('model', 'whisper-1');
     formData.append('language', 'zh'); // Optimize for Chinese
 
