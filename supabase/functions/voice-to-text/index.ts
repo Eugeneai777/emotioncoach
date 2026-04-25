@@ -6,28 +6,13 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-const normalizeAudioFormat = (mimeType: unknown) => {
-  const rawMimeType = typeof mimeType === 'string' ? mimeType.toLowerCase().trim() : '';
-  const baseMimeType = rawMimeType.split(';')[0];
-
-  if (baseMimeType === 'audio/webm') return { mimeType: 'audio/webm', extension: 'webm' };
-  if (baseMimeType === 'audio/mp4' || baseMimeType === 'audio/x-m4a' || baseMimeType === 'audio/m4a') return { mimeType: 'audio/mp4', extension: 'm4a' };
-  if (baseMimeType === 'audio/mpeg' || baseMimeType === 'audio/mp3') return { mimeType: 'audio/mpeg', extension: 'mp3' };
-  if (baseMimeType === 'audio/mpga') return { mimeType: 'audio/mpeg', extension: 'mpga' };
-  if (baseMimeType === 'audio/ogg' || baseMimeType === 'audio/oga') return { mimeType: 'audio/ogg', extension: 'ogg' };
-  if (baseMimeType === 'audio/wav' || baseMimeType === 'audio/wave' || baseMimeType === 'audio/x-wav') return { mimeType: 'audio/wav', extension: 'wav' };
-  if (!baseMimeType) return { mimeType: 'audio/webm', extension: 'webm' };
-
-  throw new Error(`Unsupported audio format: ${baseMimeType}`);
-};
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { audio, mimeType } = await req.json();
+    const { audio } = await req.json();
     
     if (!audio) {
       throw new Error('No audio data provided');
@@ -67,27 +52,11 @@ serve(async (req) => {
     for (let i = 0; i < binaryString.length; i++) {
       bytes[i] = binaryString.charCodeAt(i);
     }
-
-    if (bytes.byteLength < 2048) {
-      console.log('Skipping tiny audio chunk:', bytes.byteLength, mimeType || 'unknown');
-      return new Response(
-        JSON.stringify({ text: '' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
     
-    const audioFormat = normalizeAudioFormat(mimeType);
-    console.log('Audio metadata:', {
-      requestedMimeType: mimeType || 'unknown',
-      normalizedMimeType: audioFormat.mimeType,
-      extension: audioFormat.extension,
-      byteLength: bytes.byteLength,
-    });
-
     // Prepare form data
     const formData = new FormData();
-    const blob = new Blob([bytes], { type: audioFormat.mimeType });
-    formData.append('file', blob, `audio.${audioFormat.extension}`);
+    const blob = new Blob([bytes.buffer], { type: 'audio/webm' });
+    formData.append('file', blob, 'audio.webm');
     formData.append('model', 'whisper-1');
     formData.append('language', 'zh'); // Optimize for Chinese
 

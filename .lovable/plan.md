@@ -1,89 +1,63 @@
-## 诊断结论
+## 问题诊断
 
-当前情绪文字教练的手机端麦克风并不是单纯权限问题，而是录音识别链路存在两个瓶颈：
+`/xiaojin` 智能语音连接界面频繁显示"网络较差"红色徽标，但用户实际网络正常。
 
-1. 手机端进入的是 `MediaRecorder -> voice-to-text -> Whisper` 的录音分段识别模式，不是真正浏览器原生实时识别，所以天然会比电脑端慢。
-2. 后台日志显示 `voice-to-text` 多次返回 OpenAI 400：`Invalid file format`。也就是说部分手机/微信 WebView 录出来的音频 MIME 或文件扩展名映射不正确，后台把它当成了不被识别的格式，因此前端统一显示“语音识别服务暂时不可用”。
-3. 目前 6 秒分段上传一次，若 6 秒片段为空、格式不匹配、网络慢，就会让用户感觉“点了没反应/很慢/服务不可用”。
+### 根因
 
-## 优化目标
+`src/hooks/useNetworkQuality.ts` 中的 RTT 阈值划分过于严苛：
 
-- 不影响情绪教练、财富教练、语音教练等其他 AI 教练逻辑。
-- 手机端点击麦克风后立即有明确状态反馈。
-- 尽量缩短从说话到文字出现的等待时间。
-- 避免因某一小段音频失败就中断整个语音输入。
-- 修正后台音频格式识别，减少“服务不可用”的误报。
+| 当前阈值 | 评级 | 问题 |
+|---|---|---|
+| < 100ms | excellent | 仅本地或同区域网络可达 |
+| < 200ms | good | |
+| < 400ms | fair | 实际中国家庭宽带访问 Google STUN 普遍在 200-400ms |
+| ≥ 400ms | **poor（红色"网络较差"）** | 误报高发区 |
 
-## 实施方案
+测量方式问题更大：使用 **`stun:stun.l.google.com:19302`**（Google STUN 服务器）。在中国大陆，访问 Google STUN 经常被 GFW 干扰、丢包、绕路，RTT 普遍 300-800ms，**这并不代表用户网络差，只代表到 Google 的链路差**——而真正的语音通话是连到我们的 OpenAI 代理（eugenetalk.net），完全是另一条链路。
 
-### 1. 修复 `voice-to-text` 音频格式兼容
+所以"每次都显示网络较差"是必然的，与用户实际带宽无关。
 
-调整后台函数 `supabase/functions/voice-to-text/index.ts`：
+## 解决方案
 
-- 对 `audio/webm;codecs=opus`、`audio/mp4;codecs=...` 等 MIME 做标准化。
-- 修正扩展名映射：
-  - `audio/webm` -> `.webm`
-  - `audio/mp4` / `audio/x-m4a` -> `.m4a` 或 `.mp4`
-  - `audio/mpeg` -> `.mp3`
-  - `audio/ogg` / `audio/oga` -> `.ogg` 或 `.oga`
-  - `audio/wav` -> `.wav`
-- 对未知 MIME 不再盲目用 `.webm`，而是返回可读错误，并记录实际 MIME/文件大小，方便后续定位。
-- 对过小或空音频片段直接返回 `{ text: "" }`，不再调用识别服务，避免无效 400。
+### 1. 增加国内可达的 STUN 服务器并降低权重
 
-### 2. 优化手机端分段策略，降低等待感
+把 STUN 列表改为同时包含国内可达节点，优先尝试低延迟节点：
 
-调整 `src/hooks/useRealtimeSpeechInput.ts`：
-
-- 手机录音分段从 6 秒缩短到约 2.5-3 秒，让文字更快出现在输入框。
-- 保留顺序队列，但单段失败不清空整个队列，只跳过失败片段并继续处理后续语音。
-- 对“空片段/太短片段”静默忽略，不弹“服务不可用”。
-- 前端错误提示区分：
-  - 麦克风启动失败
-  - 当前录音片段未识别到声音
-  - 识别服务繁忙，请继续说或稍后再试
-  - 浏览器不支持录音
-- 点击停止时强制 flush 最后一段，减少最后一句话丢失。
-
-### 3. 保持桌面端和其他教练不受影响
-
-- 仍优先让桌面端使用 `SpeechRecognition` 原生实时识别。
-- 仅在移动端、微信 WebView、HarmonyOS/ArkWeb 或原生识别失败时使用录音识别 fallback。
-- 不改动财富文字教练现有按钮逻辑、不改动其他 AI 教练请求流程。
-- 继续复用 `forceReleaseMicrophone()`，确保退出页面/停止录音时释放系统麦克风红点。
-
-### 4. 改善输入框旁的状态反馈
-
-调整 `AssessmentCoachChat.tsx`：
-
-- 麦克风开启后立即绿色高亮，不等识别结果返回。
-- 正在上传/识别时显示小 loading，但不禁用麦克风停止按钮，用户可随时停止。
-- 文案从“语音识别服务暂时不可用”改为更准确的提示，例如“正在识别中，请继续说话”或“这一小段没有识别到清晰语音”。
-
-## 技术细节
-
-```text
-手机端链路：
-用户点击麦克风
-  -> getUserMedia 立即拿麦克风
-  -> MediaRecorder 每 2.5-3 秒产出音频片段
-  -> 前端队列顺序上传 voice-to-text
-  -> 后台标准化 MIME + 文件扩展名
-  -> 识别成功后追加到输入框
-  -> 单段失败只影响该片段，不中断整个录音
+```ts
+const STUN_SERVERS = [
+  'stun:stun.miwifi.com',           // 小米（国内）
+  'stun:stun.qq.com:3478',          // 腾讯（国内）
+  'stun:stun.l.google.com:19302',   // 兜底
+];
 ```
 
-关键修改文件：
+### 2. 放宽 RTT 阈值到符合中国互联网现实的水平
 
-- `src/hooks/useRealtimeSpeechInput.ts`
-- `src/components/emotion-health/AssessmentCoachChat.tsx`
-- `supabase/functions/voice-to-text/index.ts`
+```ts
+if (measuredRtt < 200) return 'excellent';   // 原 100
+if (measuredRtt < 400) return 'good';        // 原 200
+if (measuredRtt < 800) return 'fair';        // 原 400 → 黄色"网络一般"，不再轻易触发警告
+return 'poor';                                // ≥ 800ms 才算差
+```
 
-## 验证方式
+### 3. 测量失败时默认 `good` 而不是 `unknown`
 
-实施后会做以下验证：
+当前 `measureStunRtt` 返回 `null` 时会回落到 connection type；如果浏览器（如微信 WebView）连 `navigator.connection` 都没有，会停留在 `unknown`，UI 可能继续显示告警。改为：测量失败 + 无 connection 信息时，**默认返回 `good`**，避免空报警。
 
-1. 类型检查，确保前端编译无误。
-2. 部署并测试 `voice-to-text` 后台函数。
-3. 检查后台日志不再出现大量 `Invalid file format`。
-4. 确认电脑端原生实时识别仍正常。
-5. 确认手机/微信端点击后立即高亮，2.5-3 秒内开始回填文字，停止后麦克风释放。
+### 4. （可选）连接进度页只在 `poor` 时显示红色徽标
+
+`ConnectionProgress.tsx` 当前只要不是 excellent/good 就会显示黄色"网络不稳定"提示条。保持现状即可，但因为阈值放宽，绝大多数用户会落在 good 区间，警告自然消失。
+
+## 改动文件
+
+- `src/hooks/useNetworkQuality.ts` —— 调整 STUN 列表 + 阈值 + fallback 默认值
+
+## 不改的部分
+
+- `NetworkCheckDialog`、`ConnectionProgress`、`VoiceNetworkWarning` 三个组件的 UI 逻辑保留，仅由数据源（quality 值）驱动改善。
+- 计费、超短通话退款等其它逻辑不变。
+
+## 预期效果
+
+- 国内用户在普通家庭宽带 / 4G / 5G 下，RTT 测量值通常 200-400ms，将稳定显示**绿色"网络良好"**，不再弹出红色"网络较差"。
+- 仅在真实弱网（高延迟、移动信号差、跨境绕路严重）时才显示告警，回归告警的本意。

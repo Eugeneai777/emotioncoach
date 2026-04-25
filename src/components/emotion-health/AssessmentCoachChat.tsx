@@ -4,14 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Send, Sparkles, Loader2, Mic } from "lucide-react";
+import { Send, Sparkles, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { UnifiedStageProgress, type StageConfig } from "@/components/coach/UnifiedStageProgress";
 import { ParentJourneySummary } from "@/components/coach/ParentJourneySummary";
-import { useRealtimeSpeechInput } from "@/hooks/useRealtimeSpeechInput";
 import {
   type PatternType,
   type BlockedDimension,
@@ -72,16 +71,6 @@ export function AssessmentCoachChat({ pattern, blockedDimension, onComplete, res
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const sessionCompletedRef = useRef(false);
-  const {
-    isListening,
-    isProcessing: isSpeechProcessing,
-    isSupported: isSpeechInputSupported,
-    toggleListening,
-    stopListening,
-  } = useRealtimeSpeechInput({
-    onTextChange: setInput,
-    onError: (message) => toast.error(message),
-  });
 
   const isMidlife = fromAssessment === 'midlife_awakening';
   const CHAT_URL = isMidlife ? MIDLIFE_COACH_URL : EMOTION_COACH_URL;
@@ -377,11 +366,10 @@ export function AssessmentCoachChat({ pattern, blockedDimension, onComplete, res
     if (!input.trim() || isLoading || (!sessionId && !isMidlife)) return;
 
     const userMessage = input.trim();
-    stopListening();
     setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
     setInput("");
     sendMessage(userMessage, sessionId || 'midlife-direct');
-  }, [input, isLoading, sessionId, sendMessage, isMidlife, stopListening]);
+  }, [input, isLoading, sessionId, sendMessage, isMidlife]);
 
   const handleCTAClick = (type: 'camp' | 'membership') => {
     if (type === 'camp') {
@@ -597,39 +585,6 @@ export function AssessmentCoachChat({ pattern, blockedDimension, onComplete, res
       {!briefing && (
         <div className="border-t p-4 pb-[calc(16px+env(safe-area-inset-bottom))]">
           <div className="flex gap-2">
-            {isSpeechInputSupported && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => toggleListening(input)}
-                disabled={isLoading || (isSpeechProcessing && !isListening)}
-                title={isListening ? "停止语音输入" : "开始语音输入"}
-                className={cn(
-                  "h-11 w-11 min-w-[44px] rounded-full flex-shrink-0 transition-all",
-                  isListening
-                    ? "bg-emerald-500 text-white ring-2 ring-emerald-200 animate-pulse hover:bg-emerald-600"
-                    : isSpeechProcessing
-                      ? "bg-emerald-500/10 text-emerald-600"
-                    : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
-                )}
-              >
-                {isSpeechProcessing && !isListening ? <Loader2 className="w-5 h-5 animate-spin" /> : <Mic className="w-5 h-5" />}
-              </Button>
-            )}
-            {!isSpeechInputSupported && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => toast.error("当前浏览器暂不支持语音转文字，请在微信/系统浏览器开启麦克风权限，或先使用文字输入")}
-                disabled={isLoading}
-                title="语音输入暂不可用"
-                className="h-11 w-11 min-w-[44px] rounded-full flex-shrink-0 bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
-              >
-                <Mic className="w-5 h-5" />
-              </Button>
-            )}
             <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
