@@ -59,6 +59,7 @@ serve(async (req) => {
     formData.append('file', blob, 'audio.webm');
     formData.append('model', 'whisper-1');
     formData.append('language', 'zh'); // Optimize for Chinese
+    formData.append('prompt', '请将语音准确转写为中文简体，所有中文字符必须使用简体字，不要使用繁体字。');
 
     // Send to OpenAI Whisper API
     const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
