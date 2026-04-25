@@ -603,14 +603,14 @@ export function AssessmentCoachChat({ pattern, blockedDimension, onComplete, res
                 variant="ghost"
                 size="icon"
                 onClick={() => toggleListening(input)}
-                disabled={isLoading || isSpeechProcessing}
+                disabled={isLoading || (isSpeechProcessing && !isListening)}
                 title={isListening ? "停止语音输入" : "开始语音输入"}
                 className={cn(
                   "h-11 w-11 min-w-[44px] rounded-full flex-shrink-0 transition-all",
                   isListening
-                    ? "bg-primary/15 text-primary ring-2 ring-primary/35 animate-pulse"
+                    ? "bg-emerald-500 text-white ring-2 ring-emerald-200 animate-pulse hover:bg-emerald-600"
                     : isSpeechProcessing
-                      ? "bg-primary/10 text-primary"
+                      ? "bg-emerald-500/10 text-emerald-600"
                     : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
                 )}
               >
