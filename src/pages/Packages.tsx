@@ -34,6 +34,7 @@ export default function Packages() {
   const [payDialogOpen, setPayDialogOpen] = useState(false);
 
   const paymentResumeHandledRef = useRef(false);
+  const reopenPayDialogTimerRef = useRef<number | null>(null);
   const paymentResume = searchParams.get('payment_resume') === '1';
   const paymentOpenId = searchParams.get('payment_openid');
   const paymentAuthError = searchParams.get('payment_auth_error') === '1';
@@ -83,6 +84,14 @@ export default function Packages() {
       console.log('[Packages] Payment callback detected, order:', callbackOrderNo);
     }
   }, [isPaymentCallback, callbackOrderNo]);
+
+  useEffect(() => {
+    return () => {
+      if (reopenPayDialogTimerRef.current) {
+        window.clearTimeout(reopenPayDialogTimerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (paymentResumeHandledRef.current) return;
@@ -142,6 +151,21 @@ export default function Packages() {
     if (!user) {
       toast.error("请先登录", { description: "登录后即可购买套餐" });
       navigate('/auth');
+      return;
+    }
+
+    if (reopenPayDialogTimerRef.current) {
+      window.clearTimeout(reopenPayDialogTimerRef.current);
+      reopenPayDialogTimerRef.current = null;
+    }
+
+    if (payDialogOpen && selectedPackage?.key !== packageInfo.key) {
+      setPayDialogOpen(false);
+      reopenPayDialogTimerRef.current = window.setTimeout(() => {
+        setSelectedPackage(packageInfo);
+        setPayDialogOpen(true);
+        reopenPayDialogTimerRef.current = null;
+      }, 80);
       return;
     }
 
