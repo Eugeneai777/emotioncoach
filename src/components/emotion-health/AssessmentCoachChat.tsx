@@ -74,6 +74,7 @@ export function AssessmentCoachChat({ pattern, blockedDimension, onComplete, res
   const sessionCompletedRef = useRef(false);
   const { isListening, isSupported: isSpeechInputSupported, toggleListening, stopListening } = useRealtimeSpeechInput({
     onTextChange: setInput,
+    onError: (message) => toast.error(message),
   });
 
   const isMidlife = fromAssessment === 'midlife_awakening';
@@ -604,6 +605,19 @@ export function AssessmentCoachChat({ pattern, blockedDimension, onComplete, res
                     ? "bg-primary/15 text-primary ring-2 ring-primary/35 animate-pulse"
                     : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
                 )}
+              >
+                <Mic className="w-5 h-5" />
+              </Button>
+            )}
+            {!isSpeechInputSupported && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => toast.error("当前浏览器暂不支持语音转文字，请在微信/系统浏览器开启麦克风权限，或先使用文字输入")}
+                disabled={isLoading}
+                title="语音输入暂不可用"
+                className="h-11 w-11 min-w-[44px] rounded-full flex-shrink-0 bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
               >
                 <Mic className="w-5 h-5" />
               </Button>
