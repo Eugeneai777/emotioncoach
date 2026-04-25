@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Play, Award, Heart } from "lucide-react";
+import { ExternalLink, Play, Award, Heart, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { deductVideoQuota } from "@/utils/videoQuotaUtils";
+import { normalizeExternalUrl, openExternalUrl } from "@/utils/openExternalUrl";
 
 interface VideoRecommendation {
   id: string;
@@ -24,6 +25,7 @@ interface VideoRecommendationsProps {
 
 export const VideoRecommendations = ({ recommendations }: VideoRecommendationsProps) => {
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
+  const [openingCourseId, setOpeningCourseId] = useState<string | null>(null);
   const { toast } = useToast();
 
   if (!recommendations || recommendations.length === 0) {
@@ -31,6 +33,18 @@ export const VideoRecommendations = ({ recommendations }: VideoRecommendationsPr
   }
 
   const handleWatchClick = async (rec: VideoRecommendation) => {
+    const videoUrl = normalizeExternalUrl(rec.video_url);
+    if (!videoUrl) {
+      toast({
+        title: "课程链接不可用",
+        description: "请稍后再试或前往课程页查看",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setOpeningCourseId(rec.id);
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -61,13 +75,32 @@ export const VideoRecommendations = ({ recommendations }: VideoRecommendationsPr
         });
       }
 
-      window.open(rec.video_url, '_blank');
+      const openResult = openExternalUrl(videoUrl);
+      if (!openResult.ok) {
+        toast({
+          title: openResult.mode === 'blocked' ? "浏览器拦截了课程窗口" : "课程链接不可用",
+          description: openResult.mode === 'blocked' ? "请点击提示操作继续打开课程" : "请稍后再试或前往课程页查看",
+          variant: "destructive",
+          action: openResult.normalizedUrl ? (
+            <button
+              type="button"
+              className="rounded-sm px-2 py-1 text-xs font-medium bg-primary text-primary-foreground"
+              onClick={() => window.location.assign(openResult.normalizedUrl!)}
+            >
+              点击打开
+            </button>
+          ) : undefined,
+        });
+        setOpeningCourseId(null);
+        return;
+      }
     } catch (error) {
       console.error("Error watching video:", error);
       toast({
         title: "操作失败",
         variant: "destructive",
       });
+      setOpeningCourseId(null);
     }
   };
 
