@@ -304,6 +304,19 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
       const resumeUrl = new URL(window.location.href);
       resumeUrl.searchParams.set("assessment_pay_resume", "1");
 
+      // 微信/鸿蒙微信浏览器使用顶层导航进入授权函数，绕过部分 XWEB 环境下 invoke/fetch 卡住的问题
+      const ua = navigator.userAgent.toLowerCase();
+      const isHarmonyWechat = /harmonyos|hmsbrowser|openharmony/i.test(ua) || (isWechat && /huawei|honor|blk-|harmony/i.test(ua));
+      if (isWechat || isHarmonyWechat) {
+        const functionsBaseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
+        const directUrl = new URL(`${functionsBaseUrl}/wechat-pay-auth`);
+        directUrl.searchParams.set("redirectUri", resumeUrl.toString());
+        directUrl.searchParams.set("flow", "wealth_assessment");
+        console.log("[AssessmentPay] Using top-level navigation for WeChat/Harmony auth");
+        window.location.href = directUrl.toString();
+        return;
+      }
+
       const { data, error } = await supabase.functions.invoke("wechat-pay-auth", {
         body: {
           redirectUri: resumeUrl.toString(),
@@ -329,7 +342,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
       sessionStorage.removeItem("pay_auth_in_progress");
       setOpenIdResolved(true);
     }
-  }, []);
+  }, [isWechat]);
 
   // 请求小程序获取 openId（通过 postMessage）
   const requestMiniProgramOpenId = useCallback(() => {

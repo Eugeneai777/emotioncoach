@@ -33,6 +33,15 @@ export default function PayEntry() {
   const [showPayDialog, setShowPayDialog] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
 
+  const redirectBackWithAuthFallback = () => {
+    if (!paymentRedirect) return;
+    const target = new URL(paymentRedirect);
+    target.searchParams.set('payment_auth_error', '1');
+    target.searchParams.set('payment_resume', '1');
+    target.searchParams.set('assessment_pay_resume', '1');
+    window.location.replace(target.toString());
+  };
+
   // 优先处理静默授权回调（使用新的 wechat-pay-auth 函数）
   useEffect(() => {
     if (!isPaymentAuthCallback) return;
@@ -112,7 +121,14 @@ export default function PayEntry() {
       }
     };
 
+    const fallbackTimer = window.setTimeout(() => {
+      console.warn('[PayEntry] Payment auth exchange timeout, redirecting back with fallback');
+      redirectBackWithAuthFallback();
+    }, 8000);
+
     run();
+
+    return () => window.clearTimeout(fallbackTimer);
   }, [isPaymentAuthCallback, paymentAuthCode, paymentRedirect, payFlow, authState]);
 
   useEffect(() => {
