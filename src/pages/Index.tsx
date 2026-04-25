@@ -747,6 +747,7 @@ const Index = () => {
         }}
         enableStepsCollapse={true}
         enableVoiceInput={true}
+        showVoiceInputSuccessToast={false}
         messagesEndRef={messagesEndRef}
         voiceChatCTA={
           <>
