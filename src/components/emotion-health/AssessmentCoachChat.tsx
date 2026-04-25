@@ -590,6 +590,7 @@ export function AssessmentCoachChat({ pattern, blockedDimension, onComplete, res
               onTranscript={(text) => setInput(prev => prev ? `${prev} ${text}` : text)}
               disabled={isLoading}
               primaryColor="teal"
+              showSuccessToast={false}
             />
             <Textarea
               value={input}
