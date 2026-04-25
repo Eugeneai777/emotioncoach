@@ -68,7 +68,6 @@ const getSupportedMimeType = () => {
   return [
     "audio/mp4",
     "audio/webm;codecs=opus",
-    "audio/webm;codecs=opus",
     "audio/webm",
     "audio/mpeg",
   ].find((type) => MediaRecorder.isTypeSupported(type)) || "";
