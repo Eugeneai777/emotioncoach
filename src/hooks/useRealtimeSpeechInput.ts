@@ -6,7 +6,7 @@ interface BrowserSpeechRecognition extends EventTarget {
   interimResults: boolean;
   maxAlternatives: number;
   onresult: ((event: Event) => void) | null;
-  onerror: (() => void) | null;
+  onerror: ((event: Event) => void) | null;
   onend: (() => void) | null;
   start: () => void;
   stop: () => void;
@@ -19,6 +19,10 @@ interface SpeechRecognitionEventLike extends Event {
   results: SpeechRecognitionResultList;
 }
 
+interface SpeechRecognitionErrorEventLike extends Event {
+  error?: string;
+}
+
 declare global {
   interface Window {
     SpeechRecognition?: SpeechRecognitionConstructor;
@@ -28,6 +32,7 @@ declare global {
 
 interface UseRealtimeSpeechInputOptions {
   onTextChange: (text: string) => void;
+  onError?: (message: string) => void;
   language?: string;
 }
 
@@ -42,32 +47,47 @@ const joinSpeechText = (baseText: string, finalText: string, interimText: string
 
 export function useRealtimeSpeechInput({
   onTextChange,
+  onError,
   language = "zh-CN",
 }: UseRealtimeSpeechInputOptions) {
   const [isListening, setIsListening] = useState(false);
-  const [isSupported, setIsSupported] = useState(false);
+  const [isSupported, setIsSupported] = useState(() => !!getSpeechRecognition());
   const recognitionRef = useRef<BrowserSpeechRecognition | null>(null);
   const baseTextRef = useRef("");
   const finalTextRef = useRef("");
-  const shouldStopRef = useRef(false);
+  const shouldKeepListeningRef = useRef(false);
 
   useEffect(() => {
     setIsSupported(!!getSpeechRecognition());
   }, []);
 
   const stopListening = useCallback(() => {
-    shouldStopRef.current = true;
-    recognitionRef.current?.stop();
+    shouldKeepListeningRef.current = false;
+    const recognition = recognitionRef.current;
     recognitionRef.current = null;
+    try {
+      recognition?.stop();
+    } catch {
+      // Some mobile WebViews throw if stop() is called before start() settles.
+    }
     setIsListening(false);
   }, []);
 
   const startListening = useCallback((baseText: string) => {
     const SpeechRecognition = getSpeechRecognition();
-    if (!SpeechRecognition) return false;
+    if (!SpeechRecognition) {
+      setIsSupported(false);
+      onError?.("当前浏览器暂不支持语音转文字，请在微信/系统浏览器开启麦克风权限，或先使用文字输入");
+      return false;
+    }
 
-    stopListening();
-    shouldStopRef.current = false;
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch {}
+    }
+
+    shouldKeepListeningRef.current = true;
     baseTextRef.current = baseText;
     finalTextRef.current = "";
 
@@ -94,21 +114,49 @@ export function useRealtimeSpeechInput({
       onTextChange(joinSpeechText(baseTextRef.current, finalTextRef.current, interimText));
     };
 
-    recognition.onerror = () => {
+    recognition.onerror = (event: Event) => {
+      const error = (event as SpeechRecognitionErrorEventLike).error;
+      shouldKeepListeningRef.current = false;
       setIsListening(false);
       recognitionRef.current = null;
+      if (error === "not-allowed" || error === "service-not-allowed") {
+        onError?.("麦克风权限未开启，请在手机浏览器或微信设置中允许麦克风");
+      } else if (error === "audio-capture") {
+        onError?.("没有检测到可用麦克风，请检查设备权限");
+      } else if (error === "network") {
+        onError?.("语音识别网络连接失败，请稍后重试");
+      } else if (error !== "no-speech" && error !== "aborted") {
+        onError?.("语音识别启动失败，请检查麦克风权限后重试");
+      }
     };
 
     recognition.onend = () => {
+      if (shouldKeepListeningRef.current && recognitionRef.current === recognition) {
+        try {
+          recognition.start();
+          setIsListening(true);
+          return;
+        } catch {
+          shouldKeepListeningRef.current = false;
+        }
+      }
+      if (recognitionRef.current === recognition) recognitionRef.current = null;
       setIsListening(false);
-      recognitionRef.current = null;
     };
 
-    recognitionRef.current = recognition;
-    recognition.start();
-    setIsListening(true);
+    try {
+      recognitionRef.current = recognition;
+      recognition.start();
+      setIsListening(true);
+    } catch {
+      shouldKeepListeningRef.current = false;
+      recognitionRef.current = null;
+      setIsListening(false);
+      onError?.("语音识别启动失败，请检查麦克风权限后重试");
+      return false;
+    }
     return true;
-  }, [language, onTextChange, stopListening]);
+  }, [language, onError, onTextChange]);
 
   const toggleListening = useCallback((baseText: string) => {
     if (isListening) {
