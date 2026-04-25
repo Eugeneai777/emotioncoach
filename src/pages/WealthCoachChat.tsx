@@ -339,6 +339,7 @@ const WealthCoachChat = () => {
           ) : undefined
         }
         enableVoiceInput={true}
+        showVoiceInputSuccessToast={false}
         loadingPlaceholder={showMeditationAnalysisIntro ? (
           <MeditationAnalysisIntro
             dayNumber={locationState?.dayNumber}
