@@ -1,6 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-type SpeechRecognitionConstructor = new () => SpeechRecognition;
+interface BrowserSpeechRecognition extends EventTarget {
+  lang: string;
+  continuous: boolean;
+  interimResults: boolean;
+  maxAlternatives: number;
+  onresult: ((event: Event) => void) | null;
+  onerror: (() => void) | null;
+  onend: (() => void) | null;
+  start: () => void;
+  stop: () => void;
+}
+
+type SpeechRecognitionConstructor = new () => BrowserSpeechRecognition;
 
 interface SpeechRecognitionEventLike extends Event {
   resultIndex: number;
@@ -34,7 +46,7 @@ export function useRealtimeSpeechInput({
 }: UseRealtimeSpeechInputOptions) {
   const [isListening, setIsListening] = useState(false);
   const [isSupported, setIsSupported] = useState(false);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const recognitionRef = useRef<BrowserSpeechRecognition | null>(null);
   const baseTextRef = useRef("");
   const finalTextRef = useRef("");
   const shouldStopRef = useRef(false);
