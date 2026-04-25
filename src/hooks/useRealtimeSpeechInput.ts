@@ -66,12 +66,16 @@ const joinSpeechText = (baseText: string, finalText: string, interimText = "") =
 const getSupportedMimeType = () => {
   if (typeof MediaRecorder === "undefined" || !MediaRecorder.isTypeSupported) return "";
   return [
+    "audio/mp4",
+    "audio/webm;codecs=opus",
     "audio/webm;codecs=opus",
     "audio/webm",
-    "audio/mp4",
     "audio/mpeg",
   ].find((type) => MediaRecorder.isTypeSupported(type)) || "";
 };
+
+const RECORDER_TIMESLICE_MS = 2800;
+const MIN_AUDIO_CHUNK_BYTES = 2048;
 
 const blobToBase64 = (blob: Blob) => {
   return new Promise<string>((resolve, reject) => {
@@ -159,8 +163,7 @@ export function useRealtimeSpeechInput({
       if (text) appendTranscript(text);
     } catch (error) {
       console.error("Recorder transcription error:", error);
-      onError?.("语音识别服务暂时不可用，请稍后重试或先使用文字输入");
-      chunkQueueRef.current = [];
+      onError?.("这一小段语音识别失败，请继续说或稍后再试");
     } finally {
       isTranscribingRef.current = false;
       if (chunkQueueRef.current.length > 0) {
@@ -176,7 +179,14 @@ export function useRealtimeSpeechInput({
     const recorder = recorderRef.current;
     recorderRef.current = null;
     try {
-      if (recorder && recorder.state !== "inactive") recorder.stop();
+      if (recorder && recorder.state !== "inactive") {
+        try {
+          recorder.requestData();
+        } catch {
+          // Some mobile WebViews do not support manual flush reliably.
+        }
+        recorder.stop();
+      }
     } catch {
       // Some mobile WebViews throw when recorder already stopped.
     }
@@ -230,7 +240,7 @@ export function useRealtimeSpeechInput({
       recorderRef.current = recorder;
 
       recorder.ondataavailable = (event) => {
-        if (!event.data || event.data.size < 1024) return;
+        if (!event.data || event.data.size < MIN_AUDIO_CHUNK_BYTES) return;
         chunkQueueRef.current.push(event.data);
         void processRecorderQueue();
       };
@@ -247,7 +257,7 @@ export function useRealtimeSpeechInput({
         void processRecorderQueue();
       };
 
-      recorder.start(6000);
+      recorder.start(RECORDER_TIMESLICE_MS);
       setIsListening(true);
       return true;
     } catch (error) {
