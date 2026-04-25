@@ -590,6 +590,24 @@ export function AssessmentCoachChat({ pattern, blockedDimension, onComplete, res
       {!briefing && (
         <div className="border-t p-4 pb-[calc(16px+env(safe-area-inset-bottom))]">
           <div className="flex gap-2">
+            {isSpeechInputSupported && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => toggleListening(input)}
+                disabled={isLoading}
+                title={isListening ? "停止语音输入" : "开始语音输入"}
+                className={cn(
+                  "h-11 w-11 min-w-[44px] rounded-full flex-shrink-0 transition-all",
+                  isListening
+                    ? "bg-primary/15 text-primary ring-2 ring-primary/35 animate-pulse"
+                    : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
+                )}
+              >
+                <Mic className="w-5 h-5" />
+              </Button>
+            )}
             <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
