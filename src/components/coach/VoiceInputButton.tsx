@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { isWeChatMiniProgram, isWeChatBrowser } from "@/utils/platform";
 import { acquireMicrophone, releaseMicrophone } from "@/utils/microphoneManager";
+import { normalizeToSimplifiedChinese } from "@/utils/chineseText";
 
 interface VoiceInputButtonProps {
   onTranscript: (text: string) => void;
@@ -115,7 +116,8 @@ export const VoiceInputButton = ({
       if (error) throw error;
 
       if (data?.text) {
-        onTranscript(data.text);
+        const normalizedText = normalizeToSimplifiedChinese(data.text);
+        onTranscript(normalizedText);
         if (showSuccessToast) {
           toast({
             title: "语音转换成功",
