@@ -10,12 +10,14 @@ interface VoiceInputButtonProps {
   onTranscript: (text: string) => void;
   disabled?: boolean;
   primaryColor?: string;
+  showSuccessToast?: boolean;
 }
 
 export const VoiceInputButton = ({ 
   onTranscript, 
   disabled = false,
-  primaryColor = "teal"
+  primaryColor = "teal",
+  showSuccessToast = true
 }: VoiceInputButtonProps) => {
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -114,10 +116,12 @@ export const VoiceInputButton = ({
 
       if (data?.text) {
         onTranscript(data.text);
-        toast({
-          title: "语音转换成功",
-          description: "已将语音转为文字",
-        });
+        if (showSuccessToast) {
+          toast({
+            title: "语音转换成功",
+            description: "已将语音转为文字",
+          });
+        }
       } else {
         toast({
           title: "未识别到语音",

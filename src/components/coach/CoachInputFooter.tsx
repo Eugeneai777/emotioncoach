@@ -24,6 +24,7 @@ interface CoachInputFooterProps {
   enableVoiceChat?: boolean;
   onVoiceChatClick?: () => void;
   enableVoiceInput?: boolean;
+  showVoiceInputSuccessToast?: boolean;
   embedded?: boolean;
   onHeightChange?: (height: number) => void;
 }
@@ -46,6 +47,7 @@ export const CoachInputFooter = forwardRef<HTMLTextAreaElement | HTMLInputElemen
   enableVoiceChat = false,
   onVoiceChatClick,
   enableVoiceInput = false,
+  showVoiceInputSuccessToast = true,
   embedded = false,
   onHeightChange
 }, ref) => {
@@ -161,6 +163,7 @@ export const CoachInputFooter = forwardRef<HTMLTextAreaElement | HTMLInputElemen
               onTranscript={(text) => onInputChange(input ? `${input} ${text}` : text)}
               disabled={isLoading}
               primaryColor={primaryColor}
+              showSuccessToast={showVoiceInputSuccessToast}
             />
           )}
           

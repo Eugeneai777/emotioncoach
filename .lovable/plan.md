@@ -1,64 +1,80 @@
-## 修复与优化方案
+## 优化方案：隐藏语音转文字成功提示
 
 ### 目标
-修复 `https://wechat.eugenewe.net/emotion-coach` 页面完成情绪四部曲、生成简报后，自动推荐课程点击「立即观看/点击观看」无反应的问题；保留现有简报生成、课程推荐、额度扣除、观看记录、收藏逻辑，不影响其他 AI 教练功能。
+在以下两个页面中，用户点击麦克风并完成语音转文字后，不再弹出顶部提示框：
 
-### 根因判断
-`/emotion-coach` 的链路是：
+- `/emotion-coach` 情绪文字教练
+- `/assessment-coach` 情绪测评后的文字教练
 
-```text
-Index.tsx (/emotion-coach)
-  -> useStreamChat 生成简报并调用 recommend-courses
-  -> CoachLayout
-  -> ChatMessage
-  -> VideoRecommendations
-  -> 点击课程按钮
-```
+保留现有功能：
 
-当前 `VideoRecommendations.tsx` 中点击按钮后，会先异步执行登录检查、课程额度扣除、观看记录写入，然后才执行：
+- 麦克风按钮仍正常显示。
+- 录音、停止录音、语音识别仍正常。
+- 识别出的文字仍自动填入输入框。
+- 失败提示、未识别到语音提示、无麦克风权限提示仍保留，方便用户知道异常原因。
+- 不影响财富教练、沟通教练、亲子教练等其他 AI 教练现有逻辑。
+
+### 当前原因
+`VoiceInputButton` 是共用语音输入组件。语音识别成功后会统一调用：
 
 ```ts
-window.open(rec.video_url, '_blank')
+onTranscript(data.text);
+toast({
+  title: "语音转换成功",
+  description: "已将语音转为文字",
+});
 ```
 
-在微信浏览器/小程序 WebView/部分鸿蒙或安卓浏览器中，`window.open` 如果不是在用户点击的同步调用栈里直接触发，常会被拦截或静默失败，所以用户看到的现象就是「点了没反应」。此外按钮没有 loading 状态和弹窗拦截兜底，也放大了这个问题。
+所以每次成功识别都会出现提示框。对高频语音输入场景来说，这个成功提示会打断用户连续输入体验。
 
 ### 实施方案
 
-1. **只优化课程观看入口，不改情绪教练主流程**
-   - 修改重点放在 `VideoRecommendations.tsx`。
-   - 不改 `useStreamChat` 的简报生成逻辑。
-   - 不改 `recommend-courses` 推荐逻辑。
-   - 不改情绪四部曲阶段推进逻辑。
+1. **扩展共用语音按钮组件**
+   - 在 `VoiceInputButton` 增加一个可选参数，例如：
 
-2. **增加可靠的课程打开策略**
-   - 点击按钮时先做链接有效性校验。
-   - 微信/移动端环境下，优先使用当前 WebView 跳转 `window.location.assign(videoUrl)`，避免 `_blank` 被拦截导致无反应。
-   - 普通浏览器中继续尝试新标签页打开。
-   - 如果新标签页被拦截，提供 toast 明确提示，并给出「点击打开」兜底操作。
+```ts
+showSuccessToast?: boolean
+```
 
-3. **保留原有额度与观看记录规则**
-   - 继续调用 `deductVideoQuota(user.id, rec.id, rec.title, 'video_recommendations')`。
-   - 继续只在首次观看时写入 `video_watch_history`。
-   - 额度不足、未登录、操作失败仍阻止打开课程。
-   - 不绕过任何现有付费/会员权益校验。
+   - 默认值保持 `true`，确保其他页面不受影响。
 
-4. **补充点击反馈，避免用户误以为无响应**
-   - 增加 `openingCourseId` 状态。
-   - 当前课程按钮点击后显示「正在打开...」并禁用重复点击。
-   - 失败时恢复按钮并显示明确原因。
-   - 收藏按钮在课程打开处理中不被误触发。
+2. **仅在两个情绪教练页面关闭成功提示**
+   - `/emotion-coach` 通过 `CoachLayout -> CoachInputFooter -> VoiceInputButton` 链路传入关闭参数。
+   - `/assessment-coach` 的 `AssessmentCoachChat` 直接使用 `VoiceInputButton`，传入关闭参数。
 
-5. **架构优化：抽出可复用外链打开工具**
-   - 新增轻量工具函数，例如 `src/utils/openExternalUrl.ts`。
-   - 统一处理：微信环境判断、移动端同窗跳转、普通浏览器新窗口、弹窗拦截兜底。
-   - 先在 `VideoRecommendations` 使用，后续其他课程入口可逐步复用，但本次不批量改动其他教练入口，避免扩大影响范围。
+3. **保留异常提示**
+   - 不改以下 toast：
+     - 浏览器不支持语音录制
+     - 无法访问麦克风
+     - 未识别到语音
+     - 语音转换失败
+     - 微信环境下使用键盘语音输入的提示
+   - 只隐藏“语音转换成功 / 已将语音转为文字”。
+
+### 涉及文件
+
+- `src/components/coach/VoiceInputButton.tsx`
+  - 增加 `showSuccessToast` 可选属性。
+  - 成功识别时仅在该属性为 `true` 时显示成功 toast。
+
+- `src/components/coach/CoachInputFooter.tsx`
+  - 增加透传属性，例如 `showVoiceInputSuccessToast`。
+
+- `src/components/coach/CoachLayout.tsx`
+  - 增加透传属性，例如 `showVoiceInputSuccessToast`。
+
+- `src/pages/Index.tsx`
+  - `/emotion-coach` 页面设置 `showVoiceInputSuccessToast={false}`。
+
+- `src/components/emotion-health/AssessmentCoachChat.tsx`
+  - `VoiceInputButton` 设置 `showSuccessToast={false}`。
 
 ### 验证方案
 
-1. TypeScript 检查通过。
-2. `/emotion-coach` 完成四部曲后推荐课程正常展示。
-3. 点击「立即观看/点击观看」后按钮立即出现 loading 反馈。
-4. 已登录且额度正常时，课程能在微信/移动端正常跳转打开。
-5. 未登录、额度不足、课程链接为空时有明确提示，不出现静默无反应。
-6. 收藏、简报保存、推荐生成、训练营自动打卡等原有逻辑不变。
+1. 在 `/emotion-coach` 点击麦克风，说话并停止录音。
+2. 确认文字自动进入输入框。
+3. 确认不再出现“语音转换成功 / 已将语音转为文字”提示框。
+4. 在 `/assessment-coach` 重复验证。
+5. 模拟识别失败或空音频，确认错误提示仍显示。
+6. 检查其他使用语音输入的教练页面默认行为不变。
+7. 运行 TypeScript 检查，确认无类型错误。
