@@ -1,80 +1,69 @@
-## 优化方案：隐藏语音转文字成功提示
+## 优化目标
 
-### 目标
-在以下两个页面中，用户点击麦克风并完成语音转文字后，不再弹出顶部提示框：
+在 `https://wechat.eugenewe.net/emotion-coach` 中，用户点击麦克风语音输入后，识别结果统一回填为中文简体，避免出现“時局、新聞、會”等繁体字；同时不改变现有录音、扣费、识别、错误提示、发送消息、简报生成等逻辑。
 
-- `/emotion-coach` 情绪文字教练
-- `/assessment-coach` 情绪测评后的文字教练
+## 现状判断
 
-保留现有功能：
+当前语音输入链路是：
 
-- 麦克风按钮仍正常显示。
-- 录音、停止录音、语音识别仍正常。
-- 识别出的文字仍自动填入输入框。
-- 失败提示、未识别到语音提示、无麦克风权限提示仍保留，方便用户知道异常原因。
-- 不影响财富教练、沟通教练、亲子教练等其他 AI 教练现有逻辑。
-
-### 当前原因
-`VoiceInputButton` 是共用语音输入组件。语音识别成功后会统一调用：
-
-```ts
-onTranscript(data.text);
-toast({
-  title: "语音转换成功",
-  description: "已将语音转为文字",
-});
+```text
+用户录音
+  -> voice-to-text 后端函数调用语音识别
+  -> 前端 VoiceInputButton 收到 data.text
+  -> 写入 CoachInputFooter 输入框
+  -> 用户点击发送
 ```
 
-所以每次成功识别都会出现提示框。对高频语音输入场景来说，这个成功提示会打断用户连续输入体验。
+问题出在语音识别模型返回的 `data.text` 可能混入繁体字。最稳妥的优化点是在“识别完成后、写入输入框前”做一次简体归一化，不改识别接口、不改聊天接口、不改简报生成逻辑。
 
-### 实施方案
+## 实施方案
 
-1. **扩展共用语音按钮组件**
-   - 在 `VoiceInputButton` 增加一个可选参数，例如：
+1. 新增一个轻量文本工具
+   - 新建 `src/utils/chineseText.ts`
+   - 提供 `normalizeToSimplifiedChinese(text: string): string`
+   - 使用内置繁简映射表处理常见繁体字、异体字与用户截图中出现的问题，例如：
+     - `時 -> 时`
+     - `會 -> 会`
+     - `聞 -> 闻`
+     - `謝 -> 谢`
+     - `國 -> 国`
+     - `這 -> 这`
+     - `為 -> 为`
+     - `與 -> 与`
+     - `還 -> 还`
+     - `後 -> 后`
+   - 保留标点、英文、数字、emoji、用户原句结构不变。
 
-```ts
-showSuccessToast?: boolean
-```
+2. 在语音输入组件统一处理
+   - 修改 `src/components/coach/VoiceInputButton.tsx`
+   - 在 `data?.text` 返回后先执行：
+     ```ts
+     const normalizedText = normalizeToSimplifiedChinese(data.text);
+     onTranscript(normalizedText);
+     ```
+   - 这样所有使用 `VoiceInputButton` 的文字语音输入都会获得简体结果。
+   - 现有 `showSuccessToast`、错误 toast、麦克风状态、扣费调用保持不变。
 
-   - 默认值保持 `true`，确保其他页面不受影响。
+3. 后端提示词增强，降低源头返回繁体概率
+   - 修改 `supabase/functions/voice-to-text/index.ts`
+   - 在语音识别请求中加入 `prompt`，明确要求返回“简体中文，不使用繁体字”。
+   - 继续保留 `language: 'zh'`、Whisper 模型、扣费流程和错误处理。
 
-2. **仅在两个情绪教练页面关闭成功提示**
-   - `/emotion-coach` 通过 `CoachLayout -> CoachInputFooter -> VoiceInputButton` 链路传入关闭参数。
-   - `/assessment-coach` 的 `AssessmentCoachChat` 直接使用 `VoiceInputButton`，传入关闭参数。
+4. 兼容两个情绪文字教练
+   - `/emotion-coach`：通过 `CoachLayout -> CoachInputFooter -> VoiceInputButton` 自动生效。
+   - `/assessment-coach`：该页面也直接使用 `VoiceInputButton`，会同步获得简体化结果。
+   - 不改变这两个页面已完成的“隐藏语音转换成功提示框”逻辑。
 
-3. **保留异常提示**
-   - 不改以下 toast：
-     - 浏览器不支持语音录制
-     - 无法访问麦克风
-     - 未识别到语音
-     - 语音转换失败
-     - 微信环境下使用键盘语音输入的提示
-   - 只隐藏“语音转换成功 / 已将语音转为文字”。
+5. 验证
+   - 执行 TypeScript 类型检查。
+   - 用含繁体的测试字符串验证转换函数不会影响简体、英文、数字和 emoji。
+   - 确认语音输入回填位置仍然是原输入框，用户仍可继续编辑后发送。
 
-### 涉及文件
+## 技术说明
 
-- `src/components/coach/VoiceInputButton.tsx`
-  - 增加 `showSuccessToast` 可选属性。
-  - 成功识别时仅在该属性为 `true` 时显示成功 toast。
+优先采用“前端归一化 + 后端识别提示”的双保险：
 
-- `src/components/coach/CoachInputFooter.tsx`
-  - 增加透传属性，例如 `showVoiceInputSuccessToast`。
-
-- `src/components/coach/CoachLayout.tsx`
-  - 增加透传属性，例如 `showVoiceInputSuccessToast`。
-
-- `src/pages/Index.tsx`
-  - `/emotion-coach` 页面设置 `showVoiceInputSuccessToast={false}`。
-
-- `src/components/emotion-health/AssessmentCoachChat.tsx`
-  - `VoiceInputButton` 设置 `showSuccessToast={false}`。
-
-### 验证方案
-
-1. 在 `/emotion-coach` 点击麦克风，说话并停止录音。
-2. 确认文字自动进入输入框。
-3. 确认不再出现“语音转换成功 / 已将语音转为文字”提示框。
-4. 在 `/assessment-coach` 重复验证。
-5. 模拟识别失败或空音频，确认错误提示仍显示。
-6. 检查其他使用语音输入的教练页面默认行为不变。
-7. 运行 TypeScript 检查，确认无类型错误。
+- 后端 `prompt` 可以减少语音模型输出繁体的概率。
+- 前端归一化可以保证即使模型偶尔返回繁体，进入输入框前也会被转成简体。
+- 不引入新依赖，避免增加包体积与构建风险。
+- 不改数据库、不改用户会话、不影响已有 AI 教练对话和简报生成流程。
