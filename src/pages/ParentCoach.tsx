@@ -493,6 +493,7 @@ ${briefingData.growth_story || '暂无记录'}
           ) : undefined
         )}
         enableVoiceInput={true}
+        showVoiceInputSuccessToast={false}
         enableStepsCollapse={true}
         voiceChatCTA={campId ? undefined : (
           <ParentVoiceCallCTA

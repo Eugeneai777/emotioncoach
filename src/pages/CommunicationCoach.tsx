@@ -143,6 +143,7 @@ const CommunicationCoach = () => {
         community={<CoachCommunity />}
         showNotificationCenter={true}
         enableVoiceInput={true}
+        showVoiceInputSuccessToast={false}
       />
       
       <CommunicationDifficultyDialog

@@ -391,6 +391,7 @@ const DynamicCoach = () => {
       enableVoiceChat={template.coach_key === 'vibrant_life_sage'}
       onVoiceChatClick={() => setShowVoiceChat(true)}
       enableVoiceInput={true}
+      showVoiceInputSuccessToast={false}
       customFooter={gratitudeFooter}
       loadingPlaceholder={showMeditationAnalysisIntro ? (
         <MeditationAnalysisIntro
