@@ -72,7 +72,13 @@ export function AssessmentCoachChat({ pattern, blockedDimension, onComplete, res
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const sessionCompletedRef = useRef(false);
-  const { isListening, isSupported: isSpeechInputSupported, toggleListening, stopListening } = useRealtimeSpeechInput({
+  const {
+    isListening,
+    isProcessing: isSpeechProcessing,
+    isSupported: isSpeechInputSupported,
+    toggleListening,
+    stopListening,
+  } = useRealtimeSpeechInput({
     onTextChange: setInput,
     onError: (message) => toast.error(message),
   });
