@@ -4,13 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Send, Sparkles, Loader2 } from "lucide-react";
+import { Send, Sparkles, Loader2, Mic } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { UnifiedStageProgress, type StageConfig } from "@/components/coach/UnifiedStageProgress";
 import { ParentJourneySummary } from "@/components/coach/ParentJourneySummary";
+import { useRealtimeSpeechInput } from "@/hooks/useRealtimeSpeechInput";
 import {
   type PatternType,
   type BlockedDimension,
@@ -71,6 +72,9 @@ export function AssessmentCoachChat({ pattern, blockedDimension, onComplete, res
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const sessionCompletedRef = useRef(false);
+  const { isListening, isSupported: isSpeechInputSupported, toggleListening, stopListening } = useRealtimeSpeechInput({
+    onTextChange: setInput,
+  });
 
   const isMidlife = fromAssessment === 'midlife_awakening';
   const CHAT_URL = isMidlife ? MIDLIFE_COACH_URL : EMOTION_COACH_URL;
@@ -366,10 +370,11 @@ export function AssessmentCoachChat({ pattern, blockedDimension, onComplete, res
     if (!input.trim() || isLoading || (!sessionId && !isMidlife)) return;
 
     const userMessage = input.trim();
+    stopListening();
     setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
     setInput("");
     sendMessage(userMessage, sessionId || 'midlife-direct');
-  }, [input, isLoading, sessionId, sendMessage, isMidlife]);
+  }, [input, isLoading, sessionId, sendMessage, isMidlife, stopListening]);
 
   const handleCTAClick = (type: 'camp' | 'membership') => {
     if (type === 'camp') {
