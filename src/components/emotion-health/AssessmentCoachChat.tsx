@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { UnifiedStageProgress, type StageConfig } from "@/components/coach/UnifiedStageProgress";
 import { ParentJourneySummary } from "@/components/coach/ParentJourneySummary";
+import { VoiceInputButton } from "@/components/coach/VoiceInputButton";
 import {
   type PatternType,
   type BlockedDimension,
@@ -584,7 +585,12 @@ export function AssessmentCoachChat({ pattern, blockedDimension, onComplete, res
       {/* 输入区域 - 生成简报后隐藏 */}
       {!briefing && (
         <div className="border-t p-4 pb-[calc(16px+env(safe-area-inset-bottom))]">
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-end">
+            <VoiceInputButton
+              onTranscript={(text) => setInput(prev => prev ? `${prev} ${text}` : text)}
+              disabled={isLoading}
+              primaryColor="teal"
+            />
             <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
