@@ -4,13 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Send, Sparkles, Loader2 } from "lucide-react";
+import { Send, Sparkles, Loader2, Mic } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { UnifiedStageProgress, type StageConfig } from "@/components/coach/UnifiedStageProgress";
 import { ParentJourneySummary } from "@/components/coach/ParentJourneySummary";
+import { useRealtimeSpeechInput } from "@/hooks/useRealtimeSpeechInput";
 import {
   type PatternType,
   type BlockedDimension,
@@ -71,6 +72,9 @@ export function AssessmentCoachChat({ pattern, blockedDimension, onComplete, res
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const sessionCompletedRef = useRef(false);
+  const { isListening, isSupported: isSpeechInputSupported, toggleListening, stopListening } = useRealtimeSpeechInput({
+    onTextChange: setInput,
+  });
 
   const isMidlife = fromAssessment === 'midlife_awakening';
   const CHAT_URL = isMidlife ? MIDLIFE_COACH_URL : EMOTION_COACH_URL;
@@ -366,10 +370,11 @@ export function AssessmentCoachChat({ pattern, blockedDimension, onComplete, res
     if (!input.trim() || isLoading || (!sessionId && !isMidlife)) return;
 
     const userMessage = input.trim();
+    stopListening();
     setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
     setInput("");
     sendMessage(userMessage, sessionId || 'midlife-direct');
-  }, [input, isLoading, sessionId, sendMessage, isMidlife]);
+  }, [input, isLoading, sessionId, sendMessage, isMidlife, stopListening]);
 
   const handleCTAClick = (type: 'camp' | 'membership') => {
     if (type === 'camp') {
@@ -585,6 +590,24 @@ export function AssessmentCoachChat({ pattern, blockedDimension, onComplete, res
       {!briefing && (
         <div className="border-t p-4 pb-[calc(16px+env(safe-area-inset-bottom))]">
           <div className="flex gap-2">
+            {isSpeechInputSupported && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => toggleListening(input)}
+                disabled={isLoading}
+                title={isListening ? "停止语音输入" : "开始语音输入"}
+                className={cn(
+                  "h-11 w-11 min-w-[44px] rounded-full flex-shrink-0 transition-all",
+                  isListening
+                    ? "bg-primary/15 text-primary ring-2 ring-primary/35 animate-pulse"
+                    : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
+                )}
+              >
+                <Mic className="w-5 h-5" />
+              </Button>
+            )}
             <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
