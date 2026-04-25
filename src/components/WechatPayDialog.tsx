@@ -329,10 +329,10 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
       const inWechat = isWeChatBrowser();
 
       if (inWechat || isHarmony) {
-        // 🆕 统一使用对外发布域名 wechat.eugenewe.net 发起顶层导航，
-        // 避免微信浏览器对 *.supabase.co 弹出"将要访问"非备案域名安全警告。
-        // 该域名已通过 Nginx 代理转发 /functions/v1/* 到 Supabase Edge Functions。
-        const directUrl = new URL('https://wechat.eugenewe.net/functions/v1/wechat-pay-auth');
+        // 🆕 微信/鸿蒙浏览器必须使用顶层导航，绕过 fetch/CORS 差异；
+        // 直接命中真实后端函数，避免站点路由把 /functions/v1/* 返回成前端 HTML。
+        const functionsBaseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
+        const directUrl = new URL(`${functionsBaseUrl}/wechat-pay-auth`);
         directUrl.searchParams.set('redirectUri', resumeUrl.toString());
         directUrl.searchParams.set('flow', 'camp_purchase');
         console.log('[Payment] Using top-level navigation for WeChat/HarmonyOS:', directUrl.toString());
