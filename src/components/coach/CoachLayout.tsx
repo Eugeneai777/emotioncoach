@@ -102,6 +102,7 @@ interface CoachLayoutProps {
   
   // Voice input feature (speech-to-text)
   enableVoiceInput?: boolean;
+  showVoiceInputSuccessToast?: boolean;
   
   // Emotion coach specific slots
   intensityPrompt?: ReactNode;
@@ -197,6 +198,7 @@ export const CoachLayout = ({
   enableVoiceChat = false,
   onVoiceChatClick,
   enableVoiceInput = false,
+  showVoiceInputSuccessToast = true,
   intensityPrompt,
   intensitySelector,
   dailyReminderContent,
@@ -558,6 +560,7 @@ export const CoachLayout = ({
             enableVoiceChat={enableVoiceChat}
             onVoiceChatClick={onVoiceChatClick}
             enableVoiceInput={enableVoiceInput}
+            showVoiceInputSuccessToast={showVoiceInputSuccessToast}
             onHeightChange={setFooterHeight}
           />
         )}
