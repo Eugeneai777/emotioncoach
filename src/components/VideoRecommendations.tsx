@@ -165,7 +165,10 @@ export const VideoRecommendations = ({ recommendations }: VideoRecommendationsPr
       </div>
 
       <div className="space-y-3">
-        {recommendations.map((rec, index) => (
+        {recommendations.map((rec) => {
+          const isOpening = openingCourseId === rec.id;
+
+          return (
           <Card 
             key={rec.id}
             className="p-4 bg-background/80 backdrop-blur-sm hover:shadow-md transition-all border-border/50"
@@ -204,6 +207,7 @@ export const VideoRecommendations = ({ recommendations }: VideoRecommendationsPr
                   variant="ghost"
                   size="sm"
                   className="flex-shrink-0"
+                  disabled={isOpening}
                   onClick={() => handleToggleFavorite(rec)}
                 >
                   <Heart 
@@ -214,10 +218,15 @@ export const VideoRecommendations = ({ recommendations }: VideoRecommendationsPr
                   variant="default"
                   size="sm"
                   className="gap-2 flex-1"
+                  disabled={isOpening}
                   onClick={() => handleWatchClick(rec)}
                 >
-                  点击观看
-                  <ExternalLink className="w-3 h-3" />
+                  {isOpening ? "正在打开..." : "点击观看"}
+                  {isOpening ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : (
+                    <ExternalLink className="w-3 h-3" />
+                  )}
                 </Button>
               </div>
             </div>
@@ -230,7 +239,8 @@ export const VideoRecommendations = ({ recommendations }: VideoRecommendationsPr
               </div>
             )}
           </Card>
-        ))}
+          );
+        })}
       </div>
 
       <p className="text-xs text-muted-foreground mt-4 text-center">
