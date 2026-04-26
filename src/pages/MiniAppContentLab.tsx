@@ -26,8 +26,12 @@ interface ContentTopicItem {
   id: string;
   painPoint: string;
   value: string;
+  giftProductName?: string;
+  giftDisplayName?: string;
+  reportPageName?: string;
   matchedTool: string;
   aiReportValue: string;
+  actionPlanValue?: string;
   coachReportValue?: string;
   viralTitle: string;
   hook: string;
@@ -53,6 +57,9 @@ const localSeedItems = (sourceType: MiniAppSourceType): MiniAppSeedItem[] => {
       topicId: item.id,
       productId: 'cv-free-tool',
       route: '/energy-studio',
+      productName: item.label,
+      giftDisplayName: `限时赠送「${item.label}」`,
+      reportName: `${item.label}个人模式洞察报告`,
     }));
   }
 
@@ -65,6 +72,9 @@ const localSeedItems = (sourceType: MiniAppSourceType): MiniAppSeedItem[] => {
     topicId: item.id,
     productId: item.id.includes('wealth') ? 'cv-wealth-assess' : item.id.includes('scl90') ? 'cv-scl90' : 'cv-emotion-assess',
     route: item.id.includes('wealth') ? '/wealth-block' : item.id.includes('scl90') ? '/scl90' : '/assessment-tools',
+    productName: item.label,
+    giftDisplayName: `限时赠送「${item.label}」`,
+    reportName: item.id.includes('wealth') ? '财富卡点深度定位报告' : item.id.includes('scl90') ? '身心压力信号筛查报告' : `${item.label.replace('测评', '')}模式洞察报告`,
   }));
 };
 
@@ -84,9 +94,11 @@ const formatItem = (item: ContentTopicItem) => [
   `标题：${item.viralTitle}`,
   `痛点：${item.painPoint}`,
   `价值：${item.value}`,
-  `搭配：${item.matchedTool}`,
-  `AI分析报告：${item.aiReportValue}`,
-  item.coachReportValue ? `AI教练报告分析：${item.coachReportValue}` : '',
+  `产品/工具名：${item.giftProductName || '-'}`,
+  `限时赠品：${item.giftDisplayName || item.matchedTool}`,
+  `专业报告名称：${item.reportPageName || '-'}`,
+  `报告价值：${item.aiReportValue}`,
+  item.actionPlanValue || item.coachReportValue ? `下一步行动建议：${item.actionPlanValue || item.coachReportValue}` : '',
   `开场：${item.hook}`,
   `行动：${item.cta}`,
   item.route ? `入口：${item.route}` : '',
