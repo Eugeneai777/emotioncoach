@@ -332,15 +332,15 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
       const inWechat = isWeChatBrowser();
 
       if (inWechat || isHarmony) {
-        // 🆕 微信/鸿蒙浏览器必须使用顶层导航，绕过 fetch/CORS 差异；
-        // 直接命中真实后端函数，避免站点路由把 /functions/v1/* 返回成前端 HTML。
-        const functionsBaseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
-        const directUrl = new URL(`${functionsBaseUrl}/wechat-pay-auth`);
-        directUrl.searchParams.set('redirectUri', resumeUrl.toString());
-        directUrl.searchParams.set('flow', 'camp_purchase');
-        console.log('[Payment] Using top-level navigation for WeChat/HarmonyOS:', directUrl.toString());
+        // 微信/鸿蒙浏览器必须使用业务域名内的顶层导航中转，避免把 functions 域名暴露给微信 OAuth，
+        // 否则微信会把 *.supabase.co 判定为“非法域名”。
+        const authStartUrl = new URL('/pay-entry', window.location.origin);
+        authStartUrl.searchParams.set('payment_auth_start', '1');
+        authStartUrl.searchParams.set('payment_redirect', resumeUrl.toString());
+        authStartUrl.searchParams.set('pay_flow', 'camp_purchase');
+        console.log('[Payment] Using first-party auth bridge for WeChat/HarmonyOS:', authStartUrl.toString());
         window.clearTimeout(fallbackTimer);
-        window.location.href = directUrl.toString();
+        window.location.href = authStartUrl.toString();
         return;
       }
 
