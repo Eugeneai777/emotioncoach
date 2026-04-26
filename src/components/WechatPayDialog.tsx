@@ -992,16 +992,23 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
       const { data: { user: freshUser } } = await supabase.auth.getUser();
       const resolvedUserId = freshUser?.id || user?.id || sessionStorage.getItem('pending_payment_user_id') || 'guest';
 
-      const { data: nativeData, error: nativeError } = await supabase.functions.invoke('create-wechat-order', {
-        body: {
-          packageKey: packageInfo.key,
-          packageName: packageInfo.name,
-          amount: packageInfo.price,
-          userId: resolvedUserId,
-          payType: 'native',
-          existingOrderNo,
-        },
-      });
+      const nativePayload = {
+        packageKey: packageInfo.key,
+        packageName: packageInfo.name,
+        amount: packageInfo.price,
+        userId: resolvedUserId,
+        payType: 'native' as const,
+        existingOrderNo,
+      };
+      let nativeData: any;
+      let nativeError: any;
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        const result = await supabase.functions.invoke('create-wechat-order', { body: nativePayload });
+        nativeData = result.data;
+        nativeError = result.error;
+        if (!nativeError && nativeData?.success) break;
+        if (attempt < 2) await new Promise((r) => setTimeout(r, 800));
+      }
       
       if (nativeError || !nativeData?.success) {
         throw new Error(nativeData?.error || '降级失败');
@@ -1058,6 +1065,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
 
     setStatus('loading');
     setErrorMessage('');
+    setLoadingMessage('正在创建安全订单...');
 
     let resolvedOpenId = userOpenId;
     if (isMiniProgram && !resolvedOpenId) {
@@ -1125,24 +1133,42 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
         },
       });
 
-      const { data, error } = await supabase.functions.invoke('create-wechat-order', {
-        body: {
-          packageKey: packageInfo.key,
-          packageName: packageInfo.name,
-          amount: packageInfo.price,
-          userId: resolvedUserId,
-          payType: selectedPayType,
-          openId: needsOpenId ? resolvedOpenId : undefined,
-          isMiniProgram: isMiniProgram,
-          buyerName: shippingInfo?.buyerName,
-          buyerPhone: shippingInfo?.buyerPhone,
-          buyerAddress: shippingInfo?.buyerAddress,
-          idCardName: shippingInfo?.idCardName,
-          idCardNumber: shippingInfo?.idCardNumber,
-        },
-        // @ts-ignore - supabase v2 透传 fetch options
-        signal: abortRef.current?.signal,
-      });
+      const orderPayload = {
+        packageKey: packageInfo.key,
+        packageName: packageInfo.name,
+        amount: packageInfo.price,
+        userId: resolvedUserId,
+        payType: selectedPayType,
+        openId: needsOpenId ? resolvedOpenId : undefined,
+        isMiniProgram: isMiniProgram,
+        buyerName: shippingInfo?.buyerName,
+        buyerPhone: shippingInfo?.buyerPhone,
+        buyerAddress: shippingInfo?.buyerAddress,
+        idCardName: shippingInfo?.idCardName,
+        idCardNumber: shippingInfo?.idCardNumber,
+      };
+
+      let data: any;
+      let error: any;
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        const result = await supabase.functions.invoke('create-wechat-order', {
+          body: orderPayload,
+          // @ts-ignore - supabase v2 透传 fetch options
+          signal: abortRef.current?.signal,
+        });
+        data = result.data;
+        error = result.error;
+        if (!error && data?.success) break;
+        if ((error as any)?.name === 'AbortError' || abortRef.current?.signal.aborted) break;
+        if (attempt < 2) {
+          trackPaymentEvent('payment_order_create_retry', {
+            errorMessage: data?.error || (error as any)?.message || 'create order failed',
+            metadata: { payType: selectedPayType, packageKey: packageInfo.key, attempt },
+          });
+          setLoadingMessage(selectedPayType === 'jsapi' ? '正在准备微信支付...' : '正在生成支付信息...');
+          await new Promise((r) => setTimeout(r, 800));
+        }
+      }
 
       if (error) {
         // 用户中途关闭弹窗导致的中断不当作错误抛出
@@ -1203,6 +1229,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
           triggerMiniProgramNativePay(data.miniprogramPayParams, data.orderNo);
         }
       } else if (selectedPayType === 'jsapi' && data.jsapiPayParams) {
+        setLoadingMessage('正在唤起微信支付...');
         setStatus('polling');
         startPolling(data.orderNo);
 
