@@ -30,6 +30,7 @@ import { isWeChatMiniProgram } from "@/utils/platform";
 import { useAssessmentPurchase } from "@/hooks/useAssessmentPurchase";
 import { trackPaymentEvent } from "@/utils/paymentFlowTracker";
 import { setPostAuthRedirect } from "@/lib/postAuthRedirect";
+import { useWechatOpenId } from "@/hooks/useWechatOpenId";
 
 const MP_PENDING_PAYMENT_STORAGE_KEY = 'wealth_assessment_mp_pending_payment';
 const MP_PENDING_PAYMENT_DISMISSED_KEY = 'wealth_assessment_mp_pending_payment_dismissed';
@@ -41,6 +42,7 @@ export default function WealthBlockAssessmentPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user, loading: authLoading } = useAuth();
+  const wechatOpenId = useWechatOpenId();
   const isMiniProgram = isWeChatMiniProgram();
   
   const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "assessment");
@@ -1198,6 +1200,7 @@ export default function WealthBlockAssessmentPage() {
           name: '财富卡点测评',
           price: 9.9,
         }}
+        openId={wechatOpenId}
         onSuccess={() => {
           // 支付+注册成功，开始测评
           console.log('[WealthBlock] PayDialog onSuccess');
