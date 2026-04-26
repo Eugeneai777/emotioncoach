@@ -1238,6 +1238,18 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
         setStatus('polling');
         startPolling(data.orderNo);
 
+        // 安卓微信 X5 内核对“业务弹窗刚打开 + 立即调起原生支付框”的时序更敏感。
+        // 先等 React 把业务等待窗口真实绘制出来，再调用 WeixinJSBridge，避免第二次点击时原生支付框被吞。
+        await new Promise<void>((resolve) => {
+          requestAnimationFrame(() => {
+            window.setTimeout(resolve, isWechat && /Android/i.test(navigator.userAgent) ? 280 : 80);
+          });
+        });
+
+        trackPaymentEvent('payment_jsapi_business_dialog_ready', {
+          metadata: { orderNo: data.orderNo, platformDelay: isWechat && /Android/i.test(navigator.userAgent) ? 280 : 80 },
+        });
+
         // 微信浏览器：先等待 Bridge 就绪（最多 5 秒），再调起支付
         console.log('[Payment] WeChat browser: waiting for Bridge then invoke JSAPI');
         const bridgeAvailable = await waitForWeixinJSBridge(5000);
