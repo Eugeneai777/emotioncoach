@@ -47,13 +47,6 @@ export default function PayEntry() {
   useEffect(() => {
     if (!isPaymentAuthStart) return;
 
-    let fallbackTimer: number | undefined;
-
-    const redirectWithFallbackParams = (target: URL) => {
-      if (fallbackTimer) window.clearTimeout(fallbackTimer);
-      window.location.replace(target.toString());
-    };
-
     const run = async () => {
       try {
         const { data, error } = await supabase.functions.invoke('wechat-pay-auth', {
