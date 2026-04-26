@@ -91,8 +91,8 @@ interface GiftValidationResult {
 }
 
 const validateGiftItem = (item: ContentTopicItem, index: number): GiftValidationIssue | null => {
-  const productName = (item.rawGiftProductName ?? item.giftProductName ?? '').trim();
-  const giftDisplayName = (item.rawGiftDisplayName ?? item.giftDisplayName ?? item.matchedTool ?? '').trim();
+  const productName = getGiftProductName(item).trim();
+  const giftDisplayName = getGiftDisplayName(item).trim();
   const expectedGiftDisplayName = productName ? `限时赠送「${productName}」` : '';
   const suggestedGift = findCanonicalGift(item);
   const suggestedProductName = suggestedGift?.productName || suggestedGift?.label;
