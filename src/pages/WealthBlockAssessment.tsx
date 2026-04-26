@@ -1010,34 +1010,6 @@ export default function WealthBlockAssessmentPage() {
 
   return (
     <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-b from-amber-50 via-orange-50/30 to-white" style={{ WebkitOverflowScrolling: 'touch' }}>
-      {/* 全屏微信授权遮罩：点击「立即测评」后立即可见，避免 5 秒边缘函数静默期被误以为卡死 */}
-      {isRedirectingForAuth && (
-        <div className="fixed inset-0 z-[100] bg-gradient-to-br from-amber-50 via-orange-50 to-white flex items-center justify-center p-6">
-          <div className="w-full max-w-sm bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-amber-100 p-8 text-center space-y-5">
-            <div className="w-14 h-14 mx-auto border-4 border-amber-500 border-t-transparent rounded-full animate-spin" />
-            <div className="space-y-1">
-              <h3 className="text-lg font-semibold text-amber-900">正在跳转微信授权</h3>
-              <p className="text-sm text-muted-foreground">即将自动完成登录，无需输入</p>
-            </div>
-            <div className="space-y-2 text-left text-sm">
-              <div className="flex items-center gap-2 text-amber-700">
-                <span className="w-5 h-5 rounded-full bg-amber-500 text-white text-xs flex items-center justify-center">1</span>
-                <span>准备授权链接...</span>
-              </div>
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <span className="w-5 h-5 rounded-full bg-muted text-muted-foreground text-xs flex items-center justify-center">2</span>
-                <span>跳转微信完成授权</span>
-              </div>
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <span className="w-5 h-5 rounded-full bg-muted text-muted-foreground text-xs flex items-center justify-center">3</span>
-                <span>返回页面打开支付</span>
-              </div>
-            </div>
-            <p className="text-xs text-muted-foreground/70">首次授权需约 5–8 秒，请耐心等待</p>
-          </div>
-        </div>
-      )}
-
       {/* SEO & 微信分享 Meta Tags - 动态从数据库读取 */}
       <DynamicOGMeta pageKey="wealthBlock" />
 
@@ -1090,23 +1062,15 @@ export default function WealthBlockAssessmentPage() {
               animate={{ opacity: 1, y: 0 }}
               style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
             >
-            {/* 正在跳转微信授权中（占位，真正全屏遮罩在页面根节点） */}
-            {isRedirectingForAuth && (
-              <div className="flex flex-col items-center justify-center py-20 space-y-4">
-                <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
-                <p className="text-muted-foreground">正在跳转微信授权...</p>
-              </div>
-            )}
-            
             {/* 登录状态加载中 */}
-            {!isRedirectingForAuth && (authLoading || isPurchaseLoading) && (
+            {(authLoading || isPurchaseLoading) && (
               <div className="flex flex-col items-center justify-center py-20 space-y-4">
                 <Loader2 className="w-10 h-10 text-amber-500 animate-spin" />
                 <p className="text-muted-foreground text-sm">正在加载...</p>
               </div>
             )}
             
-            {!isRedirectingForAuth && !authLoading && !isPurchaseLoading && showIntro && !showResult ? (
+            {!authLoading && !isPurchaseLoading && showIntro && !showResult ? (
                 <AssessmentIntroCard
                   isLoggedIn={!!user}
                   hasPurchased={hasPurchased}
