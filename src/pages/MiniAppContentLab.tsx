@@ -1,11 +1,12 @@
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Clipboard, Download, FileText, Loader2, Sparkles, Table2, Wand2, Video } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, CheckCircle2, Clipboard, Download, FileText, Loader2, ShieldCheck, Sparkles, Table2, Wand2, Video } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -29,6 +30,8 @@ interface ContentTopicItem {
   value: string;
   giftProductName?: string;
   giftDisplayName?: string;
+  rawGiftProductName?: string;
+  rawGiftDisplayName?: string;
   reportPageName?: string;
   matchedTool: string;
   aiReportValue: string;
@@ -52,6 +55,7 @@ const localSeedItems = (sourceType: MiniAppSourceType): MiniAppSeedItem[] => {
 };
 
 const canonicalGiftNames = MINI_APP_CANONICAL_GIFTS.map(item => item.productName || item.label);
+const canonicalGiftNameSet = new Set(canonicalGiftNames);
 
 const findCanonicalGift = (item: ContentTopicItem, seed?: MiniAppSeedItem) => {
   const candidates = [item.giftProductName, seed?.productName, seed?.label, item.matchedTool].filter(Boolean) as string[];
@@ -59,6 +63,73 @@ const findCanonicalGift = (item: ContentTopicItem, seed?: MiniAppSeedItem) => {
     || MINI_APP_CANONICAL_GIFTS.find(gift => gift.topicId === item.topicId || gift.productId === item.productId)
     || seed;
 };
+
+interface GiftValidationIssue {
+  index: number;
+  productName: string;
+  giftDisplayName: string;
+  reason: string;
+  suggestedProductName?: string;
+  suggestedGiftDisplayName?: string;
+}
+
+interface GiftValidationResult {
+  total: number;
+  passed: number;
+  issues: GiftValidationIssue[];
+  checkedAt: number;
+}
+
+const validateGiftItem = (item: ContentTopicItem, index: number): GiftValidationIssue | null => {
+  const productName = (item.rawGiftProductName ?? item.giftProductName ?? '').trim();
+  const giftDisplayName = (item.rawGiftDisplayName ?? item.giftDisplayName ?? item.matchedTool ?? '').trim();
+  const expectedGiftDisplayName = productName ? `限时赠送「${productName}」` : '';
+  const suggestedGift = findCanonicalGift(item);
+  const suggestedProductName = suggestedGift?.productName || suggestedGift?.label;
+  const suggestedGiftDisplayName = suggestedGift?.giftDisplayName || (suggestedProductName ? `限时赠送「${suggestedProductName}」` : undefined);
+
+  if (!canonicalGiftNameSet.has(productName)) {
+    return {
+      index,
+      productName: productName || '未填写',
+      giftDisplayName: giftDisplayName || '未填写',
+      reason: '产品/工具名未严格命中标准赠品池',
+      suggestedProductName,
+      suggestedGiftDisplayName,
+    };
+  }
+
+  if (giftDisplayName !== expectedGiftDisplayName) {
+    return {
+      index,
+      productName,
+      giftDisplayName: giftDisplayName || '未填写',
+      reason: `限时赠品必须严格写成 ${expectedGiftDisplayName}`,
+      suggestedProductName: productName,
+      suggestedGiftDisplayName: expectedGiftDisplayName,
+    };
+  }
+
+  return null;
+};
+
+const validateGiftItems = (items: ContentTopicItem[]): GiftValidationResult => {
+  const issues = items.map(validateGiftItem).filter(Boolean) as GiftValidationIssue[];
+  return { total: items.length, passed: items.length - issues.length, issues, checkedAt: Date.now() };
+};
+
+const repairGiftItems = (items: ContentTopicItem[]): ContentTopicItem[] => items.map((item) => {
+  const canonicalGift = findCanonicalGift(item);
+  const productName = canonicalGift?.productName || canonicalGift?.label || item.giftProductName || '';
+  const giftDisplayName = canonicalGift?.giftDisplayName || (productName ? `限时赠送「${productName}」` : item.giftDisplayName);
+  return {
+    ...item,
+    giftProductName: productName,
+    giftDisplayName,
+    rawGiftProductName: productName,
+    rawGiftDisplayName: giftDisplayName,
+  };
+});
 
 const csvEscape = (value: string) => `"${(value || '').replace(/"/g, '""')}"`;
 
