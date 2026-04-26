@@ -1802,8 +1802,12 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
                 {jsapiCancelled ? (
                   <>
                     <XCircle className="h-12 w-12 text-muted-foreground" />
-                    <span className="font-medium text-foreground">支付已取消</span>
-                    <span className="text-xs text-muted-foreground">您可以重新唤起支付或重新下单</span>
+                    <span className="font-medium text-foreground">
+                      {jsapiRetryReason === 'silent' ? '微信支付未响应' : '支付已取消'}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {errorMessage || '您可以重新唤起支付或重新下单'}
+                    </span>
                   </>
                 ) : (
                   <>
@@ -1928,7 +1932,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
                         className="gap-2 bg-[#07C160] hover:bg-[#06AD56] text-white"
                       >
                         <RefreshCw className="h-3 w-3" />
-                        重新唤起支付
+                        {jsapiRetryReason === 'silent' ? '再次拉起微信支付' : '重新唤起支付'}
                       </Button>
                       <Button
                         type="button"
