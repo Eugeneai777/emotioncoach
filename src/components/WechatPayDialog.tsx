@@ -159,6 +159,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
   const [h5PayLink, setH5PayLink] = useState<string>('');
   const [orderNo, setOrderNo] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
+  const [loadingMessage, setLoadingMessage] = useState<string>('');
   const [payType, setPayType] = useState<'h5' | 'native' | 'jsapi'>('h5');
   // 优先使用 props 传入的 openId，其次使用 URL 中静默授权返回的 openId
   const urlOpenId = getPaymentOpenIdFromUrl();
@@ -741,6 +742,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     setH5PayLink('');
     setOrderNo('');
     setErrorMessage('');
+    setLoadingMessage('');
     setJsapiCancelled(false);
     setJsapiPayParams(null);
     // 非合伙人套餐默认已同意，合伙人套餐需要重新勾选
@@ -990,16 +992,23 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
       const { data: { user: freshUser } } = await supabase.auth.getUser();
       const resolvedUserId = freshUser?.id || user?.id || sessionStorage.getItem('pending_payment_user_id') || 'guest';
 
-      const { data: nativeData, error: nativeError } = await supabase.functions.invoke('create-wechat-order', {
-        body: {
-          packageKey: packageInfo.key,
-          packageName: packageInfo.name,
-          amount: packageInfo.price,
-          userId: resolvedUserId,
-          payType: 'native',
-          existingOrderNo,
-        },
-      });
+      const nativePayload = {
+        packageKey: packageInfo.key,
+        packageName: packageInfo.name,
+        amount: packageInfo.price,
+        userId: resolvedUserId,
+        payType: 'native' as const,
+        existingOrderNo,
+      };
+      let nativeData: any;
+      let nativeError: any;
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        const result = await supabase.functions.invoke('create-wechat-order', { body: nativePayload });
+        nativeData = result.data;
+        nativeError = result.error;
+        if (!nativeError && nativeData?.success) break;
+        if (attempt < 2) await new Promise((r) => setTimeout(r, 800));
+      }
       
       if (nativeError || !nativeData?.success) {
         throw new Error(nativeData?.error || '降级失败');
@@ -1056,6 +1065,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
 
     setStatus('loading');
     setErrorMessage('');
+    setLoadingMessage('正在创建安全订单...');
 
     let resolvedOpenId = userOpenId;
     if (isMiniProgram && !resolvedOpenId) {
@@ -1123,24 +1133,42 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
         },
       });
 
-      const { data, error } = await supabase.functions.invoke('create-wechat-order', {
-        body: {
-          packageKey: packageInfo.key,
-          packageName: packageInfo.name,
-          amount: packageInfo.price,
-          userId: resolvedUserId,
-          payType: selectedPayType,
-          openId: needsOpenId ? resolvedOpenId : undefined,
-          isMiniProgram: isMiniProgram,
-          buyerName: shippingInfo?.buyerName,
-          buyerPhone: shippingInfo?.buyerPhone,
-          buyerAddress: shippingInfo?.buyerAddress,
-          idCardName: shippingInfo?.idCardName,
-          idCardNumber: shippingInfo?.idCardNumber,
-        },
-        // @ts-ignore - supabase v2 透传 fetch options
-        signal: abortRef.current?.signal,
-      });
+      const orderPayload = {
+        packageKey: packageInfo.key,
+        packageName: packageInfo.name,
+        amount: packageInfo.price,
+        userId: resolvedUserId,
+        payType: selectedPayType,
+        openId: needsOpenId ? resolvedOpenId : undefined,
+        isMiniProgram: isMiniProgram,
+        buyerName: shippingInfo?.buyerName,
+        buyerPhone: shippingInfo?.buyerPhone,
+        buyerAddress: shippingInfo?.buyerAddress,
+        idCardName: shippingInfo?.idCardName,
+        idCardNumber: shippingInfo?.idCardNumber,
+      };
+
+      let data: any;
+      let error: any;
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        const result = await supabase.functions.invoke('create-wechat-order', {
+          body: orderPayload,
+          // @ts-ignore - supabase v2 透传 fetch options
+          signal: abortRef.current?.signal,
+        });
+        data = result.data;
+        error = result.error;
+        if (!error && data?.success) break;
+        if ((error as any)?.name === 'AbortError' || abortRef.current?.signal.aborted) break;
+        if (attempt < 2) {
+          trackPaymentEvent('payment_order_create_retry', {
+            errorMessage: data?.error || (error as any)?.message || 'create order failed',
+            metadata: { payType: selectedPayType, packageKey: packageInfo.key, attempt },
+          });
+          setLoadingMessage(selectedPayType === 'jsapi' ? '正在准备微信支付...' : '正在生成支付信息...');
+          await new Promise((r) => setTimeout(r, 800));
+        }
+      }
 
       if (error) {
         // 用户中途关闭弹窗导致的中断不当作错误抛出
@@ -1201,6 +1229,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
           triggerMiniProgramNativePay(data.miniprogramPayParams, data.orderNo);
         }
       } else if (selectedPayType === 'jsapi' && data.jsapiPayParams) {
+        setLoadingMessage('正在唤起微信支付...');
         setStatus('polling');
         startPolling(data.orderNo);
 
@@ -1586,9 +1615,10 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
   const handleReInvokeJsapi = async () => {
     if (!jsapiPayParams) return;
     setJsapiCancelled(false);
+    setLoadingMessage('正在唤起微信支付...');
     console.log('[Payment] Re-invoking JSAPI with cached params for order:', orderNo);
     try {
-      const bridgeAvailable = await waitForWeixinJSBridge(1500);
+      const bridgeAvailable = await waitForWeixinJSBridge(5000);
       if (bridgeAvailable) {
         await invokeJsapiPay(jsapiPayParams);
         console.log('[Payment] JSAPI re-invoke succeeded');
@@ -1697,7 +1727,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
               <div className="flex flex-col items-center gap-2">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 <span className="text-sm text-muted-foreground">
-                  {payType === 'jsapi' ? '正在调起支付...' : payType === 'h5' ? '正在创建订单...' : '正在生成二维码...'}
+                  {loadingMessage || (payType === 'jsapi' ? '正在准备微信支付...' : payType === 'h5' ? '正在创建订单...' : '正在生成二维码...')}
                 </span>
               </div>
             )}
@@ -1714,8 +1744,8 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
                 ) : (
                   <>
                     <Loader2 className="h-12 w-12 animate-spin" />
-                    <span className="font-medium">等待支付完成...</span>
-                    <span className="text-xs text-muted-foreground">请在弹出的支付窗口中完成支付</span>
+                    <span className="font-medium">{jsapiPayParams ? '请完成微信支付' : '正在唤起微信支付'}</span>
+                    <span className="text-xs text-muted-foreground">{jsapiPayParams ? '请在弹出的支付窗口中完成支付' : '支付窗口即将打开'}</span>
                   </>
                 )}
               </div>
