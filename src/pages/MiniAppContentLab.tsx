@@ -165,6 +165,7 @@ const MiniAppContentLab: React.FC = () => {
   const [count, setCount] = useState('20');
   const [items, setItems] = useState<ContentTopicItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [giftValidation, setGiftValidation] = useState<GiftValidationResult | null>(null);
 
   const selectedAudience = useMemo(() => VIDEO_AUDIENCES.find(a => a.id === audienceId) || VIDEO_AUDIENCES[0], [audienceId]);
   const seedItems = useMemo(() => localSeedItems(sourceType), [sourceType]);
@@ -177,6 +178,8 @@ const MiniAppContentLab: React.FC = () => {
     const productName = canonicalGift?.productName || canonicalGift?.label || '';
     return {
       ...item,
+      rawGiftProductName: item.giftProductName || item.rawGiftProductName,
+      rawGiftDisplayName: item.giftDisplayName || item.rawGiftDisplayName,
       giftProductName: productName,
       giftDisplayName: canonicalGift?.giftDisplayName || (productName ? `限时赠送「${productName}」` : item.matchedTool),
       reportPageName: item.reportPageName || canonicalGift?.reportName || (productName ? `${productName.replace(/测评|工具|按钮|练习/g, '')}主题洞察报告` : ''),
@@ -201,6 +204,7 @@ const MiniAppContentLab: React.FC = () => {
       if (data?.error) throw new Error(data.error);
       if (!Array.isArray(data?.items)) throw new Error('AI返回数据格式异常');
       setItems(normalizeItems(data.items));
+      setGiftValidation(null);
       toast.success(`已生成 ${data.items.length} 条短视频选题`);
     } catch (err: any) {
       toast.error(`生成失败：${err.message || '请稍后重试'}`);
@@ -217,6 +221,30 @@ const MiniAppContentLab: React.FC = () => {
       toast.error('复制失败，请手动复制');
     }
   };
+
+  const handleValidateGifts = () => {
+    const result = validateGiftItems(items);
+    setGiftValidation(result);
+    if (result.issues.length === 0) {
+      toast.success('全部通过：所有限时赠品均命中标准赠品池');
+    } else {
+      toast.error(`发现 ${result.issues.length} 条赠品异常，请检查标准名称`);
+    }
+  };
+
+  const handleRepairGifts = () => {
+    const repairedItems = repairGiftItems(items);
+    setItems(repairedItems);
+    const result = validateGiftItems(repairedItems);
+    setGiftValidation(result);
+    toast.success('已按标准赠品池修正赠品名称');
+  };
+
+  const issueMap = useMemo(() => {
+    const map = new Map<number, GiftValidationIssue>();
+    giftValidation?.issues.forEach(issue => map.set(issue.index, issue));
+    return map;
+  }, [giftValidation]);
 
   const exportCsv = () => {
     if (!items.length) return;
