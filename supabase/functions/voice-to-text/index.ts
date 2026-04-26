@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { audio } = await req.json();
+    const { audio, mimeType } = await req.json();
     
     if (!audio) {
       throw new Error('No audio data provided');
@@ -53,10 +53,25 @@ serve(async (req) => {
       bytes[i] = binaryString.charCodeAt(i);
     }
     
+    const safeMimeType = typeof mimeType === 'string' && mimeType.trim()
+      ? mimeType.split(';')[0].trim().toLowerCase()
+      : 'audio/webm';
+    const extensionByMime: Record<string, string> = {
+      'audio/webm': 'webm',
+      'audio/mp4': 'mp4',
+      'audio/mpeg': 'mp3',
+      'audio/mp3': 'mp3',
+      'audio/wav': 'wav',
+      'audio/x-wav': 'wav',
+      'audio/ogg': 'ogg',
+      'audio/m4a': 'm4a',
+    };
+    const fileExtension = extensionByMime[safeMimeType] || 'webm';
+
     // Prepare form data
     const formData = new FormData();
-    const blob = new Blob([bytes.buffer], { type: 'audio/webm' });
-    formData.append('file', blob, 'audio.webm');
+    const blob = new Blob([bytes.buffer], { type: safeMimeType });
+    formData.append('file', blob, `audio.${fileExtension}`);
     formData.append('model', 'whisper-1');
     formData.append('language', 'zh'); // Optimize for Chinese
     formData.append('prompt', '请将语音准确转写为中文简体，所有中文字符必须使用简体字，不要使用繁体字。');
@@ -72,7 +87,11 @@ serve(async (req) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('OpenAI Whisper API error:', response.status, errorText);
+      console.error('OpenAI Whisper API error:', response.status, errorText, {
+        safeMimeType,
+        fileExtension,
+        bytesLength: bytes.length,
+      });
       throw new Error(`OpenAI API error: ${response.status}`);
     }
 

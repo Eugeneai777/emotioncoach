@@ -64,7 +64,8 @@ export const VoiceInputButton = ({
       };
 
       mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(chunksRef.current, { type: 'audio/webm' });
+        const audioType = mediaRecorder.mimeType || (MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4');
+        const audioBlob = new Blob(chunksRef.current, { type: audioType });
         await processAudio(audioBlob);
       };
 
@@ -110,7 +111,7 @@ export const VoiceInputButton = ({
       });
 
       const { data, error } = await supabase.functions.invoke('voice-to-text', {
-        body: { audio: base64Audio }
+        body: { audio: base64Audio, mimeType: audioBlob.type }
       });
 
       if (error) throw error;
