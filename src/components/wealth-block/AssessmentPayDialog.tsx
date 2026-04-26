@@ -866,7 +866,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
           },
         });
 
-        clearTimeout(timeoutId);
+        if (createOrderTimeoutId) clearTimeout(createOrderTimeoutId);
 
         if (!isPaymentSessionActive(sessionId)) return;
         if (alipayError) throw alipayError;
