@@ -64,6 +64,16 @@ const findCanonicalGift = (item: ContentTopicItem, seed?: MiniAppSeedItem) => {
     || seed;
 };
 
+const getGiftProductName = (item: ContentTopicItem) => {
+  const canonicalGift = findCanonicalGift(item);
+  return canonicalGift?.productName || canonicalGift?.label || item.giftProductName || '';
+};
+
+const getGiftDisplayName = (item: ContentTopicItem) => {
+  const productName = getGiftProductName(item);
+  return productName ? `限时赠送「${productName}」` : (item.giftDisplayName || item.matchedTool || '-');
+};
+
 interface GiftValidationIssue {
   index: number;
   productName: string;
@@ -147,8 +157,8 @@ const formatItem = (item: ContentTopicItem) => [
   `标题：${item.viralTitle}`,
   `痛点：${item.painPoint}`,
   `价值：${item.value}`,
-  `产品/工具名：${item.giftProductName || '-'}`,
-  `限时赠品：${item.giftDisplayName || item.matchedTool}`,
+  `产品/工具名：${getGiftProductName(item) || '-'}`,
+  `限时赠品：${getGiftDisplayName(item)}`,
   `专业报告名称：${item.reportPageName || '-'}`,
   `报告价值：${item.aiReportValue}`,
   item.actionPlanValue || item.coachReportValue ? `下一步行动建议：${item.actionPlanValue || item.coachReportValue}` : '',
