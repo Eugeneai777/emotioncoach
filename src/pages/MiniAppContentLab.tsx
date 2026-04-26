@@ -28,6 +28,7 @@ interface ContentTopicItem {
   value: string;
   matchedTool: string;
   aiReportValue: string;
+  coachReportValue?: string;
   viralTitle: string;
   hook: string;
   cta: string;
@@ -84,7 +85,8 @@ const formatItem = (item: ContentTopicItem) => [
   `痛点：${item.painPoint}`,
   `价值：${item.value}`,
   `搭配：${item.matchedTool}`,
-  `AI报告：${item.aiReportValue}`,
+  `AI分析报告：${item.aiReportValue}`,
+  item.coachReportValue ? `AI教练报告分析：${item.coachReportValue}` : '',
   `开场：${item.hook}`,
   `行动：${item.cta}`,
   item.route ? `入口：${item.route}` : '',
@@ -140,8 +142,8 @@ const MiniAppContentLab: React.FC = () => {
 
   const exportCsv = () => {
     if (!items.length) return;
-    const header = ['痛点', '核心价值', '搭配测评/工具', 'AI分析报告附加价值', '小红书爆款标题', '开场Hook', 'CTA', '入口'];
-    const rows = items.map(item => [item.painPoint, item.value, item.matchedTool, item.aiReportValue, item.viralTitle, item.hook, item.cta, item.route || ''].map(csvEscape).join(','));
+    const header = ['痛点', '核心价值', '赠送测评/工具', 'AI分析报告附加价值', 'AI教练报告分析', '小红书爆款标题', '开场Hook', '私域CTA', '入口'];
+    const rows = items.map(item => [item.painPoint, item.value, item.matchedTool, item.aiReportValue, item.coachReportValue || '', item.viralTitle, item.hook, item.cta, item.route || ''].map(csvEscape).join(','));
     downloadBlob(`\ufeff${header.map(csvEscape).join(',')}\n${rows.join('\n')}`, `mini-app短视频选题库_${Date.now()}.csv`, 'text/csv;charset=utf-8');
     toast.success('CSV 已下载');
   };
@@ -182,7 +184,7 @@ const MiniAppContentLab: React.FC = () => {
           </div>
           <div className="min-w-0">
             <h1 className="text-lg font-bold leading-tight">短视频选题工作台</h1>
-            <p className="text-xs text-muted-foreground">/mini-app 功能自动生成内容矩阵</p>
+            <p className="text-xs text-muted-foreground">用限时赠送引导加企微/进私域</p>
           </div>
         </div>
       </div>
@@ -233,7 +235,7 @@ const MiniAppContentLab: React.FC = () => {
             </div>
             <div className="md:col-span-4 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="text-xs text-muted-foreground">
-                当前将基于 <Badge variant="secondary">{selectedSource?.label}</Badge> 的 {seedItems.length} 个功能种子生成，风格为 <Badge variant="secondary">{selectedStyle?.label}</Badge>
+                当前将基于 <Badge variant="secondary">{selectedSource?.label}</Badge> 生成“用户能领到什么”的私域引流选题，风格为 <Badge variant="secondary">{selectedStyle?.label}</Badge>
               </div>
               <Button onClick={handleGenerate} disabled={loading} className="sm:min-w-40">
                 {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
@@ -261,7 +263,7 @@ const MiniAppContentLab: React.FC = () => {
               </div>
               <div>
                 <p className="font-semibold">选择配置后生成第一批选题</p>
-                <p className="mt-1 text-sm text-muted-foreground">每条都会包含痛点、价值、搭配测评、AI报告价值和爆款标题。</p>
+                <p className="mt-1 text-sm text-muted-foreground">每条都会写清楚用户能免费领到什么、AI报告能看见什么、为什么值得加企微领取。</p>
               </div>
             </CardContent>
           </Card>
@@ -284,8 +286,9 @@ const MiniAppContentLab: React.FC = () => {
                     <div className="grid gap-2">
                       <p><span className="font-semibold text-foreground">痛点：</span><span className="text-muted-foreground">{item.painPoint}</span></p>
                       <p><span className="font-semibold text-foreground">价值：</span><span className="text-muted-foreground">{item.value}</span></p>
-                      <p><span className="font-semibold text-foreground">搭配：</span><span className="text-muted-foreground">{item.matchedTool}</span></p>
-                      <p><span className="font-semibold text-foreground">AI报告：</span><span className="text-muted-foreground">{item.aiReportValue}</span></p>
+                      <p><span className="font-semibold text-foreground">赠送：</span><span className="text-muted-foreground">{item.matchedTool}</span></p>
+                      <p><span className="font-semibold text-foreground">AI分析报告：</span><span className="text-muted-foreground">{item.aiReportValue}</span></p>
+                      {item.coachReportValue && <p><span className="font-semibold text-foreground">AI教练报告分析：</span><span className="text-muted-foreground">{item.coachReportValue}</span></p>}
                       <p><span className="font-semibold text-foreground">Hook：</span><span className="text-muted-foreground">{item.hook}</span></p>
                     </div>
                     <div className="flex flex-wrap gap-2 border-t pt-3">
@@ -305,8 +308,9 @@ const MiniAppContentLab: React.FC = () => {
                       <TableRow>
                         <TableHead className="min-w-44">痛点</TableHead>
                         <TableHead className="min-w-48">核心价值</TableHead>
-                        <TableHead className="min-w-40">搭配测评/工具</TableHead>
+                        <TableHead className="min-w-56">赠送测评/工具</TableHead>
                         <TableHead className="min-w-56">AI分析报告附加价值</TableHead>
+                        <TableHead className="min-w-56">AI教练报告分析</TableHead>
                         <TableHead className="min-w-56">小红书爆款标题</TableHead>
                         <TableHead className="min-w-28">操作</TableHead>
                       </TableRow>
@@ -318,6 +322,7 @@ const MiniAppContentLab: React.FC = () => {
                           <TableCell>{item.value}</TableCell>
                           <TableCell>{item.matchedTool}</TableCell>
                           <TableCell>{item.aiReportValue}</TableCell>
+                          <TableCell>{item.coachReportValue || '-'}</TableCell>
                           <TableCell className="font-medium">{item.viralTitle}</TableCell>
                           <TableCell>
                             <Button variant="ghost" size="sm" onClick={() => copyText(formatItem(item))}>复制</Button>
