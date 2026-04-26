@@ -11,8 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { supabase } from '@/integrations/supabase/client';
-import { CONVERSION_PRODUCTS, STATIC_TOPIC_GROUPS, VIDEO_AUDIENCES } from '@/config/videoScriptConfig';
+import { CONVERSION_PRODUCTS, VIDEO_AUDIENCES } from '@/config/videoScriptConfig';
 import {
+  MINI_APP_CANONICAL_GIFTS,
   MINI_APP_CONVERSION_SEEDS,
   MINI_APP_SCENE_SEEDS,
   MINI_APP_SOURCE_OPTIONS,
@@ -46,36 +47,17 @@ const countOptions = [10, 20, 30];
 const localSeedItems = (sourceType: MiniAppSourceType): MiniAppSeedItem[] => {
   if (sourceType === 'mini-scenes') return MINI_APP_SCENE_SEEDS;
   if (sourceType === 'conversion') return MINI_APP_CONVERSION_SEEDS;
+  if (sourceType === 'daily-tools') return MINI_APP_CANONICAL_GIFTS.filter(item => item.sourceType === 'daily-tools');
+  return MINI_APP_CANONICAL_GIFTS.filter(item => item.sourceType === 'assessments');
+};
 
-  if (sourceType === 'daily-tools') {
-    const group = STATIC_TOPIC_GROUPS.find(g => g.groupId === 'daily-tools');
-    return (group?.items || []).map(item => ({
-      id: item.id,
-      label: item.label,
-      description: item.description,
-      sourceType,
-      topicId: item.id,
-      productId: 'cv-free-tool',
-      route: '/energy-studio',
-      productName: item.label,
-      giftDisplayName: `限时赠送「${item.label}」`,
-      reportName: `${item.label}个人模式洞察报告`,
-    }));
-  }
+const canonicalGiftNames = MINI_APP_CANONICAL_GIFTS.map(item => item.productName || item.label);
 
-  const group = STATIC_TOPIC_GROUPS.find(g => g.groupId === 'assessments');
-  return (group?.items || []).map(item => ({
-    id: item.id,
-    label: item.label,
-    description: item.description,
-    sourceType,
-    topicId: item.id,
-    productId: item.id.includes('wealth') ? 'cv-wealth-assess' : item.id.includes('scl90') ? 'cv-scl90' : 'cv-emotion-assess',
-    route: item.id.includes('wealth') ? '/wealth-block' : item.id.includes('scl90') ? '/scl90' : '/assessment-tools',
-    productName: item.label,
-    giftDisplayName: `限时赠送「${item.label}」`,
-    reportName: item.id.includes('wealth') ? '财富卡点深度定位报告' : item.id.includes('scl90') ? '身心压力信号筛查报告' : `${item.label.replace('测评', '')}模式洞察报告`,
-  }));
+const findCanonicalGift = (item: ContentTopicItem, seed?: MiniAppSeedItem) => {
+  const candidates = [item.giftProductName, seed?.productName, seed?.label, item.matchedTool].filter(Boolean) as string[];
+  return MINI_APP_CANONICAL_GIFTS.find(gift => candidates.some(candidate => candidate.includes(gift.productName || gift.label)))
+    || MINI_APP_CANONICAL_GIFTS.find(gift => gift.topicId === item.topicId || gift.productId === item.productId)
+    || seed;
 };
 
 const csvEscape = (value: string) => `"${(value || '').replace(/"/g, '""')}"`;
@@ -120,12 +102,13 @@ const MiniAppContentLab: React.FC = () => {
 
   const normalizeItems = (rawItems: ContentTopicItem[]): ContentTopicItem[] => rawItems.map((item, index) => {
     const seed = seedItems.find(seedItem => seedItem.topicId === item.topicId || seedItem.productId === item.productId || seedItem.route === item.route) || seedItems[index % Math.max(seedItems.length, 1)];
-    const productName = item.giftProductName || seed?.productName || seed?.label || '';
+    const canonicalGift = findCanonicalGift(item, seed);
+    const productName = canonicalGift?.productName || canonicalGift?.label || '';
     return {
       ...item,
       giftProductName: productName,
-      giftDisplayName: item.giftDisplayName || seed?.giftDisplayName || (productName ? `限时赠送「${productName}」` : item.matchedTool),
-      reportPageName: item.reportPageName || seed?.reportName || (productName ? `${productName.replace(/测评|工具|按钮|练习/g, '')}主题洞察报告` : ''),
+      giftDisplayName: canonicalGift?.giftDisplayName || (productName ? `限时赠送「${productName}」` : item.matchedTool),
+      reportPageName: item.reportPageName || canonicalGift?.reportName || (productName ? `${productName.replace(/测评|工具|按钮|练习/g, '')}主题洞察报告` : ''),
       actionPlanValue: item.actionPlanValue || item.coachReportValue,
     };
   });
@@ -259,7 +242,7 @@ const MiniAppContentLab: React.FC = () => {
             </div>
             <div className="md:col-span-4 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="text-xs text-muted-foreground">
-                当前将基于 <Badge variant="secondary">{selectedSource?.label}</Badge> 生成“用户能领到什么”的私域引流选题，风格为 <Badge variant="secondary">{selectedStyle?.label}</Badge>
+                当前将基于 <Badge variant="secondary">{selectedSource?.label}</Badge> 生成私域引流选题；赠品仅限现有 9.9/免费测评与工具：{canonicalGiftNames.slice(0, 4).join('、')}等，风格为 <Badge variant="secondary">{selectedStyle?.label}</Badge>
               </div>
               <Button onClick={handleGenerate} disabled={loading} className="sm:min-w-40">
                 {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
