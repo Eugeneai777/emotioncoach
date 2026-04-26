@@ -1324,6 +1324,19 @@ export default function WealthBlockAssessmentPage() {
           }
           setShowPayDialog(open);
         }}
+        onCancelled={(orderNo) => {
+          console.log('[WealthBlock] PayDialog onCancelled:', orderNo);
+          resetMiniProgramPaymentStateAfterCancel(orderNo);
+          trackPaymentEvent('payment_cancelled', {
+            metadata: {
+              source: 'pay_dialog_return_to_h5',
+              orderNo: orderNo || null,
+              packageKey: 'wealth_block_assessment',
+              ua: navigator.userAgent.slice(0, 200),
+            },
+          });
+          toast.info('支付已取消，可重新发起支付');
+        }}
         userId={user?.id}
         hasPurchased={hasPurchased}
         packageKey="wealth_block_assessment"
