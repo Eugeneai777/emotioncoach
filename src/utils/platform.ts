@@ -83,11 +83,13 @@ export function isWeChatMiniProgram(): boolean {
   }
 
   // 3. 🔧 部分 Android 设备（如 Redmi K30 5G）的小程序 WebView UA 
-  // 不包含 "MicroMessenger" 和 "miniProgram"，但包含 "MMWEBSDK" + "MMW"
+  // 不包含 "MicroMessenger" 和 "miniProgram"，但包含 "MMWEBSDK" + "MMW"。
+  // 注意：安卓微信 H5 浏览器也可能包含 MMWEBSDK/MMW；若已明确包含 MicroMessenger，
+  // 必须按普通微信浏览器处理，否则第二次点击支付会误走小程序原生支付分支。
   // 例如: ...Chrome/146.0.7680.177 Mobile Safari/537.36 XWEB/1460055 MMWEBSDK/20260202 MMW
   const hasMMWebSDK = /mmwebsdk/i.test(ua);
   const hasMMW = /\bmmw\b/i.test(ua);
-  if (hasMMWebSDK && hasMMW) {
+  if (!isWechat && hasMMWebSDK && hasMMW) {
     return true;
   }
 
