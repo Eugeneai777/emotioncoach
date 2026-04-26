@@ -20,7 +20,7 @@ import { WealthBlockHistory, HistoryRecord } from "@/components/wealth-block/Wea
 import { WealthBlockTrend } from "@/components/wealth-block/WealthBlockTrend";
 import { AssessmentComparison } from "@/components/wealth-block/AssessmentComparison";
 import { AssessmentIntroCard } from "@/components/wealth-block/AssessmentIntroCard";
-import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
+import { AssessmentPayDialog } from "@/components/wealth-block/AssessmentPayDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,7 +38,6 @@ import WealthInviteCardDialog from "@/components/wealth-camp/WealthInviteCardDia
 import { usePaymentCallback } from "@/hooks/usePaymentCallback";
 import { isWeChatMiniProgram } from "@/utils/platform";
 import { useAssessmentPurchase } from "@/hooks/useAssessmentPurchase";
-import { usePackageByKey } from "@/hooks/usePackages";
 import { trackPaymentEvent } from "@/utils/paymentFlowTracker";
 import { setPostAuthRedirect } from "@/lib/postAuthRedirect";
 
@@ -70,7 +69,7 @@ export default function WealthBlockAssessmentPage() {
   // 支付相关状态
   const [showPayDialog, setShowPayDialog] = useState(false);
   const [payDialogInstanceKey, setPayDialogInstanceKey] = useState(0);
-  const [, setMiniProgramPayReturnSignal] = useState(0);
+  const [miniProgramPayReturnSignal, setMiniProgramPayReturnSignal] = useState(0);
   // 正在跳转微信授权中
   const [isRedirectingForAuth, setIsRedirectingForAuth] = useState(false);
   const payDialogReopenTimerRef = useRef<number | null>(null);
@@ -111,7 +110,6 @@ export default function WealthBlockAssessmentPage() {
   // 检查用户是否已购买测评
   const { data: purchaseRecord, isLoading: isPurchaseLoading } = useAssessmentPurchase();
   const hasPurchased = !!purchaseRecord;
-  const { data: wealthAssessmentPackage } = usePackageByKey('wealth_block_assessment');
 
   // 🆕 微信账号冲突提示（当前登录账号 ≠ 微信 openId 绑定账号 且 绑定账号已购买）
   const [conflictDialog, setConflictDialog] = useState<{
@@ -1311,10 +1309,11 @@ export default function WealthBlockAssessmentPage() {
         </Tabs>
       </main>
 
-      {/* 支付对话框：复用产品中心统一支付方式，业务校验与成功后进入测评逻辑保持不变 */}
-      <UnifiedPayDialog
+      {/* 支付对话框 */}
+      <AssessmentPayDialog
         key={payDialogInstanceKey}
         open={showPayDialog}
+        miniProgramPayReturnSignal={miniProgramPayReturnSignal}
         onOpenChange={(open) => {
           console.log('[WealthBlock] PayDialog onOpenChange:', open);
           if (open) {
@@ -1325,14 +1324,26 @@ export default function WealthBlockAssessmentPage() {
           }
           setShowPayDialog(open);
         }}
-        packageInfo={{
-          key: 'wealth_block_assessment',
-          name: wealthAssessmentPackage?.package_name || '财富卡点测评',
-          price: wealthAssessmentPackage?.price || 9.9,
+        onCancelled={(orderNo) => {
+          console.log('[WealthBlock] PayDialog onCancelled:', orderNo);
+          resetMiniProgramPaymentStateAfterCancel(orderNo);
+          trackPaymentEvent('payment_cancelled', {
+            metadata: {
+              source: 'pay_dialog_return_to_h5',
+              orderNo: orderNo || null,
+              packageKey: 'wealth_block_assessment',
+              ua: navigator.userAgent.slice(0, 200),
+            },
+          });
+          toast.info('支付已取消，可重新发起支付');
         }}
-        onSuccess={() => {
+        userId={user?.id}
+        hasPurchased={hasPurchased}
+        packageKey="wealth_block_assessment"
+        packageName="财富卡点测评"
+        onSuccess={(returnedUserId) => {
           // 支付+注册成功，开始测评
-          console.log('[WealthBlock] PayDialog onSuccess');
+          console.log('[WealthBlock] PayDialog onSuccess, userId:', returnedUserId);
           console.log('[WealthBlock] Setting showIntro=false, showPayDialog=false');
           sessionStorage.removeItem(MP_PENDING_PAYMENT_DISMISSED_KEY);
           setShowIntro(false);
