@@ -168,6 +168,7 @@ const GratitudeHistory = lazyRetry(() => import("./pages/GratitudeHistory"));
 // 工具和帮助
 const ApiDocs = lazyRetry(() => import("./pages/ApiDocs"));
 const VideoGenerator = lazyRetry(() => import("./pages/VideoGenerator"));
+const MiniAppContentLab = lazyRetry(() => import("./pages/MiniAppContentLab"));
 const PosterCenter = lazyRetry(() => import("./pages/PosterCenter"));
 const ProductBrochure = lazyRetry(() => import("./pages/ProductBrochure"));
 const CustomerSupport = lazyRetry(() => import("./pages/CustomerSupport"));
@@ -450,6 +451,7 @@ const App = () => (
               <Route path="/vibrant-life-history" element={<VibrantLifeHistory />} />
               <Route path="/api-docs" element={<ApiDocs />} />
               <Route path="/video-generator" element={<VideoGenerator />} />
+              <Route path="/mini-app-content-lab" element={<MiniAppContentLab />} />
               <Route path="/poster-center" element={<PosterCenter />} />
               <Route path="/customer-support" element={<CustomerSupport />} />
               <Route path="/my-tickets" element={<MyTickets />} />

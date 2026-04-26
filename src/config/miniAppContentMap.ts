@@ -1,0 +1,46 @@
+export type MiniAppSourceType = 'mini-scenes' | 'daily-tools' | 'assessments' | 'conversion';
+export type MiniAppContentStyle = 'xiaohongshu' | 'douyin' | 'empathy' | 'assessment';
+
+export interface MiniAppSeedItem {
+  id: string;
+  label: string;
+  description: string;
+  sourceType: MiniAppSourceType;
+  route?: string;
+  topicId?: string;
+  productId?: string;
+}
+
+export const MINI_APP_SOURCE_OPTIONS: Array<{ id: MiniAppSourceType; label: string; description: string }> = [
+  { id: 'mini-scenes', label: '/mini-app 场景', description: '深夜焦虑、财富卡点、情绪崩溃等入口场景' },
+  { id: 'daily-tools', label: '日常工具', description: '情绪 SOS、呼吸练习、感恩日记等轻工具' },
+  { id: 'assessments', label: '专业测评', description: '情绪健康、SCL-90、财富卡点等测评转化' },
+  { id: 'conversion', label: '训练营/产品转化', description: '训练营、会员、真人教练、合伙人等产品选题' },
+];
+
+export const MINI_APP_STYLE_OPTIONS: Array<{ id: MiniAppContentStyle; label: string; description: string }> = [
+  { id: 'xiaohongshu', label: '小红书种草', description: '标题更抓人，强调真实体验和收藏价值' },
+  { id: 'douyin', label: '抖音口播', description: '开场冲突更强，适合 30 秒短视频' },
+  { id: 'empathy', label: '情绪共鸣', description: '先共情后转化，适合高压人群' },
+  { id: 'assessment', label: '测评转化', description: '突出测一测、报告解读和自我洞察' },
+];
+
+export const MINI_APP_SCENE_SEEDS: MiniAppSeedItem[] = [
+  { id: 'scene-anxiety', label: '深夜焦虑', description: '翻来覆去睡不着，脑子停不下来', sourceType: 'mini-scenes', route: '/life-coach-voice?topic=anxiety', topicId: 'ai-coach-anxiety', productId: 'cv-synergy-camp' },
+  { id: 'scene-career', label: '职场迷茫', description: '想换工作没勇气，不知道下一步去哪', sourceType: 'mini-scenes', route: '/life-coach-voice?topic=career', topicId: 'ai-coach-career', productId: 'cv-365' },
+  { id: 'scene-relationship', label: '关系困扰', description: '刚和重要的人吵完架，不知道怎么修复', sourceType: 'mini-scenes', route: '/life-coach-voice?topic=relationship', topicId: 'ai-coach-relationship', productId: 'cv-coach-1v1' },
+  { id: 'scene-wealth', label: '财富卡点', description: '赚多少都存不下，收入上来又会自我破坏', sourceType: 'mini-scenes', route: '/wealth-block', topicId: 'assess-wealth', productId: 'cv-wealth-assess' },
+  { id: 'scene-sleep', label: '睡不着觉', description: '身体很累，但一闭眼就清醒', sourceType: 'mini-scenes', route: '/life-coach-voice?topic=sleep', topicId: 'tool-breathing', productId: 'cv-free-tool' },
+  { id: 'scene-meltdown', label: '情绪崩溃', description: '突然想哭，什么都不想处理', sourceType: 'mini-scenes', route: '/emotion-button', topicId: 'tool-emotion-sos', productId: 'cv-synergy-camp' },
+  { id: 'scene-exam', label: '考试焦虑', description: '越复习越慌，越想表现好越发挥不出来', sourceType: 'mini-scenes', route: '/xiaojin', topicId: 'tool-panic', productId: 'cv-free-tool' },
+  { id: 'scene-social', label: '社交困扰', description: '不敢开口，害怕被评价和拒绝', sourceType: 'mini-scenes', route: '/life-coach-voice?topic=social', topicId: 'tool-values', productId: 'cv-trial' },
+];
+
+export const MINI_APP_CONVERSION_SEEDS: MiniAppSeedItem[] = [
+  { id: 'conv-synergy', label: '7天有劲训练营', description: '7 天解压训练、AI 教练、真人录音冥想', sourceType: 'conversion', route: '/promo/synergy', topicId: 'camp-emotion_stress_7', productId: 'cv-synergy-camp' },
+  { id: 'conv-identity-bloom', label: '身份绽放训练营', description: '重新定义我是谁，适合高价值深度转化', sourceType: 'conversion', route: '/promo/identity-bloom', topicId: 'bloom-camp', productId: 'cv-bloom-camp' },
+  { id: 'conv-member365', label: '365年度会员', description: '全年 AI 教练和工具使用权益', sourceType: 'conversion', route: '/packages', topicId: 'member-365', productId: 'cv-365' },
+  { id: 'conv-trial', label: '尝鲜会员', description: '低门槛体验 50 点 AI 教练额度', sourceType: 'conversion', route: '/packages', topicId: 'member-trial', productId: 'cv-trial' },
+  { id: 'conv-wealth-camp', label: '财富觉醒训练营', description: '围绕财富信念和自我价值感做系统突破', sourceType: 'conversion', route: '/promo/wealth-synergy', topicId: 'assess-wealth', productId: 'cv-wealth-camp' },
+  { id: 'conv-coach', label: '真人教练1v1', description: '当 AI 洞察不够时，进入真人教练深度陪跑', sourceType: 'conversion', route: '/human-coaches', topicId: 'coach-1v1', productId: 'cv-coach-1v1' },
+];

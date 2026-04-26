@@ -17,7 +17,7 @@ import {
   ArrowLeft, Video, CheckCircle2, Loader2, AlertCircle,
   Download, RotateCcw, Camera, Sparkles, ImageIcon, FileJson, RefreshCw,
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
 // ─── Constants ───
@@ -181,6 +181,7 @@ function useDynamicTopicGroups(): VideoTopicGroup[] {
 
 const VideoGenerator: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { status, error, result, progress, segmentProgress, generate, retryMerge, reset } = useVideoGeneration();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const topicGroups = useDynamicTopicGroups();
@@ -189,12 +190,13 @@ const VideoGenerator: React.FC = () => {
   const [imageUrl, setImageUrl] = useState('');
   const [imagePreview, setImagePreview] = useState('');
   const [uploading, setUploading] = useState(false);
-  const [topicId, setTopicId] = useState('');
-  const [audienceId, setAudienceId] = useState('general');
-  const [conversionId, setConversionId] = useState('');
+  const [topicId, setTopicId] = useState(searchParams.get('topicId') || '');
+  const [audienceId, setAudienceId] = useState(searchParams.get('audienceId') || 'general');
+  const [conversionId, setConversionId] = useState(searchParams.get('conversionId') || '');
   const [voiceType, setVoiceType] = useState(VOICE_TYPE_OPTIONS[0].voice_type);
   const [structuredScript, setStructuredScript] = useState<StructuredScript | null>(null);
   const [generatingScript, setGeneratingScript] = useState(false);
+  const sourceIdea = searchParams.get('idea') || '';
 
   // Derived
   const allTopics = useMemo(() => topicGroups.flatMap(g => g.items), [topicGroups]);
@@ -376,6 +378,12 @@ const VideoGenerator: React.FC = () => {
             <CardTitle className="text-base flex items-center gap-2">🎯 剧本配置</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            {sourceIdea && (
+              <div className="rounded-lg border bg-muted/40 p-3 text-sm">
+                <span className="font-medium">选题来源：</span>
+                <span className="text-muted-foreground">{sourceIdea}</span>
+              </div>
+            )}
 
             {/* Topic — grouped */}
             <div className="space-y-2">
