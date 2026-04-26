@@ -1458,6 +1458,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, onCancelled
     setPayUrl("");
     setErrorMessage("");
     setPollingTimeout(false);
+    setJsapiPayDismissed(false);
     setIsForceChecking(false);
     setMpPayParams(null);
     setMpRetrying(false);
@@ -1737,6 +1738,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, onCancelled
       setPayUrl("");
       setErrorMessage("");
       setPollingTimeout(false);
+      setJsapiPayDismissed(false);
       setIsForceChecking(false);
       openIdFetchedRef.current = false;
       createOrderCalledRef.current = false;
@@ -1838,7 +1840,30 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, onCancelled
           {/* 等待支付 - JSAPI/轮询中（非小程序） */}
           {!isMiniProgram && status === "polling" && payType === "jsapi" && (
             <div className="flex flex-col items-center py-6">
-              {!pollingTimeout ? (
+              {jsapiPayDismissed ? (
+                <>
+                  <p className="text-foreground font-medium mb-1">微信支付已关闭</p>
+                  <p className="text-sm text-muted-foreground text-center mb-4">
+                    {errorMessage || "可重新拉起支付，或手动关闭此窗口"}
+                  </p>
+                  <div className="space-y-2 w-full">
+                    <Button variant="outline" onClick={handleRepay} disabled={isRepaying || isCancellingOrder} className="w-full">
+                      {(isRepaying || isCancellingOrder) && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                      重新支付
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={handleForceCheck}
+                      disabled={isForceChecking}
+                      className="w-full"
+                    >
+                      {isForceChecking ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle className="w-4 h-4 mr-2" />}
+                      我已完成支付
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-3">订单号：{orderNo}</p>
+                </>
+              ) : !pollingTimeout ? (
                 <>
                   <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
                   <p className="text-muted-foreground">等待支付确认...</p>
