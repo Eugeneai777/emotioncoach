@@ -70,8 +70,6 @@ export default function WealthBlockAssessmentPage() {
   const [showPayDialog, setShowPayDialog] = useState(false);
   const [payDialogInstanceKey, setPayDialogInstanceKey] = useState(0);
   const [miniProgramPayReturnSignal, setMiniProgramPayReturnSignal] = useState(0);
-  // 正在跳转微信授权中
-  const [isRedirectingForAuth, setIsRedirectingForAuth] = useState(false);
   const payDialogReopenTimerRef = useRef<number | null>(null);
 
   const resetMiniProgramPaymentStateAfterCancel = (orderNo?: string | null) => {
@@ -367,34 +365,6 @@ export default function WealthBlockAssessmentPage() {
     return () => window.removeEventListener('pageshow', handleBfcacheRestore);
   }, []);
 
-  // 微信浏览器未登录时，点击支付前先触发静默授权（自动登录/注册）
-  const triggerWeChatSilentAuth = async () => {
-    console.log('[WealthBlock] Triggering WeChat silent auth for login/register');
-    setIsRedirectingForAuth(true);
-    sessionStorage.setItem('pay_auth_in_progress', '1');
-
-    try {
-      // 构建回跳 URL：授权回来后自动再打开支付弹窗
-      const resumeUrl = new URL(window.location.href);
-      resumeUrl.searchParams.set('assessment_pay_resume', '1');
-
-      // 微信内必须先停留在业务域名 /pay-entry，再跳微信授权，避免暴露后端函数域名导致非法域名/状态残留
-      const authStartUrl = new URL('/pay-entry', window.location.origin);
-      authStartUrl.searchParams.set('payment_auth_start', '1');
-      authStartUrl.searchParams.set('payment_redirect', resumeUrl.toString());
-      authStartUrl.searchParams.set('pay_flow', 'wealth_assessment');
-
-      console.log('[WealthBlock] Redirecting to first-party auth bridge...');
-      window.location.href = authStartUrl.toString();
-      return;
-    } catch (err) {
-      console.error('[WealthBlock] Silent auth error:', err);
-      setIsRedirectingForAuth(false);
-      sessionStorage.removeItem('pay_auth_in_progress');
-      openWealthPayDialog();
-    }
-  };
-
   const openWealthPayDialog = () => {
     // 用户主动打开：清理 dismissed/guard
     sessionStorage.removeItem(MP_PENDING_PAYMENT_DISMISSED_KEY);
@@ -484,13 +454,6 @@ export default function WealthBlockAssessmentPage() {
       },
     });
 
-    // 微信浏览器内且未登录：先触发静默授权（自动登录/注册）
-    if (isWeChatBrowserEnv && !user) {
-      console.log('[WealthBlock][PayClick] → branch: wechat silent auth (未登录)');
-      triggerWeChatSilentAuth();
-      return;
-    }
-
     // 🆕 微信浏览器内 + 已登录：检查"当前账号 ≠ 微信 openId 绑定账号 且 绑定账号已购"
     // 命中则弹一次轻提示让用户决定继续付款 or 切换回原账号（不强拦截）
     if (isWeChatBrowserEnv && user) {
@@ -543,8 +506,8 @@ export default function WealthBlockAssessmentPage() {
       }
     }
 
-    // 已登录或非微信环境：直接打开支付弹窗
-    console.log('[WealthBlock][PayClick] → branch: openWealthPayDialog (已登录/非微信)');
+    // 与产品中心一致：先打开支付弹窗，微信 openId 授权交给支付组件内部处理
+    console.log('[WealthBlock][PayClick] → branch: openWealthPayDialog');
     openWealthPayDialog();
     console.log('[WealthBlock][PayClick] openWealthPayDialog dispatched, instanceKey will increment');
   };
@@ -557,7 +520,7 @@ export default function WealthBlockAssessmentPage() {
     } catch (err) {
       console.warn('[WealthBlock] signOut error:', err);
     }
-    triggerWeChatSilentAuth();
+    openWealthPayDialog();
   };
 
   // 微信内静默授权返回后：自动登录 + 重新打开"测评支付弹窗"
