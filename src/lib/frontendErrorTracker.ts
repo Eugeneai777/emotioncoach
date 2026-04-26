@@ -25,12 +25,19 @@ const MAX_ERRORS = 500;
 let errors: FrontendError[] = [];
 let listeners: ErrorListener[] = [];
 let installed = false;
+const recentErrorSignatures = new Map<string, number>();
+const DEDUPE_WINDOW_MS = 3000;
 
 function genId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
 function push(error: FrontendError) {
+  const signature = [error.type, error.message, error.page, error.resourceUrl, error.requestInfo].filter(Boolean).join('|');
+  const lastSeenAt = recentErrorSignatures.get(signature) || 0;
+  if (Date.now() - lastSeenAt < DEDUPE_WINDOW_MS) return;
+  recentErrorSignatures.set(signature, Date.now());
+
   errors = [error, ...errors].slice(0, MAX_ERRORS);
   listeners.forEach((fn) => fn(errors));
 
@@ -50,6 +57,17 @@ function baseInfo(): Pick<FrontendError, 'userAgent' | 'page' | 'timestamp'> {
   };
 }
 
+function isOpaqueCrossOriginScriptError(e: ErrorEvent): boolean {
+  const message = (e.message || '').trim().toLowerCase();
+  return (
+    message === 'script error.' &&
+    !e.error &&
+    !e.filename &&
+    !e.lineno &&
+    !e.colno
+  );
+}
+
 /** 安装全局错误监听 */
 export function installErrorTracker() {
   if (installed) return;
@@ -59,11 +77,18 @@ export function installErrorTracker() {
   window.addEventListener('error', (e: ErrorEvent) => {
     // 过滤资源加载错误（会在下面的 capture 处理）
     if (e.target && (e.target as HTMLElement).tagName) return;
+    // 微信 XWEB / 注入脚本的跨域异常只会暴露 "Script error."，无堆栈、无文件、无法定位业务代码，过滤为噪声
+    if (isOpaqueCrossOriginScriptError(e)) return;
     push({
       id: genId(),
       type: 'js_error',
       message: e.message || 'Unknown JS Error',
       stack: e.error?.stack,
+      extra: {
+        filename: e.filename || undefined,
+        lineno: e.lineno || undefined,
+        colno: e.colno || undefined,
+      },
       ...baseInfo(),
     });
   });
