@@ -20,7 +20,7 @@ import { WealthBlockHistory, HistoryRecord } from "@/components/wealth-block/Wea
 import { WealthBlockTrend } from "@/components/wealth-block/WealthBlockTrend";
 import { AssessmentComparison } from "@/components/wealth-block/AssessmentComparison";
 import { AssessmentIntroCard } from "@/components/wealth-block/AssessmentIntroCard";
-import { AssessmentPayDialog } from "@/components/wealth-block/AssessmentPayDialog";
+import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -69,7 +69,7 @@ export default function WealthBlockAssessmentPage() {
   // 支付相关状态
   const [showPayDialog, setShowPayDialog] = useState(false);
   const [payDialogInstanceKey, setPayDialogInstanceKey] = useState(0);
-  const [miniProgramPayReturnSignal, setMiniProgramPayReturnSignal] = useState(0);
+  const [, setMiniProgramPayReturnSignal] = useState(0);
   const payDialogReopenTimerRef = useRef<number | null>(null);
 
   const resetMiniProgramPaymentStateAfterCancel = (orderNo?: string | null) => {
