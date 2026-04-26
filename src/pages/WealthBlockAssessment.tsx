@@ -464,6 +464,39 @@ export default function WealthBlockAssessmentPage() {
       return;
     }
 
+    if (isBloomPartner) {
+      sessionStorage.removeItem('pay_auth_in_progress');
+      sessionStorage.removeItem('wealth_block_pending_pay');
+      setShowPayDialog(false);
+      setShowIntro(false);
+      return;
+    }
+
+    // 点击时再做一次权威已购校验，避免 hook / 登录回跳状态滞后导致已购用户误进微信授权。
+    try {
+      const { data: existingPaidOrder, error: paidOrderError } = await supabase
+        .from('orders')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('package_key', 'wealth_block_assessment')
+        .eq('status', 'paid')
+        .limit(1)
+        .maybeSingle();
+
+      if (paidOrderError) {
+        console.warn('[WealthBlock] Paid order recheck failed, continue to payment:', paidOrderError);
+      } else if (existingPaidOrder) {
+        console.log('[WealthBlock][PayClick] Already purchased by authoritative order check, start assessment');
+        sessionStorage.removeItem('pay_auth_in_progress');
+        sessionStorage.removeItem('wealth_block_pending_pay');
+        setShowPayDialog(false);
+        setShowIntro(false);
+        return;
+      }
+    } catch (err) {
+      console.warn('[WealthBlock] Paid order recheck exception, continue to payment:', err);
+    }
+
     // 🆕 微信浏览器内 + 已登录：检查"当前账号 ≠ 微信 openId 绑定账号 且 绑定账号已购"
     // 命中则弹一次轻提示让用户决定继续付款 or 切换回原账号（不强拦截）
     if (isWeChatBrowserEnv && user) {
