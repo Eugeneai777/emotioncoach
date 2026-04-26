@@ -1,11 +1,12 @@
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Clipboard, Download, FileText, Loader2, Sparkles, Table2, Wand2, Video } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, CheckCircle2, Clipboard, Download, FileText, Loader2, ShieldCheck, Sparkles, Table2, Wand2, Video } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -29,6 +30,8 @@ interface ContentTopicItem {
   value: string;
   giftProductName?: string;
   giftDisplayName?: string;
+  rawGiftProductName?: string;
+  rawGiftDisplayName?: string;
   reportPageName?: string;
   matchedTool: string;
   aiReportValue: string;
@@ -52,6 +55,7 @@ const localSeedItems = (sourceType: MiniAppSourceType): MiniAppSeedItem[] => {
 };
 
 const canonicalGiftNames = MINI_APP_CANONICAL_GIFTS.map(item => item.productName || item.label);
+const canonicalGiftNameSet = new Set(canonicalGiftNames);
 
 const findCanonicalGift = (item: ContentTopicItem, seed?: MiniAppSeedItem) => {
   const candidates = [item.giftProductName, seed?.productName, seed?.label, item.matchedTool].filter(Boolean) as string[];
@@ -59,6 +63,73 @@ const findCanonicalGift = (item: ContentTopicItem, seed?: MiniAppSeedItem) => {
     || MINI_APP_CANONICAL_GIFTS.find(gift => gift.topicId === item.topicId || gift.productId === item.productId)
     || seed;
 };
+
+interface GiftValidationIssue {
+  index: number;
+  productName: string;
+  giftDisplayName: string;
+  reason: string;
+  suggestedProductName?: string;
+  suggestedGiftDisplayName?: string;
+}
+
+interface GiftValidationResult {
+  total: number;
+  passed: number;
+  issues: GiftValidationIssue[];
+  checkedAt: number;
+}
+
+const validateGiftItem = (item: ContentTopicItem, index: number): GiftValidationIssue | null => {
+  const productName = (item.rawGiftProductName ?? item.giftProductName ?? '').trim();
+  const giftDisplayName = (item.rawGiftDisplayName ?? item.giftDisplayName ?? item.matchedTool ?? '').trim();
+  const expectedGiftDisplayName = productName ? `限时赠送「${productName}」` : '';
+  const suggestedGift = findCanonicalGift(item);
+  const suggestedProductName = suggestedGift?.productName || suggestedGift?.label;
+  const suggestedGiftDisplayName = suggestedGift?.giftDisplayName || (suggestedProductName ? `限时赠送「${suggestedProductName}」` : undefined);
+
+  if (!canonicalGiftNameSet.has(productName)) {
+    return {
+      index,
+      productName: productName || '未填写',
+      giftDisplayName: giftDisplayName || '未填写',
+      reason: '产品/工具名未严格命中标准赠品池',
+      suggestedProductName,
+      suggestedGiftDisplayName,
+    };
+  }
+
+  if (giftDisplayName !== expectedGiftDisplayName) {
+    return {
+      index,
+      productName,
+      giftDisplayName: giftDisplayName || '未填写',
+      reason: `限时赠品必须严格写成 ${expectedGiftDisplayName}`,
+      suggestedProductName: productName,
+      suggestedGiftDisplayName: expectedGiftDisplayName,
+    };
+  }
+
+  return null;
+};
+
+const validateGiftItems = (items: ContentTopicItem[]): GiftValidationResult => {
+  const issues = items.map(validateGiftItem).filter(Boolean) as GiftValidationIssue[];
+  return { total: items.length, passed: items.length - issues.length, issues, checkedAt: Date.now() };
+};
+
+const repairGiftItems = (items: ContentTopicItem[]): ContentTopicItem[] => items.map((item) => {
+  const canonicalGift = findCanonicalGift(item);
+  const productName = canonicalGift?.productName || canonicalGift?.label || item.giftProductName || '';
+  const giftDisplayName = canonicalGift?.giftDisplayName || (productName ? `限时赠送「${productName}」` : item.giftDisplayName);
+  return {
+    ...item,
+    giftProductName: productName,
+    giftDisplayName,
+    rawGiftProductName: productName,
+    rawGiftDisplayName: giftDisplayName,
+  };
+});
 
 const csvEscape = (value: string) => `"${(value || '').replace(/"/g, '""')}"`;
 
@@ -94,6 +165,7 @@ const MiniAppContentLab: React.FC = () => {
   const [count, setCount] = useState('20');
   const [items, setItems] = useState<ContentTopicItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [giftValidation, setGiftValidation] = useState<GiftValidationResult | null>(null);
 
   const selectedAudience = useMemo(() => VIDEO_AUDIENCES.find(a => a.id === audienceId) || VIDEO_AUDIENCES[0], [audienceId]);
   const seedItems = useMemo(() => localSeedItems(sourceType), [sourceType]);
@@ -106,6 +178,8 @@ const MiniAppContentLab: React.FC = () => {
     const productName = canonicalGift?.productName || canonicalGift?.label || '';
     return {
       ...item,
+      rawGiftProductName: item.giftProductName || item.rawGiftProductName,
+      rawGiftDisplayName: item.giftDisplayName || item.rawGiftDisplayName,
       giftProductName: productName,
       giftDisplayName: canonicalGift?.giftDisplayName || (productName ? `限时赠送「${productName}」` : item.matchedTool),
       reportPageName: item.reportPageName || canonicalGift?.reportName || (productName ? `${productName.replace(/测评|工具|按钮|练习/g, '')}主题洞察报告` : ''),
@@ -130,6 +204,7 @@ const MiniAppContentLab: React.FC = () => {
       if (data?.error) throw new Error(data.error);
       if (!Array.isArray(data?.items)) throw new Error('AI返回数据格式异常');
       setItems(normalizeItems(data.items));
+      setGiftValidation(null);
       toast.success(`已生成 ${data.items.length} 条短视频选题`);
     } catch (err: any) {
       toast.error(`生成失败：${err.message || '请稍后重试'}`);
@@ -146,6 +221,30 @@ const MiniAppContentLab: React.FC = () => {
       toast.error('复制失败，请手动复制');
     }
   };
+
+  const handleValidateGifts = () => {
+    const result = validateGiftItems(items);
+    setGiftValidation(result);
+    if (result.issues.length === 0) {
+      toast.success('全部通过：所有限时赠品均命中标准赠品池');
+    } else {
+      toast.error(`发现 ${result.issues.length} 条赠品异常，请检查标准名称`);
+    }
+  };
+
+  const handleRepairGifts = () => {
+    const repairedItems = repairGiftItems(items);
+    setItems(repairedItems);
+    const result = validateGiftItems(repairedItems);
+    setGiftValidation(result);
+    toast.success('已按标准赠品池修正赠品名称');
+  };
+
+  const issueMap = useMemo(() => {
+    const map = new Map<number, GiftValidationIssue>();
+    giftValidation?.issues.forEach(issue => map.set(issue.index, issue));
+    return map;
+  }, [giftValidation]);
 
   const exportCsv = () => {
     if (!items.length) return;
@@ -256,10 +355,36 @@ const MiniAppContentLab: React.FC = () => {
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="text-sm text-muted-foreground">已生成 {items.length} 条，可直接复制或导出排期。</div>
             <div className="flex gap-2">
+              <Button variant="secondary" size="sm" onClick={handleValidateGifts}><ShieldCheck className="mr-2 h-4 w-4" />一键校验赠品</Button>
               <Button variant="outline" size="sm" onClick={exportCsv}><Table2 className="mr-2 h-4 w-4" />导出 CSV</Button>
               <Button variant="outline" size="sm" onClick={exportMarkdown}><FileText className="mr-2 h-4 w-4" />导出 MD</Button>
             </div>
           </div>
+        )}
+
+        {giftValidation && (
+          <Alert variant={giftValidation.issues.length ? 'destructive' : 'default'} className={giftValidation.issues.length ? '' : 'border-primary/30 bg-primary/5'}>
+            {giftValidation.issues.length ? <AlertTriangle className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
+            <AlertTitle>{giftValidation.issues.length ? `发现 ${giftValidation.issues.length} 条赠品异常` : '赠品校验全部通过'}</AlertTitle>
+            <AlertDescription className="space-y-3">
+              <p>共 {giftValidation.total} 条，命中 {giftValidation.passed} 条，标准赠品池 {MINI_APP_CANONICAL_GIFTS.length} 个。</p>
+              {giftValidation.issues.length > 0 && (
+                <>
+                  <div className="grid gap-2">
+                    {giftValidation.issues.map(issue => (
+                      <div key={issue.index} className="rounded-md border bg-background/60 p-3 text-xs">
+                        <div className="font-semibold">第 {issue.index + 1} 条：{issue.reason}</div>
+                        <div className="mt-1 text-muted-foreground">当前产品/工具名：{issue.productName}</div>
+                        <div className="text-muted-foreground">当前限时赠品：{issue.giftDisplayName}</div>
+                        {issue.suggestedGiftDisplayName && <div className="mt-1 text-foreground">建议：{issue.suggestedGiftDisplayName}</div>}
+                      </div>
+                    ))}
+                  </div>
+                  <Button variant="secondary" size="sm" onClick={handleRepairGifts}>一键按标准池修正</Button>
+                </>
+              )}
+            </AlertDescription>
+          </Alert>
         )}
 
         {items.length === 0 ? (
@@ -282,11 +407,14 @@ const MiniAppContentLab: React.FC = () => {
             </TabsList>
             <TabsContent value="cards" className="grid gap-3 md:grid-cols-2">
               {items.map((item, index) => (
-                <Card key={item.id || index} className="overflow-hidden">
+                <Card key={item.id || index} className={`overflow-hidden ${issueMap.has(index) ? 'border-destructive/60' : ''}`}>
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between gap-3">
                       <CardTitle className="text-base leading-snug">{item.viralTitle}</CardTitle>
-                      <Badge variant="outline">{index + 1}</Badge>
+                      <div className="flex shrink-0 flex-col items-end gap-1">
+                        <Badge variant="outline">{index + 1}</Badge>
+                        {giftValidation && <Badge variant={issueMap.has(index) ? 'destructive' : 'secondary'}>{issueMap.has(index) ? '赠品异常' : '赠品已校验'}</Badge>}
+                      </div>
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-3 text-sm">
@@ -319,6 +447,7 @@ const MiniAppContentLab: React.FC = () => {
                         <TableHead className="min-w-48">核心价值</TableHead>
                         <TableHead className="min-w-40">产品/工具名</TableHead>
                         <TableHead className="min-w-56">限时赠品</TableHead>
+                        <TableHead className="min-w-28">赠品校验</TableHead>
                         <TableHead className="min-w-56">专业报告名称</TableHead>
                         <TableHead className="min-w-56">报告价值</TableHead>
                         <TableHead className="min-w-56">下一步行动建议</TableHead>
@@ -328,11 +457,12 @@ const MiniAppContentLab: React.FC = () => {
                     </TableHeader>
                     <TableBody>
                       {items.map((item, index) => (
-                        <TableRow key={item.id || index}>
+                        <TableRow key={item.id || index} className={issueMap.has(index) ? 'bg-destructive/5' : undefined}>
                           <TableCell>{item.painPoint}</TableCell>
                           <TableCell>{item.value}</TableCell>
                           <TableCell>{item.giftProductName || '-'}</TableCell>
                           <TableCell>{item.giftDisplayName || item.matchedTool}</TableCell>
+                          <TableCell>{giftValidation ? <Badge variant={issueMap.has(index) ? 'destructive' : 'secondary'}>{issueMap.has(index) ? '异常' : '通过'}</Badge> : '-'}</TableCell>
                           <TableCell>{item.reportPageName || '-'}</TableCell>
                           <TableCell>{item.aiReportValue}</TableCell>
                           <TableCell>{item.actionPlanValue || item.coachReportValue || '-'}</TableCell>
