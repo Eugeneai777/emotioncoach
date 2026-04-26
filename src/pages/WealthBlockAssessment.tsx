@@ -371,11 +371,22 @@ export default function WealthBlockAssessmentPage() {
   const triggerWeChatSilentAuth = async () => {
     console.log('[WealthBlock] Triggering WeChat silent auth for login/register');
     setIsRedirectingForAuth(true);
+    sessionStorage.setItem('pay_auth_in_progress', '1');
 
     try {
       // 构建回跳 URL：授权回来后自动再打开支付弹窗
       const resumeUrl = new URL(window.location.href);
       resumeUrl.searchParams.set('assessment_pay_resume', '1');
+
+      // 微信内必须先停留在业务域名 /pay-entry，再跳微信授权，避免暴露后端函数域名导致非法域名/状态残留
+      const authStartUrl = new URL('/pay-entry', window.location.origin);
+      authStartUrl.searchParams.set('payment_auth_start', '1');
+      authStartUrl.searchParams.set('payment_redirect', resumeUrl.toString());
+      authStartUrl.searchParams.set('pay_flow', 'wealth_assessment');
+
+      console.log('[WealthBlock] Redirecting to first-party auth bridge...');
+      window.location.href = authStartUrl.toString();
+      return;
 
       const { data, error } = await supabase.functions.invoke('wechat-pay-auth', {
         body: {
@@ -387,6 +398,7 @@ export default function WealthBlockAssessmentPage() {
       if (error || !data?.authUrl) {
         console.error('[WealthBlock] Failed to get silent auth URL:', error || data);
         setIsRedirectingForAuth(false);
+        sessionStorage.removeItem('pay_auth_in_progress');
         // 授权失败，直接打开支付弹窗（用扫码兜底）
         openWealthPayDialog();
         return;
@@ -397,6 +409,7 @@ export default function WealthBlockAssessmentPage() {
     } catch (err) {
       console.error('[WealthBlock] Silent auth error:', err);
       setIsRedirectingForAuth(false);
+      sessionStorage.removeItem('pay_auth_in_progress');
       openWealthPayDialog();
     }
   };
@@ -405,8 +418,7 @@ export default function WealthBlockAssessmentPage() {
     // 用户主动打开：清理 dismissed/guard
     sessionStorage.removeItem(MP_PENDING_PAYMENT_DISMISSED_KEY);
     sessionStorage.removeItem(MP_PENDING_PAYMENT_RESUME_GUARD_KEY);
-    // 🆕 双保险：清理 pay_auth_in_progress 防抖标记，避免上一次失败/取消的残留导致下次点击被静默忽略
-    sessionStorage.removeItem('pay_auth_in_progress');
+    // 注意：这里不清理 pay_auth_in_progress，它属于授权链路；授权回跳/失败时再清理，避免支付缓存清理误伤授权态。
 
     // 🆕 用户再次点击「立即测评」=> 视为放弃上一轮支付流程：
     // 1) 异步取消上一笔 pending 订单（不阻塞 UI）
