@@ -26,8 +26,12 @@ interface ContentTopicItem {
   id: string;
   painPoint: string;
   value: string;
+  giftProductName?: string;
+  giftDisplayName?: string;
+  reportPageName?: string;
   matchedTool: string;
   aiReportValue: string;
+  actionPlanValue?: string;
   coachReportValue?: string;
   viralTitle: string;
   hook: string;
@@ -53,6 +57,9 @@ const localSeedItems = (sourceType: MiniAppSourceType): MiniAppSeedItem[] => {
       topicId: item.id,
       productId: 'cv-free-tool',
       route: '/energy-studio',
+      productName: item.label,
+      giftDisplayName: `限时赠送「${item.label}」`,
+      reportName: `${item.label}个人模式洞察报告`,
     }));
   }
 
@@ -65,6 +72,9 @@ const localSeedItems = (sourceType: MiniAppSourceType): MiniAppSeedItem[] => {
     topicId: item.id,
     productId: item.id.includes('wealth') ? 'cv-wealth-assess' : item.id.includes('scl90') ? 'cv-scl90' : 'cv-emotion-assess',
     route: item.id.includes('wealth') ? '/wealth-block' : item.id.includes('scl90') ? '/scl90' : '/assessment-tools',
+    productName: item.label,
+    giftDisplayName: `限时赠送「${item.label}」`,
+    reportName: item.id.includes('wealth') ? '财富卡点深度定位报告' : item.id.includes('scl90') ? '身心压力信号筛查报告' : `${item.label.replace('测评', '')}模式洞察报告`,
   }));
 };
 
@@ -84,9 +94,11 @@ const formatItem = (item: ContentTopicItem) => [
   `标题：${item.viralTitle}`,
   `痛点：${item.painPoint}`,
   `价值：${item.value}`,
-  `搭配：${item.matchedTool}`,
-  `AI分析报告：${item.aiReportValue}`,
-  item.coachReportValue ? `AI教练报告分析：${item.coachReportValue}` : '',
+  `产品/工具名：${item.giftProductName || '-'}`,
+  `限时赠品：${item.giftDisplayName || item.matchedTool}`,
+  `专业报告名称：${item.reportPageName || '-'}`,
+  `报告价值：${item.aiReportValue}`,
+  item.actionPlanValue || item.coachReportValue ? `下一步行动建议：${item.actionPlanValue || item.coachReportValue}` : '',
   `开场：${item.hook}`,
   `行动：${item.cta}`,
   item.route ? `入口：${item.route}` : '',
@@ -106,6 +118,18 @@ const MiniAppContentLab: React.FC = () => {
   const selectedSource = MINI_APP_SOURCE_OPTIONS.find(s => s.id === sourceType);
   const selectedStyle = MINI_APP_STYLE_OPTIONS.find(s => s.id === style);
 
+  const normalizeItems = (rawItems: ContentTopicItem[]): ContentTopicItem[] => rawItems.map((item, index) => {
+    const seed = seedItems.find(seedItem => seedItem.topicId === item.topicId || seedItem.productId === item.productId || seedItem.route === item.route) || seedItems[index % Math.max(seedItems.length, 1)];
+    const productName = item.giftProductName || seed?.productName || seed?.label || '';
+    return {
+      ...item,
+      giftProductName: productName,
+      giftDisplayName: item.giftDisplayName || seed?.giftDisplayName || (productName ? `限时赠送「${productName}」` : item.matchedTool),
+      reportPageName: item.reportPageName || seed?.reportName || (productName ? `${productName.replace(/测评|工具|按钮|练习/g, '')}主题洞察报告` : ''),
+      actionPlanValue: item.actionPlanValue || item.coachReportValue,
+    };
+  });
+
   const handleGenerate = async () => {
     setLoading(true);
     try {
@@ -122,7 +146,7 @@ const MiniAppContentLab: React.FC = () => {
       if (error) throw new Error(error.message);
       if (data?.error) throw new Error(data.error);
       if (!Array.isArray(data?.items)) throw new Error('AI返回数据格式异常');
-      setItems(data.items);
+      setItems(normalizeItems(data.items));
       toast.success(`已生成 ${data.items.length} 条短视频选题`);
     } catch (err: any) {
       toast.error(`生成失败：${err.message || '请稍后重试'}`);
@@ -142,8 +166,8 @@ const MiniAppContentLab: React.FC = () => {
 
   const exportCsv = () => {
     if (!items.length) return;
-    const header = ['痛点', '核心价值', '赠送测评/工具', 'AI分析报告附加价值', 'AI教练报告分析', '小红书爆款标题', '开场Hook', '私域CTA', '入口'];
-    const rows = items.map(item => [item.painPoint, item.value, item.matchedTool, item.aiReportValue, item.coachReportValue || '', item.viralTitle, item.hook, item.cta, item.route || ''].map(csvEscape).join(','));
+    const header = ['痛点', '核心价值', '产品/工具名', '限时赠品', '专业报告名称', '报告价值', '下一步行动建议', '小红书爆款标题', '开场Hook', '私域CTA', '入口'];
+    const rows = items.map(item => [item.painPoint, item.value, item.giftProductName || '', item.giftDisplayName || item.matchedTool, item.reportPageName || '', item.aiReportValue, item.actionPlanValue || item.coachReportValue || '', item.viralTitle, item.hook, item.cta, item.route || ''].map(csvEscape).join(','));
     downloadBlob(`\ufeff${header.map(csvEscape).join(',')}\n${rows.join('\n')}`, `mini-app短视频选题库_${Date.now()}.csv`, 'text/csv;charset=utf-8');
     toast.success('CSV 已下载');
   };
@@ -157,7 +181,7 @@ const MiniAppContentLab: React.FC = () => {
       `- 内容来源：${selectedSource?.label}`,
       `- 内容风格：${selectedStyle?.label}`,
       '',
-      ...items.map((item, index) => `## ${index + 1}. ${item.viralTitle}\n\n- 痛点：${item.painPoint}\n- 核心价值：${item.value}\n- 搭配测评/工具：${item.matchedTool}\n- AI分析报告附加价值：${item.aiReportValue}\n- 开场 Hook：${item.hook}\n- CTA：${item.cta}\n- 入口：${item.route || '-'}\n`),
+      ...items.map((item, index) => `## ${index + 1}. ${item.viralTitle}\n\n- 痛点：${item.painPoint}\n- 核心价值：${item.value}\n- 产品/工具名：${item.giftProductName || '-'}\n- 限时赠品：${item.giftDisplayName || item.matchedTool}\n- 专业报告名称：${item.reportPageName || '-'}\n- 报告价值：${item.aiReportValue}\n- 下一步行动建议：${item.actionPlanValue || item.coachReportValue || '-'}\n- 开场 Hook：${item.hook}\n- CTA：${item.cta}\n- 入口：${item.route || '-'}\n`),
     ].join('\n');
     downloadBlob(md, `mini-app短视频选题库_${Date.now()}.md`, 'text/markdown;charset=utf-8');
     toast.success('Markdown 已下载');
@@ -286,9 +310,11 @@ const MiniAppContentLab: React.FC = () => {
                     <div className="grid gap-2">
                       <p><span className="font-semibold text-foreground">痛点：</span><span className="text-muted-foreground">{item.painPoint}</span></p>
                       <p><span className="font-semibold text-foreground">价值：</span><span className="text-muted-foreground">{item.value}</span></p>
-                      <p><span className="font-semibold text-foreground">赠送：</span><span className="text-muted-foreground">{item.matchedTool}</span></p>
-                      <p><span className="font-semibold text-foreground">AI分析报告：</span><span className="text-muted-foreground">{item.aiReportValue}</span></p>
-                      {item.coachReportValue && <p><span className="font-semibold text-foreground">AI教练报告分析：</span><span className="text-muted-foreground">{item.coachReportValue}</span></p>}
+                      <p><span className="font-semibold text-foreground">产品/工具名：</span><span className="text-muted-foreground">{item.giftProductName || '-'}</span></p>
+                      <p><span className="font-semibold text-foreground">限时赠品：</span><span className="text-muted-foreground">{item.giftDisplayName || item.matchedTool}</span></p>
+                      <p><span className="font-semibold text-foreground">专业报告名称：</span><span className="text-muted-foreground">{item.reportPageName || '-'}</span></p>
+                      <p><span className="font-semibold text-foreground">报告价值：</span><span className="text-muted-foreground">{item.aiReportValue}</span></p>
+                      {(item.actionPlanValue || item.coachReportValue) && <p><span className="font-semibold text-foreground">下一步行动建议：</span><span className="text-muted-foreground">{item.actionPlanValue || item.coachReportValue}</span></p>}
                       <p><span className="font-semibold text-foreground">Hook：</span><span className="text-muted-foreground">{item.hook}</span></p>
                     </div>
                     <div className="flex flex-wrap gap-2 border-t pt-3">
@@ -308,9 +334,11 @@ const MiniAppContentLab: React.FC = () => {
                       <TableRow>
                         <TableHead className="min-w-44">痛点</TableHead>
                         <TableHead className="min-w-48">核心价值</TableHead>
-                        <TableHead className="min-w-56">赠送测评/工具</TableHead>
-                        <TableHead className="min-w-56">AI分析报告附加价值</TableHead>
-                        <TableHead className="min-w-56">AI教练报告分析</TableHead>
+                        <TableHead className="min-w-40">产品/工具名</TableHead>
+                        <TableHead className="min-w-56">限时赠品</TableHead>
+                        <TableHead className="min-w-56">专业报告名称</TableHead>
+                        <TableHead className="min-w-56">报告价值</TableHead>
+                        <TableHead className="min-w-56">下一步行动建议</TableHead>
                         <TableHead className="min-w-56">小红书爆款标题</TableHead>
                         <TableHead className="min-w-28">操作</TableHead>
                       </TableRow>
@@ -320,9 +348,11 @@ const MiniAppContentLab: React.FC = () => {
                         <TableRow key={item.id || index}>
                           <TableCell>{item.painPoint}</TableCell>
                           <TableCell>{item.value}</TableCell>
-                          <TableCell>{item.matchedTool}</TableCell>
+                          <TableCell>{item.giftProductName || '-'}</TableCell>
+                          <TableCell>{item.giftDisplayName || item.matchedTool}</TableCell>
+                          <TableCell>{item.reportPageName || '-'}</TableCell>
                           <TableCell>{item.aiReportValue}</TableCell>
-                          <TableCell>{item.coachReportValue || '-'}</TableCell>
+                          <TableCell>{item.actionPlanValue || item.coachReportValue || '-'}</TableCell>
                           <TableCell className="font-medium">{item.viralTitle}</TableCell>
                           <TableCell>
                             <Button variant="ghost" size="sm" onClick={() => copyText(formatItem(item))}>复制</Button>
