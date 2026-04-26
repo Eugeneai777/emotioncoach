@@ -387,25 +387,6 @@ export default function WealthBlockAssessmentPage() {
       console.log('[WealthBlock] Redirecting to first-party auth bridge...');
       window.location.href = authStartUrl.toString();
       return;
-
-      const { data, error } = await supabase.functions.invoke('wechat-pay-auth', {
-        body: {
-          redirectUri: resumeUrl.toString(),
-          flow: 'wealth_assessment',
-        },
-      });
-
-      if (error || !data?.authUrl) {
-        console.error('[WealthBlock] Failed to get silent auth URL:', error || data);
-        setIsRedirectingForAuth(false);
-        sessionStorage.removeItem('pay_auth_in_progress');
-        // 授权失败，直接打开支付弹窗（用扫码兜底）
-        openWealthPayDialog();
-        return;
-      }
-
-      console.log('[WealthBlock] Redirecting to silent auth...');
-      window.location.href = data.authUrl;
     } catch (err) {
       console.error('[WealthBlock] Silent auth error:', err);
       setIsRedirectingForAuth(false);
@@ -608,17 +589,15 @@ export default function WealthBlockAssessmentPage() {
       url.searchParams.delete('is_new_user');
       window.history.replaceState({}, '', url.toString());
 
+      // 授权链路已回到页面，无论成功/失败都释放防抖标记，后续由支付弹窗重新建单/拉起支付。
+      sessionStorage.removeItem('pay_auth_in_progress');
+
       // 如果有 openId，缓存到 sessionStorage（供支付弹窗使用）
       if (paymentOpenId) {
         sessionStorage.setItem('wechat_payment_openid', paymentOpenId);
         // 🔧 同时写入 WechatPayDialog 使用的缓存 key，避免 key 不匹配导致循环授权
         localStorage.setItem('cached_payment_openid_gzh', paymentOpenId);
         sessionStorage.setItem('cached_payment_openid_gzh', paymentOpenId);
-      }
-
-      // 如果授权失败，清理防抖标记以允许重试
-      if (paymentAuthError) {
-        sessionStorage.removeItem('pay_auth_in_progress');
       }
 
       // 如果有 tokenHash，先自动登录，等待登录状态更新后再打开弹窗
