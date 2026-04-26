@@ -480,73 +480,10 @@ export default function WealthBlockAssessmentPage() {
       console.warn('[WealthBlock] Paid order recheck exception, continue to payment:', err);
     }
 
-    // 🆕 微信浏览器内 + 已登录：检查"当前账号 ≠ 微信 openId 绑定账号 且 绑定账号已购"
-    // 命中则弹一次轻提示让用户决定继续付款 or 切换回原账号（不强拦截）
-    if (isWeChatBrowserEnv && user) {
-      try {
-        const openId = sessionStorage.getItem('wechat_payment_openid')
-          || localStorage.getItem('cached_payment_openid_gzh')
-          || sessionStorage.getItem('cached_payment_openid_gzh');
-
-        if (openId) {
-          const { data: mapping } = await supabase
-            .from('wechat_user_mappings')
-            .select('system_user_id')
-            .eq('openid', openId)
-            .maybeSingle();
-
-          const boundUserId = mapping?.system_user_id;
-          if (boundUserId && boundUserId !== user.id) {
-            const { data: boundOrder } = await supabase
-              .from('orders')
-              .select('id')
-              .eq('user_id', boundUserId)
-              .eq('package_key', 'wealth_block_assessment')
-              .eq('status', 'paid')
-              .limit(1)
-              .maybeSingle();
-
-            if (boundOrder) {
-              const { data: profiles } = await supabase
-                .from('profiles')
-                .select('id, phone')
-                .in('id', [boundUserId, user.id]);
-
-              const mask = (p?: string | null) =>
-                p && p.length >= 7 ? `${p.slice(0, 3)}****${p.slice(-4)}` : (p || '其他账号');
-
-              const boundPhone = profiles?.find(p => p.id === boundUserId)?.phone;
-              const currentPhone = profiles?.find(p => p.id === user.id)?.phone;
-
-              setConflictDialog({
-                open: true,
-                boundPhoneMasked: mask(boundPhone),
-                currentPhoneMasked: mask(currentPhone),
-              });
-              return;
-            }
-          }
-        }
-      } catch (err) {
-        console.warn('[WealthBlock] Conflict check failed, proceeding to pay:', err);
-      }
-    }
-
     // 与产品中心一致：先打开支付弹窗，微信 openId 授权交给支付组件内部处理
     console.log('[WealthBlock][PayClick] → branch: openWealthPayDialog');
     openWealthPayDialog();
     console.log('[WealthBlock][PayClick] openWealthPayDialog dispatched, instanceKey will increment');
-  };
-
-  // 用户选择"切换回原账号"：登出后重新走微信静默授权
-  const handleSwitchToBoundAccount = async () => {
-    setConflictDialog(prev => ({ ...prev, open: false }));
-    try {
-      await supabase.auth.signOut();
-    } catch (err) {
-      console.warn('[WealthBlock] signOut error:', err);
-    }
-    openWealthPayDialog();
   };
 
   // 微信内静默授权返回后：自动登录 + 重新打开"测评支付弹窗"
