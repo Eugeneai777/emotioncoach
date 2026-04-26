@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { supabase } from '@/integrations/supabase/client';
-import { CONVERSION_PRODUCTS, STATIC_TOPIC_GROUPS, VIDEO_AUDIENCES } from '@/config/videoScriptConfig';
+import { CONVERSION_PRODUCTS, VIDEO_AUDIENCES } from '@/config/videoScriptConfig';
 import {
   MINI_APP_CANONICAL_GIFTS,
   MINI_APP_CONVERSION_SEEDS,
