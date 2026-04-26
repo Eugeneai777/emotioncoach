@@ -203,6 +203,8 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
   const codeExchangedRef = useRef<boolean>(false); // 防止重复换取 openId
   const abortRef = useRef<AbortController | null>(null); // 取消进行中的 invoke 请求
   const prevOpenRef = useRef<boolean>(false); // 跟踪上一次 open 值，用于"打开边沿"重置
+  const jsapiSystemDialogActiveRef = useRef<boolean>(false); // 微信系统支付弹框打开期间，避免误关闭业务等待弹框
+  const lastJsapiCancelAtRef = useRef<number>(0); // 取消微信系统支付后的短时间内拦截误触发的 Dialog close
 
   // 仅在 open 从 false → true 的"打开边沿"重置订单创建标记，
   // 避免关闭弹窗时 resetState 立即重置导致 useEffect 重复创建订单
@@ -852,17 +854,20 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
         
         console.log('WeixinJSBridge ready, invoking getBrandWCPayRequest');
         trackPaymentEvent('payment_jsapi_bridge_ready');
+        jsapiSystemDialogActiveRef.current = true;
         window.WeixinJSBridge.invoke(
           'getBrandWCPayRequest',
           params,
           (res) => {
             console.log('WeixinJSBridge payment result:', res.err_msg);
+            jsapiSystemDialogActiveRef.current = false;
             trackPaymentEvent('payment_jsapi_callback', {
               metadata: { errMsg: res.err_msg },
             });
             if (res.err_msg === 'get_brand_wcpay_request:ok') {
               resolve();
             } else if (res.err_msg === 'get_brand_wcpay_request:cancel') {
+              lastJsapiCancelAtRef.current = Date.now();
               reject(new Error('用户取消支付'));
             } else {
               reject(new Error(res.err_msg || '支付失败'));
@@ -1659,8 +1664,16 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     createOrder();
   };
 
+  const handleDialogOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen && payType === 'jsapi' && (jsapiSystemDialogActiveRef.current || Date.now() - lastJsapiCancelAtRef.current < 800)) {
+      console.log('[Payment] Ignoring business dialog close caused by JSAPI system payment cancellation');
+      return;
+    }
+    onOpenChange(nextOpen);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleDialogOpenChange}>
       <DialogContent className="w-[calc(100vw-2rem)] max-w-md mx-auto">
         <DialogHeader>
           <DialogTitle className="text-center">微信支付</DialogTitle>
