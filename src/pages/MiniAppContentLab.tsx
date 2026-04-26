@@ -64,6 +64,16 @@ const findCanonicalGift = (item: ContentTopicItem, seed?: MiniAppSeedItem) => {
     || seed;
 };
 
+const getGiftProductName = (item: ContentTopicItem) => {
+  const canonicalGift = findCanonicalGift(item);
+  return canonicalGift?.productName || canonicalGift?.label || item.giftProductName || '';
+};
+
+const getGiftDisplayName = (item: ContentTopicItem) => {
+  const productName = getGiftProductName(item);
+  return productName ? `限时赠送「${productName}」` : (item.giftDisplayName || item.matchedTool || '-');
+};
+
 interface GiftValidationIssue {
   index: number;
   productName: string;
@@ -81,8 +91,8 @@ interface GiftValidationResult {
 }
 
 const validateGiftItem = (item: ContentTopicItem, index: number): GiftValidationIssue | null => {
-  const productName = (item.rawGiftProductName ?? item.giftProductName ?? '').trim();
-  const giftDisplayName = (item.rawGiftDisplayName ?? item.giftDisplayName ?? item.matchedTool ?? '').trim();
+  const productName = getGiftProductName(item).trim();
+  const giftDisplayName = getGiftDisplayName(item).trim();
   const expectedGiftDisplayName = productName ? `限时赠送「${productName}」` : '';
   const suggestedGift = findCanonicalGift(item);
   const suggestedProductName = suggestedGift?.productName || suggestedGift?.label;
@@ -147,8 +157,8 @@ const formatItem = (item: ContentTopicItem) => [
   `标题：${item.viralTitle}`,
   `痛点：${item.painPoint}`,
   `价值：${item.value}`,
-  `产品/工具名：${item.giftProductName || '-'}`,
-  `限时赠品：${item.giftDisplayName || item.matchedTool}`,
+  `产品/工具名：${getGiftProductName(item) || '-'}`,
+  `限时赠品：${getGiftDisplayName(item)}`,
   `专业报告名称：${item.reportPageName || '-'}`,
   `报告价值：${item.aiReportValue}`,
   item.actionPlanValue || item.coachReportValue ? `下一步行动建议：${item.actionPlanValue || item.coachReportValue}` : '',
@@ -249,7 +259,7 @@ const MiniAppContentLab: React.FC = () => {
   const exportCsv = () => {
     if (!items.length) return;
     const header = ['痛点', '核心价值', '产品/工具名', '限时赠品', '专业报告名称', '报告价值', '下一步行动建议', '小红书爆款标题', '开场Hook', '私域CTA', '入口'];
-    const rows = items.map(item => [item.painPoint, item.value, item.giftProductName || '', item.giftDisplayName || item.matchedTool, item.reportPageName || '', item.aiReportValue, item.actionPlanValue || item.coachReportValue || '', item.viralTitle, item.hook, item.cta, item.route || ''].map(csvEscape).join(','));
+    const rows = items.map(item => [item.painPoint, item.value, getGiftProductName(item), getGiftDisplayName(item), item.reportPageName || '', item.aiReportValue, item.actionPlanValue || item.coachReportValue || '', item.viralTitle, item.hook, item.cta, item.route || ''].map(csvEscape).join(','));
     downloadBlob(`\ufeff${header.map(csvEscape).join(',')}\n${rows.join('\n')}`, `mini-app短视频选题库_${Date.now()}.csv`, 'text/csv;charset=utf-8');
     toast.success('CSV 已下载');
   };
@@ -263,7 +273,7 @@ const MiniAppContentLab: React.FC = () => {
       `- 内容来源：${selectedSource?.label}`,
       `- 内容风格：${selectedStyle?.label}`,
       '',
-      ...items.map((item, index) => `## ${index + 1}. ${item.viralTitle}\n\n- 痛点：${item.painPoint}\n- 核心价值：${item.value}\n- 产品/工具名：${item.giftProductName || '-'}\n- 限时赠品：${item.giftDisplayName || item.matchedTool}\n- 专业报告名称：${item.reportPageName || '-'}\n- 报告价值：${item.aiReportValue}\n- 下一步行动建议：${item.actionPlanValue || item.coachReportValue || '-'}\n- 开场 Hook：${item.hook}\n- CTA：${item.cta}\n- 入口：${item.route || '-'}\n`),
+      ...items.map((item, index) => `## ${index + 1}. ${item.viralTitle}\n\n- 痛点：${item.painPoint}\n- 核心价值：${item.value}\n- 产品/工具名：${getGiftProductName(item) || '-'}\n- 限时赠品：${getGiftDisplayName(item)}\n- 专业报告名称：${item.reportPageName || '-'}\n- 报告价值：${item.aiReportValue}\n- 下一步行动建议：${item.actionPlanValue || item.coachReportValue || '-'}\n- 开场 Hook：${item.hook}\n- CTA：${item.cta}\n- 入口：${item.route || '-'}\n`),
     ].join('\n');
     downloadBlob(md, `mini-app短视频选题库_${Date.now()}.md`, 'text/markdown;charset=utf-8');
     toast.success('Markdown 已下载');
@@ -421,8 +431,8 @@ const MiniAppContentLab: React.FC = () => {
                     <div className="grid gap-2">
                       <p><span className="font-semibold text-foreground">痛点：</span><span className="text-muted-foreground">{item.painPoint}</span></p>
                       <p><span className="font-semibold text-foreground">价值：</span><span className="text-muted-foreground">{item.value}</span></p>
-                      <p><span className="font-semibold text-foreground">产品/工具名：</span><span className="text-muted-foreground">{item.giftProductName || '-'}</span></p>
-                      <p><span className="font-semibold text-foreground">限时赠品：</span><span className="text-muted-foreground">{item.giftDisplayName || item.matchedTool}</span></p>
+                      <p><span className="font-semibold text-foreground">产品/工具名：</span><span className="text-muted-foreground">{getGiftProductName(item) || '-'}</span></p>
+                      <p><span className="font-semibold text-foreground">限时赠品：</span><span className="text-muted-foreground">{getGiftDisplayName(item)}</span></p>
                       <p><span className="font-semibold text-foreground">专业报告名称：</span><span className="text-muted-foreground">{item.reportPageName || '-'}</span></p>
                       <p><span className="font-semibold text-foreground">报告价值：</span><span className="text-muted-foreground">{item.aiReportValue}</span></p>
                       {(item.actionPlanValue || item.coachReportValue) && <p><span className="font-semibold text-foreground">下一步行动建议：</span><span className="text-muted-foreground">{item.actionPlanValue || item.coachReportValue}</span></p>}
@@ -460,8 +470,8 @@ const MiniAppContentLab: React.FC = () => {
                         <TableRow key={item.id || index} className={issueMap.has(index) ? 'bg-destructive/5' : undefined}>
                           <TableCell>{item.painPoint}</TableCell>
                           <TableCell>{item.value}</TableCell>
-                          <TableCell>{item.giftProductName || '-'}</TableCell>
-                          <TableCell>{item.giftDisplayName || item.matchedTool}</TableCell>
+                          <TableCell>{getGiftProductName(item) || '-'}</TableCell>
+                          <TableCell>{getGiftDisplayName(item)}</TableCell>
                           <TableCell>{giftValidation ? <Badge variant={issueMap.has(index) ? 'destructive' : 'secondary'}>{issueMap.has(index) ? '异常' : '通过'}</Badge> : '-'}</TableCell>
                           <TableCell>{item.reportPageName || '-'}</TableCell>
                           <TableCell>{item.aiReportValue}</TableCell>
