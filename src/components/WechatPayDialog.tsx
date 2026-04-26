@@ -168,6 +168,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
   const [userOpenId, setUserOpenId] = useState<string | undefined>(propOpenId || urlOpenId);
   const [jsapiPayParams, setJsapiPayParams] = useState<Record<string, string> | null>(null);
   const [jsapiCancelled, setJsapiCancelled] = useState<boolean>(false);
+  const [jsapiRetryReason, setJsapiRetryReason] = useState<'cancelled' | 'silent' | null>(null);
   // 用于避免"第一次打开先走扫码、第二次才JSAPI"的竞态
   const [openIdResolved, setOpenIdResolved] = useState<boolean>(false);
   // 正在跳转微信授权中
@@ -832,6 +833,19 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
   const invokeJsapiPay = useCallback((params: Record<string, string>) => {
     return new Promise<void>((resolve, reject) => {
       console.log('Invoking JSAPI pay with WeixinJSBridge, params:', { ...params, paySign: '***' });
+      let settled = false;
+      const noResponseTimeoutMs = /Android/i.test(navigator.userAgent) ? 4500 : 9000;
+      const noResponseTimer = window.setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        jsapiSystemDialogActiveRef.current = false;
+        console.warn('[Payment] JSAPI invoke no callback, exposing manual retry');
+        trackPaymentEvent('payment_jsapi_no_response', {
+          errorMessage: 'WeixinJSBridge.invoke no callback',
+          metadata: { timeoutMs: noResponseTimeoutMs, isMiniProgram: isWeChatMiniProgram() },
+        });
+        reject(new Error('JSAPI_SILENT_TIMEOUT'));
+      }, noResponseTimeoutMs);
       
       // 🔍 埋点：开始拉起 JSAPI 支付
       trackPaymentEvent('payment_jsapi_invoking', {
@@ -844,6 +858,9 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
       const onBridgeReady = () => {
         if (!window.WeixinJSBridge) {
           console.error('WeixinJSBridge is not available');
+          if (settled) return;
+          settled = true;
+          window.clearTimeout(noResponseTimer);
           trackPaymentEvent('payment_jsapi_failed', {
             errorMessage: 'WeixinJSBridge not available after ready event',
             metadata: { stage: 'bridge_check' },
@@ -859,6 +876,9 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
           'getBrandWCPayRequest',
           params,
           (res) => {
+            if (settled) return;
+            settled = true;
+            window.clearTimeout(noResponseTimer);
             console.log('WeixinJSBridge payment result:', res.err_msg);
             jsapiSystemDialogActiveRef.current = false;
             trackPaymentEvent('payment_jsapi_callback', {
@@ -887,6 +907,9 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
         setTimeout(() => {
           if (typeof window.WeixinJSBridge === 'undefined') {
             console.error('WeixinJSBridge load timeout');
+            if (settled) return;
+            settled = true;
+            window.clearTimeout(noResponseTimer);
             reject(new Error('WeixinJSBridge 加载超时'));
           }
         }, 5000);
