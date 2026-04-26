@@ -74,7 +74,6 @@ export default function WealthBlockAssessmentPage() {
   // 正在跳转微信授权中
   const [isRedirectingForAuth, setIsRedirectingForAuth] = useState(false);
   const payDialogReopenTimerRef = useRef<number | null>(null);
-  const paymentAuthReturnHandledRef = useRef(false);
 
   const resetMiniProgramPaymentStateAfterCancel = (orderNo?: string | null) => {
     try {
@@ -582,9 +581,6 @@ export default function WealthBlockAssessmentPage() {
 
       // 只处理测评页的支付回调（或通用支付回调）
       if (!shouldResume) return;
-      if (paymentAuthReturnHandledRef.current) return;
-      paymentAuthReturnHandledRef.current = true;
-      setIsRedirectingForAuth(true);
 
       console.log('[WealthBlock] Processing payment auth return:', {
         paymentOpenId: !!paymentOpenId,
@@ -592,18 +588,8 @@ export default function WealthBlockAssessmentPage() {
         paymentAuthError,
         payFlow,
       });
-      trackPaymentEvent('wechat_auth_return_started', {
-        metadata: {
-          packageKey: 'wealth_block_assessment',
-          hasOpenId: !!paymentOpenId,
-          hasTokenHash: !!paymentTokenHash,
-          paymentAuthError,
-          payFlow,
-        },
-      });
 
       // 清理 URL 参数，避免重复触发
-      url.searchParams.delete('payment_resume');
       url.searchParams.delete('assessment_pay_resume');
       url.searchParams.delete('payment_openid');
       url.searchParams.delete('payment_token_hash');
@@ -618,59 +604,11 @@ export default function WealthBlockAssessmentPage() {
         // 🔧 同时写入 WechatPayDialog 使用的缓存 key，避免 key 不匹配导致循环授权
         localStorage.setItem('cached_payment_openid_gzh', paymentOpenId);
         sessionStorage.setItem('cached_payment_openid_gzh', paymentOpenId);
-        trackPaymentEvent('wechat_auth_openid_cached', {
-          metadata: { packageKey: 'wealth_block_assessment' },
-        });
       }
 
-      const openPaymentDialogAfterAuth = () => {
-        trackPaymentEvent('wechat_auth_resume_payment_dialog', {
-          metadata: { packageKey: 'wealth_block_assessment', paymentAuthError },
-        });
-        setIsRedirectingForAuth(false);
-        openWealthPayDialog();
-      };
-
-      const checkPurchasedByUserId = async (userId?: string | null) => {
-        if (!userId) return false;
-        const { data: existingOrder } = await supabase
-          .from('orders')
-          .select('id')
-          .eq('user_id', userId)
-          .eq('package_key', 'wealth_block_assessment')
-          .eq('status', 'paid')
-          .limit(1)
-          .maybeSingle();
-        return !!existingOrder;
-      };
-
-      const continueAfterSessionReady = async (userId?: string | null) => {
-        try {
-          const { data: { session } } = await supabase.auth.getSession();
-          const resolvedUserId = userId || session?.user?.id;
-          if (await checkPurchasedByUserId(resolvedUserId)) {
-            trackPaymentEvent('wechat_auth_resume_skipped_purchased', {
-              metadata: { packageKey: 'wealth_block_assessment' },
-            });
-            setIsRedirectingForAuth(false);
-            setShowPayDialog(false);
-            setShowIntro(false);
-            return;
-          }
-        } catch (err) {
-          console.warn('[WealthBlock] Auth return purchase check failed, continuing payment:', err);
-        }
-        openPaymentDialogAfterAuth();
-      };
-
-      // 如果授权失败，清理防抖标记以允许重试，并直接恢复支付弹框
+      // 如果授权失败，清理防抖标记以允许重试
       if (paymentAuthError) {
         sessionStorage.removeItem('pay_auth_in_progress');
-        trackPaymentEvent('wechat_auth_return_failed_resume', {
-          metadata: { packageKey: 'wealth_block_assessment' },
-        });
-        openPaymentDialogAfterAuth();
-        return;
       }
 
       // 如果有 tokenHash，先自动登录，等待登录状态更新后再打开弹窗
@@ -684,52 +622,108 @@ export default function WealthBlockAssessmentPage() {
           
           if (error) {
             console.error('[WealthBlock] Auto-login failed:', error);
-            sessionStorage.removeItem('pay_auth_in_progress');
-            trackPaymentEvent('wechat_auth_token_login_failed', {
-              errorMessage: error.message,
-              metadata: { packageKey: 'wealth_block_assessment' },
-            });
-            await continueAfterSessionReady();
+            // 登录失败也继续打开弹窗（用扫码支付兜底）
+            if (!hasPurchased) {
+              openWealthPayDialog();
+            } else {
+              console.log('[WealthBlock] Already purchased, skipping pay dialog');
+              setShowIntro(false);
+            }
           } else if (data.session?.user) {
             // verifyOtp 返回了 session，说明登录已成功
+            // 短暂延迟让 React 状态同步，然后立即打开弹窗
             console.log('[WealthBlock] Auto-login success, user:', data.session.user.id);
-            sessionStorage.removeItem('pay_auth_in_progress');
-            trackPaymentEvent('wechat_auth_token_login_success', {
-              metadata: { packageKey: 'wealth_block_assessment' },
-            });
-            await continueAfterSessionReady(data.session.user.id);
+            // 🆕 登录后检查是否已购买
+            setTimeout(async () => {
+              const { data: existingOrder } = await supabase
+                .from('orders')
+                .select('id')
+                .eq('user_id', data.session!.user.id)
+                .eq('package_key', 'wealth_block_assessment')
+                .eq('status', 'paid')
+                .limit(1)
+                .maybeSingle();
+
+              if (existingOrder) {
+                console.log('[WealthBlock] User already purchased after login, skipping pay dialog');
+                setShowIntro(false);
+              } else {
+                openWealthPayDialog();
+              }
+            }, 100);
           } else {
             // 没有 session，等待 auth 状态更新
             console.log('[WealthBlock] Waiting for auth state update...');
-            let resolved = false;
-            const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-              if (resolved || event !== 'SIGNED_IN' || !session?.user) return;
-              resolved = true;
-              subscription.unsubscribe();
-              await continueAfterSessionReady(session.user.id);
+            const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+              if (event === 'SIGNED_IN' && session?.user) {
+                console.log('[WealthBlock] Auth state updated, checking purchase status');
+                // 🆕 登录后检查是否已购买
+                supabase
+                  .from('orders')
+                  .select('id')
+                  .eq('user_id', session.user.id)
+                  .eq('package_key', 'wealth_block_assessment')
+                  .eq('status', 'paid')
+                  .limit(1)
+                  .maybeSingle()
+                  .then(({ data: existingOrder }) => {
+                    if (existingOrder) {
+                      console.log('[WealthBlock] User already purchased, skipping pay dialog');
+                      setShowIntro(false);
+                    } else {
+                      openWealthPayDialog();
+                    }
+                  });
+                subscription.unsubscribe();
+              }
             });
-            window.setTimeout(async () => {
-              if (resolved) return;
-              resolved = true;
+            // 超时保护：1秒后无论如何都打开弹窗（如果还没购买）
+            setTimeout(() => {
               subscription.unsubscribe();
-              await continueAfterSessionReady();
-            }, 1200);
+              if (!hasPurchased) {
+                openWealthPayDialog();
+              }
+            }, 1000);
           }
         } catch (err) {
           console.error('[WealthBlock] Auto-login exception:', err);
-          sessionStorage.removeItem('pay_auth_in_progress');
-          trackPaymentEvent('wechat_auth_token_login_exception', {
-            errorMessage: err instanceof Error ? err.message : 'token login exception',
-            metadata: { packageKey: 'wealth_block_assessment' },
-          });
-          await continueAfterSessionReady();
+          if (!hasPurchased) {
+            openWealthPayDialog();
+          }
         }
       } else {
         // 🆕 没有 tokenHash，但可能用户已经通过其他方式登录了
         // 先检查当前登录状态和购买状态
         console.log('[WealthBlock] No tokenHash, checking current session...');
-        sessionStorage.removeItem('pay_auth_in_progress');
-        await continueAfterSessionReady();
+        
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        
+        if (currentSession?.user) {
+          console.log('[WealthBlock] Found existing session:', currentSession.user.id);
+          
+          const { data: existingOrder } = await supabase
+            .from('orders')
+            .select('id')
+            .eq('user_id', currentSession.user.id)
+            .eq('package_key', 'wealth_block_assessment')
+            .eq('status', 'paid')
+            .limit(1)
+            .maybeSingle();
+          
+          if (existingOrder) {
+            console.log('[WealthBlock] User already purchased (no tokenHash path), skipping pay dialog');
+            setShowIntro(false);
+            return;
+          }
+        }
+        
+        // 如果没登录或未购买，打开支付弹窗
+        if (hasPurchased) {
+          console.log('[WealthBlock] Already purchased (via hook), skipping pay dialog');
+          setShowIntro(false);
+        } else {
+          openWealthPayDialog();
+        }
       }
     };
 
