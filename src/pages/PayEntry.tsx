@@ -17,6 +17,7 @@ export default function PayEntry() {
   const paymentRedirect = searchParams.get('payment_redirect');
   const payFlow = searchParams.get('pay_flow');
   const authState = searchParams.get('state'); // 微信回调的 state 参数
+  const isPaymentAuthStart = searchParams.get('payment_auth_start') === '1' && !!paymentRedirect;
   const isPaymentAuthCallback =
     searchParams.get('payment_auth_callback') === '1' &&
     !!paymentAuthCode &&
@@ -41,6 +42,32 @@ export default function PayEntry() {
     target.searchParams.set('assessment_pay_resume', '1');
     window.location.replace(target.toString());
   };
+
+  // 微信授权起点：保持首跳在业务域名内，再由前端生成 open.weixin.qq.com 授权地址，避免直接暴露 functions 域名
+  useEffect(() => {
+    if (!isPaymentAuthStart) return;
+
+    const run = async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('wechat-pay-auth', {
+          body: { redirectUri: paymentRedirect, flow: payFlow || undefined },
+        });
+
+        if (error || !data?.authUrl) {
+          console.error('[PayEntry] Failed to start payment auth:', error || data);
+          redirectBackWithAuthFallback();
+          return;
+        }
+
+        window.location.replace(data.authUrl);
+      } catch (error) {
+        console.error('[PayEntry] Exception while starting payment auth:', error);
+        redirectBackWithAuthFallback();
+      }
+    };
+
+    run();
+  }, [isPaymentAuthStart, paymentRedirect, payFlow]);
 
   // 优先处理静默授权回调（使用新的 wechat-pay-auth 函数）
   useEffect(() => {
@@ -132,7 +159,7 @@ export default function PayEntry() {
   }, [isPaymentAuthCallback, paymentAuthCode, paymentRedirect, payFlow, authState]);
 
   useEffect(() => {
-    if (isPaymentAuthCallback) return;
+    if (isPaymentAuthCallback || isPaymentAuthStart) return;
 
     if (!partnerId) {
       setLoading(false);
