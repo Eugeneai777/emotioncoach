@@ -792,10 +792,20 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
     setStatus("creating");
     setErrorMessage("");
 
+    let createOrderTimeoutId: ReturnType<typeof setTimeout> | null = null;
+    let createOrderController: AbortController | null = null;
+
     try {
-      // 添加超时控制
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30秒超时
+      // 添加超时控制：小程序 WebView + 微信代理链路偶发超过全局 30s，需给下单更长窗口
+      createOrderController = new AbortController();
+      const createOrderTimeoutMs = isMiniProgram ? 60000 : 45000;
+      createOrderTimeoutId = setTimeout(() => {
+        try {
+          createOrderController?.abort(new Error(`create-wechat-order timeout after ${createOrderTimeoutMs}ms`));
+        } catch {
+          createOrderController?.abort();
+        }
+      }, createOrderTimeoutMs);
 
       // 确定支付类型：
       // - 微信浏览器：优先 JSAPI（弹窗）
@@ -904,12 +914,26 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
           isMiniProgram: isMiniProgram,
           forceNewOrder,
         },
+        // @ts-ignore - supabase v2 透传 fetch options，避免全局 30s fetch 监控提前中断小程序下单
+        signal: createOrderController.signal,
       });
 
-      clearTimeout(timeoutId);
+      if (createOrderTimeoutId) clearTimeout(createOrderTimeoutId);
 
       if (!isPaymentSessionActive(sessionId)) return;
       if (error) {
+        const orderErrorMessage = error?.message || String(error);
+        const isRetriableOrderNetworkError =
+          error?.name === "AbortError" ||
+          /Failed to send a request to the Edge Function/i.test(orderErrorMessage) ||
+          /FunctionsFetchError|FunctionsHttpError|代理服务器连接失败|signal (has been|is) aborted|aborted without reason/i.test(orderErrorMessage) ||
+          /Failed to fetch|NetworkError|Load failed/i.test(orderErrorMessage);
+
+        // 先交给 catch 内的静默重试处理，避免一次可恢复的网络抖动被记录成失败流程
+        if (isRetriableOrderNetworkError && !createOrderRetriedRef.current) {
+          throw error;
+        }
+
         // 🆕 埋点：创建订单失败
         trackPaymentEvent("payment_order_create_failed", {
           errorMessage: error?.message || String(error),
@@ -1199,12 +1223,13 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
         startPolling(data.orderNo);
       }
     } catch (error: any) {
+      if (createOrderTimeoutId) clearTimeout(createOrderTimeoutId);
       console.error("Create order error:", error);
       const rawMsg: string = error?.message || "";
       const isNetworkLayerError =
         error?.name === "AbortError" ||
         /Failed to send a request to the Edge Function/i.test(rawMsg) ||
-        /FunctionsFetchError|FunctionsHttpError|代理服务器连接失败|signal has been aborted/i.test(rawMsg) ||
+        /FunctionsFetchError|FunctionsHttpError|代理服务器连接失败|signal (has been|is) aborted|aborted without reason/i.test(rawMsg) ||
         /Failed to fetch|NetworkError|Load failed/i.test(rawMsg);
 
       // 网络抖动 / 微信代理超时：自动静默重试 1 次
