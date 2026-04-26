@@ -32,7 +32,6 @@ export default function WeChatAuth() {
   const [loginStatus, setLoginStatus] = useState<'pending' | 'scanned' | 'confirmed' | 'expired' | 'not_registered'>('pending');
   const [isOpenPlatform, setIsOpenPlatform] = useState<boolean | null>(null);
   const [authUrl, setAuthUrl] = useState<string>("");
-  const [authError, setAuthError] = useState<string | null>(null);
   const [expiresIn, setExpiresIn] = useState<number>(0);
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
   const mode = searchParams.get("mode") || "login";
@@ -163,18 +162,12 @@ export default function WeChatAuth() {
   // 生成移动端授权URL
   const generateMobileAuthUrl = useCallback(async () => {
     setLoading(true);
-    setAuthError(null);
     try {
-      const configRequest = supabase.functions.invoke('get-wechat-config');
-      const timeout = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error('微信授权准备超时')), 10000);
-      });
-      const { data, error } = await Promise.race([configRequest, timeout]);
+      const { data, error } = await supabase.functions.invoke('get-wechat-config');
 
       if (error || !data?.appId) {
         console.error("获取微信配置失败:", error);
         toast.error("微信登录未配置，请联系管理员");
-        setAuthError("微信授权准备失败，请刷新后重试");
         setLoading(false);
         return;
       }
@@ -198,11 +191,7 @@ export default function WeChatAuth() {
       }
     } catch (error) {
       console.error("生成授权链接失败:", error);
-      const message = error instanceof Error && error.message.includes('超时')
-        ? '微信授权准备超时，请检查网络后重试'
-        : '生成授权链接失败，请稍后重试';
-      toast.error(message);
-      setAuthError(message);
+      toast.error("生成授权链接失败");
       setLoading(false);
     }
   }, [mode]);
@@ -380,31 +369,6 @@ export default function WeChatAuth() {
           <CardContent className="flex flex-col items-center justify-center py-16">
             <Loader2 className="h-12 w-12 animate-spin text-teal-500 mb-4" />
             <p className="text-muted-foreground">正在加载微信授权...</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  if (authError) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 p-4">
-        <Card className="w-full max-w-md bg-white/80 backdrop-blur-sm border-0 shadow-xl">
-          <CardHeader className="text-center">
-            <CardTitle className="text-teal-700">微信授权未完成</CardTitle>
-            <CardDescription>{authError}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Button
-              onClick={generateMobileAuthUrl}
-              className="w-full bg-gradient-to-r from-teal-400 to-cyan-500 hover:from-teal-500 hover:to-cyan-600 text-white"
-            >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              重新授权
-            </Button>
-            <Button variant="ghost" onClick={() => navigate('/auth')} className="w-full text-muted-foreground">
-              使用手机号登录
-            </Button>
           </CardContent>
         </Card>
       </div>
