@@ -172,6 +172,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, onCancelled
   const [paymentOpenId, setPaymentOpenId] = useState<string | undefined>();
   // 🆕 轮询超时状态
   const [pollingTimeout, setPollingTimeout] = useState<boolean>(false);
+  const [jsapiPayDismissed, setJsapiPayDismissed] = useState<boolean>(false);
   const [isForceChecking, setIsForceChecking] = useState<boolean>(false);
   // 🆕 邀请码入口
   const [showInviteCodeInput, setShowInviteCodeInput] = useState(false);
@@ -792,6 +793,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, onCancelled
     if (!isPaymentSessionActive(sessionId)) return;
     setStatus("creating");
     setErrorMessage("");
+    setJsapiPayDismissed(false);
 
     let createOrderTimeoutId: ReturnType<typeof setTimeout> | null = null;
     let createOrderController: AbortController | null = null;
@@ -1043,19 +1045,15 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, onCancelled
             console.log("[Payment] JSAPI pay error:", jsapiError?.message);
             if (jsapiError?.message === "用户取消支付" || jsapiError?.message === "JSAPI_SILENT_TIMEOUT") {
               const isSilent = jsapiError?.message === "JSAPI_SILENT_TIMEOUT";
-              console.log("[Payment] JSAPI payment cancelled/silent, closing dialog and resetting state", { isSilent });
+              console.log("[Payment] JSAPI payment cancelled/silent, keeping business dialog open", { isSilent });
               stopPolling();
-              setOrderNo("");
-              setQrCodeDataUrl("");
-              setPayUrl("");
-              setErrorMessage("");
+              setErrorMessage(isSilent ? "微信支付响应较慢，请重新拉起支付" : "支付已取消，可重新拉起支付");
+              setJsapiPayDismissed(true);
               setPollingTimeout(false);
               setIsForceChecking(false);
               createOrderCalledRef.current = false;
               createOrderRetriedRef.current = false;
-              setStatus("idle");
-              onOpenChange(false);
-              toast.info(isSilent ? "微信支付响应较慢，请再次点击立即测评" : "支付已取消，可重新点击立即测评");
+              setStatus("polling");
               return;
             }
 
@@ -1114,19 +1112,15 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, onCancelled
               console.log("[Payment] JSAPI pay error:", jsapiError?.message);
               if (jsapiError?.message === "用户取消支付" || jsapiError?.message === "JSAPI_SILENT_TIMEOUT") {
                 const isSilent = jsapiError?.message === "JSAPI_SILENT_TIMEOUT";
-                console.log("[Payment] JSAPI payment cancelled/silent (wechat browser), resetting", { isSilent });
+                console.log("[Payment] JSAPI payment cancelled/silent (wechat browser), keeping business dialog open", { isSilent });
                 stopPolling();
-                setOrderNo("");
-                setQrCodeDataUrl("");
-                setPayUrl("");
-                setErrorMessage("");
+                setErrorMessage(isSilent ? "微信支付响应较慢，请重新拉起支付" : "支付已取消，可重新拉起支付");
+                setJsapiPayDismissed(true);
                 setPollingTimeout(false);
                 setIsForceChecking(false);
                 createOrderCalledRef.current = false;
                 createOrderRetriedRef.current = false;
-                setStatus("idle");
-                onOpenChange(false);
-                toast.info(isSilent ? "微信支付响应较慢，请再次点击立即测评" : "支付已取消，可重新点击立即测评");
+                setStatus("polling");
                 return;
               }
 
