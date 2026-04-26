@@ -90,6 +90,12 @@ export default function PayEntry() {
     }
     sessionStorage.setItem(authCodeLockKey, String(now));
 
+    let fallbackTimer: number | undefined;
+    const redirectWithFallbackParams = (target: URL) => {
+      if (fallbackTimer) window.clearTimeout(fallbackTimer);
+      window.location.replace(target.toString());
+    };
+
     const run = async () => {
       console.log('[PayEntry] Processing payment auth callback...');
       console.log('[PayEntry] code:', paymentAuthCode);
