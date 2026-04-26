@@ -73,13 +73,7 @@ export function AssessmentIntroCard({ isLoggedIn, hasPurchased = false, isBloomP
       return;
     }
 
-    // 未登录：先走登录引导（onStart 内含未登录跳登录逻辑）
-    if (!isLoggedIn) {
-      onStart();
-      return;
-    }
-
-    // 已登录未购买：拉起支付
+    // 未购买：与产品中心支付组件保持一致，先拉起支付弹框；微信 openId 授权交给支付组件内部处理
     if (onPay) {
       onPay();
     } else {
