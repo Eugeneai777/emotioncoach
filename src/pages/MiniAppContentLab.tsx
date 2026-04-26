@@ -447,6 +447,7 @@ const MiniAppContentLab: React.FC = () => {
                         <TableHead className="min-w-48">核心价值</TableHead>
                         <TableHead className="min-w-40">产品/工具名</TableHead>
                         <TableHead className="min-w-56">限时赠品</TableHead>
+                        <TableHead className="min-w-28">赠品校验</TableHead>
                         <TableHead className="min-w-56">专业报告名称</TableHead>
                         <TableHead className="min-w-56">报告价值</TableHead>
                         <TableHead className="min-w-56">下一步行动建议</TableHead>
@@ -456,11 +457,12 @@ const MiniAppContentLab: React.FC = () => {
                     </TableHeader>
                     <TableBody>
                       {items.map((item, index) => (
-                        <TableRow key={item.id || index}>
+                        <TableRow key={item.id || index} className={issueMap.has(index) ? 'bg-destructive/5' : undefined}>
                           <TableCell>{item.painPoint}</TableCell>
                           <TableCell>{item.value}</TableCell>
                           <TableCell>{item.giftProductName || '-'}</TableCell>
                           <TableCell>{item.giftDisplayName || item.matchedTool}</TableCell>
+                          <TableCell>{giftValidation ? <Badge variant={issueMap.has(index) ? 'destructive' : 'secondary'}>{issueMap.has(index) ? '异常' : '通过'}</Badge> : '-'}</TableCell>
                           <TableCell>{item.reportPageName || '-'}</TableCell>
                           <TableCell>{item.aiReportValue}</TableCell>
                           <TableCell>{item.actionPlanValue || item.coachReportValue || '-'}</TableCell>
