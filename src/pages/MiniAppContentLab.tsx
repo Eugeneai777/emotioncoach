@@ -355,10 +355,36 @@ const MiniAppContentLab: React.FC = () => {
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="text-sm text-muted-foreground">已生成 {items.length} 条，可直接复制或导出排期。</div>
             <div className="flex gap-2">
+              <Button variant="secondary" size="sm" onClick={handleValidateGifts}><ShieldCheck className="mr-2 h-4 w-4" />一键校验赠品</Button>
               <Button variant="outline" size="sm" onClick={exportCsv}><Table2 className="mr-2 h-4 w-4" />导出 CSV</Button>
               <Button variant="outline" size="sm" onClick={exportMarkdown}><FileText className="mr-2 h-4 w-4" />导出 MD</Button>
             </div>
           </div>
+        )}
+
+        {giftValidation && (
+          <Alert variant={giftValidation.issues.length ? 'destructive' : 'default'} className={giftValidation.issues.length ? '' : 'border-primary/30 bg-primary/5'}>
+            {giftValidation.issues.length ? <AlertTriangle className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
+            <AlertTitle>{giftValidation.issues.length ? `发现 ${giftValidation.issues.length} 条赠品异常` : '赠品校验全部通过'}</AlertTitle>
+            <AlertDescription className="space-y-3">
+              <p>共 {giftValidation.total} 条，命中 {giftValidation.passed} 条，标准赠品池 {MINI_APP_CANONICAL_GIFTS.length} 个。</p>
+              {giftValidation.issues.length > 0 && (
+                <>
+                  <div className="grid gap-2">
+                    {giftValidation.issues.map(issue => (
+                      <div key={issue.index} className="rounded-md border bg-background/60 p-3 text-xs">
+                        <div className="font-semibold">第 {issue.index + 1} 条：{issue.reason}</div>
+                        <div className="mt-1 text-muted-foreground">当前产品/工具名：{issue.productName}</div>
+                        <div className="text-muted-foreground">当前限时赠品：{issue.giftDisplayName}</div>
+                        {issue.suggestedGiftDisplayName && <div className="mt-1 text-foreground">建议：{issue.suggestedGiftDisplayName}</div>}
+                      </div>
+                    ))}
+                  </div>
+                  <Button variant="secondary" size="sm" onClick={handleRepairGifts}>一键按标准池修正</Button>
+                </>
+              )}
+            </AlertDescription>
+          </Alert>
         )}
 
         {items.length === 0 ? (
@@ -381,11 +407,14 @@ const MiniAppContentLab: React.FC = () => {
             </TabsList>
             <TabsContent value="cards" className="grid gap-3 md:grid-cols-2">
               {items.map((item, index) => (
-                <Card key={item.id || index} className="overflow-hidden">
+                <Card key={item.id || index} className={`overflow-hidden ${issueMap.has(index) ? 'border-destructive/60' : ''}`}>
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between gap-3">
                       <CardTitle className="text-base leading-snug">{item.viralTitle}</CardTitle>
-                      <Badge variant="outline">{index + 1}</Badge>
+                      <div className="flex shrink-0 flex-col items-end gap-1">
+                        <Badge variant="outline">{index + 1}</Badge>
+                        {giftValidation && <Badge variant={issueMap.has(index) ? 'destructive' : 'secondary'}>{issueMap.has(index) ? '赠品异常' : '赠品已校验'}</Badge>}
+                      </div>
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-3 text-sm">
