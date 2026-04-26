@@ -9,6 +9,9 @@ export interface MiniAppSeedItem {
   route?: string;
   topicId?: string;
   productId?: string;
+  productName?: string;
+  giftDisplayName?: string;
+  reportName?: string;
 }
 
 export const MINI_APP_SOURCE_OPTIONS: Array<{ id: MiniAppSourceType; label: string; description: string }> = [
@@ -26,14 +29,14 @@ export const MINI_APP_STYLE_OPTIONS: Array<{ id: MiniAppContentStyle; label: str
 ];
 
 export const MINI_APP_SCENE_SEEDS: MiniAppSeedItem[] = [
-  { id: 'scene-anxiety', label: '深夜焦虑', description: '翻来覆去睡不着，脑子停不下来', sourceType: 'mini-scenes', route: '/life-coach-voice?topic=anxiety', topicId: 'ai-coach-anxiety', productId: 'cv-synergy-camp' },
-  { id: 'scene-career', label: '职场迷茫', description: '想换工作没勇气，不知道下一步去哪', sourceType: 'mini-scenes', route: '/life-coach-voice?topic=career', topicId: 'ai-coach-career', productId: 'cv-365' },
-  { id: 'scene-relationship', label: '关系困扰', description: '刚和重要的人吵完架，不知道怎么修复', sourceType: 'mini-scenes', route: '/life-coach-voice?topic=relationship', topicId: 'ai-coach-relationship', productId: 'cv-coach-1v1' },
-  { id: 'scene-wealth', label: '财富卡点', description: '赚多少都存不下，收入上来又会自我破坏', sourceType: 'mini-scenes', route: '/wealth-block', topicId: 'assess-wealth', productId: 'cv-wealth-assess' },
-  { id: 'scene-sleep', label: '睡不着觉', description: '身体很累，但一闭眼就清醒', sourceType: 'mini-scenes', route: '/life-coach-voice?topic=sleep', topicId: 'tool-breathing', productId: 'cv-free-tool' },
-  { id: 'scene-meltdown', label: '情绪崩溃', description: '突然想哭，什么都不想处理', sourceType: 'mini-scenes', route: '/emotion-button', topicId: 'tool-emotion-sos', productId: 'cv-synergy-camp' },
-  { id: 'scene-exam', label: '考试焦虑', description: '越复习越慌，越想表现好越发挥不出来', sourceType: 'mini-scenes', route: '/xiaojin', topicId: 'tool-panic', productId: 'cv-free-tool' },
-  { id: 'scene-social', label: '社交困扰', description: '不敢开口，害怕被评价和拒绝', sourceType: 'mini-scenes', route: '/life-coach-voice?topic=social', topicId: 'tool-values', productId: 'cv-trial' },
+  { id: 'scene-anxiety', label: '深夜焦虑', description: '翻来覆去睡不着，脑子停不下来', sourceType: 'mini-scenes', route: '/life-coach-voice?topic=anxiety', topicId: 'ai-coach-anxiety', productId: 'cv-synergy-camp', productName: '7天有劲训练营', giftDisplayName: '限时赠送「深夜焦虑觉察体验」', reportName: '深夜焦虑模式解析报告' },
+  { id: 'scene-career', label: '职场迷茫', description: '想换工作没勇气，不知道下一步去哪', sourceType: 'mini-scenes', route: '/life-coach-voice?topic=career', topicId: 'ai-coach-career', productId: 'cv-365', productName: '365年度会员', giftDisplayName: '限时赠送「职场方向觉察体验」', reportName: '职场内耗根源分析报告' },
+  { id: 'scene-relationship', label: '关系困扰', description: '刚和重要的人吵完架，不知道怎么修复', sourceType: 'mini-scenes', route: '/life-coach-voice?topic=relationship', topicId: 'ai-coach-relationship', productId: 'cv-coach-1v1', productName: '真人教练1v1', giftDisplayName: '限时赠送「关系沟通觉察体验」', reportName: '关系沟通盲点洞察报告' },
+  { id: 'scene-wealth', label: '财富卡点', description: '赚多少都存不下，收入上来又会自我破坏', sourceType: 'mini-scenes', route: '/wealth-block', topicId: 'assess-wealth', productId: 'cv-wealth-assess', productName: '财富卡点测评', giftDisplayName: '限时赠送「财富卡点测评」', reportName: '财富卡点深度定位报告' },
+  { id: 'scene-sleep', label: '睡不着觉', description: '身体很累，但一闭眼就清醒', sourceType: 'mini-scenes', route: '/life-coach-voice?topic=sleep', topicId: 'tool-breathing', productId: 'cv-free-tool', productName: '呼吸练习', giftDisplayName: '限时赠送「呼吸练习」', reportName: '睡眠焦虑触发因素报告' },
+  { id: 'scene-meltdown', label: '情绪崩溃', description: '突然想哭，什么都不想处理', sourceType: 'mini-scenes', route: '/emotion-button', topicId: 'tool-emotion-sos', productId: 'cv-synergy-camp', productName: '情绪SOS按钮', giftDisplayName: '限时赠送「情绪SOS按钮」', reportName: '情绪崩溃触发点解析报告' },
+  { id: 'scene-exam', label: '考试焦虑', description: '越复习越慌，越想表现好越发挥不出来', sourceType: 'mini-scenes', route: '/xiaojin', topicId: 'tool-panic', productId: 'cv-free-tool', productName: '恐慌急救', giftDisplayName: '限时赠送「恐慌急救」', reportName: '考试焦虑压力模式报告' },
+  { id: 'scene-social', label: '社交困扰', description: '不敢开口，害怕被评价和拒绝', sourceType: 'mini-scenes', route: '/life-coach-voice?topic=social', topicId: 'tool-values', productId: 'cv-trial', productName: '价值观探索', giftDisplayName: '限时赠送「价值观探索」', reportName: '社交回避内在需求洞察报告' },
 ];
 
 export const MINI_APP_CONVERSION_SEEDS: MiniAppSeedItem[] = [
