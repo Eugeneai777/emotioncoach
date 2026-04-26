@@ -1228,10 +1228,9 @@ export default function WealthBlockAssessmentPage() {
       </main>
 
       {/* 支付对话框 */}
-      <AssessmentPayDialog
+      <UnifiedPayDialog
         key={payDialogInstanceKey}
         open={showPayDialog}
-        miniProgramPayReturnSignal={miniProgramPayReturnSignal}
         onOpenChange={(open) => {
           console.log('[WealthBlock] PayDialog onOpenChange:', open);
           if (open) {
@@ -1242,26 +1241,14 @@ export default function WealthBlockAssessmentPage() {
           }
           setShowPayDialog(open);
         }}
-        onCancelled={(orderNo) => {
-          console.log('[WealthBlock] PayDialog onCancelled:', orderNo);
-          resetMiniProgramPaymentStateAfterCancel(orderNo);
-          trackPaymentEvent('payment_cancelled', {
-            metadata: {
-              source: 'pay_dialog_return_to_h5',
-              orderNo: orderNo || null,
-              packageKey: 'wealth_block_assessment',
-              ua: navigator.userAgent.slice(0, 200),
-            },
-          });
-          toast.info('支付已取消，可重新发起支付');
+        packageInfo={{
+          key: 'wealth_block_assessment',
+          name: '财富卡点测评',
+          price: 9.9,
         }}
-        userId={user?.id}
-        hasPurchased={hasPurchased}
-        packageKey="wealth_block_assessment"
-        packageName="财富卡点测评"
-        onSuccess={(returnedUserId) => {
+        onSuccess={() => {
           // 支付+注册成功，开始测评
-          console.log('[WealthBlock] PayDialog onSuccess, userId:', returnedUserId);
+          console.log('[WealthBlock] PayDialog onSuccess');
           console.log('[WealthBlock] Setting showIntro=false, showPayDialog=false');
           sessionStorage.removeItem(MP_PENDING_PAYMENT_DISMISSED_KEY);
           setShowIntro(false);
