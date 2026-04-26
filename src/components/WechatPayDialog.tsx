@@ -159,6 +159,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
   const [h5PayLink, setH5PayLink] = useState<string>('');
   const [orderNo, setOrderNo] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
+  const [loadingMessage, setLoadingMessage] = useState<string>('');
   const [payType, setPayType] = useState<'h5' | 'native' | 'jsapi'>('h5');
   // 优先使用 props 传入的 openId，其次使用 URL 中静默授权返回的 openId
   const urlOpenId = getPaymentOpenIdFromUrl();
@@ -741,6 +742,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     setH5PayLink('');
     setOrderNo('');
     setErrorMessage('');
+    setLoadingMessage('');
     setJsapiCancelled(false);
     setJsapiPayParams(null);
     // 非合伙人套餐默认已同意，合伙人套餐需要重新勾选
