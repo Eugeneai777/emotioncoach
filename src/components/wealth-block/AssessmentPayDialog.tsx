@@ -24,6 +24,7 @@ interface AssessmentPayDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: (userId: string) => void;
+  onCancelled?: (orderNo?: string) => void;
   miniProgramPayReturnSignal?: number;
   /** 支付成功后跳转的页面路径，默认为当前页面 */
   returnUrl?: string;
@@ -154,7 +155,7 @@ const isPayAuthInProgress = (): boolean => {
   return sessionStorage.getItem("pay_auth_in_progress") === "1";
 };
 
-export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgramPayReturnSignal, returnUrl, userId, hasPurchased, packageKey, packageName }: AssessmentPayDialogProps) {
+export function AssessmentPayDialog({ open, onOpenChange, onSuccess, onCancelled, miniProgramPayReturnSignal, returnUrl, userId, hasPurchased, packageKey, packageName }: AssessmentPayDialogProps) {
   const [status, setStatus] = useState<PaymentStatus>("idle");
   const [orderNo, setOrderNo] = useState<string>("");
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>("");
@@ -1517,11 +1518,27 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, miniProgram
   const forceCloseStaleMiniProgramDialog = useCallback(() => {
     if (!open) return;
     console.log("[AssessmentPay] MiniProgram returned to H5, abandoning current order and closing dialog");
+    const staleOrderNo = orderNo;
+    stopPolling();
     mpNativePayPageHiddenRef.current = false;
+    mpNativePayLaunchedRef.current = false;
+    createOrderCalledRef.current = false;
+    createOrderRetriedRef.current = false;
+    setOrderNo("");
+    setMpPayParams(null);
+    setQrCodeDataUrl("");
+    setPayUrl("");
+    setErrorMessage("");
+    setPollingTimeout(false);
+    setIsForceChecking(false);
+    setMpLaunchFailed(false);
+    clearCachedMiniProgramPaymentState(packageKey);
+    setStatus("idle");
+    onCancelled?.(staleOrderNo || undefined);
     // 🔧 不再在此弹 toast：取消提示由 WealthBlockAssessment 的 payment_fail=1 分支统一处理，
     // 避免 iOS 同 tick remount 时被吞 + 安卓双弹的问题
     handleDialogOpenChange(false);
-  }, [handleDialogOpenChange, open]);
+  }, [handleDialogOpenChange, onCancelled, open, orderNo, packageKey]);
 
   useEffect(() => {
     if (!miniProgramPayReturnSignal || !open || !isMiniProgram) return;
