@@ -431,8 +431,8 @@ const MiniAppContentLab: React.FC = () => {
                     <div className="grid gap-2">
                       <p><span className="font-semibold text-foreground">痛点：</span><span className="text-muted-foreground">{item.painPoint}</span></p>
                       <p><span className="font-semibold text-foreground">价值：</span><span className="text-muted-foreground">{item.value}</span></p>
-                      <p><span className="font-semibold text-foreground">产品/工具名：</span><span className="text-muted-foreground">{item.giftProductName || '-'}</span></p>
-                      <p><span className="font-semibold text-foreground">限时赠品：</span><span className="text-muted-foreground">{item.giftDisplayName || item.matchedTool}</span></p>
+                      <p><span className="font-semibold text-foreground">产品/工具名：</span><span className="text-muted-foreground">{getGiftProductName(item) || '-'}</span></p>
+                      <p><span className="font-semibold text-foreground">限时赠品：</span><span className="text-muted-foreground">{getGiftDisplayName(item)}</span></p>
                       <p><span className="font-semibold text-foreground">专业报告名称：</span><span className="text-muted-foreground">{item.reportPageName || '-'}</span></p>
                       <p><span className="font-semibold text-foreground">报告价值：</span><span className="text-muted-foreground">{item.aiReportValue}</span></p>
                       {(item.actionPlanValue || item.coachReportValue) && <p><span className="font-semibold text-foreground">下一步行动建议：</span><span className="text-muted-foreground">{item.actionPlanValue || item.coachReportValue}</span></p>}
@@ -470,8 +470,8 @@ const MiniAppContentLab: React.FC = () => {
                         <TableRow key={item.id || index} className={issueMap.has(index) ? 'bg-destructive/5' : undefined}>
                           <TableCell>{item.painPoint}</TableCell>
                           <TableCell>{item.value}</TableCell>
-                          <TableCell>{item.giftProductName || '-'}</TableCell>
-                          <TableCell>{item.giftDisplayName || item.matchedTool}</TableCell>
+                          <TableCell>{getGiftProductName(item) || '-'}</TableCell>
+                          <TableCell>{getGiftDisplayName(item)}</TableCell>
                           <TableCell>{giftValidation ? <Badge variant={issueMap.has(index) ? 'destructive' : 'secondary'}>{issueMap.has(index) ? '异常' : '通过'}</Badge> : '-'}</TableCell>
                           <TableCell>{item.reportPageName || '-'}</TableCell>
                           <TableCell>{item.aiReportValue}</TableCell>
