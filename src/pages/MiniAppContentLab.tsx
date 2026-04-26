@@ -118,6 +118,18 @@ const MiniAppContentLab: React.FC = () => {
   const selectedSource = MINI_APP_SOURCE_OPTIONS.find(s => s.id === sourceType);
   const selectedStyle = MINI_APP_STYLE_OPTIONS.find(s => s.id === style);
 
+  const normalizeItems = (rawItems: ContentTopicItem[]): ContentTopicItem[] => rawItems.map((item, index) => {
+    const seed = seedItems.find(seedItem => seedItem.topicId === item.topicId || seedItem.productId === item.productId || seedItem.route === item.route) || seedItems[index % Math.max(seedItems.length, 1)];
+    const productName = item.giftProductName || seed?.productName || seed?.label || '';
+    return {
+      ...item,
+      giftProductName: productName,
+      giftDisplayName: item.giftDisplayName || seed?.giftDisplayName || (productName ? `限时赠送「${productName}」` : item.matchedTool),
+      reportPageName: item.reportPageName || seed?.reportName || (productName ? `${productName.replace(/测评|工具|按钮|练习/g, '')}主题洞察报告` : ''),
+      actionPlanValue: item.actionPlanValue || item.coachReportValue,
+    };
+  });
+
   const handleGenerate = async () => {
     setLoading(true);
     try {
@@ -134,7 +146,7 @@ const MiniAppContentLab: React.FC = () => {
       if (error) throw new Error(error.message);
       if (data?.error) throw new Error(data.error);
       if (!Array.isArray(data?.items)) throw new Error('AI返回数据格式异常');
-      setItems(data.items);
+      setItems(normalizeItems(data.items));
       toast.success(`已生成 ${data.items.length} 条短视频选题`);
     } catch (err: any) {
       toast.error(`生成失败：${err.message || '请稍后重试'}`);
@@ -154,8 +166,8 @@ const MiniAppContentLab: React.FC = () => {
 
   const exportCsv = () => {
     if (!items.length) return;
-    const header = ['痛点', '核心价值', '赠送测评/工具', 'AI分析报告附加价值', 'AI教练报告分析', '小红书爆款标题', '开场Hook', '私域CTA', '入口'];
-    const rows = items.map(item => [item.painPoint, item.value, item.matchedTool, item.aiReportValue, item.coachReportValue || '', item.viralTitle, item.hook, item.cta, item.route || ''].map(csvEscape).join(','));
+    const header = ['痛点', '核心价值', '产品/工具名', '限时赠品', '专业报告名称', '报告价值', '下一步行动建议', '小红书爆款标题', '开场Hook', '私域CTA', '入口'];
+    const rows = items.map(item => [item.painPoint, item.value, item.giftProductName || '', item.giftDisplayName || item.matchedTool, item.reportPageName || '', item.aiReportValue, item.actionPlanValue || item.coachReportValue || '', item.viralTitle, item.hook, item.cta, item.route || ''].map(csvEscape).join(','));
     downloadBlob(`\ufeff${header.map(csvEscape).join(',')}\n${rows.join('\n')}`, `mini-app短视频选题库_${Date.now()}.csv`, 'text/csv;charset=utf-8');
     toast.success('CSV 已下载');
   };
@@ -169,7 +181,7 @@ const MiniAppContentLab: React.FC = () => {
       `- 内容来源：${selectedSource?.label}`,
       `- 内容风格：${selectedStyle?.label}`,
       '',
-      ...items.map((item, index) => `## ${index + 1}. ${item.viralTitle}\n\n- 痛点：${item.painPoint}\n- 核心价值：${item.value}\n- 搭配测评/工具：${item.matchedTool}\n- AI分析报告附加价值：${item.aiReportValue}\n- 开场 Hook：${item.hook}\n- CTA：${item.cta}\n- 入口：${item.route || '-'}\n`),
+      ...items.map((item, index) => `## ${index + 1}. ${item.viralTitle}\n\n- 痛点：${item.painPoint}\n- 核心价值：${item.value}\n- 产品/工具名：${item.giftProductName || '-'}\n- 限时赠品：${item.giftDisplayName || item.matchedTool}\n- 专业报告名称：${item.reportPageName || '-'}\n- 报告价值：${item.aiReportValue}\n- 下一步行动建议：${item.actionPlanValue || item.coachReportValue || '-'}\n- 开场 Hook：${item.hook}\n- CTA：${item.cta}\n- 入口：${item.route || '-'}\n`),
     ].join('\n');
     downloadBlob(md, `mini-app短视频选题库_${Date.now()}.md`, 'text/markdown;charset=utf-8');
     toast.success('Markdown 已下载');
