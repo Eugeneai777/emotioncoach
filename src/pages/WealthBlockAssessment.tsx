@@ -1208,36 +1208,6 @@ export default function WealthBlockAssessmentPage() {
         }}
       />
 
-      {/* 🆕 微信账号冲突提示（轻提示，不强拦截） */}
-      <AlertDialog
-        open={conflictDialog.open}
-        onOpenChange={(open) => setConflictDialog(prev => ({ ...prev, open }))}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>检测到此微信曾绑定其他账号</AlertDialogTitle>
-            <AlertDialogDescription>
-              此微信曾用账号 <strong>{conflictDialog.boundPhoneMasked}</strong> 购买过本测评。
-              当前你以 <strong>{conflictDialog.currentPhoneMasked}</strong> 登录。
-              <br /><br />
-              本次将为 <strong>{conflictDialog.currentPhoneMasked}</strong> 重新付费 ¥9.9，订单与测评结果归此账号。
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={handleSwitchToBoundAccount}>
-              切换到 {conflictDialog.boundPhoneMasked}
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                setConflictDialog(prev => ({ ...prev, open: false }));
-                openWealthPayDialog();
-              }}
-            >
-              继续付款
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }
