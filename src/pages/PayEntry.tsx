@@ -83,6 +83,12 @@ export default function PayEntry() {
     }
     sessionStorage.setItem(authCodeLockKey, String(now));
 
+    let fallbackTimer: number | undefined;
+    const redirectWithFallbackParams = (target: URL) => {
+      if (fallbackTimer) window.clearTimeout(fallbackTimer);
+      window.location.replace(target.toString());
+    };
+
     const run = async () => {
       console.log('[PayEntry] Processing payment auth callback...');
       console.log('[PayEntry] code:', paymentAuthCode);
@@ -114,7 +120,7 @@ export default function PayEntry() {
           // 通用支付恢复标记
           target.searchParams.set('payment_resume', '1');
           target.searchParams.set('assessment_pay_resume', '1');
-          window.location.replace(target.toString());
+          redirectWithFallbackParams(target);
           return;
         }
 
@@ -138,17 +144,17 @@ export default function PayEntry() {
         console.log('[PayEntry] Redirecting to:', target.toString());
         
         // 使用 replace 防止回退导致重复触发
-        window.location.replace(target.toString());
+        redirectWithFallbackParams(target);
       } catch (e) {
         console.error('[PayEntry] Exception in payment auth callback:', e);
         const target = new URL(paymentRedirect!);
         target.searchParams.set('payment_auth_error', '1');
         target.searchParams.set('assessment_pay_resume', '1');
-        window.location.replace(target.toString());
+        redirectWithFallbackParams(target);
       }
     };
 
-    const fallbackTimer = window.setTimeout(() => {
+    fallbackTimer = window.setTimeout(() => {
       console.warn('[PayEntry] Payment auth exchange timeout, redirecting back with fallback');
       redirectBackWithAuthFallback();
     }, 8000);
