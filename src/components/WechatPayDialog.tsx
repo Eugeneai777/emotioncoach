@@ -1615,9 +1615,10 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
   const handleReInvokeJsapi = async () => {
     if (!jsapiPayParams) return;
     setJsapiCancelled(false);
+    setLoadingMessage('正在唤起微信支付...');
     console.log('[Payment] Re-invoking JSAPI with cached params for order:', orderNo);
     try {
-      const bridgeAvailable = await waitForWeixinJSBridge(1500);
+      const bridgeAvailable = await waitForWeixinJSBridge(5000);
       if (bridgeAvailable) {
         await invokeJsapiPay(jsapiPayParams);
         console.log('[Payment] JSAPI re-invoke succeeded');
@@ -1726,7 +1727,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
               <div className="flex flex-col items-center gap-2">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 <span className="text-sm text-muted-foreground">
-                  {payType === 'jsapi' ? '正在调起支付...' : payType === 'h5' ? '正在创建订单...' : '正在生成二维码...'}
+                  {loadingMessage || (payType === 'jsapi' ? '正在准备微信支付...' : payType === 'h5' ? '正在创建订单...' : '正在生成二维码...')}
                 </span>
               </div>
             )}
@@ -1743,8 +1744,8 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
                 ) : (
                   <>
                     <Loader2 className="h-12 w-12 animate-spin" />
-                    <span className="font-medium">等待支付完成...</span>
-                    <span className="text-xs text-muted-foreground">请在弹出的支付窗口中完成支付</span>
+                    <span className="font-medium">{jsapiPayParams ? '请完成微信支付' : '正在唤起微信支付'}</span>
+                    <span className="text-xs text-muted-foreground">{jsapiPayParams ? '请在弹出的支付窗口中完成支付' : '支付窗口即将打开'}</span>
                   </>
                 )}
               </div>
