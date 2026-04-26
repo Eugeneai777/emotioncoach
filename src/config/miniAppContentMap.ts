@@ -40,10 +40,10 @@ export const MINI_APP_SCENE_SEEDS: MiniAppSeedItem[] = [
 ];
 
 export const MINI_APP_CONVERSION_SEEDS: MiniAppSeedItem[] = [
-  { id: 'conv-synergy', label: '7天有劲训练营', description: '7 天解压训练、AI 教练、真人录音冥想', sourceType: 'conversion', route: '/promo/synergy', topicId: 'camp-emotion_stress_7', productId: 'cv-synergy-camp' },
-  { id: 'conv-identity-bloom', label: '身份绽放训练营', description: '重新定义我是谁，适合高价值深度转化', sourceType: 'conversion', route: '/promo/identity-bloom', topicId: 'bloom-camp', productId: 'cv-bloom-camp' },
-  { id: 'conv-member365', label: '365年度会员', description: '全年 AI 教练和工具使用权益', sourceType: 'conversion', route: '/packages', topicId: 'member-365', productId: 'cv-365' },
-  { id: 'conv-trial', label: '尝鲜会员', description: '低门槛体验 50 点 AI 教练额度', sourceType: 'conversion', route: '/packages', topicId: 'member-trial', productId: 'cv-trial' },
-  { id: 'conv-wealth-camp', label: '财富觉醒训练营', description: '围绕财富信念和自我价值感做系统突破', sourceType: 'conversion', route: '/promo/wealth-synergy', topicId: 'assess-wealth', productId: 'cv-wealth-camp' },
-  { id: 'conv-coach', label: '真人教练1v1', description: '当 AI 洞察不够时，进入真人教练深度陪跑', sourceType: 'conversion', route: '/human-coaches', topicId: 'coach-1v1', productId: 'cv-coach-1v1' },
+  { id: 'conv-synergy', label: '7天有劲训练营', description: '7 天解压训练、AI 教练、真人录音冥想', sourceType: 'conversion', route: '/promo/synergy', topicId: 'camp-emotion_stress_7', productId: 'cv-synergy-camp', productName: '7天有劲训练营', giftDisplayName: '限时赠送「7天有劲训练营体验名额」', reportName: '压力内耗恢复力评估报告' },
+  { id: 'conv-identity-bloom', label: '身份绽放训练营', description: '重新定义我是谁，适合高价值深度转化', sourceType: 'conversion', route: '/promo/identity-bloom', topicId: 'bloom-camp', productId: 'cv-bloom-camp', productName: '身份绽放训练营', giftDisplayName: '限时赠送「身份绽放觉察体验」', reportName: '身份卡点与生命主线洞察报告' },
+  { id: 'conv-member365', label: '365年度会员', description: '全年 AI 教练和工具使用权益', sourceType: 'conversion', route: '/packages', topicId: 'member-365', productId: 'cv-365', productName: '365年度会员', giftDisplayName: '限时赠送「365年度会员体验权益」', reportName: '年度成长卡点扫描报告' },
+  { id: 'conv-trial', label: '尝鲜会员', description: '低门槛体验 50 点 AI 教练额度', sourceType: 'conversion', route: '/packages', topicId: 'member-trial', productId: 'cv-trial', productName: '尝鲜会员', giftDisplayName: '限时赠送「尝鲜会员体验权益」', reportName: '个人成长阻力快速定位报告' },
+  { id: 'conv-wealth-camp', label: '财富觉醒训练营', description: '围绕财富信念和自我价值感做系统突破', sourceType: 'conversion', route: '/promo/wealth-synergy', topicId: 'assess-wealth', productId: 'cv-wealth-camp', productName: '财富觉醒训练营', giftDisplayName: '限时赠送「财富觉醒训练营体验名额」', reportName: '财富信念阻力深度解析报告' },
+  { id: 'conv-coach', label: '真人教练1v1', description: '当 AI 洞察不够时，进入真人教练深度陪跑', sourceType: 'conversion', route: '/human-coaches', topicId: 'coach-1v1', productId: 'cv-coach-1v1', productName: '真人教练1v1', giftDisplayName: '限时赠送「真人教练1v1咨询体验」', reportName: '关键人生议题深度梳理报告' },
 ];
