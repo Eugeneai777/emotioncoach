@@ -1664,8 +1664,16 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     createOrder();
   };
 
+  const handleDialogOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen && payType === 'jsapi' && (jsapiSystemDialogActiveRef.current || Date.now() - lastJsapiCancelAtRef.current < 800)) {
+      console.log('[Payment] Ignoring business dialog close caused by JSAPI system payment cancellation');
+      return;
+    }
+    onOpenChange(nextOpen);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleDialogOpenChange}>
       <DialogContent className="w-[calc(100vw-2rem)] max-w-md mx-auto">
         <DialogHeader>
           <DialogTitle className="text-center">微信支付</DialogTitle>
