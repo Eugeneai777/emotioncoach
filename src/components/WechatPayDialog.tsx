@@ -747,6 +747,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     setErrorMessage('');
     setLoadingMessage('');
     setJsapiCancelled(false);
+    setJsapiRetryReason(null);
     setJsapiPayParams(null);
     // 非合伙人套餐默认已同意，合伙人套餐需要重新勾选
     setAgreedTerms(!needsTerms);
@@ -1289,13 +1290,16 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
             });
           } catch (jsapiError: any) {
             console.log('[Payment] JSAPI pay error:', jsapiError?.message);
-            if (jsapiError?.message === '用户取消支付') {
-              // 用户取消：标记为已取消，允许用复用同一订单重新唤起
-              console.log('[Payment] User cancelled JSAPI, allowing retry with same order');
+            if (jsapiError?.message === '用户取消支付' || jsapiError?.message === 'JSAPI_SILENT_TIMEOUT') {
+              // 用户取消/Android 微信吞回调：保持业务窗口，允许复用同一订单重新唤起
+              const isSilentTimeout = jsapiError?.message === 'JSAPI_SILENT_TIMEOUT';
+              console.log('[Payment] JSAPI cancelled/no-response, allowing retry with same order', { isSilentTimeout });
               trackPaymentEvent('payment_jsapi_user_cancelled', {
-                metadata: { orderNo: data.orderNo },
+                metadata: { orderNo: data.orderNo, isSilentTimeout },
               });
               setJsapiCancelled(true);
+              setJsapiRetryReason(isSilentTimeout ? 'silent' : 'cancelled');
+              setErrorMessage(isSilentTimeout ? '微信支付没有响应，请再次点击下方按钮拉起支付' : '支付已取消，可重新拉起支付');
             } else {
               // JSAPI 失败，降级到扫码模式
               trackPaymentEvent('payment_jsapi_failed', {
@@ -1655,6 +1659,8 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
   const handleReInvokeJsapi = async () => {
     if (!jsapiPayParams) return;
     setJsapiCancelled(false);
+    setJsapiRetryReason(null);
+    setErrorMessage('');
     setLoadingMessage('正在唤起微信支付...');
     console.log('[Payment] Re-invoking JSAPI with cached params for order:', orderNo);
     try {
