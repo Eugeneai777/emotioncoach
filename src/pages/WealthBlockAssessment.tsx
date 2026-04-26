@@ -1088,17 +1088,6 @@ export default function WealthBlockAssessmentPage() {
                   isLoading={false}
                   onStart={() => {
                     // 🔒 付费墙守门：未登录跳登录、未付费拉支付、绽放合伙人/已付费才放行
-                    if (!user) {
-                      // 标记登录后需要自动拉起支付
-                      sessionStorage.setItem('wealth_block_pending_pay', '1');
-                      // 双保险：URL ?redirect= + setPostAuthRedirect 兜底，
-                      // 确保不论 /auth 走哪条登录路径都能回到本页触发自动支付
-                      const currentPath = window.location.pathname + window.location.search;
-                      setPostAuthRedirect(currentPath);
-                      toast.info("请先登录");
-                      navigate(`/auth?redirect=${encodeURIComponent(currentPath)}`);
-                      return;
-                    }
                     if (!hasPurchased && !isBloomPartner) {
                       console.log('[WealthBlock] Not purchased, opening pay dialog');
                       handlePayClick();
