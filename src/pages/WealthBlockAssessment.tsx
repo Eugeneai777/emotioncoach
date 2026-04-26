@@ -21,16 +21,6 @@ import { WealthBlockTrend } from "@/components/wealth-block/WealthBlockTrend";
 import { AssessmentComparison } from "@/components/wealth-block/AssessmentComparison";
 import { AssessmentIntroCard } from "@/components/wealth-block/AssessmentIntroCard";
 import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { AssessmentResult, blockInfo, patternInfo, FollowUpAnswer, calculateResult, calculateHealthScore } from "@/components/wealth-block/wealthBlockData";
 import { DeepFollowUpAnswer } from "@/components/wealth-block/DeepFollowUpDialog";
 import { useWealthCampAnalytics } from "@/hooks/useWealthCampAnalytics";
@@ -108,13 +98,6 @@ export default function WealthBlockAssessmentPage() {
   // 检查用户是否已购买测评
   const { data: purchaseRecord, isLoading: isPurchaseLoading } = useAssessmentPurchase();
   const hasPurchased = !!purchaseRecord;
-
-  // 🆕 微信账号冲突提示（当前登录账号 ≠ 微信 openId 绑定账号 且 绑定账号已购买）
-  const [conflictDialog, setConflictDialog] = useState<{
-    open: boolean;
-    boundPhoneMasked: string;
-    currentPhoneMasked: string;
-  }>({ open: false, boundPhoneMasked: '', currentPhoneMasked: '' });
 
   // 检查用户是否已是绽放合伙人
   const { data: bloomPartnerRecord } = useQuery({
