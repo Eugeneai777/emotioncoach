@@ -454,6 +454,16 @@ export default function WealthBlockAssessmentPage() {
       },
     });
 
+    // 与产品中心一致：支付入口先要求登录；登录成功回到当前页后由 pending 标记自动拉起支付
+    if (!user) {
+      const currentPath = window.location.pathname + window.location.search;
+      sessionStorage.setItem('wealth_block_pending_pay', '1');
+      setPostAuthRedirect(currentPath);
+      toast.info("请先登录");
+      navigate(`/auth?redirect=${encodeURIComponent(currentPath)}`);
+      return;
+    }
+
     // 🆕 微信浏览器内 + 已登录：检查"当前账号 ≠ 微信 openId 绑定账号 且 绑定账号已购"
     // 命中则弹一次轻提示让用户决定继续付款 or 切换回原账号（不强拦截）
     if (isWeChatBrowserEnv && user) {
