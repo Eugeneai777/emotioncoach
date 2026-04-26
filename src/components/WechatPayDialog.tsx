@@ -228,8 +228,8 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
 
   const shouldWaitForOpenId = (isMiniProgram || isWechat) && !propOpenId;
 
-  // 优化后的 WeixinJSBridge 等待逻辑：缩短为 1.5 秒，避免阻塞体验
-  const waitForWeixinJSBridge = useCallback((timeout = 1500): Promise<boolean> => {
+  // 微信 Android/XWEB 下 Bridge 可能延迟注入，等待 5 秒避免过早误判并降级扫码
+  const waitForWeixinJSBridge = useCallback((timeout = 5000): Promise<boolean> => {
     return new Promise((resolve) => {
       if (typeof window.WeixinJSBridge !== 'undefined') {
         console.log('[Payment] WeixinJSBridge already available');
@@ -1204,9 +1204,9 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
         setStatus('polling');
         startPolling(data.orderNo);
 
-        // 微信浏览器：先等待 Bridge 就绪（最多 1.5 秒），再调起支付
+        // 微信浏览器：先等待 Bridge 就绪（最多 5 秒），再调起支付
         console.log('[Payment] WeChat browser: waiting for Bridge then invoke JSAPI');
-        const bridgeAvailable = await waitForWeixinJSBridge(1500);
+        const bridgeAvailable = await waitForWeixinJSBridge(5000);
         
         // 缓存 JSAPI 参数，供取消后重新唤起
         setJsapiPayParams(data.jsapiPayParams);
@@ -1240,7 +1240,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
           // Bridge 不可用，直接降级到扫码
           console.log('[Payment] Bridge not available, falling back to native');
           trackPaymentEvent('payment_jsapi_failed', {
-            errorMessage: 'WeixinJSBridge not available within 1500ms',
+            errorMessage: 'WeixinJSBridge not available within 5000ms',
             metadata: { orderNo: data.orderNo, fallbackTo: 'native', stage: 'bridge_wait_timeout' },
           });
           await fallbackToNativePayment(data.orderNo);
