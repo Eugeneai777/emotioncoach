@@ -1070,7 +1070,7 @@ export default function WealthBlockAssessmentPage() {
               </div>
             )}
             
-            {!authLoading && !isPurchaseLoading && showIntro && !showResult ? (
+            {authLoading || isPurchaseLoading ? null : showIntro && !showResult ? (
                 <AssessmentIntroCard
                   isLoggedIn={!!user}
                   hasPurchased={hasPurchased}
