@@ -12,7 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { supabase } from '@/integrations/supabase/client';
 import type { MarketingGift, MarketingProduct } from '@/hooks/useMarketingPools';
-import type { MiniAppSourceType } from '@/config/miniAppContentMap';
+import { MINI_APP_CANONICAL_GIFTS, type MiniAppSeedItem, type MiniAppSourceType } from '@/config/miniAppContentMap';
+import { usePackages } from '@/hooks/usePackages';
 
 interface MarketingPoolEditorProps {
   type: 'product' | 'gift';
@@ -83,6 +84,7 @@ export function MarketingPoolEditor({ type, products = [], gifts = [], onSaved }
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [productForm, setProductForm] = useState<ProductForm>(blankProduct);
   const [giftForm, setGiftForm] = useState<GiftForm>(blankGift);
+  const { data: packages = [] } = usePackages();
 
   const isProduct = type === 'product';
   const title = isProduct ? '编辑转化产品池' : '编辑标准赠品池';
@@ -132,6 +134,41 @@ export function MarketingPoolEditor({ type, products = [], gifts = [], onSaved }
 
   const nextProductOrder = () => String((products.reduce((max, item) => Math.max(max, item.display_order || 0), 0) || 0) + 10);
   const nextGiftOrder = () => String((gifts.reduce((max, item) => Math.max(max, item.display_order || 0), 0) || 0) + 10);
+
+  const giftPriceLabel = (gift: MiniAppSeedItem) => {
+    const price = packages.find(pkg => pkg.package_key === gift.productId)?.price;
+    const fallbackPrice = gift.sourceType === 'assessments' ? 9.9 : 0;
+    const finalPrice = price ?? fallbackPrice;
+    return finalPrice > 0 ? `¥${finalPrice}` : '免费';
+  };
+
+  const saveGiftTemplate = async (gift: MiniAppSeedItem) => {
+    const productName = gift.productName || gift.label;
+    setSaving(true);
+    const { error } = await supabase.from('marketing_gift_pool' as any).upsert({
+      gift_key: gift.id,
+      label: gift.label,
+      product_name: productName,
+      gift_display_name: gift.giftDisplayName || `限时赠送「${productName}」`,
+      description: gift.description,
+      source_type: gift.sourceType,
+      route: gift.route || null,
+      topic_id: gift.topicId || null,
+      product_id: gift.productId || null,
+      report_name: gift.reportName || null,
+      display_order: gifts.find(item => item.gift_key === gift.id)?.display_order || Number(nextGiftOrder()),
+      is_active: true,
+    }, { onConflict: 'gift_key' });
+    setSaving(false);
+
+    if (error) {
+      toast.error(`保存失败：${error.message}`);
+      return;
+    }
+
+    toast.success('已加入赠品池并同步');
+    onSaved();
+  };
 
   const saveProduct = async () => {
     if (!productForm.label.trim()) {
