@@ -15,6 +15,7 @@ import { StoreCommissionProducts } from "@/components/partner/StoreCommissionPro
 import { WithdrawalForm } from "@/components/partner/WithdrawalForm";
 import { YoujinPartnerDashboard } from "@/components/partner/YoujinPartnerDashboard";
 import { IndustryPartnerDashboard } from "@/components/partner/IndustryPartnerDashboard";
+import { Skeleton } from "@/components/ui/skeleton";
 import { PromotionHub } from "@/components/partner/PromotionHub";
 import { MyFlywheelOverview } from "@/components/partner/MyFlywheelOverview";
 import { PartnerFlywheel } from "@/components/partner/PartnerFlywheel";
@@ -36,10 +37,15 @@ export default function Partner() {
 
   if (authLoading || partnerLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="text-muted-foreground">加载中...</p>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
+        <PageHeader title="合伙人中心" />
+        <div className="container max-w-4xl mx-auto px-4 py-6 space-y-6">
+          <Skeleton className="h-8 w-40" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+            <Skeleton className="h-64 rounded-lg" />
+            <Skeleton className="h-64 rounded-lg" />
+          </div>
+          <Skeleton className="h-40 rounded-lg" />
         </div>
       </div>
     );

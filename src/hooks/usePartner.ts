@@ -40,11 +40,14 @@ export function usePartner() {
   useEffect(() => {
     const fetchPartner = async () => {
       if (!user) {
+        setPartner(null);
+        setIsPartner(false);
         setLoading(false);
         return;
       }
 
       try {
+        setLoading(true);
         const { data, error } = await supabase
           .from('partners')
           .select('*')
@@ -58,11 +61,14 @@ export function usePartner() {
           setPartner(null);
           setIsPartner(false);
         } else {
-          setPartner(data);
-          setIsPartner(data.status === 'active');
+          const partnerData = Array.isArray(data) ? data[0] ?? null : data;
+          setPartner(partnerData);
+          setIsPartner(partnerData?.status === 'active');
         }
       } catch (error) {
         console.error('Error in usePartner:', error);
+        setPartner(null);
+        setIsPartner(false);
       } finally {
         setLoading(false);
       }

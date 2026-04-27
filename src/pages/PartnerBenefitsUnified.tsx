@@ -5,6 +5,7 @@ import { usePartner } from "@/hooks/usePartner";
 import { usePartnerLevels } from "@/hooks/usePartnerLevels";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ResponsiveComparison } from "@/components/ui/responsive-comparison";
 import PageHeader from "@/components/PageHeader";
 import { useEffect } from "react";
@@ -32,8 +33,12 @@ export default function PartnerBenefitsUnified() {
 
   if (authLoading || partnerLoading || levelsLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
+        <PageHeader title="我的合伙人权益" />
+        <div className="container max-w-4xl mx-auto px-4 py-6 space-y-4">
+          <Skeleton className="h-8 w-40" />
+          <Skeleton className="h-80 rounded-lg" />
+        </div>
       </div>
     );
   }
@@ -46,6 +51,25 @@ export default function PartnerBenefitsUnified() {
   const yL3 = youjinLevels.find(l => l.level_name === 'L3');
 
   if (!bloom || !yL1 || !yL2 || !yL3) return null;
+
+  if (!partner) {
+    return (
+      <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-slate-50 via-white to-slate-50" style={{ WebkitOverflowScrolling: 'touch' }}>
+        <PageHeader title="我的合伙人权益" />
+        <div className="container max-w-4xl mx-auto px-4 py-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">暂未开通合伙人权益</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground">成为合伙人后，这里会展示你的权益、等级和可升级方案。</p>
+              <Button onClick={() => navigate('/partner')}>了解合伙人计划</Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   const isBloom = partner?.partner_type === 'bloom';
   const partnerLevel = partner?.partner_level || 'L1';
