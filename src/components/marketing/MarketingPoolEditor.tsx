@@ -217,38 +217,28 @@ export function MarketingPoolEditor({ type, products = [], gifts = [], onSaved }
 
             {isProduct ? (
               <div className="grid gap-3">
-                <div className="space-y-1"><Label>产品 ID</Label><Input value={productForm.product_key} onChange={e => setProductForm({ ...productForm, product_key: e.target.value })} placeholder="自动生成或手动填写" disabled={!!editingKey} /></div>
                 <div className="space-y-1"><Label>产品名称</Label><Input value={productForm.label} onChange={e => setProductForm({ ...productForm, label: e.target.value })} /></div>
                 <div className="space-y-1"><Label>描述</Label><Textarea value={productForm.description} onChange={e => setProductForm({ ...productForm, description: e.target.value })} /></div>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-1"><Label>价格</Label><Input value={productForm.price} onChange={e => setProductForm({ ...productForm, price: e.target.value })} placeholder="可为空" /></div>
                   <div className="space-y-1"><Label>分类</Label><Input value={productForm.category} onChange={e => setProductForm({ ...productForm, category: e.target.value })} /></div>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-1"><Label>排序</Label><Input value={productForm.display_order} onChange={e => setProductForm({ ...productForm, display_order: e.target.value })} /></div>
-                  <div className="flex items-center justify-between rounded-md border px-3 py-2"><Label>启用</Label><Switch checked={productForm.is_active} onCheckedChange={checked => setProductForm({ ...productForm, is_active: checked })} /></div>
-                </div>
+                <div className="flex items-center justify-between rounded-md border px-3 py-2"><Label>启用</Label><Switch checked={productForm.is_active} onCheckedChange={checked => setProductForm({ ...productForm, is_active: checked })} /></div>
                 <Button onClick={saveProduct} disabled={saving}>{saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}保存并同步</Button>
               </div>
             ) : (
               <div className="grid gap-3">
-                <div className="space-y-1"><Label>赠品 ID</Label><Input value={giftForm.gift_key} onChange={e => setGiftForm({ ...giftForm, gift_key: e.target.value })} placeholder="自动生成或手动填写" disabled={!!editingKey} /></div>
                 <div className="space-y-1"><Label>标准名称</Label><Input value={giftForm.product_name} onChange={e => setGiftForm({ ...giftForm, product_name: e.target.value, label: e.target.value, gift_display_name: `限时赠送「${e.target.value}」` })} /></div>
                 <div className="space-y-1"><Label>展示文案</Label><Input value={giftForm.gift_display_name} onChange={e => setGiftForm({ ...giftForm, gift_display_name: e.target.value })} /></div>
                 <div className="space-y-1"><Label>描述</Label><Textarea value={giftForm.description} onChange={e => setGiftForm({ ...giftForm, description: e.target.value })} /></div>
                 <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-1"><Label>类型</Label><Select value={giftForm.source_type} onValueChange={value => setGiftForm({ ...giftForm, source_type: value as MiniAppSourceType })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="assessments">专业测评</SelectItem><SelectItem value="daily-tools">日常工具</SelectItem><SelectItem value="conversion">转化产品</SelectItem><SelectItem value="mini-scenes">场景入口</SelectItem></SelectContent></Select></div>
-                  <div className="space-y-1"><Label>排序</Label><Input value={giftForm.display_order} onChange={e => setGiftForm({ ...giftForm, display_order: e.target.value })} /></div>
+                  <div className="space-y-1"><Label>类型</Label><Select value={giftForm.source_type} onValueChange={value => setGiftForm({ ...giftForm, source_type: value as MiniAppSourceType })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="assessments">专业测评</SelectItem><SelectItem value="daily-tools">日常工具</SelectItem></SelectContent></Select></div>
+                  <div className="flex items-center justify-between rounded-md border px-3 py-2"><Label>启用</Label><Switch checked={giftForm.is_active} onCheckedChange={checked => setGiftForm({ ...giftForm, is_active: checked })} /></div>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-1"><Label>入口</Label><Input value={giftForm.route} onChange={e => setGiftForm({ ...giftForm, route: e.target.value })} /></div>
                   <div className="space-y-1"><Label>报告名称</Label><Input value={giftForm.report_name} onChange={e => setGiftForm({ ...giftForm, report_name: e.target.value })} /></div>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-1"><Label>Topic ID</Label><Input value={giftForm.topic_id} onChange={e => setGiftForm({ ...giftForm, topic_id: e.target.value })} /></div>
-                  <div className="space-y-1"><Label>Product ID</Label><Input value={giftForm.product_id} onChange={e => setGiftForm({ ...giftForm, product_id: e.target.value })} /></div>
-                </div>
-                <div className="flex items-center justify-between rounded-md border px-3 py-2"><Label>启用</Label><Switch checked={giftForm.is_active} onCheckedChange={checked => setGiftForm({ ...giftForm, is_active: checked })} /></div>
                 <Button onClick={saveGift} disabled={saving}>{saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}保存并同步</Button>
               </div>
             )}
