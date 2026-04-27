@@ -1471,6 +1471,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, onCancelled
     setQrCodeDataUrl("");
     setPayUrl("");
     setErrorMessage("");
+    setCreateOrderSlow(false);
     setPollingTimeout(false);
     setJsapiPayDismissed(false);
     setIsForceChecking(false);
@@ -1538,6 +1539,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, onCancelled
     setQrCodeDataUrl("");
     setPayUrl("");
     setErrorMessage("");
+    setCreateOrderSlow(false);
     setPollingTimeout(false);
     setIsForceChecking(false);
     setMpLaunchFailed(false);
@@ -1751,6 +1753,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, onCancelled
       setQrCodeDataUrl("");
       setPayUrl("");
       setErrorMessage("");
+      setCreateOrderSlow(false);
       setPollingTimeout(false);
       setJsapiPayDismissed(false);
       setIsForceChecking(false);
