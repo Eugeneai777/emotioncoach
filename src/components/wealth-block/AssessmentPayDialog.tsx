@@ -422,6 +422,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, onCancelled
       if ((type === "OPENID" || type === "MP_OPENID" || type === "GET_OPENID_RESULT") && openId) {
         console.log("[AssessmentPay] Received openId from MiniProgram message");
         sessionStorage.setItem("wechat_payment_openid", openId);
+        writeWechatOpenIdCache("payment", openId, userId);
         setUserOpenId(openId);
         setOpenIdResolved(true);
       }
