@@ -81,7 +81,7 @@ const getGiftProductName = (item: ContentTopicItem, canonicalGifts: MiniAppSeedI
 
 const getGiftDisplayName = (item: ContentTopicItem, canonicalGifts: MiniAppSeedItem[]) => {
   const productName = getGiftProductName(item, canonicalGifts);
-  return productName ? `限时赠送「${productName}」` : (item.giftDisplayName || item.matchedTool || '-');
+  return productName ? productName : (item.giftDisplayName || item.matchedTool || '-').replace(/^限时赠送「(.+)」$/, '$1');
 };
 
 interface GiftValidationIssue {
@@ -168,7 +168,6 @@ const formatItem = (item: ContentTopicItem, canonicalGifts: MiniAppSeedItem[]) =
   `爆款标题：${item.viralTitle}`,
   `价值：${item.value}`,
   `产品/工具名：${getGiftProductName(item, canonicalGifts) || '-'}`,
-  `限时赠品：${getGiftDisplayName(item, canonicalGifts)}`,
   `专业报告名称：${item.reportPageName || '-'}`,
   `报告价值：${item.aiReportValue}`,
   item.actionPlanValue || item.coachReportValue ? `下一步行动建议：${item.actionPlanValue || item.coachReportValue}` : '',
@@ -181,18 +180,17 @@ const formatXhsArticle = (item: ContentTopicItem, canonicalGifts: MiniAppSeedIte
   `封面标题：${item.xhsCoverTitle || item.viralTitle}`,
   `爆款标题：${item.viralTitle}`,
   '',
-  item.xhsBody || [item.hook, item.value, getGiftDisplayName(item, canonicalGifts), item.cta].filter(Boolean).join('\n\n'),
+  item.xhsBody || [item.hook, item.value, item.cta].filter(Boolean).join('\n\n'),
   '',
   item.xhsCarouselPages?.length ? `卡片页建议：\n${item.xhsCarouselPages.map((page, index) => `${index + 1}. ${page}`).join('\n')}` : '',
   item.xhsTags?.length ? `标签：${item.xhsTags.map(tag => `#${tag.replace(/^#/, '')}`).join(' ')}` : '',
   item.xhsCommentGuide ? `评论/私信引导：${item.xhsCommentGuide}` : '',
-  `限时赠品：${getGiftDisplayName(item, canonicalGifts)}`,
 ].filter(Boolean).join('\n');
 
 const formatVoiceoverScript = (item: ContentTopicItem, canonicalGifts: MiniAppSeedItem[]) => [
   `口播标题：${item.voiceoverTitle || item.viralTitle}`,
   '',
-  item.voiceoverScript || [item.hook, item.value, getGiftDisplayName(item, canonicalGifts), item.cta].filter(Boolean).join('\n\n'),
+  item.voiceoverScript || [item.hook, item.value, item.cta].filter(Boolean).join('\n\n'),
   item.voiceoverShots?.length ? `\n镜头建议：\n${item.voiceoverShots.map((shot, index) => `${index + 1}. ${shot}`).join('\n')}` : '',
 ].filter(Boolean).join('\n');
 
@@ -433,7 +431,7 @@ const MiniAppContentLab: React.FC = () => {
             )}
             <div className="md:col-span-5 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="text-xs text-muted-foreground">
-                当前将基于 <Badge variant="secondary">{selectedSource?.label}</Badge> 生成 <Badge variant="secondary">{selectedContentFormat?.label}</Badge>{contentFormat === 'xhs-article' && includeVoiceover ? ' + 对应口播稿' : ''}；赠品仅限现有 9.9/免费测评与工具：{canonicalGiftNames.slice(0, 4).join('、')}等，风格为 <Badge variant="secondary">{selectedStyle?.label}</Badge>
+                当前将基于 <Badge variant="secondary">{selectedSource?.label}</Badge> 生成 <Badge variant="secondary">{selectedContentFormat?.label}</Badge>{contentFormat === 'xhs-article' && includeVoiceover ? ' + 对应口播稿' : ''}；转化入口来自现有测评与工具池，风格为 <Badge variant="secondary">{selectedStyle?.label}</Badge>
               </div>
               <Button onClick={handleGenerate} disabled={loading} className="bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-md shadow-primary/20 sm:min-w-40">
                 {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
@@ -487,7 +485,7 @@ const MiniAppContentLab: React.FC = () => {
               </div>
               <div>
                 <p className="font-semibold">选择配置后生成第一批选题</p>
-                <p className="mt-1 text-sm text-muted-foreground">每条都会写清楚用户能免费领到什么、AI报告能看见什么、为什么值得加企微领取。</p>
+                <p className="mt-1 text-sm text-muted-foreground">每条都会写清楚用户痛点、AI报告价值和为什么值得继续私信了解。</p>
               </div>
             </CardContent>
           </Card>
@@ -533,9 +531,6 @@ const MiniAppContentLab: React.FC = () => {
                         <h2 className="py-8 text-3xl font-black leading-tight text-foreground sm:text-4xl">
                           {previewItem.xhsCoverTitle || previewItem.viralTitle}
                         </h2>
-                        <div className="rounded-xl border border-background/70 bg-background/75 p-3 text-sm text-foreground shadow-sm">
-                          <span className="font-semibold text-primary">限时赠品：</span>{getGiftDisplayName(previewItem, canonicalGifts)}
-                        </div>
                       </div>
                     </section>
 
@@ -547,7 +542,7 @@ const MiniAppContentLab: React.FC = () => {
                       <div className="rounded-xl border border-primary/15 bg-primary/5 p-4">
                         <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground"><Images className="h-4 w-4 text-primary" />卡片页</div>
                         <div className="grid gap-2 sm:grid-cols-2">
-                          {(previewItem.xhsCarouselPages?.length ? previewItem.xhsCarouselPages : ['封面：强化痛点与结果感', `共鸣：${previewItem.painPoint}`, `方法：${previewItem.value}`, `领取：${getGiftDisplayName(previewItem, canonicalGifts)}`]).map((page, pageIndex) => (
+                          {(previewItem.xhsCarouselPages?.length ? previewItem.xhsCarouselPages : ['封面：强化痛点与结果感', `共鸣：${previewItem.painPoint}`, `方法：${previewItem.value}`, `引导：${previewItem.xhsCommentGuide || previewItem.cta}`]).map((page, pageIndex) => (
                             <div key={pageIndex} className="rounded-lg border border-background/80 bg-card/80 p-3 text-sm shadow-sm">
                               <Badge variant="secondary" className="mb-2">第{pageIndex + 1}页</Badge>
                               <p className="leading-relaxed text-foreground">{page}</p>
@@ -613,7 +608,6 @@ const MiniAppContentLab: React.FC = () => {
                       <p><span className="font-semibold text-primary">痛点：</span><span className="text-muted-foreground">{item.painPoint}</span></p>
                       <p><span className="font-semibold text-primary">价值：</span><span className="text-muted-foreground">{item.value}</span></p>
                       <p><span className="font-semibold text-foreground">产品/工具名：</span><span className="text-muted-foreground">{getGiftProductName(item, canonicalGifts) || '-'}</span></p>
-                      <div className="rounded-lg border border-accent/25 bg-accent/10 p-3"><span className="font-semibold text-foreground">限时赠品：</span><span className="text-foreground">{getGiftDisplayName(item, canonicalGifts)}</span></div>
                       <p><span className="font-semibold text-foreground">专业报告名称：</span><span className="text-muted-foreground">{item.reportPageName || '-'}</span></p>
                       <p><span className="font-semibold text-foreground">报告价值：</span><span className="text-muted-foreground">{item.aiReportValue}</span></p>
                       {(item.actionPlanValue || item.coachReportValue) && <p><span className="font-semibold text-foreground">下一步行动建议：</span><span className="text-muted-foreground">{item.actionPlanValue || item.coachReportValue}</span></p>}
@@ -644,7 +638,6 @@ const MiniAppContentLab: React.FC = () => {
                         {contentFormat === 'xhs-article' && <TableHead className="min-w-48">标签</TableHead>}
                         <TableHead className="min-w-48">核心价值</TableHead>
                         <TableHead className="min-w-40">产品/工具名</TableHead>
-                        <TableHead className="min-w-56">限时赠品</TableHead>
                         <TableHead className="min-w-28">赠品校验</TableHead>
                         <TableHead className="min-w-56">专业报告名称</TableHead>
                         <TableHead className="min-w-56">报告价值</TableHead>
@@ -662,7 +655,6 @@ const MiniAppContentLab: React.FC = () => {
                           {contentFormat === 'xhs-article' && <TableCell>{item.xhsTags?.map(tag => `#${tag.replace(/^#/, '')}`).join(' ') || '-'}</TableCell>}
                           <TableCell>{item.value}</TableCell>
                           <TableCell>{getGiftProductName(item, canonicalGifts) || '-'}</TableCell>
-                          <TableCell>{getGiftDisplayName(item, canonicalGifts)}</TableCell>
                           <TableCell>{giftValidation ? <Badge variant={issueMap.has(index) ? 'destructive' : 'secondary'}>{issueMap.has(index) ? '异常' : '通过'}</Badge> : '-'}</TableCell>
                           <TableCell>{item.reportPageName || '-'}</TableCell>
                           <TableCell>{item.aiReportValue}</TableCell>
