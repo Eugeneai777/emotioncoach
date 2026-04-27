@@ -565,8 +565,17 @@ const MiniAppContentLab: React.FC = () => {
                         <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground"><MessageCircle className="h-4 w-4 text-primary" />私信引导</div>
                         <p className="text-sm leading-relaxed text-foreground">{previewItem.xhsCommentGuide || previewItem.cta}</p>
                       </div>
+                      {previewItem.voiceoverScript && (
+                        <div className="rounded-xl border border-accent/25 bg-secondary/55 p-4">
+                          <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground"><Video className="h-4 w-4 text-primary" />对应口播稿</div>
+                          <h3 className="mb-2 font-semibold text-foreground">{previewItem.voiceoverTitle || previewItem.viralTitle}</h3>
+                          <p className="whitespace-pre-wrap text-sm leading-7 text-foreground">{previewItem.voiceoverScript}</p>
+                          {!!previewItem.voiceoverShots?.length && <div className="mt-3 grid gap-1.5 text-xs text-muted-foreground">{previewItem.voiceoverShots.map((shot, shotIndex) => <div key={shotIndex} className="rounded-md bg-background/65 px-2 py-1.5">镜头{shotIndex + 1}：{shot}</div>)}</div>}
+                        </div>
+                      )}
                       <div className="flex flex-wrap gap-2 border-t pt-4">
                         <Button size="sm" onClick={() => copyText(formatXhsArticle(previewItem, canonicalGifts), '预览成稿已复制')}><Clipboard className="mr-2 h-4 w-4" />复制成稿</Button>
+                        {previewItem.voiceoverScript && <Button variant="secondary" size="sm" onClick={() => copyText(formatVoiceoverScript(previewItem, canonicalGifts), '口播稿已复制')}><Video className="mr-2 h-4 w-4" />复制口播稿</Button>}
                         <Button variant="outline" size="sm" onClick={() => copyText(previewItem.xhsCoverTitle || previewItem.viralTitle, '封面标题已复制')}>复制封面标题</Button>
                         {!!previewItem.xhsTags?.length && <Button variant="outline" size="sm" onClick={() => copyText(previewItem.xhsTags!.map(tag => `#${tag.replace(/^#/, '')}`).join(' '), '标签已复制')}>复制标签</Button>}
                       </div>
