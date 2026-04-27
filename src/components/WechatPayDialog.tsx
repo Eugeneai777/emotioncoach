@@ -1662,6 +1662,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     setLoadingMessage('正在唤起微信支付...');
     console.log('[Payment] Re-invoking JSAPI with cached params for order:', orderNo);
     try {
+      jsapiDialogCloseGuardUntilRef.current = Date.now() + (/Android/i.test(navigator.userAgent) ? 13500 : 10500);
       if (typeof window.WeixinJSBridge !== 'undefined') {
         // Android 微信第二次手动点击时，必须尽量保持在用户手势调用栈内直接 invoke，
         // 避免先 await 再调起导致 XWEB 吞掉系统支付框。
@@ -1681,6 +1682,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
       console.log('[Payment] JSAPI re-invoke error:', err?.message);
       if (err?.message === '用户取消支付' || err?.message === 'JSAPI_SILENT_TIMEOUT') {
         const isSilentTimeout = err?.message === 'JSAPI_SILENT_TIMEOUT';
+        jsapiDialogCloseGuardUntilRef.current = Date.now() + 1500;
         setJsapiCancelled(true);
         setJsapiRetryReason(isSilentTimeout ? 'silent' : 'cancelled');
         setErrorMessage(isSilentTimeout ? '微信支付没有响应，请再次点击下方按钮拉起支付' : '支付已取消，可重新拉起支付');
@@ -1691,6 +1693,12 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
   };
 
   const handleRetry = () => {
+    if (payType === 'jsapi' && jsapiPayParams && orderNo && /Android/i.test(navigator.userAgent)) {
+      setJsapiRetryReason('manual');
+      handleReInvokeJsapi();
+      return;
+    }
+
     // 🆕 小程序环境：如果已有订单号，复用已有订单重新触发原生支付
     const existingOrder = orderNo || getPendingOrderFromCache();
     if (isMiniProgram && existingOrder && packageInfo) {
@@ -1714,7 +1722,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
   };
 
   const handleDialogOpenChange = (nextOpen: boolean) => {
-    if (!nextOpen && payType === 'jsapi' && (jsapiSystemDialogActiveRef.current || Date.now() - lastJsapiCancelAtRef.current < 800)) {
+    if (!nextOpen && payType === 'jsapi' && (jsapiSystemDialogActiveRef.current || Date.now() < jsapiDialogCloseGuardUntilRef.current || Date.now() - lastJsapiCancelAtRef.current < 800)) {
       console.log('[Payment] Ignoring business dialog close caused by JSAPI system payment cancellation');
       return;
     }
