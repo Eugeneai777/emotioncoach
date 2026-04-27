@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { clearWechatOpenIdCaches } from "@/utils/wechatOpenIdCache";
 
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -73,14 +74,7 @@ export const useAuth = () => {
 
   const signOut = async () => {
     // 清除微信 OpenID 缓存，防止账号切换后复用旧 OpenID
-    localStorage.removeItem('cached_wechat_openid');
-    sessionStorage.removeItem('cached_wechat_openid');
-    localStorage.removeItem('cached_payment_openid');
-    sessionStorage.removeItem('cached_payment_openid');
-    localStorage.removeItem('cached_payment_openid_gzh');
-    sessionStorage.removeItem('cached_payment_openid_gzh');
-    localStorage.removeItem('cached_payment_openid_mp');
-    sessionStorage.removeItem('cached_payment_openid_mp');
+    clearWechatOpenIdCaches();
     await supabase.auth.signOut();
   };
 
