@@ -14,10 +14,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { supabase } from '@/integrations/supabase/client';
 import { VIDEO_AUDIENCES } from '@/config/videoScriptConfig';
 import {
+  MINI_APP_CONTENT_FORMAT_OPTIONS,
   MINI_APP_CONVERSION_SEEDS,
   MINI_APP_SCENE_SEEDS,
   MINI_APP_SOURCE_OPTIONS,
   MINI_APP_STYLE_OPTIONS,
+  MiniAppContentFormat,
   MiniAppContentStyle,
   MiniAppSeedItem,
   MiniAppSourceType,
@@ -41,6 +43,12 @@ interface ContentTopicItem {
   viralTitle: string;
   hook: string;
   cta: string;
+  xhsCoverTitle?: string;
+  xhsBody?: string;
+  xhsSections?: string[];
+  xhsCarouselPages?: string[];
+  xhsTags?: string[];
+  xhsCommentGuide?: string;
   route?: string;
   topicId?: string;
   productId?: string;
