@@ -88,11 +88,11 @@ interface GiftValidationResult {
   checkedAt: number;
 }
 
-const validateGiftItem = (item: ContentTopicItem, index: number): GiftValidationIssue | null => {
-  const productName = getGiftProductName(item).trim();
-  const giftDisplayName = getGiftDisplayName(item).trim();
+const validateGiftItem = (item: ContentTopicItem, index: number, canonicalGifts: MiniAppSeedItem[], canonicalGiftNameSet: Set<string>): GiftValidationIssue | null => {
+  const productName = getGiftProductName(item, canonicalGifts).trim();
+  const giftDisplayName = getGiftDisplayName(item, canonicalGifts).trim();
   const expectedGiftDisplayName = productName ? `限时赠送「${productName}」` : '';
-  const suggestedGift = findCanonicalGift(item);
+  const suggestedGift = findCanonicalGift(item, canonicalGifts);
   const suggestedProductName = suggestedGift?.productName || suggestedGift?.label;
   const suggestedGiftDisplayName = suggestedGift?.giftDisplayName || (suggestedProductName ? `限时赠送「${suggestedProductName}」` : undefined);
 
@@ -121,13 +121,13 @@ const validateGiftItem = (item: ContentTopicItem, index: number): GiftValidation
   return null;
 };
 
-const validateGiftItems = (items: ContentTopicItem[]): GiftValidationResult => {
-  const issues = items.map(validateGiftItem).filter(Boolean) as GiftValidationIssue[];
+const validateGiftItems = (items: ContentTopicItem[], canonicalGifts: MiniAppSeedItem[], canonicalGiftNameSet: Set<string>): GiftValidationResult => {
+  const issues = items.map((item, index) => validateGiftItem(item, index, canonicalGifts, canonicalGiftNameSet)).filter(Boolean) as GiftValidationIssue[];
   return { total: items.length, passed: items.length - issues.length, issues, checkedAt: Date.now() };
 };
 
-const repairGiftItems = (items: ContentTopicItem[]): ContentTopicItem[] => items.map((item) => {
-  const canonicalGift = findCanonicalGift(item);
+const repairGiftItems = (items: ContentTopicItem[], canonicalGifts: MiniAppSeedItem[]): ContentTopicItem[] => items.map((item) => {
+  const canonicalGift = findCanonicalGift(item, canonicalGifts);
   const productName = canonicalGift?.productName || canonicalGift?.label || item.giftProductName || '';
   const giftDisplayName = canonicalGift?.giftDisplayName || (productName ? `限时赠送「${productName}」` : item.giftDisplayName);
   return {
@@ -151,12 +151,12 @@ const downloadBlob = (content: string, filename: string, type: string) => {
   URL.revokeObjectURL(url);
 };
 
-const formatItem = (item: ContentTopicItem) => [
+const formatItem = (item: ContentTopicItem, canonicalGifts: MiniAppSeedItem[]) => [
   `痛点：${item.painPoint}`,
   `爆款标题：${item.viralTitle}`,
   `价值：${item.value}`,
-  `产品/工具名：${getGiftProductName(item) || '-'}`,
-  `限时赠品：${getGiftDisplayName(item)}`,
+  `产品/工具名：${getGiftProductName(item, canonicalGifts) || '-'}`,
+  `限时赠品：${getGiftDisplayName(item, canonicalGifts)}`,
   `专业报告名称：${item.reportPageName || '-'}`,
   `报告价值：${item.aiReportValue}`,
   item.actionPlanValue || item.coachReportValue ? `下一步行动建议：${item.actionPlanValue || item.coachReportValue}` : '',
