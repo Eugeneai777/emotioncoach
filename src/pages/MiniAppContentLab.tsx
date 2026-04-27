@@ -607,6 +607,7 @@ const MiniAppContentLab: React.FC = () => {
                           {!!item.xhsCarouselPages?.length && <div className="grid gap-1.5 text-xs text-muted-foreground">{item.xhsCarouselPages.map((page, pageIndex) => <div key={pageIndex} className="rounded-md bg-background/65 px-2 py-1.5">第{pageIndex + 1}页：{page}</div>)}</div>}
                           {!!item.xhsTags?.length && <div className="flex flex-wrap gap-1.5">{item.xhsTags.map(tag => <Badge key={tag} variant="secondary">#{tag.replace(/^#/, '')}</Badge>)}</div>}
                           {item.xhsCommentGuide && <div className="rounded-lg border border-accent/25 bg-accent/10 p-2 text-xs text-foreground">评论/私信引导：{item.xhsCommentGuide}</div>}
+                          {item.voiceoverScript && <div className="rounded-lg border border-primary/20 bg-background/70 p-3"><div className="mb-1 font-semibold text-primary">对应口播稿：</div><p className="whitespace-pre-wrap leading-relaxed text-foreground">{item.voiceoverScript}</p></div>}
                         </div>
                       )}
                       <p><span className="font-semibold text-primary">痛点：</span><span className="text-muted-foreground">{item.painPoint}</span></p>
@@ -621,6 +622,7 @@ const MiniAppContentLab: React.FC = () => {
                     <div className="flex flex-wrap gap-2 border-t pt-3">
                       <Button variant="secondary" size="sm" onClick={() => copyText(formatItem(item, canonicalGifts), '整条选题已复制')}><Clipboard className="mr-2 h-4 w-4" />复制整条</Button>
                       {contentFormat === 'xhs-article' && <Button variant="secondary" size="sm" onClick={() => copyText(formatXhsArticle(item, canonicalGifts), '整篇图文稿已复制')}><FileText className="mr-2 h-4 w-4" />复制图文稿</Button>}
+                      {contentFormat === 'xhs-article' && item.voiceoverScript && <Button variant="secondary" size="sm" onClick={() => copyText(formatVoiceoverScript(item, canonicalGifts), '口播稿已复制')}><Video className="mr-2 h-4 w-4" />复制口播稿</Button>}
                       <Button variant="outline" size="sm" onClick={() => copyText(item.viralTitle, '标题已复制')}><Download className="mr-2 h-4 w-4" />复制标题</Button>
                       {contentFormat === 'xhs-article' && !!item.xhsTags?.length && <Button variant="outline" size="sm" onClick={() => copyText(item.xhsTags!.map(tag => `#${tag.replace(/^#/, '')}`).join(' '), '标签已复制')}>复制标签</Button>}
                       <Button variant="outline" size="sm" onClick={() => goVideoGenerator(item)}><Video className="mr-2 h-4 w-4" />生成口播稿</Button>
@@ -638,6 +640,7 @@ const MiniAppContentLab: React.FC = () => {
                         <TableHead className="min-w-44">痛点</TableHead>
                         <TableHead className="min-w-56">小红书爆款标题</TableHead>
                         {contentFormat === 'xhs-article' && <TableHead className="min-w-56">图文稿</TableHead>}
+                        {contentFormat === 'xhs-article' && <TableHead className="min-w-56">对应口播稿</TableHead>}
                         {contentFormat === 'xhs-article' && <TableHead className="min-w-48">标签</TableHead>}
                         <TableHead className="min-w-48">核心价值</TableHead>
                         <TableHead className="min-w-40">产品/工具名</TableHead>
@@ -655,6 +658,7 @@ const MiniAppContentLab: React.FC = () => {
                           <TableCell>{item.painPoint}</TableCell>
                           <TableCell className="font-medium">{item.viralTitle}</TableCell>
                           {contentFormat === 'xhs-article' && <TableCell className="max-w-md whitespace-pre-wrap">{item.xhsBody || '-'}</TableCell>}
+                          {contentFormat === 'xhs-article' && <TableCell className="max-w-md whitespace-pre-wrap">{item.voiceoverScript || '-'}</TableCell>}
                           {contentFormat === 'xhs-article' && <TableCell>{item.xhsTags?.map(tag => `#${tag.replace(/^#/, '')}`).join(' ') || '-'}</TableCell>}
                           <TableCell>{item.value}</TableCell>
                           <TableCell>{getGiftProductName(item, canonicalGifts) || '-'}</TableCell>
