@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -49,6 +50,9 @@ interface ContentTopicItem {
   xhsCarouselPages?: string[];
   xhsTags?: string[];
   xhsCommentGuide?: string;
+  voiceoverTitle?: string;
+  voiceoverScript?: string;
+  voiceoverShots?: string[];
   route?: string;
   topicId?: string;
   productId?: string;
@@ -185,12 +189,20 @@ const formatXhsArticle = (item: ContentTopicItem, canonicalGifts: MiniAppSeedIte
   `限时赠品：${getGiftDisplayName(item, canonicalGifts)}`,
 ].filter(Boolean).join('\n');
 
+const formatVoiceoverScript = (item: ContentTopicItem, canonicalGifts: MiniAppSeedItem[]) => [
+  `口播标题：${item.voiceoverTitle || item.viralTitle}`,
+  '',
+  item.voiceoverScript || [item.hook, item.value, getGiftDisplayName(item, canonicalGifts), item.cta].filter(Boolean).join('\n\n'),
+  item.voiceoverShots?.length ? `\n镜头建议：\n${item.voiceoverShots.map((shot, index) => `${index + 1}. ${shot}`).join('\n')}` : '',
+].filter(Boolean).join('\n');
+
 const MiniAppContentLab: React.FC = () => {
   const navigate = useNavigate();
   const [audienceId, setAudienceId] = useState('general');
   const [sourceType, setSourceType] = useState<MiniAppSourceType>('mini-scenes');
   const [style, setStyle] = useState<MiniAppContentStyle>('xiaohongshu');
   const [contentFormat, setContentFormat] = useState<MiniAppContentFormat>('video');
+  const [includeVoiceover, setIncludeVoiceover] = useState(true);
   const [count, setCount] = useState('20');
   const [items, setItems] = useState<ContentTopicItem[]>([]);
   const [previewIndex, setPreviewIndex] = useState(0);
@@ -234,6 +246,7 @@ const MiniAppContentLab: React.FC = () => {
           sourceType,
           style,
           contentFormat,
+            includeVoiceover: contentFormat === 'xhs-article' && includeVoiceover,
           count: Number(count),
           seedItems,
         },
@@ -245,7 +258,7 @@ const MiniAppContentLab: React.FC = () => {
       setItems(normalizeItems(data.items));
       setPreviewIndex(0);
       setGiftValidation(null);
-      toast.success(`已生成 ${data.items.length} 条${contentFormat === 'xhs-article' ? '小红书图文稿' : '短视频选题'}`);
+      toast.success(`已生成 ${data.items.length} 条${contentFormat === 'xhs-article' ? `小红书图文稿${includeVoiceover ? ' + 口播稿' : ''}` : '短视频选题'}`);
     } catch (err: any) {
       toast.error(`生成失败：${err.message || '请稍后重试'}`);
     } finally {
@@ -290,10 +303,10 @@ const MiniAppContentLab: React.FC = () => {
     if (!items.length) return;
     const isXhs = contentFormat === 'xhs-article';
     const header = isXhs
-      ? ['痛点', '封面标题', '小红书爆款标题', '图文正文', '卡片页建议', '标签', '评论/私信引导', '产品/工具名', '限时赠品', '入口']
+      ? ['痛点', '封面标题', '小红书爆款标题', '图文正文', '卡片页建议', '标签', '评论/私信引导', '口播标题', '口播稿', '镜头建议', '产品/工具名', '限时赠品', '入口']
       : ['痛点', '小红书爆款标题', '核心价值', '产品/工具名', '限时赠品', '专业报告名称', '报告价值', '下一步行动建议', '开场Hook', '私域CTA', '入口'];
     const rows = items.map(item => (isXhs
-      ? [item.painPoint, item.xhsCoverTitle || item.viralTitle, item.viralTitle, item.xhsBody || '', item.xhsCarouselPages?.join('\n') || '', item.xhsTags?.map(tag => `#${tag.replace(/^#/, '')}`).join(' ') || '', item.xhsCommentGuide || '', getGiftProductName(item, canonicalGifts), getGiftDisplayName(item, canonicalGifts), item.route || '']
+      ? [item.painPoint, item.xhsCoverTitle || item.viralTitle, item.viralTitle, item.xhsBody || '', item.xhsCarouselPages?.join('\n') || '', item.xhsTags?.map(tag => `#${tag.replace(/^#/, '')}`).join(' ') || '', item.xhsCommentGuide || '', item.voiceoverTitle || item.viralTitle, item.voiceoverScript || '', item.voiceoverShots?.join('\n') || '', getGiftProductName(item, canonicalGifts), getGiftDisplayName(item, canonicalGifts), item.route || '']
       : [item.painPoint, item.viralTitle, item.value, getGiftProductName(item, canonicalGifts), getGiftDisplayName(item, canonicalGifts), item.reportPageName || '', item.aiReportValue, item.actionPlanValue || item.coachReportValue || '', item.hook, item.cta, item.route || '']
     ).map(csvEscape).join(','));
     downloadBlob(`\ufeff${header.map(csvEscape).join(',')}\n${rows.join('\n')}`, `mini-app${isXhs ? '小红书图文稿' : '短视频选题库'}_${Date.now()}.csv`, 'text/csv;charset=utf-8');
@@ -311,7 +324,7 @@ const MiniAppContentLab: React.FC = () => {
       `- 产出类型：${selectedContentFormat?.label}`,
       '',
       ...items.map((item, index) => contentFormat === 'xhs-article'
-        ? `## ${index + 1}. ${item.xhsCoverTitle || item.viralTitle}\n\n${formatXhsArticle(item, canonicalGifts)}\n`
+        ? `## ${index + 1}. ${item.xhsCoverTitle || item.viralTitle}\n\n${formatXhsArticle(item, canonicalGifts)}\n\n${item.voiceoverScript ? `### 对应口播稿\n\n${formatVoiceoverScript(item, canonicalGifts)}\n` : ''}`
         : `## ${index + 1}. ${item.painPoint}\n\n- 痛点：${item.painPoint}\n- 小红书爆款标题：${item.viralTitle}\n- 核心价值：${item.value}\n- 产品/工具名：${getGiftProductName(item, canonicalGifts) || '-'}\n- 限时赠品：${getGiftDisplayName(item, canonicalGifts)}\n- 专业报告名称：${item.reportPageName || '-'}\n- 报告价值：${item.aiReportValue}\n- 下一步行动建议：${item.actionPlanValue || item.coachReportValue || '-'}\n- 开场 Hook：${item.hook}\n- CTA：${item.cta}\n- 入口：${item.route || '-'}\n`),
     ].join('\n');
     downloadBlob(md, `mini-app${contentFormat === 'xhs-article' ? '小红书图文稿' : '短视频选题库'}_${Date.now()}.md`, 'text/markdown;charset=utf-8');
@@ -409,9 +422,18 @@ const MiniAppContentLab: React.FC = () => {
                 </SelectContent>
               </Select>
             </div>
+            {contentFormat === 'xhs-article' && (
+              <label className="md:col-span-5 flex items-center gap-3 rounded-xl border border-accent/25 bg-accent/10 p-3 text-sm text-foreground">
+                <Checkbox checked={includeVoiceover} onCheckedChange={checked => setIncludeVoiceover(checked === true)} disabled={loading} />
+                <span className="min-w-0">
+                  <span className="font-semibold">同时生成对应口播稿版本</span>
+                  <span className="ml-2 text-muted-foreground">每条图文稿会同步产出可直接念的短视频口播稿和镜头建议。</span>
+                </span>
+              </label>
+            )}
             <div className="md:col-span-5 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="text-xs text-muted-foreground">
-                当前将基于 <Badge variant="secondary">{selectedSource?.label}</Badge> 生成 <Badge variant="secondary">{selectedContentFormat?.label}</Badge>；赠品仅限现有 9.9/免费测评与工具：{canonicalGiftNames.slice(0, 4).join('、')}等，风格为 <Badge variant="secondary">{selectedStyle?.label}</Badge>
+                当前将基于 <Badge variant="secondary">{selectedSource?.label}</Badge> 生成 <Badge variant="secondary">{selectedContentFormat?.label}</Badge>{contentFormat === 'xhs-article' && includeVoiceover ? ' + 对应口播稿' : ''}；赠品仅限现有 9.9/免费测评与工具：{canonicalGiftNames.slice(0, 4).join('、')}等，风格为 <Badge variant="secondary">{selectedStyle?.label}</Badge>
               </div>
               <Button onClick={handleGenerate} disabled={loading} className="bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-md shadow-primary/20 sm:min-w-40">
                 {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
@@ -543,8 +565,17 @@ const MiniAppContentLab: React.FC = () => {
                         <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground"><MessageCircle className="h-4 w-4 text-primary" />私信引导</div>
                         <p className="text-sm leading-relaxed text-foreground">{previewItem.xhsCommentGuide || previewItem.cta}</p>
                       </div>
+                      {previewItem.voiceoverScript && (
+                        <div className="rounded-xl border border-accent/25 bg-secondary/55 p-4">
+                          <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground"><Video className="h-4 w-4 text-primary" />对应口播稿</div>
+                          <h3 className="mb-2 font-semibold text-foreground">{previewItem.voiceoverTitle || previewItem.viralTitle}</h3>
+                          <p className="whitespace-pre-wrap text-sm leading-7 text-foreground">{previewItem.voiceoverScript}</p>
+                          {!!previewItem.voiceoverShots?.length && <div className="mt-3 grid gap-1.5 text-xs text-muted-foreground">{previewItem.voiceoverShots.map((shot, shotIndex) => <div key={shotIndex} className="rounded-md bg-background/65 px-2 py-1.5">镜头{shotIndex + 1}：{shot}</div>)}</div>}
+                        </div>
+                      )}
                       <div className="flex flex-wrap gap-2 border-t pt-4">
                         <Button size="sm" onClick={() => copyText(formatXhsArticle(previewItem, canonicalGifts), '预览成稿已复制')}><Clipboard className="mr-2 h-4 w-4" />复制成稿</Button>
+                        {previewItem.voiceoverScript && <Button variant="secondary" size="sm" onClick={() => copyText(formatVoiceoverScript(previewItem, canonicalGifts), '口播稿已复制')}><Video className="mr-2 h-4 w-4" />复制口播稿</Button>}
                         <Button variant="outline" size="sm" onClick={() => copyText(previewItem.xhsCoverTitle || previewItem.viralTitle, '封面标题已复制')}>复制封面标题</Button>
                         {!!previewItem.xhsTags?.length && <Button variant="outline" size="sm" onClick={() => copyText(previewItem.xhsTags!.map(tag => `#${tag.replace(/^#/, '')}`).join(' '), '标签已复制')}>复制标签</Button>}
                       </div>
@@ -576,6 +607,7 @@ const MiniAppContentLab: React.FC = () => {
                           {!!item.xhsCarouselPages?.length && <div className="grid gap-1.5 text-xs text-muted-foreground">{item.xhsCarouselPages.map((page, pageIndex) => <div key={pageIndex} className="rounded-md bg-background/65 px-2 py-1.5">第{pageIndex + 1}页：{page}</div>)}</div>}
                           {!!item.xhsTags?.length && <div className="flex flex-wrap gap-1.5">{item.xhsTags.map(tag => <Badge key={tag} variant="secondary">#{tag.replace(/^#/, '')}</Badge>)}</div>}
                           {item.xhsCommentGuide && <div className="rounded-lg border border-accent/25 bg-accent/10 p-2 text-xs text-foreground">评论/私信引导：{item.xhsCommentGuide}</div>}
+                          {item.voiceoverScript && <div className="rounded-lg border border-primary/20 bg-background/70 p-3"><div className="mb-1 font-semibold text-primary">对应口播稿：</div><p className="whitespace-pre-wrap leading-relaxed text-foreground">{item.voiceoverScript}</p></div>}
                         </div>
                       )}
                       <p><span className="font-semibold text-primary">痛点：</span><span className="text-muted-foreground">{item.painPoint}</span></p>
@@ -590,6 +622,7 @@ const MiniAppContentLab: React.FC = () => {
                     <div className="flex flex-wrap gap-2 border-t pt-3">
                       <Button variant="secondary" size="sm" onClick={() => copyText(formatItem(item, canonicalGifts), '整条选题已复制')}><Clipboard className="mr-2 h-4 w-4" />复制整条</Button>
                       {contentFormat === 'xhs-article' && <Button variant="secondary" size="sm" onClick={() => copyText(formatXhsArticle(item, canonicalGifts), '整篇图文稿已复制')}><FileText className="mr-2 h-4 w-4" />复制图文稿</Button>}
+                      {contentFormat === 'xhs-article' && item.voiceoverScript && <Button variant="secondary" size="sm" onClick={() => copyText(formatVoiceoverScript(item, canonicalGifts), '口播稿已复制')}><Video className="mr-2 h-4 w-4" />复制口播稿</Button>}
                       <Button variant="outline" size="sm" onClick={() => copyText(item.viralTitle, '标题已复制')}><Download className="mr-2 h-4 w-4" />复制标题</Button>
                       {contentFormat === 'xhs-article' && !!item.xhsTags?.length && <Button variant="outline" size="sm" onClick={() => copyText(item.xhsTags!.map(tag => `#${tag.replace(/^#/, '')}`).join(' '), '标签已复制')}>复制标签</Button>}
                       <Button variant="outline" size="sm" onClick={() => goVideoGenerator(item)}><Video className="mr-2 h-4 w-4" />生成口播稿</Button>
@@ -607,6 +640,7 @@ const MiniAppContentLab: React.FC = () => {
                         <TableHead className="min-w-44">痛点</TableHead>
                         <TableHead className="min-w-56">小红书爆款标题</TableHead>
                         {contentFormat === 'xhs-article' && <TableHead className="min-w-56">图文稿</TableHead>}
+                        {contentFormat === 'xhs-article' && <TableHead className="min-w-56">对应口播稿</TableHead>}
                         {contentFormat === 'xhs-article' && <TableHead className="min-w-48">标签</TableHead>}
                         <TableHead className="min-w-48">核心价值</TableHead>
                         <TableHead className="min-w-40">产品/工具名</TableHead>
@@ -624,6 +658,7 @@ const MiniAppContentLab: React.FC = () => {
                           <TableCell>{item.painPoint}</TableCell>
                           <TableCell className="font-medium">{item.viralTitle}</TableCell>
                           {contentFormat === 'xhs-article' && <TableCell className="max-w-md whitespace-pre-wrap">{item.xhsBody || '-'}</TableCell>}
+                          {contentFormat === 'xhs-article' && <TableCell className="max-w-md whitespace-pre-wrap">{item.voiceoverScript || '-'}</TableCell>}
                           {contentFormat === 'xhs-article' && <TableCell>{item.xhsTags?.map(tag => `#${tag.replace(/^#/, '')}`).join(' ') || '-'}</TableCell>}
                           <TableCell>{item.value}</TableCell>
                           <TableCell>{getGiftProductName(item, canonicalGifts) || '-'}</TableCell>
