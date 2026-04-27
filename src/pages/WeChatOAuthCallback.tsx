@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { Loader2 } from "lucide-react";
+import { CheckCircle2, Loader2, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { consumePostAuthRedirect } from "@/lib/postAuthRedirect";
@@ -9,6 +9,7 @@ export default function WeChatOAuthCallback() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
+  const [step, setStep] = useState<"received" | "verifying" | "returning">("received");
 
   useEffect(() => {
     const handleCallback = async () => {
@@ -26,6 +27,7 @@ export default function WeChatOAuthCallback() {
       const isBind = state.startsWith('bind_');
 
       try {
+        setStep("verifying");
         // 调用 Edge Function 处理 OAuth
         const { data, error: invokeError } = await supabase.functions.invoke('wechat-oauth-process', {
           body: { code, state }
@@ -37,6 +39,7 @@ export default function WeChatOAuthCallback() {
 
         // 处理绑定成功的情况
         if (isBind && (data?.success || data?.bindSuccess)) {
+          setStep("returning");
           toast.success("微信账号绑定成功！");
         // 首次绑定成功后引导用户关注公众号
           navigate("/settings?tab=notifications&wechat_bound=success", { replace: true });
@@ -45,10 +48,12 @@ export default function WeChatOAuthCallback() {
 
         if (data?.error) {
           if (data.error === 'already_bound') {
+            setStep("returning");
             const accountName = data.bound_account_name || '未知账号';
             toast.error(`该微信已绑定其他账号（${accountName}），如需绑定当前账号请先解绑`);
             navigate(`/settings?tab=notifications&wechat_error=already_bound&bound_account=${encodeURIComponent(accountName)}`, { replace: true });
           } else if (data.error === 'not_registered') {
+            setStep("returning");
             toast.error("该微信未注册，请先注册");
             navigate("/wechat-auth?mode=register", { replace: true });
           } else {
@@ -59,6 +64,7 @@ export default function WeChatOAuthCallback() {
 
         // 如果返回了 magic link，处理登录
         if (data?.magicLink) {
+          setStep("verifying");
           // 使用 token 完成登录
           const { error: signInError } = await supabase.auth.verifyOtp({
             token_hash: data.tokenHash,
@@ -70,6 +76,7 @@ export default function WeChatOAuthCallback() {
           }
 
           toast.success("登录成功！");
+          setStep("returning");
           
           // 登录通知已在后端 wechat-oauth-process 中发送，前端无需重复发送
           
@@ -110,12 +117,14 @@ export default function WeChatOAuthCallback() {
 
         // 兜底处理：如果没有匹配任何已知情况，也导航到设置页
         if (isBind) {
+          setStep("returning");
           console.warn('Unexpected bind response:', data);
           navigate("/settings?tab=notifications", { replace: true });
           return;
         }
 
         // 对于其他未知情况，导航到首页
+        setStep("returning");
         console.warn('Unknown OAuth response:', data);
         navigate("/", { replace: true });
       } catch (err) {
@@ -131,17 +140,39 @@ export default function WeChatOAuthCallback() {
   }, [searchParams, navigate]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50">
-      <div className="text-center space-y-4">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <div className="w-full max-w-sm rounded-lg border border-border bg-card p-6 text-center shadow-xl">
         {error ? (
           <>
-            <div className="text-red-500 text-lg">{error}</div>
-            <div className="text-muted-foreground text-sm">正在跳转...</div>
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
+              <ShieldCheck className="h-6 w-6 text-destructive" />
+            </div>
+            <div className="text-lg font-medium text-destructive">授权未完成</div>
+            <div className="mt-2 text-sm text-muted-foreground">{error}</div>
+            <div className="mt-4 text-xs text-muted-foreground">正在返回登录页...</div>
           </>
         ) : (
           <>
-            <Loader2 className="h-12 w-12 animate-spin text-teal-500 mx-auto" />
-            <div className="text-muted-foreground">正在处理微信授权...</div>
+            <div className="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+              {step === "returning" ? (
+                <CheckCircle2 className="h-6 w-6 text-primary" />
+              ) : (
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              )}
+            </div>
+            <div className="text-lg font-medium text-foreground">
+              {step === "returning" ? "授权完成" : "正在安全验证"}
+            </div>
+            <div className="mt-2 text-sm text-muted-foreground">
+              {step === "received" && "已收到微信返回信息"}
+              {step === "verifying" && "正在确认身份与账号状态"}
+              {step === "returning" && "正在回到刚才的页面"}
+            </div>
+            <div className="mt-5 grid grid-cols-3 gap-2 text-xs text-muted-foreground">
+              <div className="rounded-md bg-muted/60 px-2 py-2">接收授权</div>
+              <div className="rounded-md bg-muted/60 px-2 py-2">验证身份</div>
+              <div className="rounded-md bg-muted/60 px-2 py-2">返回页面</div>
+            </div>
           </>
         )}
       </div>
