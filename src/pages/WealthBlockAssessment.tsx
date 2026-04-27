@@ -210,6 +210,11 @@ export default function WealthBlockAssessmentPage() {
   useEffect(() => {
     if (authLoading) return;
     if (!user) return;
+    const pendingCampPay = sessionStorage.getItem(WEALTH_CAMP_PENDING_PAY_KEY);
+    if (pendingCampPay === '1') {
+      restoreResultForResume(true);
+      return;
+    }
     const pending = sessionStorage.getItem('wealth_block_pending_pay');
     if (pending !== '1') return;
     sessionStorage.removeItem('wealth_block_pending_pay');
