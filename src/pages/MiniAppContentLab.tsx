@@ -12,9 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { supabase } from '@/integrations/supabase/client';
-import { CONVERSION_PRODUCTS, VIDEO_AUDIENCES } from '@/config/videoScriptConfig';
+import { VIDEO_AUDIENCES } from '@/config/videoScriptConfig';
 import {
-  MINI_APP_CANONICAL_GIFTS,
   MINI_APP_CONVERSION_SEEDS,
   MINI_APP_SCENE_SEEDS,
   MINI_APP_SOURCE_OPTIONS,
@@ -23,6 +22,8 @@ import {
   MiniAppSeedItem,
   MiniAppSourceType,
 } from '@/config/miniAppContentMap';
+import { MarketingPoolEditor } from '@/components/marketing/MarketingPoolEditor';
+import { MarketingGift, useMarketingGifts, useMarketingPoolAdminStatus, useMarketingProducts } from '@/hooks/useMarketingPools';
 
 interface ContentTopicItem {
   id: string;
@@ -47,30 +48,27 @@ interface ContentTopicItem {
 
 const countOptions = [10, 20, 30];
 
-const localSeedItems = (sourceType: MiniAppSourceType): MiniAppSeedItem[] => {
+const localSeedItems = (sourceType: MiniAppSourceType, canonicalGifts: MiniAppSeedItem[]): MiniAppSeedItem[] => {
   if (sourceType === 'mini-scenes') return MINI_APP_SCENE_SEEDS;
   if (sourceType === 'conversion') return MINI_APP_CONVERSION_SEEDS;
-  if (sourceType === 'daily-tools') return MINI_APP_CANONICAL_GIFTS.filter(item => item.sourceType === 'daily-tools');
-  return MINI_APP_CANONICAL_GIFTS.filter(item => item.sourceType === 'assessments');
+  if (sourceType === 'daily-tools') return canonicalGifts.filter(item => item.sourceType === 'daily-tools');
+  return canonicalGifts.filter(item => item.sourceType === 'assessments');
 };
 
-const canonicalGiftNames = MINI_APP_CANONICAL_GIFTS.map(item => item.productName || item.label);
-const canonicalGiftNameSet = new Set(canonicalGiftNames);
-
-const findCanonicalGift = (item: ContentTopicItem, seed?: MiniAppSeedItem) => {
+const findCanonicalGift = (item: ContentTopicItem, canonicalGifts: MiniAppSeedItem[], seed?: MiniAppSeedItem) => {
   const candidates = [item.giftProductName, seed?.productName, seed?.label, item.matchedTool].filter(Boolean) as string[];
-  return MINI_APP_CANONICAL_GIFTS.find(gift => candidates.some(candidate => candidate.includes(gift.productName || gift.label)))
-    || MINI_APP_CANONICAL_GIFTS.find(gift => gift.topicId === item.topicId || gift.productId === item.productId)
+  return canonicalGifts.find(gift => candidates.some(candidate => candidate.includes(gift.productName || gift.label)))
+    || canonicalGifts.find(gift => gift.topicId === item.topicId || gift.productId === item.productId)
     || seed;
 };
 
-const getGiftProductName = (item: ContentTopicItem) => {
-  const canonicalGift = findCanonicalGift(item);
+const getGiftProductName = (item: ContentTopicItem, canonicalGifts: MiniAppSeedItem[]) => {
+  const canonicalGift = findCanonicalGift(item, canonicalGifts);
   return canonicalGift?.productName || canonicalGift?.label || item.giftProductName || '';
 };
 
-const getGiftDisplayName = (item: ContentTopicItem) => {
-  const productName = getGiftProductName(item);
+const getGiftDisplayName = (item: ContentTopicItem, canonicalGifts: MiniAppSeedItem[]) => {
+  const productName = getGiftProductName(item, canonicalGifts);
   return productName ? `限时赠送「${productName}」` : (item.giftDisplayName || item.matchedTool || '-');
 };
 
@@ -90,11 +88,11 @@ interface GiftValidationResult {
   checkedAt: number;
 }
 
-const validateGiftItem = (item: ContentTopicItem, index: number): GiftValidationIssue | null => {
-  const productName = getGiftProductName(item).trim();
-  const giftDisplayName = getGiftDisplayName(item).trim();
+const validateGiftItem = (item: ContentTopicItem, index: number, canonicalGifts: MiniAppSeedItem[], canonicalGiftNameSet: Set<string>): GiftValidationIssue | null => {
+  const productName = getGiftProductName(item, canonicalGifts).trim();
+  const giftDisplayName = getGiftDisplayName(item, canonicalGifts).trim();
   const expectedGiftDisplayName = productName ? `限时赠送「${productName}」` : '';
-  const suggestedGift = findCanonicalGift(item);
+  const suggestedGift = findCanonicalGift(item, canonicalGifts);
   const suggestedProductName = suggestedGift?.productName || suggestedGift?.label;
   const suggestedGiftDisplayName = suggestedGift?.giftDisplayName || (suggestedProductName ? `限时赠送「${suggestedProductName}」` : undefined);
 
@@ -123,13 +121,13 @@ const validateGiftItem = (item: ContentTopicItem, index: number): GiftValidation
   return null;
 };
 
-const validateGiftItems = (items: ContentTopicItem[]): GiftValidationResult => {
-  const issues = items.map(validateGiftItem).filter(Boolean) as GiftValidationIssue[];
+const validateGiftItems = (items: ContentTopicItem[], canonicalGifts: MiniAppSeedItem[], canonicalGiftNameSet: Set<string>): GiftValidationResult => {
+  const issues = items.map((item, index) => validateGiftItem(item, index, canonicalGifts, canonicalGiftNameSet)).filter(Boolean) as GiftValidationIssue[];
   return { total: items.length, passed: items.length - issues.length, issues, checkedAt: Date.now() };
 };
 
-const repairGiftItems = (items: ContentTopicItem[]): ContentTopicItem[] => items.map((item) => {
-  const canonicalGift = findCanonicalGift(item);
+const repairGiftItems = (items: ContentTopicItem[], canonicalGifts: MiniAppSeedItem[]): ContentTopicItem[] => items.map((item) => {
+  const canonicalGift = findCanonicalGift(item, canonicalGifts);
   const productName = canonicalGift?.productName || canonicalGift?.label || item.giftProductName || '';
   const giftDisplayName = canonicalGift?.giftDisplayName || (productName ? `限时赠送「${productName}」` : item.giftDisplayName);
   return {
@@ -153,12 +151,12 @@ const downloadBlob = (content: string, filename: string, type: string) => {
   URL.revokeObjectURL(url);
 };
 
-const formatItem = (item: ContentTopicItem) => [
+const formatItem = (item: ContentTopicItem, canonicalGifts: MiniAppSeedItem[]) => [
   `痛点：${item.painPoint}`,
   `爆款标题：${item.viralTitle}`,
   `价值：${item.value}`,
-  `产品/工具名：${getGiftProductName(item) || '-'}`,
-  `限时赠品：${getGiftDisplayName(item)}`,
+  `产品/工具名：${getGiftProductName(item, canonicalGifts) || '-'}`,
+  `限时赠品：${getGiftDisplayName(item, canonicalGifts)}`,
   `专业报告名称：${item.reportPageName || '-'}`,
   `报告价值：${item.aiReportValue}`,
   item.actionPlanValue || item.coachReportValue ? `下一步行动建议：${item.actionPlanValue || item.coachReportValue}` : '',
@@ -176,15 +174,21 @@ const MiniAppContentLab: React.FC = () => {
   const [items, setItems] = useState<ContentTopicItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [giftValidation, setGiftValidation] = useState<GiftValidationResult | null>(null);
+  const { products, refetch: refetchProducts } = useMarketingProducts();
+  const { gifts, refetch: refetchGifts } = useMarketingGifts();
+  const { isAdmin } = useMarketingPoolAdminStatus();
 
   const selectedAudience = useMemo(() => VIDEO_AUDIENCES.find(a => a.id === audienceId) || VIDEO_AUDIENCES[0], [audienceId]);
-  const seedItems = useMemo(() => localSeedItems(sourceType), [sourceType]);
+  const canonicalGifts = useMemo<MiniAppSeedItem[]>(() => gifts, [gifts]);
+  const canonicalGiftNames = useMemo(() => canonicalGifts.map(item => item.productName || item.label), [canonicalGifts]);
+  const canonicalGiftNameSet = useMemo(() => new Set(canonicalGiftNames), [canonicalGiftNames]);
+  const seedItems = useMemo(() => localSeedItems(sourceType, canonicalGifts), [sourceType, canonicalGifts]);
   const selectedSource = MINI_APP_SOURCE_OPTIONS.find(s => s.id === sourceType);
   const selectedStyle = MINI_APP_STYLE_OPTIONS.find(s => s.id === style);
 
   const normalizeItems = (rawItems: ContentTopicItem[]): ContentTopicItem[] => rawItems.map((item, index) => {
     const seed = seedItems.find(seedItem => seedItem.topicId === item.topicId || seedItem.productId === item.productId || seedItem.route === item.route) || seedItems[index % Math.max(seedItems.length, 1)];
-    const canonicalGift = findCanonicalGift(item, seed);
+    const canonicalGift = findCanonicalGift(item, canonicalGifts, seed);
     const productName = canonicalGift?.productName || canonicalGift?.label || '';
     return {
       ...item,
@@ -233,7 +237,7 @@ const MiniAppContentLab: React.FC = () => {
   };
 
   const handleValidateGifts = () => {
-    const result = validateGiftItems(items);
+    const result = validateGiftItems(items, canonicalGifts, canonicalGiftNameSet);
     setGiftValidation(result);
     if (result.issues.length === 0) {
       toast.success('全部通过：所有限时赠品均命中标准赠品池');
@@ -243,9 +247,9 @@ const MiniAppContentLab: React.FC = () => {
   };
 
   const handleRepairGifts = () => {
-    const repairedItems = repairGiftItems(items);
+    const repairedItems = repairGiftItems(items, canonicalGifts);
     setItems(repairedItems);
-    const result = validateGiftItems(repairedItems);
+    const result = validateGiftItems(repairedItems, canonicalGifts, canonicalGiftNameSet);
     setGiftValidation(result);
     toast.success('已按标准赠品池修正赠品名称');
   };
@@ -259,7 +263,7 @@ const MiniAppContentLab: React.FC = () => {
   const exportCsv = () => {
     if (!items.length) return;
     const header = ['痛点', '小红书爆款标题', '核心价值', '产品/工具名', '限时赠品', '专业报告名称', '报告价值', '下一步行动建议', '开场Hook', '私域CTA', '入口'];
-    const rows = items.map(item => [item.painPoint, item.viralTitle, item.value, getGiftProductName(item), getGiftDisplayName(item), item.reportPageName || '', item.aiReportValue, item.actionPlanValue || item.coachReportValue || '', item.hook, item.cta, item.route || ''].map(csvEscape).join(','));
+    const rows = items.map(item => [item.painPoint, item.viralTitle, item.value, getGiftProductName(item, canonicalGifts), getGiftDisplayName(item, canonicalGifts), item.reportPageName || '', item.aiReportValue, item.actionPlanValue || item.coachReportValue || '', item.hook, item.cta, item.route || ''].map(csvEscape).join(','));
     downloadBlob(`\ufeff${header.map(csvEscape).join(',')}\n${rows.join('\n')}`, `mini-app短视频选题库_${Date.now()}.csv`, 'text/csv;charset=utf-8');
     toast.success('CSV 已下载');
   };
@@ -273,7 +277,7 @@ const MiniAppContentLab: React.FC = () => {
       `- 内容来源：${selectedSource?.label}`,
       `- 内容风格：${selectedStyle?.label}`,
       '',
-      ...items.map((item, index) => `## ${index + 1}. ${item.painPoint}\n\n- 痛点：${item.painPoint}\n- 小红书爆款标题：${item.viralTitle}\n- 核心价值：${item.value}\n- 产品/工具名：${getGiftProductName(item) || '-'}\n- 限时赠品：${getGiftDisplayName(item)}\n- 专业报告名称：${item.reportPageName || '-'}\n- 报告价值：${item.aiReportValue}\n- 下一步行动建议：${item.actionPlanValue || item.coachReportValue || '-'}\n- 开场 Hook：${item.hook}\n- CTA：${item.cta}\n- 入口：${item.route || '-'}\n`),
+      ...items.map((item, index) => `## ${index + 1}. ${item.painPoint}\n\n- 痛点：${item.painPoint}\n- 小红书爆款标题：${item.viralTitle}\n- 核心价值：${item.value}\n- 产品/工具名：${getGiftProductName(item, canonicalGifts) || '-'}\n- 限时赠品：${getGiftDisplayName(item, canonicalGifts)}\n- 专业报告名称：${item.reportPageName || '-'}\n- 报告价值：${item.aiReportValue}\n- 下一步行动建议：${item.actionPlanValue || item.coachReportValue || '-'}\n- 开场 Hook：${item.hook}\n- CTA：${item.cta}\n- 入口：${item.route || '-'}\n`),
     ].join('\n');
     downloadBlob(md, `mini-app短视频选题库_${Date.now()}.md`, 'text/markdown;charset=utf-8');
     toast.success('Markdown 已下载');
@@ -377,7 +381,7 @@ const MiniAppContentLab: React.FC = () => {
             {giftValidation.issues.length ? <AlertTriangle className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
             <AlertTitle>{giftValidation.issues.length ? `发现 ${giftValidation.issues.length} 条赠品异常` : '赠品校验全部通过'}</AlertTitle>
             <AlertDescription className="space-y-3">
-              <p>共 {giftValidation.total} 条，命中 {giftValidation.passed} 条，标准赠品池 {MINI_APP_CANONICAL_GIFTS.length} 个。</p>
+              <p>共 {giftValidation.total} 条，命中 {giftValidation.passed} 条，标准赠品池 {canonicalGifts.length} 个。</p>
               {giftValidation.issues.length > 0 && (
                 <>
                   <div className="grid gap-2">
@@ -432,15 +436,15 @@ const MiniAppContentLab: React.FC = () => {
                       <p><span className="font-semibold text-foreground">痛点：</span><span className="text-muted-foreground">{item.painPoint}</span></p>
                       <p><span className="font-semibold text-foreground">爆款标题：</span><span className="text-muted-foreground">{item.viralTitle}</span></p>
                       <p><span className="font-semibold text-foreground">价值：</span><span className="text-muted-foreground">{item.value}</span></p>
-                      <p><span className="font-semibold text-foreground">产品/工具名：</span><span className="text-muted-foreground">{getGiftProductName(item) || '-'}</span></p>
-                      <p><span className="font-semibold text-foreground">限时赠品：</span><span className="text-muted-foreground">{getGiftDisplayName(item)}</span></p>
+                      <p><span className="font-semibold text-foreground">产品/工具名：</span><span className="text-muted-foreground">{getGiftProductName(item, canonicalGifts) || '-'}</span></p>
+                      <p><span className="font-semibold text-foreground">限时赠品：</span><span className="text-muted-foreground">{getGiftDisplayName(item, canonicalGifts)}</span></p>
                       <p><span className="font-semibold text-foreground">专业报告名称：</span><span className="text-muted-foreground">{item.reportPageName || '-'}</span></p>
                       <p><span className="font-semibold text-foreground">报告价值：</span><span className="text-muted-foreground">{item.aiReportValue}</span></p>
                       {(item.actionPlanValue || item.coachReportValue) && <p><span className="font-semibold text-foreground">下一步行动建议：</span><span className="text-muted-foreground">{item.actionPlanValue || item.coachReportValue}</span></p>}
                       <p><span className="font-semibold text-foreground">Hook：</span><span className="text-muted-foreground">{item.hook}</span></p>
                     </div>
                     <div className="flex flex-wrap gap-2 border-t pt-3">
-                      <Button variant="secondary" size="sm" onClick={() => copyText(formatItem(item), '整条选题已复制')}><Clipboard className="mr-2 h-4 w-4" />复制整条</Button>
+                      <Button variant="secondary" size="sm" onClick={() => copyText(formatItem(item, canonicalGifts), '整条选题已复制')}><Clipboard className="mr-2 h-4 w-4" />复制整条</Button>
                       <Button variant="outline" size="sm" onClick={() => copyText(item.viralTitle, '标题已复制')}><Download className="mr-2 h-4 w-4" />复制标题</Button>
                       <Button variant="outline" size="sm" onClick={() => goVideoGenerator(item)}><Video className="mr-2 h-4 w-4" />生成口播稿</Button>
                     </div>
@@ -472,14 +476,14 @@ const MiniAppContentLab: React.FC = () => {
                           <TableCell>{item.painPoint}</TableCell>
                           <TableCell className="font-medium">{item.viralTitle}</TableCell>
                           <TableCell>{item.value}</TableCell>
-                          <TableCell>{getGiftProductName(item) || '-'}</TableCell>
-                          <TableCell>{getGiftDisplayName(item)}</TableCell>
+                          <TableCell>{getGiftProductName(item, canonicalGifts) || '-'}</TableCell>
+                          <TableCell>{getGiftDisplayName(item, canonicalGifts)}</TableCell>
                           <TableCell>{giftValidation ? <Badge variant={issueMap.has(index) ? 'destructive' : 'secondary'}>{issueMap.has(index) ? '异常' : '通过'}</Badge> : '-'}</TableCell>
                           <TableCell>{item.reportPageName || '-'}</TableCell>
                           <TableCell>{item.aiReportValue}</TableCell>
                           <TableCell>{item.actionPlanValue || item.coachReportValue || '-'}</TableCell>
                           <TableCell>
-                            <Button variant="ghost" size="sm" onClick={() => copyText(formatItem(item))}>复制</Button>
+                            <Button variant="ghost" size="sm" onClick={() => copyText(formatItem(item, canonicalGifts))}>复制</Button>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -492,18 +496,28 @@ const MiniAppContentLab: React.FC = () => {
         )}
 
         <Card>
-          <CardHeader className="pb-3"><CardTitle className="text-base">可用转化产品池</CardTitle></CardHeader>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between gap-2">
+              <CardTitle className="text-base">可用转化产品池</CardTitle>
+              {isAdmin && <MarketingPoolEditor type="product" products={products} onSaved={() => refetchProducts()} />}
+            </div>
+          </CardHeader>
           <CardContent className="flex flex-wrap gap-2">
-            {CONVERSION_PRODUCTS.slice(0, 12).map(product => (
+            {products.slice(0, 12).map(product => (
               <Badge key={product.id} variant="secondary">{product.label}</Badge>
             ))}
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="pb-3"><CardTitle className="text-base">标准赠品池</CardTitle></CardHeader>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between gap-2">
+              <CardTitle className="text-base">标准赠品池</CardTitle>
+              {isAdmin && <MarketingPoolEditor type="gift" gifts={gifts as MarketingGift[]} onSaved={() => refetchGifts()} />}
+            </div>
+          </CardHeader>
           <CardContent className="flex flex-wrap gap-2">
-            {MINI_APP_CANONICAL_GIFTS.map(gift => (
+            {canonicalGifts.map(gift => (
               <Badge key={gift.id} variant="secondary">{gift.productName || gift.label}</Badge>
             ))}
           </CardContent>
