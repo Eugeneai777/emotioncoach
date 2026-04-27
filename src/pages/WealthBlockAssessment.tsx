@@ -1168,6 +1168,18 @@ export default function WealthBlockAssessmentPage() {
                     isSaving={isSaving}
                     isSaved={isSaved}
                     onAiInsightReady={setAiInsight}
+                    onAuthRequired={(forCamp) => {
+                      if (user) return true;
+                      const currentPath = window.location.pathname + window.location.search;
+                      persistResultForResume(!!forCamp);
+                      if (forCamp) sessionStorage.setItem(WEALTH_CAMP_PENDING_PAY_KEY, '1');
+                      setPostAuthRedirect(currentPath);
+                      toast.info('请先登录');
+                      navigate(`/auth?redirect=${encodeURIComponent(currentPath)}`);
+                      return false;
+                    }}
+                    autoOpenPay={autoOpenCampPay}
+                    resumedOpenId={resumedCampOpenId}
                   />
                 </div>
               ) : (
