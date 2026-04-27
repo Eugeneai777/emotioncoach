@@ -67,6 +67,13 @@ serve(async (req) => {
     if ((err.error_type === 'network_fail' || err.error_type === 'timeout') && includesAny('/auth/v1/user', '/auth/v1/token')) {
       return '微信/移动端认证请求被网络或页面生命周期中断；非服务端代码错误，已自动标记为无需处理。';
     }
+    if (
+      err.error_type === 'server_error' &&
+      err.status_code === 503 &&
+      includesAny('SUPABASE_EDGE_RUNTIME_ERROR', 'Service is temporarily unavailable')
+    ) {
+      return '后端函数运行时短暂不可用，业务代码未执行；属于平台瞬时波动，已自动标记为无需处理。';
+    }
     return null;
   };
 
@@ -131,7 +138,7 @@ serve(async (req) => {
       .select('id, url, error_type, response_body, message, created_at')
       .eq('status', 'pending')
       .gte('created_at', twentyFourHoursAgo)
-      .in('error_type', ['client_error', 'network_fail', 'timeout']);
+      .in('error_type', ['client_error', 'server_error', 'network_fail', 'timeout']);
 
     const noAction = (errors || [])
       .map((err: any) => ({ id: err.id, reason: getKnownNoActionReason(err) }))
