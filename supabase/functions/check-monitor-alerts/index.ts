@@ -37,12 +37,76 @@ serve(async (req) => {
 
   const alerts: Array<{ type: string; level: string; message: string; details: string }> = [];
   const fifteenMinAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+  const twentyMinAgo = new Date(Date.now() - 20 * 60 * 1000).toISOString();
+
+  const extractPath = (url?: string | null) => {
+    if (!url) return '';
+    try { return new URL(url).pathname; } catch { return url; }
+  };
+
+  const markSelfHealedApiErrors = async () => {
+    const { data: errors } = await supabase
+      .from('monitor_api_errors')
+      .select('id, url, status_code, error_type, response_body, created_at, user_id')
+      .eq('status', 'pending')
+      .gte('created_at', twentyMinAgo)
+      .in('error_type', ['server_error', 'network_fail', 'timeout']);
+
+    if (!errors?.length) return 0;
+
+    const { data: successes } = await supabase
+      .from('monitor_stability_records')
+      .select('request_path, status_code, success, created_at, user_id')
+      .eq('success', true)
+      .gte('created_at', twentyMinAgo)
+      .limit(1000);
+
+    if (!successes?.length) return 0;
+
+    const healedIds = errors
+      .filter((err: any) => {
+        const path = extractPath(err.url);
+        const isTransientRuntime =
+          path.includes('/functions/v1/') &&
+          (err.status_code === 503 || err.error_type === 'network_fail' || err.error_type === 'timeout' || String(err.response_body || '').includes('Service is temporarily unavailable'));
+        if (!isTransientRuntime) return false;
+
+        const errTime = new Date(err.created_at).getTime();
+        return successes.some((ok: any) => {
+          const okTime = new Date(ok.created_at).getTime();
+          const withinRetryWindow = okTime >= errTime && okTime - errTime <= 3 * 60 * 1000;
+          const sameUser = !err.user_id || !ok.user_id || err.user_id === ok.user_id;
+          return withinRetryWindow && sameUser && ok.request_path === path;
+        });
+      })
+      .map((err: any) => err.id);
+
+    if (healedIds.length === 0) return 0;
+
+    await supabase
+      .from('monitor_api_errors')
+      .update({
+        status: 'ignored',
+        diagnosis: '重试后已有同一路径成功请求，判定为短暂连接/运行时波动，已自动降噪。',
+        fix_suggestion: '无需人工处理；继续观察同一路径是否持续失败。',
+        diagnosed_at: new Date().toISOString(),
+      })
+      .in('id', healedIds);
+
+    return healedIds.length;
+  };
 
   try {
+    const selfHealedCount = await markSelfHealedApiErrors();
+    if (selfHealedCount > 0) {
+      console.log(`Auto-muted ${selfHealedCount} self-healed API errors.`);
+    }
+
     // 1. 检查 API 错误突增（15分钟内 > 10 条）
     const { count: apiErrorCount } = await supabase
       .from('monitor_api_errors')
       .select('*', { count: 'exact', head: true })
+      .eq('status', 'pending')
       .gte('created_at', fifteenMinAgo);
 
     if ((apiErrorCount || 0) > 10) {
@@ -50,6 +114,7 @@ serve(async (req) => {
       const { data: apiErrors } = await supabase
         .from('monitor_api_errors')
         .select('method, url, error_type, status_code, message')
+        .eq('status', 'pending')
         .gte('created_at', fifteenMinAgo)
         .order('created_at', { ascending: false })
         .limit(50);
