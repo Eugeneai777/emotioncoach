@@ -38,6 +38,8 @@ const KNOWN_HARMLESS_PATTERNS: { urlMatch: string; errorType?: ApiErrorType; rea
   { urlMatch: '/rest/v1/', errorType: 'timeout', reason: '移动端后台挂起导致数据库请求超时，属正常行为' },
   { urlMatch: '/rest/v1/', errorType: 'network_fail', reason: '移动端页面切换或后台挂起导致请求中断，属正常行为' },
   { urlMatch: 'refresh_token_not_found', errorType: 'client_error', reason: '用户 token 过期刷新失败，重新登录即可，属正常行为' },
+  { urlMatch: '/auth/v1/user', errorType: 'timeout', reason: '认证状态请求后续已恢复时，判定为微信内网络波动，属正常行为' },
+  { urlMatch: '/auth/v1/user', errorType: 'network_fail', reason: '认证状态请求被微信 WebView 中断，后续恢复时属正常行为' },
   { urlMatch: '/auth/v1/token', errorType: 'timeout', reason: '移动端后台挂起导致认证请求超时，属正常行为' },
   { urlMatch: '/functions/v1/', errorType: 'timeout', reason: '移动端后台挂起导致函数请求超时，属正常行为' },
   { urlMatch: '/functions/v1/', errorType: 'network_fail', reason: '移动端页面切换导致函数请求中断，属正常行为' },
