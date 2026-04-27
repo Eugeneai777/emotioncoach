@@ -12,9 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { supabase } from '@/integrations/supabase/client';
-import { CONVERSION_PRODUCTS, VIDEO_AUDIENCES } from '@/config/videoScriptConfig';
+import { VIDEO_AUDIENCES } from '@/config/videoScriptConfig';
 import {
-  MINI_APP_CANONICAL_GIFTS,
   MINI_APP_CONVERSION_SEEDS,
   MINI_APP_SCENE_SEEDS,
   MINI_APP_SOURCE_OPTIONS,
@@ -23,6 +22,8 @@ import {
   MiniAppSeedItem,
   MiniAppSourceType,
 } from '@/config/miniAppContentMap';
+import { MarketingPoolEditor } from '@/components/marketing/MarketingPoolEditor';
+import { MarketingGift, useMarketingGifts, useMarketingPoolAdminStatus, useMarketingProducts } from '@/hooks/useMarketingPools';
 
 interface ContentTopicItem {
   id: string;
@@ -47,30 +48,27 @@ interface ContentTopicItem {
 
 const countOptions = [10, 20, 30];
 
-const localSeedItems = (sourceType: MiniAppSourceType): MiniAppSeedItem[] => {
+const localSeedItems = (sourceType: MiniAppSourceType, canonicalGifts: MiniAppSeedItem[]): MiniAppSeedItem[] => {
   if (sourceType === 'mini-scenes') return MINI_APP_SCENE_SEEDS;
   if (sourceType === 'conversion') return MINI_APP_CONVERSION_SEEDS;
-  if (sourceType === 'daily-tools') return MINI_APP_CANONICAL_GIFTS.filter(item => item.sourceType === 'daily-tools');
-  return MINI_APP_CANONICAL_GIFTS.filter(item => item.sourceType === 'assessments');
+  if (sourceType === 'daily-tools') return canonicalGifts.filter(item => item.sourceType === 'daily-tools');
+  return canonicalGifts.filter(item => item.sourceType === 'assessments');
 };
 
-const canonicalGiftNames = MINI_APP_CANONICAL_GIFTS.map(item => item.productName || item.label);
-const canonicalGiftNameSet = new Set(canonicalGiftNames);
-
-const findCanonicalGift = (item: ContentTopicItem, seed?: MiniAppSeedItem) => {
+const findCanonicalGift = (item: ContentTopicItem, canonicalGifts: MiniAppSeedItem[], seed?: MiniAppSeedItem) => {
   const candidates = [item.giftProductName, seed?.productName, seed?.label, item.matchedTool].filter(Boolean) as string[];
-  return MINI_APP_CANONICAL_GIFTS.find(gift => candidates.some(candidate => candidate.includes(gift.productName || gift.label)))
-    || MINI_APP_CANONICAL_GIFTS.find(gift => gift.topicId === item.topicId || gift.productId === item.productId)
+  return canonicalGifts.find(gift => candidates.some(candidate => candidate.includes(gift.productName || gift.label)))
+    || canonicalGifts.find(gift => gift.topicId === item.topicId || gift.productId === item.productId)
     || seed;
 };
 
-const getGiftProductName = (item: ContentTopicItem) => {
-  const canonicalGift = findCanonicalGift(item);
+const getGiftProductName = (item: ContentTopicItem, canonicalGifts: MiniAppSeedItem[]) => {
+  const canonicalGift = findCanonicalGift(item, canonicalGifts);
   return canonicalGift?.productName || canonicalGift?.label || item.giftProductName || '';
 };
 
-const getGiftDisplayName = (item: ContentTopicItem) => {
-  const productName = getGiftProductName(item);
+const getGiftDisplayName = (item: ContentTopicItem, canonicalGifts: MiniAppSeedItem[]) => {
+  const productName = getGiftProductName(item, canonicalGifts);
   return productName ? `限时赠送「${productName}」` : (item.giftDisplayName || item.matchedTool || '-');
 };
 
