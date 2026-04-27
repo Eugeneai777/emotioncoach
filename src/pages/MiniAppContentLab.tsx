@@ -420,7 +420,7 @@ const MiniAppContentLab: React.FC = () => {
                 <Card key={item.id || index} className={`overflow-hidden ${issueMap.has(index) ? 'border-destructive/60' : ''}`}>
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between gap-3">
-                      <CardTitle className="text-base leading-snug">{item.viralTitle}</CardTitle>
+                      <CardTitle className="text-base leading-snug">{item.painPoint}</CardTitle>
                       <div className="flex shrink-0 flex-col items-end gap-1">
                         <Badge variant="outline">{index + 1}</Badge>
                         {giftValidation && <Badge variant={issueMap.has(index) ? 'destructive' : 'secondary'}>{issueMap.has(index) ? '赠品异常' : '赠品已校验'}</Badge>}
@@ -430,6 +430,7 @@ const MiniAppContentLab: React.FC = () => {
                   <CardContent className="space-y-3 text-sm">
                     <div className="grid gap-2">
                       <p><span className="font-semibold text-foreground">痛点：</span><span className="text-muted-foreground">{item.painPoint}</span></p>
+                      <p><span className="font-semibold text-foreground">爆款标题：</span><span className="text-muted-foreground">{item.viralTitle}</span></p>
                       <p><span className="font-semibold text-foreground">价值：</span><span className="text-muted-foreground">{item.value}</span></p>
                       <p><span className="font-semibold text-foreground">产品/工具名：</span><span className="text-muted-foreground">{getGiftProductName(item) || '-'}</span></p>
                       <p><span className="font-semibold text-foreground">限时赠品：</span><span className="text-muted-foreground">{getGiftDisplayName(item)}</span></p>
@@ -454,6 +455,7 @@ const MiniAppContentLab: React.FC = () => {
                     <TableHeader>
                       <TableRow>
                         <TableHead className="min-w-44">痛点</TableHead>
+                        <TableHead className="min-w-56">小红书爆款标题</TableHead>
                         <TableHead className="min-w-48">核心价值</TableHead>
                         <TableHead className="min-w-40">产品/工具名</TableHead>
                         <TableHead className="min-w-56">限时赠品</TableHead>
@@ -461,7 +463,6 @@ const MiniAppContentLab: React.FC = () => {
                         <TableHead className="min-w-56">专业报告名称</TableHead>
                         <TableHead className="min-w-56">报告价值</TableHead>
                         <TableHead className="min-w-56">下一步行动建议</TableHead>
-                        <TableHead className="min-w-56">小红书爆款标题</TableHead>
                         <TableHead className="min-w-28">操作</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -469,6 +470,7 @@ const MiniAppContentLab: React.FC = () => {
                       {items.map((item, index) => (
                         <TableRow key={item.id || index} className={issueMap.has(index) ? 'bg-destructive/5' : undefined}>
                           <TableCell>{item.painPoint}</TableCell>
+                          <TableCell className="font-medium">{item.viralTitle}</TableCell>
                           <TableCell>{item.value}</TableCell>
                           <TableCell>{getGiftProductName(item) || '-'}</TableCell>
                           <TableCell>{getGiftDisplayName(item)}</TableCell>
@@ -476,7 +478,6 @@ const MiniAppContentLab: React.FC = () => {
                           <TableCell>{item.reportPageName || '-'}</TableCell>
                           <TableCell>{item.aiReportValue}</TableCell>
                           <TableCell>{item.actionPlanValue || item.coachReportValue || '-'}</TableCell>
-                          <TableCell className="font-medium">{item.viralTitle}</TableCell>
                           <TableCell>
                             <Button variant="ghost" size="sm" onClick={() => copyText(formatItem(item))}>复制</Button>
                           </TableCell>
