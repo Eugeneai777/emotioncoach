@@ -8,9 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGr
 import { useVideoGeneration, VideoGenStatus, StructuredScript } from '@/hooks/useVideoGeneration';
 import { VOICE_TYPE_OPTIONS } from '@/config/voiceTypeConfig';
 import {
-  STATIC_TOPIC_GROUPS, VIDEO_AUDIENCES, CONVERSION_PRODUCTS,
+  STATIC_TOPIC_GROUPS, VIDEO_AUDIENCES,
   getRecommendedProducts, VideoTopic, VideoTopicGroup,
 } from '@/config/videoScriptConfig';
+import { useMarketingProducts } from '@/hooks/useMarketingPools';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -185,6 +186,7 @@ const VideoGenerator: React.FC = () => {
   const { status, error, result, progress, segmentProgress, generate, retryMerge, reset } = useVideoGeneration();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const topicGroups = useDynamicTopicGroups();
+  const { products: conversionProducts } = useMarketingProducts();
 
   // Form state
   const [imageUrl, setImageUrl] = useState('');
@@ -202,7 +204,7 @@ const VideoGenerator: React.FC = () => {
   const allTopics = useMemo(() => topicGroups.flatMap(g => g.items), [topicGroups]);
   const selectedTopic = useMemo(() => allTopics.find(t => t.id === topicId), [allTopics, topicId]);
   const selectedAudience = useMemo(() => VIDEO_AUDIENCES.find(a => a.id === audienceId), [audienceId]);
-  const selectedConversion = useMemo(() => CONVERSION_PRODUCTS.find(p => p.id === conversionId), [conversionId]);
+  const selectedConversion = useMemo(() => conversionProducts.find(p => p.id === conversionId), [conversionProducts, conversionId]);
 
   const recommendedIds = useMemo(() => topicId ? getRecommendedProducts(topicId) : [], [topicId]);
 
@@ -318,17 +320,17 @@ const VideoGenerator: React.FC = () => {
 
   // Group conversion products by category, recommended first
   const conversionGroups = useMemo(() => {
-    const cats = new Map<string, typeof CONVERSION_PRODUCTS>();
+    const cats = new Map<string, typeof conversionProducts>();
     // Recommended first
-    const recommended = CONVERSION_PRODUCTS.filter(p => recommendedIds.includes(p.id));
+    const recommended = conversionProducts.filter(p => recommendedIds.includes(p.id));
     if (recommended.length) cats.set('⭐ 推荐', recommended);
     // Then by category
-    for (const p of CONVERSION_PRODUCTS) {
+    for (const p of conversionProducts) {
       if (!cats.has(p.category)) cats.set(p.category, []);
       cats.get(p.category)!.push(p);
     }
     return cats;
-  }, [recommendedIds]);
+  }, [recommendedIds, conversionProducts]);
 
   return (
     <div className="min-h-screen bg-background pb-20">
