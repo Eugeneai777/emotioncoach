@@ -6,15 +6,25 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
+async function findAuthUserByEmail(supabase: any, email: string) {
+  for (let page = 1; page <= 5; page += 1) {
+    const { data, error } = await supabase.auth.admin.listUsers({ page, perPage: 1000 });
+    if (error) return { user: null, error };
+    const user = data?.users?.find((item: any) => item.email?.toLowerCase() === email.toLowerCase());
+    if (user) return { user, error: null };
+    if (!data?.users || data.users.length < 1000) break;
+  }
+  return { user: null, error: null };
+}
+
 /**
  * 微信支付前置认证（仅微信浏览器使用）
  * 
  * 功能：
  * 1. 生成静默授权 URL（snsapi_base，用户无感知）
- * 2. 用 code 换取 openId + 自动识别老用户/新用户 + 返回登录令牌
+ * 2. 支付回调使用 openid_only 仅换取 openId；注册链路仍可显式使用 register flow
  * 
  * 这样前端在回调后可以：
- * - 直接用 tokenHash 自动登录（无弹窗）
  * - 直接用 openId 拉起 JSAPI 支付
  */
 serve(async (req) => {
@@ -40,7 +50,7 @@ serve(async (req) => {
     callbackUrl.searchParams.set('payment_auth_callback', '1');
     callbackUrl.searchParams.set('payment_redirect', redirectUri);
     if (flow) callbackUrl.searchParams.set('pay_flow', flow);
-    const state = flow === 'register' ? `register_${Date.now()}` : `payauth_${Date.now()}`;
+    const state = flow === 'register' ? `register_${Date.now()}` : `pay_openid_${Date.now()}`;
     const scope = flow === 'register' ? 'snsapi_userinfo' : 'snsapi_base';
     const wechatAuthUrl = `https://open.weixin.qq.com/connect/oauth2/authorize?appid=${appId}&redirect_uri=${encodeURIComponent(callbackUrl.toString())}&response_type=code&scope=${scope}&state=${state}#wechat_redirect`;
     console.log('[WechatPayAuth] GET redirect → 302 to WeChat for flow:', flow);
@@ -97,8 +107,7 @@ serve(async (req) => {
  * 生成微信授权 URL
  * 固定回调到 /pay-entry，由 pay-entry 中转处理
  * 
- * 对于注册场景（flow=register），使用 snsapi_userinfo 以获取用户头像昵称
- * 对于其他场景，使用 snsapi_base 静默授权
+ * 支付场景只获取 openId，使用 snsapi_base；显式 register flow 仍用于注册获取头像昵称。
  */
 function generateAuthUrl(redirectUri: string, flow?: string): Response {
   const appId = Deno.env.get('WECHAT_APP_ID');
@@ -119,10 +128,8 @@ function generateAuthUrl(redirectUri: string, flow?: string): Response {
     callbackUrl.searchParams.set('pay_flow', flow);
   }
 
-  // state 用于防止 CSRF，同时携带 flow 信息以便回调时识别
-  const state = flow === 'register' ? `register_${Date.now()}` : `payauth_${Date.now()}`;
+  const state = flow === 'register' ? `register_${Date.now()}` : `pay_openid_${Date.now()}`;
 
-  // 注册场景使用 snsapi_userinfo 获取用户信息，其他场景使用 snsapi_base 静默授权
   const scope = flow === 'register' ? 'snsapi_userinfo' : 'snsapi_base';
   const wechatAuthUrl = `https://open.weixin.qq.com/connect/oauth2/authorize?appid=${appId}&redirect_uri=${encodeURIComponent(callbackUrl.toString())}&response_type=code&scope=${scope}&state=${state}#wechat_redirect`;
 
@@ -244,11 +251,11 @@ async function ensureUserFromOpenId(openId: string, unionId?: string): Promise<R
     if (authError) {
       console.error('[WechatPayAuth] Error creating miniprogram user:', authError);
       
-      // 通过邮箱精准查找用户（替代 listUsers 全量拉取）
-      const { data: existingUserData, error: getUserError } = await supabase.auth.admin.getUserByEmail(tempEmail);
+      // 通过邮箱查找用户（兼容当前 auth admin SDK）
+      const { user: existingUser, error: getUserError } = await findAuthUserByEmail(supabase, tempEmail);
       
-      if (!getUserError && existingUserData?.user) {
-        userId = existingUserData.user.id;
+      if (!getUserError && existingUser) {
+        userId = existingUser.id;
         console.log('[WechatPayAuth] Found existing user by email:', userId);
       } else {
         console.error('[WechatPayAuth] getUserByEmail failed:', getUserError);
@@ -627,11 +634,11 @@ async function exchangeCodeAndEnsureUser(code: string, state?: string): Promise<
       // 如果用户已存在（可能之前通过其他方式创建），尝试获取用户
       console.error('[WechatPayAuth] Error creating user:', authError);
       
-      // 通过邮箱精准查找用户（替代 listUsers 全量拉取）
-      const { data: existingUserData, error: getUserError } = await supabase.auth.admin.getUserByEmail(tempEmail);
+      // 通过邮箱查找用户（兼容当前 auth admin SDK）
+      const { user: existingUser, error: getUserError } = await findAuthUserByEmail(supabase, tempEmail);
       
-      if (!getUserError && existingUserData?.user) {
-        userId = existingUserData.user.id;
+      if (!getUserError && existingUser) {
+        userId = existingUser.id;
         console.log('[WechatPayAuth] Found existing user by email:', userId);
       } else {
         console.error('[WechatPayAuth] getUserByEmail failed:', getUserError);

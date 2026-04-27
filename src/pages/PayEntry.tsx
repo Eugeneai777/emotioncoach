@@ -91,10 +91,9 @@ export default function PayEntry() {
       console.log('[PayEntry] authState:', authState);
 
       try {
-        // 调用新的 wechat-pay-auth 函数换取 openId + tokenHash（自动登录/注册）
-        // 传递 state 参数以便识别是否是注册场景（用于获取用户头像昵称）
+        // 支付 openId 授权只换取 openId，不创建/切换登录态；登录/注册由独立授权链路处理。
         const { data, error } = await supabase.functions.invoke('wechat-pay-auth', {
-          body: { code: paymentAuthCode, state: authState },
+          body: { code: paymentAuthCode, state: authState, mode: 'openid_only' },
         });
 
         console.log('[PayEntry] wechat-pay-auth response:', data, error);
@@ -118,22 +117,16 @@ export default function PayEntry() {
           return;
         }
 
-        const { openId, tokenHash, isNewUser } = data;
+        const { openId } = data;
 
         // 添加新参数
         target.searchParams.set('payment_openid', openId);
-        if (tokenHash) {
-          target.searchParams.set('payment_token_hash', tokenHash);
-        }
         if (payFlow) {
           target.searchParams.set('pay_flow', payFlow);
         }
         // 通用支付恢复标记
         target.searchParams.set('payment_resume', '1');
         target.searchParams.set('assessment_pay_resume', '1');
-        if (isNewUser) {
-          target.searchParams.set('is_new_user', '1');
-        }
 
         console.log('[PayEntry] Redirecting to:', target.toString());
         
