@@ -174,15 +174,21 @@ const MiniAppContentLab: React.FC = () => {
   const [items, setItems] = useState<ContentTopicItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [giftValidation, setGiftValidation] = useState<GiftValidationResult | null>(null);
+  const { products, refetch: refetchProducts } = useMarketingProducts();
+  const { gifts, refetch: refetchGifts } = useMarketingGifts();
+  const { isAdmin } = useMarketingPoolAdminStatus();
 
   const selectedAudience = useMemo(() => VIDEO_AUDIENCES.find(a => a.id === audienceId) || VIDEO_AUDIENCES[0], [audienceId]);
-  const seedItems = useMemo(() => localSeedItems(sourceType), [sourceType]);
+  const canonicalGifts = useMemo<MiniAppSeedItem[]>(() => gifts, [gifts]);
+  const canonicalGiftNames = useMemo(() => canonicalGifts.map(item => item.productName || item.label), [canonicalGifts]);
+  const canonicalGiftNameSet = useMemo(() => new Set(canonicalGiftNames), [canonicalGiftNames]);
+  const seedItems = useMemo(() => localSeedItems(sourceType, canonicalGifts), [sourceType, canonicalGifts]);
   const selectedSource = MINI_APP_SOURCE_OPTIONS.find(s => s.id === sourceType);
   const selectedStyle = MINI_APP_STYLE_OPTIONS.find(s => s.id === style);
 
   const normalizeItems = (rawItems: ContentTopicItem[]): ContentTopicItem[] => rawItems.map((item, index) => {
     const seed = seedItems.find(seedItem => seedItem.topicId === item.topicId || seedItem.productId === item.productId || seedItem.route === item.route) || seedItems[index % Math.max(seedItems.length, 1)];
-    const canonicalGift = findCanonicalGift(item, seed);
+    const canonicalGift = findCanonicalGift(item, canonicalGifts, seed);
     const productName = canonicalGift?.productName || canonicalGift?.label || '';
     return {
       ...item,
@@ -231,7 +237,7 @@ const MiniAppContentLab: React.FC = () => {
   };
 
   const handleValidateGifts = () => {
-    const result = validateGiftItems(items);
+    const result = validateGiftItems(items, canonicalGifts, canonicalGiftNameSet);
     setGiftValidation(result);
     if (result.issues.length === 0) {
       toast.success('全部通过：所有限时赠品均命中标准赠品池');
@@ -241,9 +247,9 @@ const MiniAppContentLab: React.FC = () => {
   };
 
   const handleRepairGifts = () => {
-    const repairedItems = repairGiftItems(items);
+    const repairedItems = repairGiftItems(items, canonicalGifts);
     setItems(repairedItems);
-    const result = validateGiftItems(repairedItems);
+    const result = validateGiftItems(repairedItems, canonicalGifts, canonicalGiftNameSet);
     setGiftValidation(result);
     toast.success('已按标准赠品池修正赠品名称');
   };
@@ -257,7 +263,7 @@ const MiniAppContentLab: React.FC = () => {
   const exportCsv = () => {
     if (!items.length) return;
     const header = ['痛点', '小红书爆款标题', '核心价值', '产品/工具名', '限时赠品', '专业报告名称', '报告价值', '下一步行动建议', '开场Hook', '私域CTA', '入口'];
-    const rows = items.map(item => [item.painPoint, item.viralTitle, item.value, getGiftProductName(item), getGiftDisplayName(item), item.reportPageName || '', item.aiReportValue, item.actionPlanValue || item.coachReportValue || '', item.hook, item.cta, item.route || ''].map(csvEscape).join(','));
+    const rows = items.map(item => [item.painPoint, item.viralTitle, item.value, getGiftProductName(item, canonicalGifts), getGiftDisplayName(item, canonicalGifts), item.reportPageName || '', item.aiReportValue, item.actionPlanValue || item.coachReportValue || '', item.hook, item.cta, item.route || ''].map(csvEscape).join(','));
     downloadBlob(`\ufeff${header.map(csvEscape).join(',')}\n${rows.join('\n')}`, `mini-app短视频选题库_${Date.now()}.csv`, 'text/csv;charset=utf-8');
     toast.success('CSV 已下载');
   };
@@ -271,7 +277,7 @@ const MiniAppContentLab: React.FC = () => {
       `- 内容来源：${selectedSource?.label}`,
       `- 内容风格：${selectedStyle?.label}`,
       '',
-      ...items.map((item, index) => `## ${index + 1}. ${item.painPoint}\n\n- 痛点：${item.painPoint}\n- 小红书爆款标题：${item.viralTitle}\n- 核心价值：${item.value}\n- 产品/工具名：${getGiftProductName(item) || '-'}\n- 限时赠品：${getGiftDisplayName(item)}\n- 专业报告名称：${item.reportPageName || '-'}\n- 报告价值：${item.aiReportValue}\n- 下一步行动建议：${item.actionPlanValue || item.coachReportValue || '-'}\n- 开场 Hook：${item.hook}\n- CTA：${item.cta}\n- 入口：${item.route || '-'}\n`),
+      ...items.map((item, index) => `## ${index + 1}. ${item.painPoint}\n\n- 痛点：${item.painPoint}\n- 小红书爆款标题：${item.viralTitle}\n- 核心价值：${item.value}\n- 产品/工具名：${getGiftProductName(item, canonicalGifts) || '-'}\n- 限时赠品：${getGiftDisplayName(item, canonicalGifts)}\n- 专业报告名称：${item.reportPageName || '-'}\n- 报告价值：${item.aiReportValue}\n- 下一步行动建议：${item.actionPlanValue || item.coachReportValue || '-'}\n- 开场 Hook：${item.hook}\n- CTA：${item.cta}\n- 入口：${item.route || '-'}\n`),
     ].join('\n');
     downloadBlob(md, `mini-app短视频选题库_${Date.now()}.md`, 'text/markdown;charset=utf-8');
     toast.success('Markdown 已下载');
