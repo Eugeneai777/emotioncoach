@@ -5488,6 +5488,99 @@ export type Database = {
         }
         Relationships: []
       }
+      marketing_gift_pool: {
+        Row: {
+          created_at: string
+          description: string
+          display_order: number
+          gift_display_name: string
+          gift_key: string
+          id: string
+          is_active: boolean
+          label: string
+          product_id: string | null
+          product_name: string
+          report_name: string | null
+          route: string | null
+          source_type: string
+          topic_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string
+          display_order?: number
+          gift_display_name: string
+          gift_key: string
+          id?: string
+          is_active?: boolean
+          label: string
+          product_id?: string | null
+          product_name: string
+          report_name?: string | null
+          route?: string | null
+          source_type?: string
+          topic_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          display_order?: number
+          gift_display_name?: string
+          gift_key?: string
+          id?: string
+          is_active?: boolean
+          label?: string
+          product_id?: string | null
+          product_name?: string
+          report_name?: string | null
+          route?: string | null
+          source_type?: string
+          topic_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      marketing_product_pool: {
+        Row: {
+          category: string
+          created_at: string
+          description: string
+          display_order: number
+          id: string
+          is_active: boolean
+          label: string
+          price: number | null
+          product_key: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          description?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          label: string
+          price?: number | null
+          product_key: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          label?: string
+          price?: number | null
+          product_key?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       marriage_assessment_history: {
         Row: {
           answers: Json | null
