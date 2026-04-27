@@ -799,15 +799,15 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, onCancelled
     setErrorMessage("");
     setJsapiPayDismissed(false);
 
-    let createOrderTimeoutId: ReturnType<typeof window.setTimeout> | null = null;
-    let createOrderSlowTimerId: ReturnType<typeof window.setTimeout> | null = null;
+    let createOrderTimeoutId: number | null = null;
+    let createOrderSlowTimerId: number | null = null;
     let createOrderController: AbortController | null = null;
 
     try {
       // 添加超时控制：小程序 WebView + 微信代理链路偶发超过全局 30s，需给下单更长窗口
       createOrderController = new AbortController();
       const createOrderTimeoutMs = isMiniProgram ? 22000 : 18000;
-      createOrderTimeoutId = setTimeout(() => {
+      createOrderTimeoutId = window.setTimeout(() => {
         try {
           createOrderController?.abort(new Error(`create-wechat-order timeout after ${createOrderTimeoutMs}ms`));
         } catch {
