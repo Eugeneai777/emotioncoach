@@ -251,11 +251,11 @@ async function ensureUserFromOpenId(openId: string, unionId?: string): Promise<R
     if (authError) {
       console.error('[WechatPayAuth] Error creating miniprogram user:', authError);
       
-      // 通过邮箱精准查找用户（替代 listUsers 全量拉取）
-      const { data: existingUserData, error: getUserError } = await supabase.auth.admin.getUserByEmail(tempEmail);
+      // 通过邮箱查找用户（兼容当前 auth admin SDK）
+      const { user: existingUser, error: getUserError } = await findAuthUserByEmail(supabase, tempEmail);
       
-      if (!getUserError && existingUserData?.user) {
-        userId = existingUserData.user.id;
+      if (!getUserError && existingUser) {
+        userId = existingUser.id;
         console.log('[WechatPayAuth] Found existing user by email:', userId);
       } else {
         console.error('[WechatPayAuth] getUserByEmail failed:', getUserError);
@@ -634,11 +634,11 @@ async function exchangeCodeAndEnsureUser(code: string, state?: string): Promise<
       // 如果用户已存在（可能之前通过其他方式创建），尝试获取用户
       console.error('[WechatPayAuth] Error creating user:', authError);
       
-      // 通过邮箱精准查找用户（替代 listUsers 全量拉取）
-      const { data: existingUserData, error: getUserError } = await supabase.auth.admin.getUserByEmail(tempEmail);
+      // 通过邮箱查找用户（兼容当前 auth admin SDK）
+      const { user: existingUser, error: getUserError } = await findAuthUserByEmail(supabase, tempEmail);
       
-      if (!getUserError && existingUserData?.user) {
-        userId = existingUserData.user.id;
+      if (!getUserError && existingUser) {
+        userId = existingUser.id;
         console.log('[WechatPayAuth] Found existing user by email:', userId);
       } else {
         console.error('[WechatPayAuth] getUserByEmail failed:', getUserError);
