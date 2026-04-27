@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { addDays, format } from "date-fns";
 import { EmotionBloomIntroSections } from "@/components/camp/EmotionBloomIntroSections";
 import { IdentityBloomIntroSections } from "@/components/camp/IdentityBloomIntroSections";
 import { setPostAuthRedirect } from "@/lib/postAuthRedirect";
@@ -202,6 +203,72 @@ const CampIntro = () => {
   });
 
   const hasJoinedCamp = !!existingCamp;
+
+  const startEmotionStressCampAndEnter = async () => {
+    if (!user || !campTemplate || campType !== 'emotion_stress_7') return false;
+
+    const { data: activeCamp } = await supabase
+      .from('training_camps')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('camp_type', 'emotion_stress_7')
+      .eq('status', 'active')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (activeCamp?.id) {
+      navigate(`/camp-checkin/${activeCamp.id}`);
+      return true;
+    }
+
+    const today = new Date();
+    const endDate = addDays(today, campTemplate.duration_days - 1);
+    const { data: insertedCamps, error } = await supabase
+      .from('training_camps')
+      .insert({
+        user_id: user.id,
+        camp_name: campTemplate.camp_name,
+        camp_type: 'emotion_stress_7',
+        duration_days: campTemplate.duration_days,
+        start_date: format(today, 'yyyy-MM-dd'),
+        end_date: format(endDate, 'yyyy-MM-dd'),
+        current_day: 0,
+        completed_days: 0,
+        check_in_dates: [],
+        status: 'active',
+      })
+      .select('id');
+
+    if (error) {
+      if (error.code === '23505') {
+        const { data: existingAfterConflict } = await supabase
+          .from('training_camps')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('camp_type', 'emotion_stress_7')
+          .eq('status', 'active')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (existingAfterConflict?.id) {
+          navigate(`/camp-checkin/${existingAfterConflict.id}`);
+          return true;
+        }
+      }
+      throw error;
+    }
+
+    await supabase.from('profiles').update({ preferred_coach: 'emotion' }).eq('id', user.id);
+
+    if (insertedCamps?.[0]?.id) {
+      toast.success("训练营已开启，开始训练吧！");
+      navigate(`/camp-checkin/${insertedCamps[0].id}`);
+      return true;
+    }
+
+    return false;
+  };
 
   if (isLoading) {
     return (
