@@ -219,9 +219,11 @@ serve(async (req) => {
     }
 
     let reusedMiniProgramOrderNo: string | undefined;
-    // 🔧 小程序支付/前端明确要求新单时，一律不复用 pending 订单：
-    // 重新发起前先结束旧 pending，避免二次点击命中旧 prepay_id / 旧 out_trade_no
-    const skipReuse = payType === 'miniprogram' || forceNewOrder;
+    // 🔧 JSAPI/小程序支付/前端明确要求新单时，一律不复用 pending 订单：
+    // 微信侧同一个 out_trade_no 的请求参数必须与首次完全一致，JSAPI 二次请求会因
+    // time_expire、description 等细微变化触发“请求重入时，参数与首次请求时不一致”。
+    // 所以重新发起前先结束旧 pending，再用全新 orderNo 创建微信订单。
+    const skipReuse = payType === 'jsapi' || payType === 'miniprogram' || forceNewOrder;
     if (skipReuse) {
       console.log('[CreateOrder] fresh-order mode → cancelling all pending & creating fresh order for user:', finalUserId, 'package:', packageKey, 'payType:', payType, 'forceNewOrder:', forceNewOrder);
       if (finalUserId && finalUserId !== 'guest') {
