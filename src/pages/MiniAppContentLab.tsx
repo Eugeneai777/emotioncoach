@@ -525,6 +525,8 @@ const MiniAppContentLab: React.FC = () => {
                       <TableRow>
                         <TableHead className="min-w-44">痛点</TableHead>
                         <TableHead className="min-w-56">小红书爆款标题</TableHead>
+                        {contentFormat === 'xhs-article' && <TableHead className="min-w-56">图文稿</TableHead>}
+                        {contentFormat === 'xhs-article' && <TableHead className="min-w-48">标签</TableHead>}
                         <TableHead className="min-w-48">核心价值</TableHead>
                         <TableHead className="min-w-40">产品/工具名</TableHead>
                         <TableHead className="min-w-56">限时赠品</TableHead>
@@ -540,6 +542,8 @@ const MiniAppContentLab: React.FC = () => {
                         <TableRow key={item.id || index} className={issueMap.has(index) ? 'bg-destructive/5' : undefined}>
                           <TableCell>{item.painPoint}</TableCell>
                           <TableCell className="font-medium">{item.viralTitle}</TableCell>
+                          {contentFormat === 'xhs-article' && <TableCell className="max-w-md whitespace-pre-wrap">{item.xhsBody || '-'}</TableCell>}
+                          {contentFormat === 'xhs-article' && <TableCell>{item.xhsTags?.map(tag => `#${tag.replace(/^#/, '')}`).join(' ') || '-'}</TableCell>}
                           <TableCell>{item.value}</TableCell>
                           <TableCell>{getGiftProductName(item, canonicalGifts) || '-'}</TableCell>
                           <TableCell>{getGiftDisplayName(item, canonicalGifts)}</TableCell>
@@ -548,7 +552,7 @@ const MiniAppContentLab: React.FC = () => {
                           <TableCell>{item.aiReportValue}</TableCell>
                           <TableCell>{item.actionPlanValue || item.coachReportValue || '-'}</TableCell>
                           <TableCell>
-                            <Button variant="ghost" size="sm" onClick={() => copyText(formatItem(item, canonicalGifts))}>复制</Button>
+                            <Button variant="ghost" size="sm" onClick={() => copyText(contentFormat === 'xhs-article' ? formatXhsArticle(item, canonicalGifts) : formatItem(item, canonicalGifts))}>复制</Button>
                           </TableCell>
                         </TableRow>
                       ))}
