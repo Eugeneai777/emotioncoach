@@ -432,7 +432,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
         metadata: { hasOpenId: true },
       });
       setUserOpenId(data.openId);
-      cachePaymentOpenId(data.openId);
+      cachePaymentOpenId(data.openId, user?.id);
       setOpenIdResolved(true);
       setIsExchangingCode(false);
     } catch (err) {
@@ -470,7 +470,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
         userOpenId ||
         propOpenId ||
         getMiniProgramOpenIdFromCache() ||
-        getCachedPaymentOpenId() ||
+        getCachedPaymentOpenId(user?.id) ||
         new URLSearchParams(window.location.search).get('mp_openid') ||
         undefined
       );
@@ -492,7 +492,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
 
       const resolvedOpenId = resolveOpenId();
       if (resolvedOpenId) {
-        cachePaymentOpenId(resolvedOpenId);
+        cachePaymentOpenId(resolvedOpenId, user?.id);
         setUserOpenId(resolvedOpenId);
         setOpenIdResolved(true);
         return resolvedOpenId;
@@ -520,7 +520,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
         } catch {
           // ignore
         }
-        cachePaymentOpenId(openId);
+        cachePaymentOpenId(openId, user?.id);
         setUserOpenId(openId);
         setOpenIdResolved(true);
         setIsRedirectingForOpenId(false);
@@ -554,12 +554,12 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
         ? (propOpenId || mpOpenIdFromUrl || cachedMpOpenId)
         : (propOpenId || urlOpenId);
 
-      const cachedOpenId = getCachedPaymentOpenId();
+      const cachedOpenId = getCachedPaymentOpenId(user?.id);
       if (existingOpenId || cachedOpenId) {
         const resolvedId = existingOpenId || cachedOpenId!;
         console.log('[Payment] Using existing openId:', propOpenId ? 'from props' : (isMiniProgram ? 'from mp_openid' : (existingOpenId ? 'from URL' : 'from cache')));
         setUserOpenId(resolvedId);
-        cachePaymentOpenId(resolvedId);
+        cachePaymentOpenId(resolvedId, user?.id);
         setOpenIdResolved(true);
         setIsRedirectingForOpenId(false);
         setIsExchangingCode(false);
@@ -591,14 +591,14 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
           window.setTimeout(() => {
             const resolvedId =
               getMiniProgramOpenIdFromCache() ||
-              getCachedPaymentOpenId() ||
+              getCachedPaymentOpenId(user?.id) ||
               new URLSearchParams(window.location.search).get('mp_openid') ||
               undefined;
 
             if (resolvedId) {
               console.log('[Payment] MiniProgram: received openId after native request');
               setUserOpenId(resolvedId);
-              cachePaymentOpenId(resolvedId);
+              cachePaymentOpenId(resolvedId, user?.id);
             } else {
               console.warn('[Payment] MiniProgram: openId request timed out, falling back to native pay page');
             }
@@ -633,7 +633,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
           if (mapping?.openid) {
             console.log('[Payment] Found user openId from database');
             setUserOpenId(mapping.openid);
-            cachePaymentOpenId(mapping.openid);
+            cachePaymentOpenId(mapping.openid, user.id);
             setOpenIdResolved(true);
             return;
           }
@@ -666,7 +666,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     if (!open) return;
 
     const recoverFromAuthRedirectState = () => {
-      const resolvedOpenId = propOpenId || getPaymentOpenIdFromUrl() || getCachedPaymentOpenId();
+      const resolvedOpenId = propOpenId || getPaymentOpenIdFromUrl() || getCachedPaymentOpenId(user?.id);
       if (!resolvedOpenId) return;
 
       if (isRedirectingForOpenId || isExchangingCode || !openIdResolved) {
@@ -674,7 +674,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
       }
 
       setUserOpenId(resolvedOpenId);
-      cachePaymentOpenId(resolvedOpenId);
+      cachePaymentOpenId(resolvedOpenId, user?.id);
       setOpenIdResolved(true);
       setIsRedirectingForOpenId(false);
       setIsExchangingCode(false);
@@ -755,7 +755,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     // 🆕 清理 sessionStorage 防抖标记（resetState 中补漏，避免二次点击跳过授权卡死）
     sessionStorage.removeItem('pay_auth_in_progress');
     // 🆕 保留 sessionStorage 中缓存的 openId，防止循环授权
-    const cachedId = propOpenId || urlOpenId || getCachedPaymentOpenId();
+    const cachedId = propOpenId || urlOpenId || getCachedPaymentOpenId(user?.id);
     setUserOpenId(cachedId);
     setOpenIdResolved(!!cachedId); // 如果有缓存的 openId，直接标记为已解析
     setIsRedirectingForOpenId(false);
