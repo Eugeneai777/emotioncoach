@@ -171,7 +171,9 @@ ${JSON.stringify(seedItems, null, 2)}
     if (!Array.isArray(parsed.items)) return jsonResponse({ error: "AI返回缺少 items 列表" }, 500);
 
     return jsonResponse({
-      items: parsed.items.slice(0, count).map((item: any, index: number) => ({
+      items: parsed.items.slice(0, count).map((item: any, index: number) => {
+        const voiceover = includeVoiceover ? buildVoiceoverScript(item) : { title: '', script: '' };
+        return {
         painPoint: String(item.painPoint || '').slice(0, 120),
         value: String(item.value || '').slice(0, 140),
         giftProductName: String(item.giftProductName || item.productName || '').slice(0, 80),
@@ -190,14 +192,15 @@ ${JSON.stringify(seedItems, null, 2)}
         xhsCarouselPages: Array.isArray(item.xhsCarouselPages) ? item.xhsCarouselPages.slice(0, 8).map((v: unknown) => String(v).slice(0, 140)) : [],
         xhsTags: Array.isArray(item.xhsTags) ? item.xhsTags.slice(0, 12).map((v: unknown) => String(v).replace(/^#/, '').slice(0, 30)) : [],
         xhsCommentGuide: String(item.xhsCommentGuide || item.commentGuide || '').slice(0, 160),
-        voiceoverTitle: String(item.voiceoverTitle || item.viralTitle || '').slice(0, 100),
-        voiceoverScript: String(item.voiceoverScript || '').slice(0, 2200),
+        voiceoverTitle: String(item.voiceoverTitle || voiceover.title || '').slice(0, 100),
+        voiceoverScript: String(item.voiceoverScript || voiceover.script || '').slice(0, 2200),
         voiceoverShots: Array.isArray(item.voiceoverShots) ? item.voiceoverShots.slice(0, 8).map((v: unknown) => String(v).slice(0, 140)) : [],
         route: typeof item.route === 'string' ? item.route : '',
         topicId: typeof item.topicId === 'string' ? item.topicId : '',
         productId: typeof item.productId === 'string' ? item.productId : '',
         id: `ai-${Date.now()}-${index}`,
-      })),
+        };
+      }),
     });
   } catch (e) {
     console.error("mini-app-content-ai error:", e);
