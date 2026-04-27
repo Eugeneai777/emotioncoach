@@ -499,6 +499,15 @@ const MiniAppContentLab: React.FC = () => {
             ))}
           </CardContent>
         </Card>
+
+        <Card>
+          <CardHeader className="pb-3"><CardTitle className="text-base">标准赠品池</CardTitle></CardHeader>
+          <CardContent className="flex flex-wrap gap-2">
+            {MINI_APP_CANONICAL_GIFTS.map(gift => (
+              <Badge key={gift.id} variant="secondary">{gift.productName || gift.label}</Badge>
+            ))}
+          </CardContent>
+        </Card>
       </main>
     </div>
   );
