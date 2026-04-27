@@ -6,6 +6,17 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
+async function findAuthUserByEmail(supabase: any, email: string) {
+  for (let page = 1; page <= 5; page += 1) {
+    const { data, error } = await supabase.auth.admin.listUsers({ page, perPage: 1000 });
+    if (error) return { user: null, error };
+    const user = data?.users?.find((item: any) => item.email?.toLowerCase() === email.toLowerCase());
+    if (user) return { user, error: null };
+    if (!data?.users || data.users.length < 1000) break;
+  }
+  return { user: null, error: null };
+}
+
 /**
  * 微信支付前置认证（仅微信浏览器使用）
  * 
