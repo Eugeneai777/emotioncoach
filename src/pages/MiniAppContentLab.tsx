@@ -173,11 +173,24 @@ const formatItem = (item: ContentTopicItem, canonicalGifts: MiniAppSeedItem[]) =
   item.route ? `入口：${item.route}` : '',
 ].filter(Boolean).join('\n');
 
+const formatXhsArticle = (item: ContentTopicItem, canonicalGifts: MiniAppSeedItem[]) => [
+  `封面标题：${item.xhsCoverTitle || item.viralTitle}`,
+  `爆款标题：${item.viralTitle}`,
+  '',
+  item.xhsBody || [item.hook, item.value, getGiftDisplayName(item, canonicalGifts), item.cta].filter(Boolean).join('\n\n'),
+  '',
+  item.xhsCarouselPages?.length ? `卡片页建议：\n${item.xhsCarouselPages.map((page, index) => `${index + 1}. ${page}`).join('\n')}` : '',
+  item.xhsTags?.length ? `标签：${item.xhsTags.map(tag => `#${tag.replace(/^#/, '')}`).join(' ')}` : '',
+  item.xhsCommentGuide ? `评论/私信引导：${item.xhsCommentGuide}` : '',
+  `限时赠品：${getGiftDisplayName(item, canonicalGifts)}`,
+].filter(Boolean).join('\n');
+
 const MiniAppContentLab: React.FC = () => {
   const navigate = useNavigate();
   const [audienceId, setAudienceId] = useState('general');
   const [sourceType, setSourceType] = useState<MiniAppSourceType>('mini-scenes');
   const [style, setStyle] = useState<MiniAppContentStyle>('xiaohongshu');
+  const [contentFormat, setContentFormat] = useState<MiniAppContentFormat>('video');
   const [count, setCount] = useState('20');
   const [items, setItems] = useState<ContentTopicItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -193,6 +206,7 @@ const MiniAppContentLab: React.FC = () => {
   const seedItems = useMemo(() => localSeedItems(sourceType, canonicalGifts), [sourceType, canonicalGifts]);
   const selectedSource = MINI_APP_SOURCE_OPTIONS.find(s => s.id === sourceType);
   const selectedStyle = MINI_APP_STYLE_OPTIONS.find(s => s.id === style);
+  const selectedContentFormat = MINI_APP_CONTENT_FORMAT_OPTIONS.find(s => s.id === contentFormat);
 
   const normalizeItems = (rawItems: ContentTopicItem[]): ContentTopicItem[] => rawItems.map((item, index) => {
     const seed = seedItems.find(seedItem => seedItem.topicId === item.topicId || seedItem.productId === item.productId || seedItem.route === item.route) || seedItems[index % Math.max(seedItems.length, 1)];
