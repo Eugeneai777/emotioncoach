@@ -799,8 +799,8 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, onCancelled
     setErrorMessage("");
     setJsapiPayDismissed(false);
 
-    let createOrderTimeoutId: ReturnType<typeof setTimeout> | null = null;
-    let createOrderSlowTimerId: ReturnType<typeof setTimeout> | null = null;
+    let createOrderTimeoutId: ReturnType<typeof window.setTimeout> | null = null;
+    let createOrderSlowTimerId: ReturnType<typeof window.setTimeout> | null = null;
     let createOrderController: AbortController | null = null;
 
     try {
