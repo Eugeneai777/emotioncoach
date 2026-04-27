@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertTriangle, ArrowLeft, CheckCircle2, Clipboard, Download, FileText, Loader2, ShieldCheck, Sparkles, Table2, Wand2, Video } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, CheckCircle2, Clipboard, Download, FileText, Hash, Images, Loader2, MessageCircle, ShieldCheck, Sparkles, Table2, Wand2, Video } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -193,6 +193,7 @@ const MiniAppContentLab: React.FC = () => {
   const [contentFormat, setContentFormat] = useState<MiniAppContentFormat>('video');
   const [count, setCount] = useState('20');
   const [items, setItems] = useState<ContentTopicItem[]>([]);
+  const [previewIndex, setPreviewIndex] = useState(0);
   const [loading, setLoading] = useState(false);
   const [giftValidation, setGiftValidation] = useState<GiftValidationResult | null>(null);
   const { products, refetch: refetchProducts } = useMarketingProducts();
@@ -207,6 +208,7 @@ const MiniAppContentLab: React.FC = () => {
   const selectedSource = MINI_APP_SOURCE_OPTIONS.find(s => s.id === sourceType);
   const selectedStyle = MINI_APP_STYLE_OPTIONS.find(s => s.id === style);
   const selectedContentFormat = MINI_APP_CONTENT_FORMAT_OPTIONS.find(s => s.id === contentFormat);
+  const previewItem = items[Math.min(previewIndex, Math.max(items.length - 1, 0))];
 
   const normalizeItems = (rawItems: ContentTopicItem[]): ContentTopicItem[] => rawItems.map((item, index) => {
     const seed = seedItems.find(seedItem => seedItem.topicId === item.topicId || seedItem.productId === item.productId || seedItem.route === item.route) || seedItems[index % Math.max(seedItems.length, 1)];
@@ -241,6 +243,7 @@ const MiniAppContentLab: React.FC = () => {
       if (data?.error) throw new Error(data.error);
       if (!Array.isArray(data?.items)) throw new Error('AI返回数据格式异常');
       setItems(normalizeItems(data.items));
+      setPreviewIndex(0);
       setGiftValidation(null);
       toast.success(`已生成 ${data.items.length} 条${contentFormat === 'xhs-article' ? '小红书图文稿' : '短视频选题'}`);
     } catch (err: any) {
@@ -467,11 +470,89 @@ const MiniAppContentLab: React.FC = () => {
             </CardContent>
           </Card>
         ) : (
-          <Tabs defaultValue="cards" className="space-y-4">
+          <Tabs defaultValue={contentFormat === 'xhs-article' ? 'preview' : 'cards'} className="space-y-4">
             <TabsList>
+              {contentFormat === 'xhs-article' && <TabsTrigger value="preview">成稿预览</TabsTrigger>}
               <TabsTrigger value="cards">卡片视图</TabsTrigger>
               <TabsTrigger value="table">表格视图</TabsTrigger>
             </TabsList>
+            {contentFormat === 'xhs-article' && previewItem && (
+              <TabsContent value="preview">
+                <Card className="overflow-hidden border-primary/15 bg-card/90 shadow-lg shadow-primary/5 backdrop-blur">
+                  <div className="h-1.5 bg-gradient-to-r from-primary via-accent to-secondary" />
+                  <CardHeader className="pb-4">
+                    <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                      <div className="min-w-0 space-y-2">
+                        <CardTitle className="text-base">小红书实时排版预览</CardTitle>
+                        <p className="text-sm text-muted-foreground">切换任意一条结果，查看发布前的完整成稿版式。</p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {items.map((item, index) => (
+                          <Button
+                            key={item.id || index}
+                            variant={previewIndex === index ? 'default' : 'outline'}
+                            size="sm"
+                            className={previewIndex === index ? 'bg-primary text-primary-foreground' : 'bg-background/70'}
+                            onClick={() => setPreviewIndex(index)}
+                          >
+                            #{index + 1}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="grid gap-4 lg:grid-cols-[0.92fr_1.08fr]">
+                    <section className="overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/15 via-accent/10 to-secondary/60 shadow-sm">
+                      <div className="flex min-h-[360px] flex-col justify-between p-5 sm:p-6">
+                        <div className="flex items-center justify-between gap-2 text-xs text-primary">
+                          <Badge className="bg-primary/15 text-primary hover:bg-primary/15">封面标题</Badge>
+                          <span>#{previewIndex + 1}</span>
+                        </div>
+                        <h2 className="py-8 text-3xl font-black leading-tight text-foreground sm:text-4xl">
+                          {previewItem.xhsCoverTitle || previewItem.viralTitle}
+                        </h2>
+                        <div className="rounded-xl border border-background/70 bg-background/75 p-3 text-sm text-foreground shadow-sm">
+                          <span className="font-semibold text-primary">限时赠品：</span>{getGiftDisplayName(previewItem, canonicalGifts)}
+                        </div>
+                      </div>
+                    </section>
+
+                    <section className="space-y-4 rounded-2xl border border-border/70 bg-background/75 p-4 shadow-sm">
+                      <div className="rounded-xl bg-secondary/45 p-4">
+                        <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground"><FileText className="h-4 w-4 text-primary" />正文</div>
+                        <p className="whitespace-pre-wrap text-sm leading-7 text-foreground">{previewItem.xhsBody || [previewItem.hook, previewItem.value, previewItem.cta].filter(Boolean).join('\n\n')}</p>
+                      </div>
+                      <div className="rounded-xl border border-primary/15 bg-primary/5 p-4">
+                        <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground"><Images className="h-4 w-4 text-primary" />卡片页</div>
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          {(previewItem.xhsCarouselPages?.length ? previewItem.xhsCarouselPages : ['封面：强化痛点与结果感', `共鸣：${previewItem.painPoint}`, `方法：${previewItem.value}`, `领取：${getGiftDisplayName(previewItem, canonicalGifts)}`]).map((page, pageIndex) => (
+                            <div key={pageIndex} className="rounded-lg border border-background/80 bg-card/80 p-3 text-sm shadow-sm">
+                              <Badge variant="secondary" className="mb-2">第{pageIndex + 1}页</Badge>
+                              <p className="leading-relaxed text-foreground">{page}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="rounded-xl border border-accent/25 bg-accent/10 p-4">
+                        <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground"><Hash className="h-4 w-4 text-primary" />标签</div>
+                        <div className="flex flex-wrap gap-2">
+                          {(previewItem.xhsTags?.length ? previewItem.xhsTags : ['自我成长', '情绪管理', '有劲AI']).map(tag => <Badge key={tag} variant="secondary">#{tag.replace(/^#/, '')}</Badge>)}
+                        </div>
+                      </div>
+                      <div className="rounded-xl border border-primary/20 bg-primary/10 p-4">
+                        <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground"><MessageCircle className="h-4 w-4 text-primary" />私信引导</div>
+                        <p className="text-sm leading-relaxed text-foreground">{previewItem.xhsCommentGuide || previewItem.cta}</p>
+                      </div>
+                      <div className="flex flex-wrap gap-2 border-t pt-4">
+                        <Button size="sm" onClick={() => copyText(formatXhsArticle(previewItem, canonicalGifts), '预览成稿已复制')}><Clipboard className="mr-2 h-4 w-4" />复制成稿</Button>
+                        <Button variant="outline" size="sm" onClick={() => copyText(previewItem.xhsCoverTitle || previewItem.viralTitle, '封面标题已复制')}>复制封面标题</Button>
+                        {!!previewItem.xhsTags?.length && <Button variant="outline" size="sm" onClick={() => copyText(previewItem.xhsTags!.map(tag => `#${tag.replace(/^#/, '')}`).join(' '), '标签已复制')}>复制标签</Button>}
+                      </div>
+                    </section>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            )}
             <TabsContent value="cards" className="grid gap-3 md:grid-cols-2">
               {items.map((item, index) => (
                 <Card key={item.id || index} className={`overflow-hidden bg-card/90 shadow-sm transition-shadow hover:shadow-md ${issueMap.has(index) ? 'border-destructive/60' : 'border-primary/10'}`}>
