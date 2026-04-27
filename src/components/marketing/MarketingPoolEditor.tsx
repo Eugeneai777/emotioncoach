@@ -14,6 +14,7 @@ import { supabase } from '@/integrations/supabase/client';
 import type { MarketingGift, MarketingProduct } from '@/hooks/useMarketingPools';
 import { MINI_APP_CANONICAL_GIFTS, type MiniAppSeedItem, type MiniAppSourceType } from '@/config/miniAppContentMap';
 import { usePackages } from '@/hooks/usePackages';
+import { CONVERSION_PRODUCTS, type ConversionProduct } from '@/config/videoScriptConfig';
 
 interface MarketingPoolEditorProps {
   type: 'product' | 'gift';
@@ -134,6 +135,33 @@ export function MarketingPoolEditor({ type, products = [], gifts = [], onSaved }
 
   const nextProductOrder = () => String((products.reduce((max, item) => Math.max(max, item.display_order || 0), 0) || 0) + 10);
   const nextGiftOrder = () => String((gifts.reduce((max, item) => Math.max(max, item.display_order || 0), 0) || 0) + 10);
+
+  const productPriceLabel = (product: ConversionProduct) => {
+    if (product.price === undefined || product.price === null) return product.category === '引流' ? '免费' : '未定价';
+    return product.price > 0 ? `¥${product.price}` : '免费';
+  };
+
+  const saveProductTemplate = async (product: ConversionProduct) => {
+    setSaving(true);
+    const { error } = await supabase.from('marketing_product_pool' as any).upsert({
+      product_key: product.id,
+      label: product.label,
+      description: product.description,
+      price: product.price ?? null,
+      category: product.category,
+      display_order: products.find(item => item.product_key === product.id)?.display_order || Number(nextProductOrder()),
+      is_active: true,
+    }, { onConflict: 'product_key' });
+    setSaving(false);
+
+    if (error) {
+      toast.error(`保存失败：${error.message}`);
+      return;
+    }
+
+    toast.success('已加入产品池并同步');
+    onSaved();
+  };
 
   const giftPriceLabel = (gift: MiniAppSeedItem) => {
     const price = packages.find(pkg => pkg.package_key === gift.productId)?.price;
