@@ -414,9 +414,9 @@ const MiniAppContentLab: React.FC = () => {
         )}
 
         {items.length === 0 ? (
-          <Card className="border-dashed">
+          <Card className="border-dashed border-primary/25 bg-card/75 backdrop-blur">
             <CardContent className="flex min-h-[260px] flex-col items-center justify-center gap-3 text-center">
-              <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 text-primary shadow-sm">
                 <Sparkles className="h-7 w-7" />
               </div>
               <div>
@@ -433,23 +433,24 @@ const MiniAppContentLab: React.FC = () => {
             </TabsList>
             <TabsContent value="cards" className="grid gap-3 md:grid-cols-2">
               {items.map((item, index) => (
-                <Card key={item.id || index} className={`overflow-hidden ${issueMap.has(index) ? 'border-destructive/60' : ''}`}>
+                <Card key={item.id || index} className={`overflow-hidden bg-card/90 shadow-sm transition-shadow hover:shadow-md ${issueMap.has(index) ? 'border-destructive/60' : 'border-primary/10'}`}>
+                  <div className={`h-1 ${issueMap.has(index) ? 'bg-destructive' : 'bg-gradient-to-r from-primary via-accent to-secondary'}`} />
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between gap-3">
-                      <CardTitle className="text-base leading-snug">{item.painPoint}</CardTitle>
+                      <CardTitle className="text-base leading-snug text-foreground">{item.painPoint}</CardTitle>
                       <div className="flex shrink-0 flex-col items-end gap-1">
-                        <Badge variant="outline">{index + 1}</Badge>
+                        <Badge className="bg-primary/10 text-primary hover:bg-primary/10">#{index + 1}</Badge>
                         {giftValidation && <Badge variant={issueMap.has(index) ? 'destructive' : 'secondary'}>{issueMap.has(index) ? '赠品异常' : '赠品已校验'}</Badge>}
                       </div>
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-3 text-sm">
-                    <div className="grid gap-2">
-                      <p><span className="font-semibold text-foreground">痛点：</span><span className="text-muted-foreground">{item.painPoint}</span></p>
-                      <p><span className="font-semibold text-foreground">爆款标题：</span><span className="text-muted-foreground">{item.viralTitle}</span></p>
-                      <p><span className="font-semibold text-foreground">价值：</span><span className="text-muted-foreground">{item.value}</span></p>
+                    <div className="grid gap-2.5">
+                      <div className="rounded-lg bg-secondary/45 p-3"><span className="font-semibold text-foreground">爆款标题：</span><span className="text-foreground">{item.viralTitle}</span></div>
+                      <p><span className="font-semibold text-primary">痛点：</span><span className="text-muted-foreground">{item.painPoint}</span></p>
+                      <p><span className="font-semibold text-primary">价值：</span><span className="text-muted-foreground">{item.value}</span></p>
                       <p><span className="font-semibold text-foreground">产品/工具名：</span><span className="text-muted-foreground">{getGiftProductName(item, canonicalGifts) || '-'}</span></p>
-                      <p><span className="font-semibold text-foreground">限时赠品：</span><span className="text-muted-foreground">{getGiftDisplayName(item, canonicalGifts)}</span></p>
+                      <div className="rounded-lg border border-accent/25 bg-accent/10 p-3"><span className="font-semibold text-foreground">限时赠品：</span><span className="text-foreground">{getGiftDisplayName(item, canonicalGifts)}</span></div>
                       <p><span className="font-semibold text-foreground">专业报告名称：</span><span className="text-muted-foreground">{item.reportPageName || '-'}</span></p>
                       <p><span className="font-semibold text-foreground">报告价值：</span><span className="text-muted-foreground">{item.aiReportValue}</span></p>
                       {(item.actionPlanValue || item.coachReportValue) && <p><span className="font-semibold text-foreground">下一步行动建议：</span><span className="text-muted-foreground">{item.actionPlanValue || item.coachReportValue}</span></p>}
