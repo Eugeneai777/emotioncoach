@@ -511,6 +511,11 @@ const CampIntro = () => {
             onClick={() => {
               if (hasJoinedCamp && existingCamp) {
                 navigate(`/camp-checkin/${existingCamp.id}`);
+              } else if (campType === 'emotion_stress_7' && hasPurchased) {
+                startEmotionStressCampAndEnter().catch((error) => {
+                  console.error('Start emotion stress camp error:', error);
+                  toast.error('开启训练营失败，请稍后重试');
+                });
               } else if (campTemplate.price && campTemplate.price > 0 && !hasPurchased) {
                 // 付费训练营且未购买：先检查登录
                 if (!user) {
@@ -539,8 +544,8 @@ const CampIntro = () => {
               ? '加载中...'
               : hasJoinedCamp 
               ? '继续训练' 
-              : hasPurchased 
-              ? '已购买，立即开始' 
+              : hasPurchased
+              ? '开始训练'
               : (campTemplate.price && campTemplate.price > 0)
               ? `立即购买 ¥${campTemplate.price}` 
               : '立即加入训练营'}
@@ -584,6 +589,15 @@ const CampIntro = () => {
           }
           setShowPayDialog(false);
           refetchPurchase();
+          if (campType === 'emotion_stress_7') {
+            try {
+              await startEmotionStressCampAndEnter();
+            } catch (error) {
+              console.error('Auto-start emotion stress camp after payment error:', error);
+              toast.error('开启训练营失败，请稍后重试');
+            }
+            return;
+          }
           toast.success("购买成功！请选择开始日期");
           setShowStartDialog(true);
         }}
