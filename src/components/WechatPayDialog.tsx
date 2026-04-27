@@ -1940,16 +1940,18 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
                         <RefreshCw className="h-3 w-3" />
                         {jsapiRetryReason === 'silent' ? '再次拉起微信支付' : '重新唤起支付'}
                       </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={handleRetry}
-                        className="gap-2"
-                      >
-                        <RefreshCw className="h-3 w-3" />
-                        重新下单
-                      </Button>
+                      {payType !== 'jsapi' && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={handleRetry}
+                          className="gap-2"
+                        >
+                          <RefreshCw className="h-3 w-3" />
+                          重新下单
+                        </Button>
+                      )}
                     </>
                   ) : (
                     <>
@@ -1957,7 +1959,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
                       {status === 'polling' && (
                         <p className="text-xs text-muted-foreground flex items-center justify-center gap-1">
                           <Loader2 className="h-3 w-3 animate-spin" />
-                          支付弹窗已打开，请完成支付
+                          如未弹出支付窗口，请点击下方按钮再次拉起
                         </p>
                       )}
                       <Button
