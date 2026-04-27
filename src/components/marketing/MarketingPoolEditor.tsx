@@ -12,7 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { supabase } from '@/integrations/supabase/client';
 import type { MarketingGift, MarketingProduct } from '@/hooks/useMarketingPools';
-import type { MiniAppSourceType } from '@/config/miniAppContentMap';
+import { MINI_APP_CANONICAL_GIFTS, type MiniAppSeedItem, type MiniAppSourceType } from '@/config/miniAppContentMap';
+import { usePackages } from '@/hooks/usePackages';
 
 interface MarketingPoolEditorProps {
   type: 'product' | 'gift';
@@ -83,6 +84,7 @@ export function MarketingPoolEditor({ type, products = [], gifts = [], onSaved }
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [productForm, setProductForm] = useState<ProductForm>(blankProduct);
   const [giftForm, setGiftForm] = useState<GiftForm>(blankGift);
+  const { data: packages = [] } = usePackages();
 
   const isProduct = type === 'product';
   const title = isProduct ? '编辑转化产品池' : '编辑标准赠品池';
@@ -132,6 +134,41 @@ export function MarketingPoolEditor({ type, products = [], gifts = [], onSaved }
 
   const nextProductOrder = () => String((products.reduce((max, item) => Math.max(max, item.display_order || 0), 0) || 0) + 10);
   const nextGiftOrder = () => String((gifts.reduce((max, item) => Math.max(max, item.display_order || 0), 0) || 0) + 10);
+
+  const giftPriceLabel = (gift: MiniAppSeedItem) => {
+    const price = packages.find(pkg => pkg.package_key === gift.productId)?.price;
+    const fallbackPrice = gift.sourceType === 'assessments' ? 9.9 : 0;
+    const finalPrice = price ?? fallbackPrice;
+    return finalPrice > 0 ? `¥${finalPrice}` : '免费';
+  };
+
+  const saveGiftTemplate = async (gift: MiniAppSeedItem) => {
+    const productName = gift.productName || gift.label;
+    setSaving(true);
+    const { error } = await supabase.from('marketing_gift_pool' as any).upsert({
+      gift_key: gift.id,
+      label: gift.label,
+      product_name: productName,
+      gift_display_name: gift.giftDisplayName || `限时赠送「${productName}」`,
+      description: gift.description,
+      source_type: gift.sourceType,
+      route: gift.route || null,
+      topic_id: gift.topicId || null,
+      product_id: gift.productId || null,
+      report_name: gift.reportName || null,
+      display_order: gifts.find(item => item.gift_key === gift.id)?.display_order || Number(nextGiftOrder()),
+      is_active: true,
+    }, { onConflict: 'gift_key' });
+    setSaving(false);
+
+    if (error) {
+      toast.error(`保存失败：${error.message}`);
+      return;
+    }
+
+    toast.success('已加入赠品池并同步');
+    onSaved();
+  };
 
   const saveProduct = async () => {
     if (!productForm.label.trim()) {
@@ -228,18 +265,40 @@ export function MarketingPoolEditor({ type, products = [], gifts = [], onSaved }
               </div>
             ) : (
               <div className="grid gap-3">
-                <div className="space-y-1"><Label>标准名称</Label><Input value={giftForm.product_name} onChange={e => setGiftForm({ ...giftForm, product_name: e.target.value, label: e.target.value, gift_display_name: `限时赠送「${e.target.value}」` })} /></div>
-                <div className="space-y-1"><Label>展示文案</Label><Input value={giftForm.gift_display_name} onChange={e => setGiftForm({ ...giftForm, gift_display_name: e.target.value })} /></div>
-                <div className="space-y-1"><Label>描述</Label><Textarea value={giftForm.description} onChange={e => setGiftForm({ ...giftForm, description: e.target.value })} /></div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-1"><Label>类型</Label><Select value={giftForm.source_type} onValueChange={value => setGiftForm({ ...giftForm, source_type: value as MiniAppSourceType })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="assessments">专业测评</SelectItem><SelectItem value="daily-tools">日常工具</SelectItem></SelectContent></Select></div>
-                  <div className="flex items-center justify-between rounded-md border px-3 py-2"><Label>启用</Label><Switch checked={giftForm.is_active} onCheckedChange={checked => setGiftForm({ ...giftForm, is_active: checked })} /></div>
+                <div className="space-y-2">
+                  <Label>直接选择测评/工具</Label>
+                  <div className="grid max-h-72 gap-2 overflow-y-auto rounded-md border p-2">
+                    {MINI_APP_CANONICAL_GIFTS.filter(gift => gift.sourceType === 'assessments' || gift.sourceType === 'daily-tools').map(gift => {
+                      const exists = gifts.some(item => item.gift_key === gift.id && item.is_active);
+                      return (
+                        <Button key={gift.id} type="button" variant="outline" className="h-auto justify-between gap-3 whitespace-normal px-3 py-2 text-left" disabled={saving} onClick={() => saveGiftTemplate(gift)}>
+                          <span className="min-w-0">
+                            <span className="block font-medium">{gift.productName || gift.label}</span>
+                            <span className="block text-xs text-muted-foreground">{gift.sourceType === 'assessments' ? '测评' : '工具'} · {giftPriceLabel(gift)}{exists ? ' · 已在池中' : ''}</span>
+                          </span>
+                          <Plus className="h-4 w-4 shrink-0" />
+                        </Button>
+                      );
+                    })}
+                  </div>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-1"><Label>入口</Label><Input value={giftForm.route} onChange={e => setGiftForm({ ...giftForm, route: e.target.value })} /></div>
-                  <div className="space-y-1"><Label>报告名称</Label><Input value={giftForm.report_name} onChange={e => setGiftForm({ ...giftForm, report_name: e.target.value })} /></div>
+                {editingKey && (
+                  <div className="grid gap-3 border-t pt-3">
+                    <div className="space-y-1"><Label>标准名称</Label><Input value={giftForm.product_name} onChange={e => setGiftForm({ ...giftForm, product_name: e.target.value, label: e.target.value, gift_display_name: `限时赠送「${e.target.value}」` })} /></div>
+                    <div className="space-y-1"><Label>展示文案</Label><Input value={giftForm.gift_display_name} onChange={e => setGiftForm({ ...giftForm, gift_display_name: e.target.value })} /></div>
+                    <div className="flex items-center justify-between rounded-md border px-3 py-2"><Label>启用</Label><Switch checked={giftForm.is_active} onCheckedChange={checked => setGiftForm({ ...giftForm, is_active: checked })} /></div>
+                    <Button onClick={saveGift} disabled={saving}>{saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}保存修改</Button>
+                  </div>
+                )}
+                {!editingKey && (
+                  <div className="rounded-md border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+                    共 {MINI_APP_CANONICAL_GIFTS.filter(gift => gift.sourceType === 'assessments').length} 个测评、{MINI_APP_CANONICAL_GIFTS.filter(gift => gift.sourceType === 'daily-tools').length} 个工具；测评默认 ¥9.9，工具默认免费。
+                  </div>
+                )}
+                <div className="hidden">
+                  <Select value={giftForm.source_type} onValueChange={value => setGiftForm({ ...giftForm, source_type: value as MiniAppSourceType })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="assessments">专业测评</SelectItem><SelectItem value="daily-tools">日常工具</SelectItem></SelectContent></Select>
+                  <Textarea value={giftForm.description} onChange={e => setGiftForm({ ...giftForm, description: e.target.value })} />
                 </div>
-                <Button onClick={saveGift} disabled={saving}>{saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}保存并同步</Button>
               </div>
             )}
           </div>
