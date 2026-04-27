@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertTriangle, ArrowLeft, CheckCircle2, Clipboard, Download, FileText, Loader2, ShieldCheck, Sparkles, Table2, Wand2, Video } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, CheckCircle2, Clipboard, Download, FileText, Hash, Images, Loader2, MessageCircle, ShieldCheck, Sparkles, Table2, Wand2, Video } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -193,6 +193,7 @@ const MiniAppContentLab: React.FC = () => {
   const [contentFormat, setContentFormat] = useState<MiniAppContentFormat>('video');
   const [count, setCount] = useState('20');
   const [items, setItems] = useState<ContentTopicItem[]>([]);
+  const [previewIndex, setPreviewIndex] = useState(0);
   const [loading, setLoading] = useState(false);
   const [giftValidation, setGiftValidation] = useState<GiftValidationResult | null>(null);
   const { products, refetch: refetchProducts } = useMarketingProducts();
@@ -207,6 +208,7 @@ const MiniAppContentLab: React.FC = () => {
   const selectedSource = MINI_APP_SOURCE_OPTIONS.find(s => s.id === sourceType);
   const selectedStyle = MINI_APP_STYLE_OPTIONS.find(s => s.id === style);
   const selectedContentFormat = MINI_APP_CONTENT_FORMAT_OPTIONS.find(s => s.id === contentFormat);
+  const previewItem = items[Math.min(previewIndex, Math.max(items.length - 1, 0))];
 
   const normalizeItems = (rawItems: ContentTopicItem[]): ContentTopicItem[] => rawItems.map((item, index) => {
     const seed = seedItems.find(seedItem => seedItem.topicId === item.topicId || seedItem.productId === item.productId || seedItem.route === item.route) || seedItems[index % Math.max(seedItems.length, 1)];
@@ -241,6 +243,7 @@ const MiniAppContentLab: React.FC = () => {
       if (data?.error) throw new Error(data.error);
       if (!Array.isArray(data?.items)) throw new Error('AI返回数据格式异常');
       setItems(normalizeItems(data.items));
+      setPreviewIndex(0);
       setGiftValidation(null);
       toast.success(`已生成 ${data.items.length} 条${contentFormat === 'xhs-article' ? '小红书图文稿' : '短视频选题'}`);
     } catch (err: any) {
