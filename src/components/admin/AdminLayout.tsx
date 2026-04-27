@@ -18,6 +18,7 @@ import CustomerServiceManagement from "./CustomerServiceManagement";
 import CostMonitorDashboard from "./CostMonitorDashboard";
 import OperationsMonitorDashboard from "./OperationsMonitorDashboard";
 import UserAnomalyMonitor from "./UserAnomalyMonitor";
+import UxMonitoringCoverage from "./UxMonitoringCoverage";
 import StabilityMonitor from "./StabilityMonitor";
 import RiskContentMonitor from "./RiskContentMonitor";
 import EmergencyContactsManagement from "./EmergencyContactsManagement";
@@ -104,6 +105,7 @@ export function AdminLayout({ userRole }: AdminLayoutProps) {
                   <Route path="cost-monitor" element={<CostMonitorDashboard />} />
                   <Route path="api-monitor" element={<OperationsMonitorDashboard />} />
                   <Route path="user-anomaly" element={<UserAnomalyMonitor />} />
+                  <Route path="ux-monitoring-coverage" element={<UxMonitoringCoverage />} />
                   <Route path="stability" element={<StabilityMonitor />} />
                   <Route path="risk-content" element={<RiskContentMonitor />} />
                   <Route path="emergency-contacts" element={<EmergencyContactsManagement />} />
