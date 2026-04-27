@@ -502,9 +502,14 @@ serve(async (req) => {
     let fallbackReason: string | undefined;
     
     // 使用代理服务器调用微信API（带重试机制，防止代理服务器偶发超时）
+    // JSAPI/小程序支付是用户正在等待弹出微信支付的强交互链路，不能 15s * 3 长阻塞。
+    // 仅保留一次快速重试；Native/H5 仍保持原有更稳妥的重试窗口。
     if (proxyUrl && proxyToken) {
       console.log('Using proxy server:', proxyUrl);
-      const MAX_RETRIES = 2;
+      const isInteractiveWechatPay = isJsapi || isMiniProgramPay;
+      const MAX_RETRIES = isInteractiveWechatPay ? 1 : 2;
+      const PROXY_TIMEOUT_MS = isInteractiveWechatPay ? 7000 : 15000;
+      const RETRY_DELAY_MS = isInteractiveWechatPay ? 600 : 1000;
       let proxyResponse: Response | null = null;
       let lastProxyError: Error | null = null;
       
@@ -514,7 +519,7 @@ serve(async (req) => {
             console.log(`[CreateOrder] Retry attempt ${attempt}/${MAX_RETRIES} for proxy call`);
           }
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s 超时
+          const timeoutId = setTimeout(() => controller.abort(), PROXY_TIMEOUT_MS);
           proxyResponse = await fetch(`${proxyUrl}/wechat-proxy`, {
             method: 'POST',
             headers: {
@@ -540,8 +545,7 @@ serve(async (req) => {
           lastProxyError = fetchErr;
           console.warn(`[CreateOrder] Proxy call failed (attempt ${attempt + 1}/${MAX_RETRIES + 1}):`, fetchErr.message || fetchErr.code);
           if (attempt < MAX_RETRIES) {
-            // 等待 1s 后重试
-            await new Promise(r => setTimeout(r, 1000));
+            await new Promise(r => setTimeout(r, RETRY_DELAY_MS));
           }
         }
       }

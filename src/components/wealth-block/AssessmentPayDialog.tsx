@@ -176,6 +176,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, onCancelled
   const [pollingTimeout, setPollingTimeout] = useState<boolean>(false);
   const [jsapiPayDismissed, setJsapiPayDismissed] = useState<boolean>(false);
   const [isForceChecking, setIsForceChecking] = useState<boolean>(false);
+  const [createOrderSlow, setCreateOrderSlow] = useState<boolean>(false);
   // 🆕 邀请码入口
   const [showInviteCodeInput, setShowInviteCodeInput] = useState(false);
   const [inviteCode, setInviteCode] = useState("");
@@ -798,20 +799,24 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, onCancelled
     setErrorMessage("");
     setJsapiPayDismissed(false);
 
-    let createOrderTimeoutId: ReturnType<typeof setTimeout> | null = null;
+    let createOrderTimeoutId: number | null = null;
+    let createOrderSlowTimerId: number | null = null;
     let createOrderController: AbortController | null = null;
 
     try {
       // 添加超时控制：小程序 WebView + 微信代理链路偶发超过全局 30s，需给下单更长窗口
       createOrderController = new AbortController();
-      const createOrderTimeoutMs = isMiniProgram ? 60000 : 45000;
-      createOrderTimeoutId = setTimeout(() => {
+      const createOrderTimeoutMs = isMiniProgram ? 22000 : 18000;
+      createOrderTimeoutId = window.setTimeout(() => {
         try {
           createOrderController?.abort(new Error(`create-wechat-order timeout after ${createOrderTimeoutMs}ms`));
         } catch {
           createOrderController?.abort();
         }
       }, createOrderTimeoutMs);
+      createOrderSlowTimerId = window.setTimeout(() => {
+        if (isPaymentSessionActive(sessionId)) setCreateOrderSlow(true);
+      }, 6000);
 
       // 确定支付类型：
       // - 微信浏览器：优先 JSAPI（弹窗）
@@ -872,6 +877,8 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, onCancelled
           },
         });
 
+        if (createOrderSlowTimerId) clearTimeout(createOrderSlowTimerId);
+        setCreateOrderSlow(false);
         if (createOrderTimeoutId) clearTimeout(createOrderTimeoutId);
 
         if (!isPaymentSessionActive(sessionId)) return;
@@ -924,6 +931,8 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, onCancelled
         signal: createOrderController.signal,
       });
 
+      if (createOrderSlowTimerId) clearTimeout(createOrderSlowTimerId);
+      setCreateOrderSlow(false);
       if (createOrderTimeoutId) clearTimeout(createOrderTimeoutId);
 
       if (!isPaymentSessionActive(sessionId)) return;
@@ -1221,6 +1230,8 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, onCancelled
         startPolling(data.orderNo);
       }
     } catch (error: any) {
+      if (createOrderSlowTimerId) clearTimeout(createOrderSlowTimerId);
+      setCreateOrderSlow(false);
       if (createOrderTimeoutId) clearTimeout(createOrderTimeoutId);
       console.error("Create order error:", error);
       const rawMsg: string = error?.message || "";
@@ -1460,6 +1471,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, onCancelled
     setQrCodeDataUrl("");
     setPayUrl("");
     setErrorMessage("");
+    setCreateOrderSlow(false);
     setPollingTimeout(false);
     setJsapiPayDismissed(false);
     setIsForceChecking(false);
@@ -1527,6 +1539,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, onCancelled
     setQrCodeDataUrl("");
     setPayUrl("");
     setErrorMessage("");
+    setCreateOrderSlow(false);
     setPollingTimeout(false);
     setIsForceChecking(false);
     setMpLaunchFailed(false);
@@ -1740,6 +1753,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, onCancelled
       setQrCodeDataUrl("");
       setPayUrl("");
       setErrorMessage("");
+      setCreateOrderSlow(false);
       setPollingTimeout(false);
       setJsapiPayDismissed(false);
       setIsForceChecking(false);
@@ -1776,21 +1790,25 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, onCancelled
             </div>
           )}
 
-          {/* 创建订单中 - 小程序环境不显示等待消息 */}
+          {/* 创建订单中 */}
           {!isRedirectingForOpenId && (status === "idle" || status === "creating") && !isMiniProgram && (
             <div className="flex flex-col items-center py-8">
               <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground text-center">
                 {status === "idle" && shouldWaitForOpenId && !openIdResolved
                   ? "正在初始化…"
-                  : "正在创建订单…"}
+                  : createOrderSlow
+                    ? "微信支付通道响应较慢，正在重试…"
+                    : "正在创建安全订单…"}
               </p>
+              {createOrderSlow && <p className="text-xs text-muted-foreground mt-2 text-center">请保持页面打开，异常时可稍后重新发起</p>}
             </div>
           )}
-          {/* 小程序环境：仅显示简化的加载动画 */}
+          {/* 小程序环境 */}
           {!isRedirectingForOpenId && (status === "idle" || status === "creating") && isMiniProgram && (
             <div className="flex flex-col items-center py-8">
               <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
+              {createOrderSlow && <p className="text-xs text-muted-foreground text-center">微信支付通道响应较慢，正在重试…</p>}
             </div>
           )}
 
