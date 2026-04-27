@@ -6,6 +6,7 @@ import { Lock, MessageCircle, Quote, Users, Wind, BookOpen, Heart, Clock, Gem, C
 import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
 import { usePaymentCallback } from "@/hooks/usePaymentCallback";
 import { usePackageByKey } from "@/hooks/usePackages";
+import { usePackagePurchased } from "@/hooks/usePackagePurchased";
 import { useWechatOpenId } from "@/hooks/useWechatOpenId";
 import { useAuth } from "@/hooks/useAuth";
 import { setPostAuthRedirect } from "@/lib/postAuthRedirect";
@@ -109,6 +110,7 @@ export default function PromoMidlife25to45Women399() {
   const [showPay, setShowPay] = useState(false);
   const openId = useWechatOpenId();
   const { data: pkg } = usePackageByKey(PACKAGE_KEY);
+  const { data: hasPurchased, isLoading: checkingPurchase } = usePackagePurchased(PACKAGE_KEY, !!user);
   const price = pkg?.price ?? 399;
 
   usePaymentCallback({
@@ -121,6 +123,10 @@ export default function PromoMidlife25to45Women399() {
     if (!user) {
       setPostAuthRedirect(RETURN_URL);
       navigate(`/auth?redirect=${encodeURIComponent(RETURN_URL)}`);
+      return;
+    }
+    if (hasPurchased) {
+      navigate("/camp-intro/emotion_stress_7");
       return;
     }
     setShowPay(true);
@@ -703,7 +709,7 @@ export default function PromoMidlife25to45Women399() {
               boxShadow: `0 -2px 16px rgba(0,0,0,0.08), 0 8px 24px ${C.primary}38`,
             }}
           >
-            ¥{price} · 立即加入 7 天喘息计划
+            {checkingPurchase ? "正在确认开通状态..." : hasPurchased ? "已购买，开始训练" : `¥${price} · 立即加入 7 天喘息计划`}
           </button>
         </div>
       </div>
