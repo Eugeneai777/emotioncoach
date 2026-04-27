@@ -76,7 +76,8 @@ serve(async (req) => {
         const errTime = new Date(err.created_at).getTime();
         return successes.some((ok: any) => {
           const okTime = new Date(ok.created_at).getTime();
-          const withinRetryWindow = okTime >= errTime && okTime - errTime <= 3 * 60 * 1000;
+          const retryWindowMs = path.startsWith('/auth/v1/') ? 5 * 60 * 1000 : 3 * 60 * 1000;
+          const withinRetryWindow = okTime >= errTime && okTime - errTime <= retryWindowMs;
           const sameUser = !err.user_id || !ok.user_id || err.user_id === ok.user_id;
           return withinRetryWindow && sameUser && ok.request_path === path;
         });
