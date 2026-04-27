@@ -508,7 +508,8 @@ const MiniAppContentLab: React.FC = () => {
           </Tabs>
         )}
 
-        <Card>
+        <Card className="overflow-hidden border-primary/15 bg-card/85 shadow-sm backdrop-blur">
+          <div className="h-1 bg-gradient-to-r from-primary to-accent" />
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between gap-2">
               <CardTitle className="text-base">可用转化产品池</CardTitle>
@@ -517,12 +518,13 @@ const MiniAppContentLab: React.FC = () => {
           </CardHeader>
           <CardContent className="flex flex-wrap gap-2">
             {products.slice(0, 12).map(product => (
-              <Badge key={product.id} variant="secondary">{product.label}</Badge>
+              <Badge key={product.id} className="border border-primary/20 bg-primary/10 text-primary hover:bg-primary/15">{product.label}</Badge>
             ))}
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="overflow-hidden border-accent/20 bg-card/85 shadow-sm backdrop-blur">
+          <div className="h-1 bg-gradient-to-r from-accent to-secondary" />
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between gap-2">
               <CardTitle className="text-base">标准赠品池</CardTitle>
@@ -531,7 +533,7 @@ const MiniAppContentLab: React.FC = () => {
           </CardHeader>
           <CardContent className="flex flex-wrap gap-2">
             {canonicalGifts.map(gift => (
-              <Badge key={gift.id} variant="secondary">{gift.productName || gift.label}</Badge>
+              <Badge key={gift.id} className="border border-accent/25 bg-accent/10 text-foreground hover:bg-accent/15">{gift.productName || gift.label}</Badge>
             ))}
           </CardContent>
         </Card>
