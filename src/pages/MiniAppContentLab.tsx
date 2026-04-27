@@ -81,7 +81,7 @@ const getGiftProductName = (item: ContentTopicItem, canonicalGifts: MiniAppSeedI
 
 const getGiftDisplayName = (item: ContentTopicItem, canonicalGifts: MiniAppSeedItem[]) => {
   const productName = getGiftProductName(item, canonicalGifts);
-  return productName ? `限时赠送「${productName}」` : (item.giftDisplayName || item.matchedTool || '-');
+  return productName ? productName : (item.giftDisplayName || item.matchedTool || '-').replace(/^限时赠送「(.+)」$/, '$1');
 };
 
 interface GiftValidationIssue {
@@ -168,7 +168,6 @@ const formatItem = (item: ContentTopicItem, canonicalGifts: MiniAppSeedItem[]) =
   `爆款标题：${item.viralTitle}`,
   `价值：${item.value}`,
   `产品/工具名：${getGiftProductName(item, canonicalGifts) || '-'}`,
-  `限时赠品：${getGiftDisplayName(item, canonicalGifts)}`,
   `专业报告名称：${item.reportPageName || '-'}`,
   `报告价值：${item.aiReportValue}`,
   item.actionPlanValue || item.coachReportValue ? `下一步行动建议：${item.actionPlanValue || item.coachReportValue}` : '',
@@ -181,18 +180,17 @@ const formatXhsArticle = (item: ContentTopicItem, canonicalGifts: MiniAppSeedIte
   `封面标题：${item.xhsCoverTitle || item.viralTitle}`,
   `爆款标题：${item.viralTitle}`,
   '',
-  item.xhsBody || [item.hook, item.value, getGiftDisplayName(item, canonicalGifts), item.cta].filter(Boolean).join('\n\n'),
+  item.xhsBody || [item.hook, item.value, item.cta].filter(Boolean).join('\n\n'),
   '',
   item.xhsCarouselPages?.length ? `卡片页建议：\n${item.xhsCarouselPages.map((page, index) => `${index + 1}. ${page}`).join('\n')}` : '',
   item.xhsTags?.length ? `标签：${item.xhsTags.map(tag => `#${tag.replace(/^#/, '')}`).join(' ')}` : '',
   item.xhsCommentGuide ? `评论/私信引导：${item.xhsCommentGuide}` : '',
-  `限时赠品：${getGiftDisplayName(item, canonicalGifts)}`,
 ].filter(Boolean).join('\n');
 
 const formatVoiceoverScript = (item: ContentTopicItem, canonicalGifts: MiniAppSeedItem[]) => [
   `口播标题：${item.voiceoverTitle || item.viralTitle}`,
   '',
-  item.voiceoverScript || [item.hook, item.value, getGiftDisplayName(item, canonicalGifts), item.cta].filter(Boolean).join('\n\n'),
+  item.voiceoverScript || [item.hook, item.value, item.cta].filter(Boolean).join('\n\n'),
   item.voiceoverShots?.length ? `\n镜头建议：\n${item.voiceoverShots.map((shot, index) => `${index + 1}. ${shot}`).join('\n')}` : '',
 ].filter(Boolean).join('\n');
 
