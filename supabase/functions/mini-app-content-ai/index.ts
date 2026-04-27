@@ -101,6 +101,18 @@ function extractJson(content: string) {
   }
 }
 
+function buildVoiceoverScript(item: any) {
+  const title = String(item.voiceoverTitle || item.viralTitle || item.xhsCoverTitle || '这条内容适合拍成口播');
+  const script = [
+    item.hook || `如果你也有这种感觉：${item.painPoint || '明明很努力，却总是卡在同一个地方'}`,
+    `很多人不是不够努力，而是还没看见自己真正的卡点。${item.value || ''}`,
+    item.aiReportValue ? `这份报告会帮你看见：${item.aiReportValue}` : '',
+    item.actionPlanValue ? `接下来你还会拿到：${item.actionPlanValue}` : '',
+    `${item.giftDisplayName || '限时赠送对应测评/工具'}，想领取的话，评论或私信关键词，我发你入口。`,
+  ].filter(Boolean).join('\n\n');
+  return { title, script };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -113,7 +125,7 @@ Deno.serve(async (req) => {
     const style = (['xiaohongshu', 'douyin', 'empathy', 'assessment'].includes(body.style) ? body.style : 'xiaohongshu') as Style;
     const contentFormat = (['video', 'xhs-article'].includes(body.contentFormat) ? body.contentFormat : 'video') as ContentFormat;
     const includeVoiceover = body.includeVoiceover === true;
-    const count = clampCount(body.count);
+    const count = contentFormat === 'xhs-article' && includeVoiceover ? Math.min(clampCount(body.count), 10) : clampCount(body.count);
     const seedItems = Array.isArray(body.seedItems) ? body.seedItems.slice(0, 60) : [];
 
     const userPrompt = `请生成 ${count} 条${contentFormat === 'xhs-article' ? '小红书爆款图文稿' : '短视频选题库'}。
@@ -122,7 +134,7 @@ Deno.serve(async (req) => {
 内容来源：${SOURCE_LABELS[sourceType]}
 内容风格：${STYLE_LABELS[style]}
 产出类型：${contentFormat === 'xhs-article' ? '小红书爆款图文稿，必须可直接复制发布' : '短视频口播选题，可继续生成口播稿'}
-${contentFormat === 'xhs-article' && includeVoiceover ? '附加要求：每条小红书图文稿都必须同步生成对应口播稿版本，补全 voiceoverTitle、voiceoverScript、voiceoverShots。' : ''}
+${contentFormat === 'xhs-article' && includeVoiceover ? '附加要求：不需要额外生成口播稿字段，系统会根据图文稿自动改写口播稿；请优先保证图文稿完整稳定。' : ''}
 
 可用功能/产品种子：
 ${JSON.stringify(seedItems, null, 2)}
@@ -159,7 +171,9 @@ ${JSON.stringify(seedItems, null, 2)}
     if (!Array.isArray(parsed.items)) return jsonResponse({ error: "AI返回缺少 items 列表" }, 500);
 
     return jsonResponse({
-      items: parsed.items.slice(0, count).map((item: any, index: number) => ({
+      items: parsed.items.slice(0, count).map((item: any, index: number) => {
+        const voiceover = includeVoiceover ? buildVoiceoverScript(item) : { title: '', script: '' };
+        return {
         painPoint: String(item.painPoint || '').slice(0, 120),
         value: String(item.value || '').slice(0, 140),
         giftProductName: String(item.giftProductName || item.productName || '').slice(0, 80),
@@ -178,14 +192,15 @@ ${JSON.stringify(seedItems, null, 2)}
         xhsCarouselPages: Array.isArray(item.xhsCarouselPages) ? item.xhsCarouselPages.slice(0, 8).map((v: unknown) => String(v).slice(0, 140)) : [],
         xhsTags: Array.isArray(item.xhsTags) ? item.xhsTags.slice(0, 12).map((v: unknown) => String(v).replace(/^#/, '').slice(0, 30)) : [],
         xhsCommentGuide: String(item.xhsCommentGuide || item.commentGuide || '').slice(0, 160),
-        voiceoverTitle: String(item.voiceoverTitle || item.viralTitle || '').slice(0, 100),
-        voiceoverScript: String(item.voiceoverScript || '').slice(0, 2200),
+        voiceoverTitle: String(item.voiceoverTitle || voiceover.title || '').slice(0, 100),
+        voiceoverScript: String(item.voiceoverScript || voiceover.script || '').slice(0, 2200),
         voiceoverShots: Array.isArray(item.voiceoverShots) ? item.voiceoverShots.slice(0, 8).map((v: unknown) => String(v).slice(0, 140)) : [],
         route: typeof item.route === 'string' ? item.route : '',
         topicId: typeof item.topicId === 'string' ? item.topicId : '',
         productId: typeof item.productId === 'string' ? item.productId : '',
         id: `ai-${Date.now()}-${index}`,
-      })),
+        };
+      }),
     });
   } catch (e) {
     console.error("mini-app-content-ai error:", e);
