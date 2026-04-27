@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -49,6 +50,9 @@ interface ContentTopicItem {
   xhsCarouselPages?: string[];
   xhsTags?: string[];
   xhsCommentGuide?: string;
+  voiceoverTitle?: string;
+  voiceoverScript?: string;
+  voiceoverShots?: string[];
   route?: string;
   topicId?: string;
   productId?: string;
@@ -185,12 +189,20 @@ const formatXhsArticle = (item: ContentTopicItem, canonicalGifts: MiniAppSeedIte
   `限时赠品：${getGiftDisplayName(item, canonicalGifts)}`,
 ].filter(Boolean).join('\n');
 
+const formatVoiceoverScript = (item: ContentTopicItem, canonicalGifts: MiniAppSeedItem[]) => [
+  `口播标题：${item.voiceoverTitle || item.viralTitle}`,
+  '',
+  item.voiceoverScript || [item.hook, item.value, getGiftDisplayName(item, canonicalGifts), item.cta].filter(Boolean).join('\n\n'),
+  item.voiceoverShots?.length ? `\n镜头建议：\n${item.voiceoverShots.map((shot, index) => `${index + 1}. ${shot}`).join('\n')}` : '',
+].filter(Boolean).join('\n');
+
 const MiniAppContentLab: React.FC = () => {
   const navigate = useNavigate();
   const [audienceId, setAudienceId] = useState('general');
   const [sourceType, setSourceType] = useState<MiniAppSourceType>('mini-scenes');
   const [style, setStyle] = useState<MiniAppContentStyle>('xiaohongshu');
   const [contentFormat, setContentFormat] = useState<MiniAppContentFormat>('video');
+  const [includeVoiceover, setIncludeVoiceover] = useState(true);
   const [count, setCount] = useState('20');
   const [items, setItems] = useState<ContentTopicItem[]>([]);
   const [previewIndex, setPreviewIndex] = useState(0);
