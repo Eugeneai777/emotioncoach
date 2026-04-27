@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { addDays, format } from "date-fns";
 import { EmotionBloomIntroSections } from "@/components/camp/EmotionBloomIntroSections";
 import { IdentityBloomIntroSections } from "@/components/camp/IdentityBloomIntroSections";
 import { setPostAuthRedirect } from "@/lib/postAuthRedirect";
@@ -202,6 +203,72 @@ const CampIntro = () => {
   });
 
   const hasJoinedCamp = !!existingCamp;
+
+  const startEmotionStressCampAndEnter = async () => {
+    if (!user || !campTemplate || campType !== 'emotion_stress_7') return false;
+
+    const { data: activeCamp } = await supabase
+      .from('training_camps')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('camp_type', 'emotion_stress_7')
+      .eq('status', 'active')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (activeCamp?.id) {
+      navigate(`/camp-checkin/${activeCamp.id}`);
+      return true;
+    }
+
+    const today = new Date();
+    const endDate = addDays(today, campTemplate.duration_days - 1);
+    const { data: insertedCamps, error } = await supabase
+      .from('training_camps')
+      .insert({
+        user_id: user.id,
+        camp_name: campTemplate.camp_name,
+        camp_type: 'emotion_stress_7',
+        duration_days: campTemplate.duration_days,
+        start_date: format(today, 'yyyy-MM-dd'),
+        end_date: format(endDate, 'yyyy-MM-dd'),
+        current_day: 0,
+        completed_days: 0,
+        check_in_dates: [],
+        status: 'active',
+      })
+      .select('id');
+
+    if (error) {
+      if (error.code === '23505') {
+        const { data: existingAfterConflict } = await supabase
+          .from('training_camps')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('camp_type', 'emotion_stress_7')
+          .eq('status', 'active')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (existingAfterConflict?.id) {
+          navigate(`/camp-checkin/${existingAfterConflict.id}`);
+          return true;
+        }
+      }
+      throw error;
+    }
+
+    await supabase.from('profiles').update({ preferred_coach: 'emotion' }).eq('id', user.id);
+
+    if (insertedCamps?.[0]?.id) {
+      toast.success("训练营已开启，开始训练吧！");
+      navigate(`/camp-checkin/${insertedCamps[0].id}`);
+      return true;
+    }
+
+    return false;
+  };
 
   if (isLoading) {
     return (
@@ -444,6 +511,11 @@ const CampIntro = () => {
             onClick={() => {
               if (hasJoinedCamp && existingCamp) {
                 navigate(`/camp-checkin/${existingCamp.id}`);
+              } else if (campType === 'emotion_stress_7' && hasPurchased) {
+                startEmotionStressCampAndEnter().catch((error) => {
+                  console.error('Start emotion stress camp error:', error);
+                  toast.error('开启训练营失败，请稍后重试');
+                });
               } else if (campTemplate.price && campTemplate.price > 0 && !hasPurchased) {
                 // 付费训练营且未购买：先检查登录
                 if (!user) {
@@ -472,8 +544,8 @@ const CampIntro = () => {
               ? '加载中...'
               : hasJoinedCamp 
               ? '继续训练' 
-              : hasPurchased 
-              ? '已购买，立即开始' 
+              : hasPurchased
+              ? '开始训练'
               : (campTemplate.price && campTemplate.price > 0)
               ? `立即购买 ¥${campTemplate.price}` 
               : '立即加入训练营'}
@@ -517,6 +589,15 @@ const CampIntro = () => {
           }
           setShowPayDialog(false);
           refetchPurchase();
+          if (campType === 'emotion_stress_7') {
+            try {
+              await startEmotionStressCampAndEnter();
+            } catch (error) {
+              console.error('Auto-start emotion stress camp after payment error:', error);
+              toast.error('开启训练营失败，请稍后重试');
+            }
+            return;
+          }
           toast.success("购买成功！请选择开始日期");
           setShowStartDialog(true);
         }}
