@@ -49,7 +49,7 @@ export interface UxAnomalyStats {
 
 type UxAnomalyListener = (anomalies: UxAnomaly[], stats: UxAnomalyStats) => void;
 
-const SCENE_LABELS: Record<BusinessScene, string> = {
+export const BUSINESS_SCENE_LABELS: Record<BusinessScene, string> = {
   ai_coach_call: 'AI智能通话',
   human_coach_call: '真人教练通话',
   wealth_assessment: '财富卡点测评',
@@ -60,10 +60,19 @@ const SCENE_LABELS: Record<BusinessScene, string> = {
 };
 
 const MAX_ANOMALIES = 500;
-const SLOW_THRESHOLD_MS = 10_000;
-const CONSECUTIVE_FAIL_THRESHOLD = 3;
-const RETRY_WINDOW_MS = 60_000; // 1 分钟内重试
-const RETRY_COUNT_THRESHOLD = 3; // 1 分钟内 ≥3 次算频繁重试
+export const UX_ANOMALY_THRESHOLDS = {
+  slowRequestMs: 10_000,
+  consecutiveFailCount: 3,
+  consecutiveFailWindowMs: 5 * 60_000,
+  retryWindowMs: 60_000,
+  retryCount: 3,
+  maxLocalAnomalies: MAX_ANOMALIES,
+} as const;
+
+const SLOW_THRESHOLD_MS = UX_ANOMALY_THRESHOLDS.slowRequestMs;
+const CONSECUTIVE_FAIL_THRESHOLD = UX_ANOMALY_THRESHOLDS.consecutiveFailCount;
+const RETRY_WINDOW_MS = UX_ANOMALY_THRESHOLDS.retryWindowMs; // 1 分钟内重试
+const RETRY_COUNT_THRESHOLD = UX_ANOMALY_THRESHOLDS.retryCount; // 1 分钟内 ≥3 次算频繁重试
 
 let anomalies: UxAnomaly[] = [];
 let listeners: UxAnomalyListener[] = [];
@@ -131,7 +140,7 @@ export function trackSlowRequest(scene: BusinessScene, durationMs: number, extra
     id: genId(),
     type: 'slow_request',
     scene,
-    sceneLabel: SCENE_LABELS[scene],
+    sceneLabel: BUSINESS_SCENE_LABELS[scene],
     userId: getUserId(),
     message: `请求耗时 ${(durationMs / 1000).toFixed(1)}s，超过 ${SLOW_THRESHOLD_MS / 1000}s 阈值`,
     duration: Math.round(durationMs),
@@ -148,7 +157,7 @@ export function trackUserCancel(scene: BusinessScene, reason?: string, extra?: R
     id: genId(),
     type: 'user_cancel',
     scene,
-    sceneLabel: SCENE_LABELS[scene],
+    sceneLabel: BUSINESS_SCENE_LABELS[scene],
     userId: getUserId(),
     message: reason || '用户中途取消操作',
     timestamp: Date.now(),
@@ -176,7 +185,7 @@ export function trackOperationFail(scene: BusinessScene, errorMsg: string, extra
       id: genId(),
       type: 'consecutive_fail',
       scene,
-      sceneLabel: SCENE_LABELS[scene],
+      sceneLabel: BUSINESS_SCENE_LABELS[scene],
       userId: getUserId(),
       message: `连续失败 ${streak.count} 次: ${errorMsg}`,
       failCount: streak.count,
@@ -215,7 +224,7 @@ function trackRetryInternal(scene: BusinessScene, extra?: Record<string, unknown
       id: genId(),
       type: 'frequent_retry',
       scene,
-      sceneLabel: SCENE_LABELS[scene],
+      sceneLabel: BUSINESS_SCENE_LABELS[scene],
       userId: getUserId(),
       message: `${RETRY_WINDOW_MS / 1000}秒内重试 ${recent.length} 次`,
       retryCount: recent.length,
