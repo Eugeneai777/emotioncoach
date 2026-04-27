@@ -31,6 +31,7 @@ import { useAssessmentPurchase } from "@/hooks/useAssessmentPurchase";
 import { trackPaymentEvent } from "@/utils/paymentFlowTracker";
 import { setPostAuthRedirect } from "@/lib/postAuthRedirect";
 import { useWechatOpenId } from "@/hooks/useWechatOpenId";
+import { writeWechatOpenIdCache } from "@/utils/wechatOpenIdCache";
 
 const MP_PENDING_PAYMENT_STORAGE_KEY = 'wealth_assessment_mp_pending_payment';
 const MP_PENDING_PAYMENT_DISMISSED_KEY = 'wealth_assessment_mp_pending_payment_dismissed';
@@ -523,7 +524,12 @@ export default function WealthBlockAssessmentPage() {
       // 如果有 openId，缓存到 sessionStorage（供支付弹窗使用）
       if (paymentOpenId) {
         sessionStorage.setItem('wechat_payment_openid', paymentOpenId);
-        // 🔧 同时写入 WechatPayDialog 使用的缓存 key，避免 key 不匹配导致循环授权
+        // 🔧 同时写入 WechatPayDialog 使用的新隔离缓存 key，避免登录用户读不到旧 key 后循环授权
+        const { data: { session } } = await supabase.auth.getSession();
+        const paymentOwnerId = user?.id || session?.user?.id || sessionStorage.getItem('pending_payment_user_id');
+        writeWechatOpenIdCache('payment', paymentOpenId, paymentOwnerId);
+
+        // 保留旧 key 兼容历史页面，但登录用户不会依赖它
         localStorage.setItem('cached_payment_openid_gzh', paymentOpenId);
         sessionStorage.setItem('cached_payment_openid_gzh', paymentOpenId);
       }
