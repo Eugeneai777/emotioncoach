@@ -11,10 +11,9 @@ const corsHeaders = {
  * 
  * 功能：
  * 1. 生成静默授权 URL（snsapi_base，用户无感知）
- * 2. 用 code 换取 openId + 自动识别老用户/新用户 + 返回登录令牌
+ * 2. 用 code 换取支付 openId，默认不创建/切换登录态
  * 
  * 这样前端在回调后可以：
- * - 直接用 tokenHash 自动登录（无弹窗）
  * - 直接用 openId 拉起 JSAPI 支付
  */
 serve(async (req) => {
@@ -40,8 +39,8 @@ serve(async (req) => {
     callbackUrl.searchParams.set('payment_auth_callback', '1');
     callbackUrl.searchParams.set('payment_redirect', redirectUri);
     if (flow) callbackUrl.searchParams.set('pay_flow', flow);
-    const state = flow === 'register' ? `register_${Date.now()}` : `payauth_${Date.now()}`;
-    const scope = flow === 'register' ? 'snsapi_userinfo' : 'snsapi_base';
+    const state = `pay_openid_${Date.now()}`;
+    const scope = 'snsapi_base';
     const wechatAuthUrl = `https://open.weixin.qq.com/connect/oauth2/authorize?appid=${appId}&redirect_uri=${encodeURIComponent(callbackUrl.toString())}&response_type=code&scope=${scope}&state=${state}#wechat_redirect`;
     console.log('[WechatPayAuth] GET redirect → 302 to WeChat for flow:', flow);
     return new Response(null, { status: 302, headers: { Location: wechatAuthUrl } });
@@ -97,8 +96,7 @@ serve(async (req) => {
  * 生成微信授权 URL
  * 固定回调到 /pay-entry，由 pay-entry 中转处理
  * 
- * 对于注册场景（flow=register），使用 snsapi_userinfo 以获取用户头像昵称
- * 对于其他场景，使用 snsapi_base 静默授权
+ * 支付场景只获取 openId，固定使用 snsapi_base 静默授权。
  */
 function generateAuthUrl(redirectUri: string, flow?: string): Response {
   const appId = Deno.env.get('WECHAT_APP_ID');
@@ -119,11 +117,10 @@ function generateAuthUrl(redirectUri: string, flow?: string): Response {
     callbackUrl.searchParams.set('pay_flow', flow);
   }
 
-  // state 用于防止 CSRF，同时携带 flow 信息以便回调时识别
-  const state = flow === 'register' ? `register_${Date.now()}` : `payauth_${Date.now()}`;
+  // state 仅标识支付 openId 授权，不承载登录/注册语义。
+  const state = `pay_openid_${Date.now()}`;
 
-  // 注册场景使用 snsapi_userinfo 获取用户信息，其他场景使用 snsapi_base 静默授权
-  const scope = flow === 'register' ? 'snsapi_userinfo' : 'snsapi_base';
+  const scope = 'snsapi_base';
   const wechatAuthUrl = `https://open.weixin.qq.com/connect/oauth2/authorize?appid=${appId}&redirect_uri=${encodeURIComponent(callbackUrl.toString())}&response_type=code&scope=${scope}&state=${state}#wechat_redirect`;
 
   console.log('[WechatPayAuth] Generated auth URL for flow:', flow, 'scope:', scope);
