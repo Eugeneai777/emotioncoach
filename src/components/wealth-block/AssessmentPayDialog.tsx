@@ -800,6 +800,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, onCancelled
     setJsapiPayDismissed(false);
 
     let createOrderTimeoutId: ReturnType<typeof setTimeout> | null = null;
+    let createOrderSlowTimerId: ReturnType<typeof setTimeout> | null = null;
     let createOrderController: AbortController | null = null;
 
     try {
@@ -813,7 +814,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, onCancelled
           createOrderController?.abort();
         }
       }, createOrderTimeoutMs);
-      const createOrderSlowTimerId = window.setTimeout(() => {
+      createOrderSlowTimerId = window.setTimeout(() => {
         if (isPaymentSessionActive(sessionId)) setCreateOrderSlow(true);
       }, 6000);
 
@@ -876,6 +877,8 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, onCancelled
           },
         });
 
+        if (createOrderSlowTimerId) clearTimeout(createOrderSlowTimerId);
+        setCreateOrderSlow(false);
         if (createOrderTimeoutId) clearTimeout(createOrderTimeoutId);
 
         if (!isPaymentSessionActive(sessionId)) return;
@@ -928,7 +931,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, onCancelled
         signal: createOrderController.signal,
       });
 
-      clearTimeout(createOrderSlowTimerId);
+      if (createOrderSlowTimerId) clearTimeout(createOrderSlowTimerId);
       setCreateOrderSlow(false);
       if (createOrderTimeoutId) clearTimeout(createOrderTimeoutId);
 
@@ -1227,6 +1230,8 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, onCancelled
         startPolling(data.orderNo);
       }
     } catch (error: any) {
+      if (createOrderSlowTimerId) clearTimeout(createOrderSlowTimerId);
+      setCreateOrderSlow(false);
       if (createOrderTimeoutId) clearTimeout(createOrderTimeoutId);
       console.error("Create order error:", error);
       const rawMsg: string = error?.message || "";
