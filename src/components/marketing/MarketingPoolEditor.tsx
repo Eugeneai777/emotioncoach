@@ -14,6 +14,7 @@ import { supabase } from '@/integrations/supabase/client';
 import type { MarketingGift, MarketingProduct } from '@/hooks/useMarketingPools';
 import { MINI_APP_CANONICAL_GIFTS, type MiniAppSeedItem, type MiniAppSourceType } from '@/config/miniAppContentMap';
 import { usePackages } from '@/hooks/usePackages';
+import { CONVERSION_PRODUCTS, type ConversionProduct } from '@/config/videoScriptConfig';
 
 interface MarketingPoolEditorProps {
   type: 'product' | 'gift';
@@ -135,6 +136,33 @@ export function MarketingPoolEditor({ type, products = [], gifts = [], onSaved }
   const nextProductOrder = () => String((products.reduce((max, item) => Math.max(max, item.display_order || 0), 0) || 0) + 10);
   const nextGiftOrder = () => String((gifts.reduce((max, item) => Math.max(max, item.display_order || 0), 0) || 0) + 10);
 
+  const productPriceLabel = (product: ConversionProduct) => {
+    if (product.price === undefined || product.price === null) return product.category === '引流' ? '免费' : '未定价';
+    return product.price > 0 ? `¥${product.price}` : '免费';
+  };
+
+  const saveProductTemplate = async (product: ConversionProduct) => {
+    setSaving(true);
+    const { error } = await supabase.from('marketing_product_pool' as any).upsert({
+      product_key: product.id,
+      label: product.label,
+      description: product.description,
+      price: product.price ?? null,
+      category: product.category,
+      display_order: products.find(item => item.product_key === product.id)?.display_order || Number(nextProductOrder()),
+      is_active: true,
+    }, { onConflict: 'product_key' });
+    setSaving(false);
+
+    if (error) {
+      toast.error(`保存失败：${error.message}`);
+      return;
+    }
+
+    toast.success('已加入产品池并同步');
+    onSaved();
+  };
+
   const giftPriceLabel = (gift: MiniAppSeedItem) => {
     const price = packages.find(pkg => pkg.package_key === gift.productId)?.price;
     const fallbackPrice = gift.sourceType === 'assessments' ? 9.9 : 0;
@@ -254,14 +282,40 @@ export function MarketingPoolEditor({ type, products = [], gifts = [], onSaved }
 
             {isProduct ? (
               <div className="grid gap-3">
-                <div className="space-y-1"><Label>产品名称</Label><Input value={productForm.label} onChange={e => setProductForm({ ...productForm, label: e.target.value })} /></div>
-                <div className="space-y-1"><Label>描述</Label><Textarea value={productForm.description} onChange={e => setProductForm({ ...productForm, description: e.target.value })} /></div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-1"><Label>价格</Label><Input value={productForm.price} onChange={e => setProductForm({ ...productForm, price: e.target.value })} placeholder="可为空" /></div>
-                  <div className="space-y-1"><Label>分类</Label><Input value={productForm.category} onChange={e => setProductForm({ ...productForm, category: e.target.value })} /></div>
+                <div className="space-y-2">
+                  <Label>直接选择产品</Label>
+                  <div className="grid max-h-72 gap-2 overflow-y-auto rounded-md border p-2">
+                    {CONVERSION_PRODUCTS.map(product => {
+                      const exists = products.some(item => item.product_key === product.id && item.is_active);
+                      return (
+                        <Button key={product.id} type="button" variant="outline" className="h-auto justify-between gap-3 whitespace-normal px-3 py-2 text-left" disabled={saving} onClick={() => saveProductTemplate(product)}>
+                          <span className="min-w-0">
+                            <span className="block font-medium">{product.label}</span>
+                            <span className="block text-xs text-muted-foreground">{product.category} · {productPriceLabel(product)}{exists ? ' · 已在池中' : ''}</span>
+                          </span>
+                          <Plus className="h-4 w-4 shrink-0" />
+                        </Button>
+                      );
+                    })}
+                  </div>
                 </div>
-                <div className="flex items-center justify-between rounded-md border px-3 py-2"><Label>启用</Label><Switch checked={productForm.is_active} onCheckedChange={checked => setProductForm({ ...productForm, is_active: checked })} /></div>
-                <Button onClick={saveProduct} disabled={saving}>{saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}保存并同步</Button>
+                {editingKey && (
+                  <div className="grid gap-3 border-t pt-3">
+                    <div className="space-y-1"><Label>产品名称</Label><Input value={productForm.label} onChange={e => setProductForm({ ...productForm, label: e.target.value })} /></div>
+                    <div className="space-y-1"><Label>描述</Label><Textarea value={productForm.description} onChange={e => setProductForm({ ...productForm, description: e.target.value })} /></div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="space-y-1"><Label>价格</Label><Input value={productForm.price} onChange={e => setProductForm({ ...productForm, price: e.target.value })} placeholder="可为空" /></div>
+                      <div className="space-y-1"><Label>分类</Label><Input value={productForm.category} onChange={e => setProductForm({ ...productForm, category: e.target.value })} /></div>
+                    </div>
+                    <div className="flex items-center justify-between rounded-md border px-3 py-2"><Label>启用</Label><Switch checked={productForm.is_active} onCheckedChange={checked => setProductForm({ ...productForm, is_active: checked })} /></div>
+                    <Button onClick={saveProduct} disabled={saving}>{saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}保存修改</Button>
+                  </div>
+                )}
+                {!editingKey && (
+                  <div className="rounded-md border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+                    共 {CONVERSION_PRODUCTS.length} 个预设产品；价格和分类会自动带入。
+                  </div>
+                )}
               </div>
             ) : (
               <div className="grid gap-3">
