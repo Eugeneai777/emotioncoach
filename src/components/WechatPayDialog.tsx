@@ -1068,7 +1068,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
   };
 
   // 创建订单
-  const createOrder = async () => {
+  const createOrder = async (options: { forceNewOrder?: boolean } = {}) => {
     if (!packageInfo) return;
 
     // 🆕 防重入：如果已经在创建中或已创建，直接返回
@@ -1166,6 +1166,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
         amount: packageInfo.price,
         userId: resolvedUserId,
         payType: selectedPayType,
+        forceNewOrder: options.forceNewOrder === true,
         openId: needsOpenId ? resolvedOpenId : undefined,
         isMiniProgram: isMiniProgram,
         buyerName: shippingInfo?.buyerName,
@@ -1289,15 +1290,15 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
           } catch (jsapiError: any) {
             console.log('[Payment] JSAPI pay error:', jsapiError?.message);
             if (jsapiError?.message === '用户取消支付' || jsapiError?.message === 'JSAPI_SILENT_TIMEOUT') {
-              // 用户取消/Android 微信吞回调：保持业务窗口，允许复用同一订单重新唤起
+              // 用户取消/Android 微信吞回调：保持业务窗口；再次点击时结束当前无回调订单并创建新订单
               const isSilentTimeout = jsapiError?.message === 'JSAPI_SILENT_TIMEOUT';
-              console.log('[Payment] JSAPI cancelled/no-response, allowing retry with same order', { isSilentTimeout });
+              console.log('[Payment] JSAPI cancelled/no-response, waiting for fresh-order retry', { isSilentTimeout });
               trackPaymentEvent('payment_jsapi_user_cancelled', {
                 metadata: { orderNo: data.orderNo, isSilentTimeout },
               });
               setJsapiCancelled(true);
               setJsapiRetryReason(isSilentTimeout ? 'silent' : 'cancelled');
-              setErrorMessage(isSilentTimeout ? '微信支付没有响应，请再次点击下方按钮拉起支付' : '支付已取消，可重新拉起支付');
+              setErrorMessage(isSilentTimeout ? '微信支付没有响应，请再次点击下方按钮重新创建订单' : '支付已取消，可重新创建订单');
             } else {
               // JSAPI 失败，降级到扫码模式
               trackPaymentEvent('payment_jsapi_failed', {
