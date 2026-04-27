@@ -293,31 +293,43 @@ const MiniAppContentLab: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
-      <div className="sticky top-0 z-20 border-b bg-background/95 backdrop-blur px-4 py-3">
+    <div className="relative min-h-screen overflow-hidden bg-background pb-20">
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_12%_8%,hsl(var(--primary)/0.18),transparent_30%),radial-gradient(circle_at_85%_16%,hsl(var(--accent)/0.22),transparent_28%),linear-gradient(180deg,hsl(var(--secondary)/0.48),hsl(var(--background))_42%)]" />
+      <div className="sticky top-0 z-20 border-b border-primary/10 bg-background/80 px-4 py-3 shadow-sm backdrop-blur-xl">
         <div className="mx-auto flex max-w-6xl items-center gap-3">
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-primary/25 via-accent/20 to-secondary text-primary shadow-sm ring-1 ring-primary/15">
             <Wand2 className="h-5 w-5" />
           </div>
           <div className="min-w-0">
-            <h1 className="text-lg font-bold leading-tight">短视频选题工作台</h1>
-            <p className="text-xs text-muted-foreground">用限时赠送引导加企微/进私域</p>
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-lg font-bold leading-tight">短视频选题工作台</h1>
+              <Badge className="bg-primary/12 text-primary hover:bg-primary/12">彩色营销版</Badge>
+            </div>
+            <p className="text-xs text-muted-foreground">用限时赠送引导加企微/进私域 · 产品池与赠品池全站同步</p>
           </div>
         </div>
       </div>
 
       <main className="mx-auto max-w-6xl space-y-4 p-4">
-        <Card>
+        <Card className="overflow-hidden border-primary/15 bg-card/90 shadow-lg shadow-primary/5 backdrop-blur">
+          <div className="h-1.5 bg-gradient-to-r from-primary via-accent to-secondary" />
           <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Sparkles className="h-4 w-4 text-primary" /> 生成配置
-            </CardTitle>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary"><Sparkles className="h-4 w-4" /></span>
+                生成配置
+              </CardTitle>
+              <div className="flex flex-wrap gap-2 text-xs">
+                <Badge variant="outline" className="border-primary/25 bg-primary/5 text-primary">私域引流</Badge>
+                <Badge variant="outline" className="border-accent/30 bg-accent/10">9.9 / 免费赠品</Badge>
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-4">
-            <div className="space-y-2">
+            <div className="space-y-2 rounded-xl border border-primary/15 bg-primary/5 p-3">
               <Label>目标人群</Label>
               <Select value={audienceId} onValueChange={setAudienceId} disabled={loading}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
@@ -326,7 +338,7 @@ const MiniAppContentLab: React.FC = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2 rounded-xl border border-accent/20 bg-accent/10 p-3">
               <Label>内容来源</Label>
               <Select value={sourceType} onValueChange={v => setSourceType(v as MiniAppSourceType)} disabled={loading}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
@@ -335,7 +347,7 @@ const MiniAppContentLab: React.FC = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2 rounded-xl border border-secondary bg-secondary/45 p-3">
               <Label>内容风格</Label>
               <Select value={style} onValueChange={v => setStyle(v as MiniAppContentStyle)} disabled={loading}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
@@ -344,7 +356,7 @@ const MiniAppContentLab: React.FC = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2 rounded-xl border border-primary/10 bg-card p-3 shadow-sm">
               <Label>生成数量</Label>
               <Select value={count} onValueChange={setCount} disabled={loading}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
@@ -357,7 +369,7 @@ const MiniAppContentLab: React.FC = () => {
               <div className="text-xs text-muted-foreground">
                 当前将基于 <Badge variant="secondary">{selectedSource?.label}</Badge> 生成私域引流选题；赠品仅限现有 9.9/免费测评与工具：{canonicalGiftNames.slice(0, 4).join('、')}等，风格为 <Badge variant="secondary">{selectedStyle?.label}</Badge>
               </div>
-              <Button onClick={handleGenerate} disabled={loading} className="sm:min-w-40">
+              <Button onClick={handleGenerate} disabled={loading} className="bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-md shadow-primary/20 sm:min-w-40">
                 {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
                 生成选题库
               </Button>
