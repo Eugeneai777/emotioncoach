@@ -11,6 +11,8 @@ import { isWeChatMiniProgram, isWeChatBrowser } from "@/utils/platform";
 import { usePackages, getPackagePrice } from "@/hooks/usePackages";
 import { trackPaymentEvent } from "@/utils/paymentFlowTracker";
 import { readWechatOpenIdCache, writeWechatOpenIdCache } from "@/utils/wechatOpenIdCache";
+import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
+import { useAuth } from "@/hooks/useAuth";
 
 // 声明 WeixinJSBridge 类型
 declare global {
@@ -158,6 +160,30 @@ const isPayAuthInProgress = (): boolean => {
 };
 
 export function AssessmentPayDialog({ open, onOpenChange, onSuccess, onCancelled, miniProgramPayReturnSignal, returnUrl, userId, hasPurchased, packageKey, packageName }: AssessmentPayDialogProps) {
+  const { user } = useAuth();
+  const { data: unifiedPackages } = usePackages();
+  const unifiedPrice = getPackagePrice(unifiedPackages, packageKey, 9.9);
+  const resolvedUserId = userId && userId !== "guest" ? userId : user?.id;
+  const unifiedOpenId = getPaymentOpenId(resolvedUserId);
+
+  return (
+    <UnifiedPayDialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) onCancelled?.();
+        onOpenChange(nextOpen);
+      }}
+      packageInfo={{
+        key: packageKey,
+        name: packageName,
+        price: unifiedPrice,
+      }}
+      onSuccess={() => onSuccess(resolvedUserId || "guest")}
+      returnUrl={returnUrl}
+      openId={unifiedOpenId}
+    />
+  );
+
   const [status, setStatus] = useState<PaymentStatus>("idle");
   const [orderNo, setOrderNo] = useState<string>("");
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>("");
