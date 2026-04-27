@@ -219,14 +219,15 @@ serve(async (req) => {
     }
 
     let reusedMiniProgramOrderNo: string | undefined;
-    // 🔧 小程序支付一律不复用 pending 订单：用户每次重新发起都创建新单，避免二次点击命中旧 prepay_id / 旧 out_trade_no
-    const skipReuse = payType === 'miniprogram';
+    // 🔧 小程序支付/前端明确要求新单时，一律不复用 pending 订单：
+    // 重新发起前先结束旧 pending，避免二次点击命中旧 prepay_id / 旧 out_trade_no
+    const skipReuse = payType === 'miniprogram' || forceNewOrder;
     if (skipReuse) {
-      console.log('[CreateOrder] miniprogram fresh-order mode → cancelling all pending & creating fresh order for user:', finalUserId, 'package:', packageKey, 'forceNewOrder:', forceNewOrder);
+      console.log('[CreateOrder] fresh-order mode → cancelling all pending & creating fresh order for user:', finalUserId, 'package:', packageKey, 'payType:', payType, 'forceNewOrder:', forceNewOrder);
       if (finalUserId && finalUserId !== 'guest') {
         const { data: cancelled } = await supabase
           .from('orders')
-          .update({ status: 'cancelled' })
+          .update({ status: 'cancelled', updated_at: new Date().toISOString() })
           .eq('user_id', finalUserId)
           .eq('package_key', packageKey)
           .eq('status', 'pending')

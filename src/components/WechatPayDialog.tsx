@@ -1068,7 +1068,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
   };
 
   // 创建订单
-  const createOrder = async () => {
+  const createOrder = async (options: { forceNewOrder?: boolean } = {}) => {
     if (!packageInfo) return;
 
     // 🆕 防重入：如果已经在创建中或已创建，直接返回
@@ -1166,6 +1166,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
         amount: packageInfo.price,
         userId: resolvedUserId,
         payType: selectedPayType,
+        forceNewOrder: options.forceNewOrder === true,
         openId: needsOpenId ? resolvedOpenId : undefined,
         isMiniProgram: isMiniProgram,
         buyerName: shippingInfo?.buyerName,
@@ -1289,15 +1290,15 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
           } catch (jsapiError: any) {
             console.log('[Payment] JSAPI pay error:', jsapiError?.message);
             if (jsapiError?.message === '用户取消支付' || jsapiError?.message === 'JSAPI_SILENT_TIMEOUT') {
-              // 用户取消/Android 微信吞回调：保持业务窗口，允许复用同一订单重新唤起
+              // 用户取消/Android 微信吞回调：保持业务窗口；再次点击时结束当前无回调订单并创建新订单
               const isSilentTimeout = jsapiError?.message === 'JSAPI_SILENT_TIMEOUT';
-              console.log('[Payment] JSAPI cancelled/no-response, allowing retry with same order', { isSilentTimeout });
+              console.log('[Payment] JSAPI cancelled/no-response, waiting for fresh-order retry', { isSilentTimeout });
               trackPaymentEvent('payment_jsapi_user_cancelled', {
                 metadata: { orderNo: data.orderNo, isSilentTimeout },
               });
               setJsapiCancelled(true);
               setJsapiRetryReason(isSilentTimeout ? 'silent' : 'cancelled');
-              setErrorMessage(isSilentTimeout ? '微信支付没有响应，请再次点击下方按钮拉起支付' : '支付已取消，可重新拉起支付');
+              setErrorMessage(isSilentTimeout ? '微信支付没有响应，请再次点击下方按钮重新创建订单' : '支付已取消，可重新创建订单');
             } else {
               // JSAPI 失败，降级到扫码模式
               trackPaymentEvent('payment_jsapi_failed', {
@@ -1653,43 +1654,16 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     }
   }, [open]);
 
-  // 重新唤起 JSAPI 支付（复用已有订单，不重新下单）
+  // 重新创建 JSAPI 订单：不复用无回调订单，后端会先结束旧 pending 订单再创建新订单
   const handleReInvokeJsapi = async () => {
-    if (!jsapiPayParams) return;
-    setJsapiCancelled(false);
-    setJsapiRetryReason(null);
-    setErrorMessage('');
-    setLoadingMessage('正在唤起微信支付...');
-    console.log('[Payment] Re-invoking JSAPI with cached params for order:', orderNo);
-    try {
-      jsapiDialogCloseGuardUntilRef.current = Date.now() + (/Android/i.test(navigator.userAgent) ? 13500 : 10500);
-      if (typeof window.WeixinJSBridge !== 'undefined') {
-        // Android 微信第二次手动点击时，必须尽量保持在用户手势调用栈内直接 invoke，
-        // 避免先 await 再调起导致 XWEB 吞掉系统支付框。
-        await invokeJsapiPay(jsapiPayParams);
-        console.log('[Payment] JSAPI re-invoke succeeded');
-      } else {
-        const bridgeAvailable = await waitForWeixinJSBridge(5000);
-        if (bridgeAvailable) {
-          await invokeJsapiPay(jsapiPayParams);
-          console.log('[Payment] JSAPI re-invoke succeeded');
-        } else {
-          console.log('[Payment] Bridge not available on retry, falling back');
-          await fallbackToNativePayment(orderNo);
-        }
-      }
-    } catch (err: any) {
-      console.log('[Payment] JSAPI re-invoke error:', err?.message);
-      if (err?.message === '用户取消支付' || err?.message === 'JSAPI_SILENT_TIMEOUT') {
-        const isSilentTimeout = err?.message === 'JSAPI_SILENT_TIMEOUT';
-        jsapiDialogCloseGuardUntilRef.current = Date.now() + 1500;
-        setJsapiCancelled(true);
-        setJsapiRetryReason(isSilentTimeout ? 'silent' : 'cancelled');
-        setErrorMessage(isSilentTimeout ? '微信支付没有响应，请再次点击下方按钮拉起支付' : '支付已取消，可重新拉起支付');
-      } else {
-        await fallbackToNativePayment(orderNo);
-      }
-    }
+    console.log('[Payment] JSAPI retry: cancelling stale pending order and creating fresh order:', orderNo);
+    trackPaymentEvent('payment_jsapi_fresh_order_retry', {
+      metadata: { staleOrderNo: orderNo, reason: jsapiRetryReason },
+    });
+    orderCreatedRef.current = true;
+    resetState();
+    orderCreatedRef.current = false;
+    await createOrder({ forceNewOrder: true });
   };
 
   const handleRetry = () => {
@@ -1938,7 +1912,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
                         className="gap-2 bg-[#07C160] hover:bg-[#06AD56] text-white"
                       >
                         <RefreshCw className="h-3 w-3" />
-                        {jsapiRetryReason === 'silent' ? '再次拉起微信支付' : '重新唤起支付'}
+                        {jsapiRetryReason === 'silent' ? '重新创建订单支付' : '重新下单支付'}
                       </Button>
                       {payType !== 'jsapi' && (
                         <Button
