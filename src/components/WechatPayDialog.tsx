@@ -1912,7 +1912,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
                         className="gap-2 bg-[#07C160] hover:bg-[#06AD56] text-white"
                       >
                         <RefreshCw className="h-3 w-3" />
-                        {jsapiRetryReason === 'silent' ? '再次拉起微信支付' : '重新唤起支付'}
+                        {jsapiRetryReason === 'silent' ? '重新创建订单支付' : '重新下单支付'}
                       </Button>
                       {payType !== 'jsapi' && (
                         <Button
