@@ -360,7 +360,7 @@ const MiniAppContentLab: React.FC = () => {
               </div>
             </div>
           </CardHeader>
-          <CardContent className="grid gap-4 md:grid-cols-4">
+          <CardContent className="grid gap-4 md:grid-cols-5">
             <div className="space-y-2 rounded-xl border border-primary/15 bg-primary/5 p-3">
               <Label>目标人群</Label>
               <Select value={audienceId} onValueChange={setAudienceId} disabled={loading}>
@@ -388,6 +388,15 @@ const MiniAppContentLab: React.FC = () => {
                 </SelectContent>
               </Select>
             </div>
+            <div className="space-y-2 rounded-xl border border-primary/20 bg-primary/10 p-3">
+              <Label>产出类型</Label>
+              <Select value={contentFormat} onValueChange={v => setContentFormat(v as MiniAppContentFormat)} disabled={loading}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {MINI_APP_CONTENT_FORMAT_OPTIONS.map(s => <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="space-y-2 rounded-xl border border-primary/10 bg-card p-3 shadow-sm">
               <Label>生成数量</Label>
               <Select value={count} onValueChange={setCount} disabled={loading}>
@@ -397,13 +406,13 @@ const MiniAppContentLab: React.FC = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div className="md:col-span-4 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="md:col-span-5 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="text-xs text-muted-foreground">
-                当前将基于 <Badge variant="secondary">{selectedSource?.label}</Badge> 生成私域引流选题；赠品仅限现有 9.9/免费测评与工具：{canonicalGiftNames.slice(0, 4).join('、')}等，风格为 <Badge variant="secondary">{selectedStyle?.label}</Badge>
+                当前将基于 <Badge variant="secondary">{selectedSource?.label}</Badge> 生成 <Badge variant="secondary">{selectedContentFormat?.label}</Badge>；赠品仅限现有 9.9/免费测评与工具：{canonicalGiftNames.slice(0, 4).join('、')}等，风格为 <Badge variant="secondary">{selectedStyle?.label}</Badge>
               </div>
               <Button onClick={handleGenerate} disabled={loading} className="bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-md shadow-primary/20 sm:min-w-40">
                 {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                生成选题库
+                {contentFormat === 'xhs-article' ? '生成图文稿' : '生成选题库'}
               </Button>
             </div>
           </CardContent>
@@ -411,7 +420,7 @@ const MiniAppContentLab: React.FC = () => {
 
         {items.length > 0 && (
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="text-sm text-muted-foreground">已生成 {items.length} 条，可直接复制或导出排期。</div>
+            <div className="text-sm text-muted-foreground">已生成 {items.length} 条{contentFormat === 'xhs-article' ? '小红书图文稿' : '选题'}，可直接复制或导出排期。</div>
             <div className="flex gap-2">
               <Button variant="secondary" size="sm" onClick={handleValidateGifts}><ShieldCheck className="mr-2 h-4 w-4" />一键校验赠品</Button>
               <Button variant="outline" size="sm" onClick={exportCsv}><Table2 className="mr-2 h-4 w-4" />导出 CSV</Button>
