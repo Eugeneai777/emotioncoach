@@ -1790,21 +1790,25 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, onCancelled
             </div>
           )}
 
-          {/* 创建订单中 - 小程序环境不显示等待消息 */}
+          {/* 创建订单中 */}
           {!isRedirectingForOpenId && (status === "idle" || status === "creating") && !isMiniProgram && (
             <div className="flex flex-col items-center py-8">
               <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground text-center">
                 {status === "idle" && shouldWaitForOpenId && !openIdResolved
                   ? "正在初始化…"
-                  : "正在创建订单…"}
+                  : createOrderSlow
+                    ? "微信支付通道响应较慢，正在重试…"
+                    : "正在创建安全订单…"}
               </p>
+              {createOrderSlow && <p className="text-xs text-muted-foreground mt-2 text-center">请保持页面打开，异常时可稍后重新发起</p>}
             </div>
           )}
-          {/* 小程序环境：仅显示简化的加载动画 */}
+          {/* 小程序环境 */}
           {!isRedirectingForOpenId && (status === "idle" || status === "creating") && isMiniProgram && (
             <div className="flex flex-col items-center py-8">
               <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
+              {createOrderSlow && <p className="text-xs text-muted-foreground text-center">微信支付通道响应较慢，正在重试…</p>}
             </div>
           )}
 
