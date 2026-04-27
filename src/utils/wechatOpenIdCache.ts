@@ -21,6 +21,9 @@ export const readWechatOpenIdCache = (scope: WechatOpenIdScope, userId?: string 
     const scoped = localStorage.getItem(scopedKey) || sessionStorage.getItem(scopedKey);
     if (scoped) return scoped;
 
+    // 已知登录用户时，必须只读取该用户隔离后的缓存，避免同设备切换账号复用旧 openId。
+    if (userId) return undefined;
+
     return legacyKeys[scope]
       .map((key) => localStorage.getItem(key) || sessionStorage.getItem(key))
       .find(Boolean) || undefined;
