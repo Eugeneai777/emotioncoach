@@ -67,8 +67,10 @@ serve(async (req) => {
       .filter((err: any) => {
         const path = extractPath(err.url);
         const isTransientRuntime =
-          path.includes('/functions/v1/') &&
-          (err.status_code === 503 || err.error_type === 'network_fail' || err.error_type === 'timeout' || String(err.response_body || '').includes('Service is temporarily unavailable'));
+          (path.includes('/functions/v1/') &&
+            (err.status_code === 503 || err.error_type === 'network_fail' || err.error_type === 'timeout' || String(err.response_body || '').includes('Service is temporarily unavailable'))) ||
+          (path === '/auth/v1/user' && (err.error_type === 'timeout' || err.error_type === 'network_fail')) ||
+          (path === '/auth/v1/token' && (err.error_type === 'timeout' || err.error_type === 'network_fail'));
         if (!isTransientRuntime) return false;
 
         const errTime = new Date(err.created_at).getTime();
