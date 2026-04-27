@@ -64,6 +64,9 @@ serve(async (req) => {
     if ((err.error_type === 'network_fail' || err.error_type === 'timeout') && includesAny('check-order-status')) {
       return '支付状态轮询被中断或超时，多由用户离开页面/未完成支付触发，已自动标记为无需处理。';
     }
+    if ((err.error_type === 'network_fail' || err.error_type === 'timeout') && includesAny('/auth/v1/user', '/auth/v1/token')) {
+      return '微信/移动端认证请求被网络或页面生命周期中断；非服务端代码错误，已自动标记为无需处理。';
+    }
     return null;
   };
 
