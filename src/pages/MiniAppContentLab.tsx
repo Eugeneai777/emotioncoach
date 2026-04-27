@@ -431,7 +431,7 @@ const MiniAppContentLab: React.FC = () => {
             )}
             <div className="md:col-span-5 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="text-xs text-muted-foreground">
-                当前将基于 <Badge variant="secondary">{selectedSource?.label}</Badge> 生成 <Badge variant="secondary">{selectedContentFormat?.label}</Badge>{contentFormat === 'xhs-article' && includeVoiceover ? ' + 对应口播稿' : ''}；赠品仅限现有 9.9/免费测评与工具：{canonicalGiftNames.slice(0, 4).join('、')}等，风格为 <Badge variant="secondary">{selectedStyle?.label}</Badge>
+                当前将基于 <Badge variant="secondary">{selectedSource?.label}</Badge> 生成 <Badge variant="secondary">{selectedContentFormat?.label}</Badge>{contentFormat === 'xhs-article' && includeVoiceover ? ' + 对应口播稿' : ''}；转化入口来自现有测评与工具池，风格为 <Badge variant="secondary">{selectedStyle?.label}</Badge>
               </div>
               <Button onClick={handleGenerate} disabled={loading} className="bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-md shadow-primary/20 sm:min-w-40">
                 {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
@@ -485,7 +485,7 @@ const MiniAppContentLab: React.FC = () => {
               </div>
               <div>
                 <p className="font-semibold">选择配置后生成第一批选题</p>
-                <p className="mt-1 text-sm text-muted-foreground">每条都会写清楚用户能免费领到什么、AI报告能看见什么、为什么值得加企微领取。</p>
+                <p className="mt-1 text-sm text-muted-foreground">每条都会写清楚用户痛点、AI报告价值和为什么值得继续私信了解。</p>
               </div>
             </CardContent>
           </Card>
@@ -531,9 +531,6 @@ const MiniAppContentLab: React.FC = () => {
                         <h2 className="py-8 text-3xl font-black leading-tight text-foreground sm:text-4xl">
                           {previewItem.xhsCoverTitle || previewItem.viralTitle}
                         </h2>
-                        <div className="rounded-xl border border-background/70 bg-background/75 p-3 text-sm text-foreground shadow-sm">
-                          <span className="font-semibold text-primary">限时赠品：</span>{getGiftDisplayName(previewItem, canonicalGifts)}
-                        </div>
                       </div>
                     </section>
 
