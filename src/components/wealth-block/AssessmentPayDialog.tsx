@@ -10,6 +10,7 @@ import QRCode from "qrcode";
 import { isWeChatMiniProgram, isWeChatBrowser } from "@/utils/platform";
 import { usePackages, getPackagePrice } from "@/hooks/usePackages";
 import { trackPaymentEvent } from "@/utils/paymentFlowTracker";
+import { readWechatOpenIdCache, writeWechatOpenIdCache } from "@/utils/wechatOpenIdCache";
 
 // 声明 WeixinJSBridge 类型
 declare global {
@@ -129,7 +130,10 @@ const getPaymentOpenId = (): string | undefined => {
 
   if (urlOpenId) return urlOpenId;
 
-  // 优先读 AssessmentPayDialog 自身缓存（保持原行为）
+  const scopedCachedOpenId = readWechatOpenIdCache("payment", sessionStorage.getItem("pending_payment_user_id"));
+  if (scopedCachedOpenId) return scopedCachedOpenId;
+
+  // 优先读 AssessmentPayDialog 自身缓存（兼容旧行为）
   const cachedOpenId = sessionStorage.getItem("wechat_payment_openid");
   if (cachedOpenId) return cachedOpenId;
 
@@ -137,11 +141,7 @@ const getPaymentOpenId = (): string | undefined => {
   try {
     const inMiniProgram = isWeChatMiniProgram();
     const stdKey = inMiniProgram ? "cached_payment_openid_mp" : "cached_payment_openid_gzh";
-    const stdCached =
-      localStorage.getItem(stdKey) ||
-      sessionStorage.getItem(stdKey) ||
-      localStorage.getItem("cached_payment_openid") ||
-      sessionStorage.getItem("cached_payment_openid");
+    const stdCached = readWechatOpenIdCache("payment") || localStorage.getItem(stdKey) || sessionStorage.getItem(stdKey);
     if (stdCached) return stdCached;
   } catch {
     /* ignore */
