@@ -119,9 +119,9 @@ const clearMiniProgramPaymentDismissed = (packageKey?: string) => {
   }
 };
 
-// 从多个来源获取 openId（URL 参数 > sessionStorage 缓存）
+// 从多个来源获取 openId（URL 参数 > 当前用户隔离缓存 > 游客/旧缓存）
 // 🔧 兼容 WechatPayDialog 的标准缓存 key，避免循环授权
-const getPaymentOpenId = (): string | undefined => {
+const getPaymentOpenId = (userId?: string): string | undefined => {
   const urlParams = new URLSearchParams(window.location.search);
 
   // 兼容不同端可能传的字段名
@@ -130,8 +130,10 @@ const getPaymentOpenId = (): string | undefined => {
 
   if (urlOpenId) return urlOpenId;
 
-  const scopedCachedOpenId = readWechatOpenIdCache("payment", sessionStorage.getItem("pending_payment_user_id"));
+  const scopedCachedOpenId = readWechatOpenIdCache("payment", userId || sessionStorage.getItem("pending_payment_user_id"));
   if (scopedCachedOpenId) return scopedCachedOpenId;
+
+  if (userId) return undefined;
 
   // 优先读 AssessmentPayDialog 自身缓存（兼容旧行为）
   const cachedOpenId = sessionStorage.getItem("wechat_payment_openid");
@@ -163,7 +165,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, onCancelled
   const [payType, setPayType] = useState<"h5" | "native" | "jsapi" | "alipay">("native");
   const [errorMessage, setErrorMessage] = useState<string>("");
   // 从 URL 或缓存获取 openId
-  const cachedOpenId = getPaymentOpenId();
+  const cachedOpenId = getPaymentOpenId(userId && userId !== "guest" ? userId : undefined);
   const [userOpenId, setUserOpenId] = useState<string | undefined>(cachedOpenId);
   const [openIdResolved, setOpenIdResolved] = useState<boolean>(false);
   // 正在跳转微信授权中
