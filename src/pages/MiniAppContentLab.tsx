@@ -303,10 +303,10 @@ const MiniAppContentLab: React.FC = () => {
     if (!items.length) return;
     const isXhs = contentFormat === 'xhs-article';
     const header = isXhs
-      ? ['痛点', '封面标题', '小红书爆款标题', '图文正文', '卡片页建议', '标签', '评论/私信引导', '产品/工具名', '限时赠品', '入口']
+      ? ['痛点', '封面标题', '小红书爆款标题', '图文正文', '卡片页建议', '标签', '评论/私信引导', '口播标题', '口播稿', '镜头建议', '产品/工具名', '限时赠品', '入口']
       : ['痛点', '小红书爆款标题', '核心价值', '产品/工具名', '限时赠品', '专业报告名称', '报告价值', '下一步行动建议', '开场Hook', '私域CTA', '入口'];
     const rows = items.map(item => (isXhs
-      ? [item.painPoint, item.xhsCoverTitle || item.viralTitle, item.viralTitle, item.xhsBody || '', item.xhsCarouselPages?.join('\n') || '', item.xhsTags?.map(tag => `#${tag.replace(/^#/, '')}`).join(' ') || '', item.xhsCommentGuide || '', getGiftProductName(item, canonicalGifts), getGiftDisplayName(item, canonicalGifts), item.route || '']
+      ? [item.painPoint, item.xhsCoverTitle || item.viralTitle, item.viralTitle, item.xhsBody || '', item.xhsCarouselPages?.join('\n') || '', item.xhsTags?.map(tag => `#${tag.replace(/^#/, '')}`).join(' ') || '', item.xhsCommentGuide || '', item.voiceoverTitle || item.viralTitle, item.voiceoverScript || '', item.voiceoverShots?.join('\n') || '', getGiftProductName(item, canonicalGifts), getGiftDisplayName(item, canonicalGifts), item.route || '']
       : [item.painPoint, item.viralTitle, item.value, getGiftProductName(item, canonicalGifts), getGiftDisplayName(item, canonicalGifts), item.reportPageName || '', item.aiReportValue, item.actionPlanValue || item.coachReportValue || '', item.hook, item.cta, item.route || '']
     ).map(csvEscape).join(','));
     downloadBlob(`\ufeff${header.map(csvEscape).join(',')}\n${rows.join('\n')}`, `mini-app${isXhs ? '小红书图文稿' : '短视频选题库'}_${Date.now()}.csv`, 'text/csv;charset=utf-8');
@@ -324,7 +324,7 @@ const MiniAppContentLab: React.FC = () => {
       `- 产出类型：${selectedContentFormat?.label}`,
       '',
       ...items.map((item, index) => contentFormat === 'xhs-article'
-        ? `## ${index + 1}. ${item.xhsCoverTitle || item.viralTitle}\n\n${formatXhsArticle(item, canonicalGifts)}\n`
+        ? `## ${index + 1}. ${item.xhsCoverTitle || item.viralTitle}\n\n${formatXhsArticle(item, canonicalGifts)}\n\n${item.voiceoverScript ? `### 对应口播稿\n\n${formatVoiceoverScript(item, canonicalGifts)}\n` : ''}`
         : `## ${index + 1}. ${item.painPoint}\n\n- 痛点：${item.painPoint}\n- 小红书爆款标题：${item.viralTitle}\n- 核心价值：${item.value}\n- 产品/工具名：${getGiftProductName(item, canonicalGifts) || '-'}\n- 限时赠品：${getGiftDisplayName(item, canonicalGifts)}\n- 专业报告名称：${item.reportPageName || '-'}\n- 报告价值：${item.aiReportValue}\n- 下一步行动建议：${item.actionPlanValue || item.coachReportValue || '-'}\n- 开场 Hook：${item.hook}\n- CTA：${item.cta}\n- 入口：${item.route || '-'}\n`),
     ].join('\n');
     downloadBlob(md, `mini-app${contentFormat === 'xhs-article' ? '小红书图文稿' : '短视频选题库'}_${Date.now()}.md`, 'text/markdown;charset=utf-8');
