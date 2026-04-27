@@ -14,6 +14,7 @@ import { isWeChatMiniProgram, isWeChatBrowser, waitForWxMiniProgramReady } from 
 import { getPostPaymentRedirectPath } from '@/utils/postPaymentRedirect';
 import { setPostAuthRedirect } from '@/lib/postAuthRedirect';
 import { trackPaymentEvent } from '@/utils/paymentFlowTracker';
+import { readWechatOpenIdCache, writeWechatOpenIdCache } from '@/utils/wechatOpenIdCache';
 
 // 声明 WeixinJSBridge 类型（wx 类型已在 platform.ts 中声明）
 declare global {
@@ -87,22 +88,14 @@ const CACHED_PAYMENT_OPENID_MP_KEY = 'cached_payment_openid_mp';   // 小程序
 // 兼容旧 key（读取时检查，写入时不再使用）
 const CACHED_PAYMENT_OPENID_LEGACY_KEY = 'cached_payment_openid';
 
-const cachePaymentOpenId = (openId: string) => {
-  const inMiniProgram = isWeChatMiniProgram();
-  const key = inMiniProgram ? CACHED_PAYMENT_OPENID_MP_KEY : CACHED_PAYMENT_OPENID_GZH_KEY;
+const cachePaymentOpenId = (openId: string, userId?: string | null) => {
   try {
-    localStorage.setItem(key, openId);
-    sessionStorage.setItem(key, openId);
-    // 清理旧的混合 key，防止下次被误读
-    localStorage.removeItem(CACHED_PAYMENT_OPENID_LEGACY_KEY);
-    sessionStorage.removeItem(CACHED_PAYMENT_OPENID_LEGACY_KEY);
+    writeWechatOpenIdCache('payment', openId, userId);
   } catch { /* ignore */ }
 };
-const getCachedPaymentOpenId = (): string | undefined => {
-  const inMiniProgram = isWeChatMiniProgram();
-  const key = inMiniProgram ? CACHED_PAYMENT_OPENID_MP_KEY : CACHED_PAYMENT_OPENID_GZH_KEY;
+const getCachedPaymentOpenId = (userId?: string | null): string | undefined => {
   try {
-    return localStorage.getItem(key) || sessionStorage.getItem(key) || undefined;
+    return readWechatOpenIdCache('payment', userId);
   } catch { return undefined; }
 };
 
