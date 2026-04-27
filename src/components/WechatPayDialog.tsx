@@ -161,7 +161,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
   const [userOpenId, setUserOpenId] = useState<string | undefined>(propOpenId || urlOpenId);
   const [jsapiPayParams, setJsapiPayParams] = useState<Record<string, string> | null>(null);
   const [jsapiCancelled, setJsapiCancelled] = useState<boolean>(false);
-  const [jsapiRetryReason, setJsapiRetryReason] = useState<'cancelled' | 'silent' | null>(null);
+  const [jsapiRetryReason, setJsapiRetryReason] = useState<'cancelled' | 'silent' | 'manual' | null>(null);
   // 用于避免"第一次打开先走扫码、第二次才JSAPI"的竞态
   const [openIdResolved, setOpenIdResolved] = useState<boolean>(false);
   // 正在跳转微信授权中
@@ -199,6 +199,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
   const prevOpenRef = useRef<boolean>(false); // 跟踪上一次 open 值，用于"打开边沿"重置
   const jsapiSystemDialogActiveRef = useRef<boolean>(false); // 微信系统支付弹框打开期间，避免误关闭业务等待弹框
   const lastJsapiCancelAtRef = useRef<number>(0); // 取消微信系统支付后的短时间内拦截误触发的 Dialog close
+  const jsapiDialogCloseGuardUntilRef = useRef<number>(0); // Android XWEB 无回调窗口期内防止业务弹窗被误关闭
 
   // 仅在 open 从 false → true 的"打开边沿"重置订单创建标记，
   // 避免关闭弹窗时 resetState 立即重置导致 useEffect 重复创建订单
@@ -760,6 +761,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     setOpenIdResolved(!!cachedId); // 如果有缓存的 openId，直接标记为已解析
     setIsRedirectingForOpenId(false);
     setIsExchangingCode(false);
+    jsapiDialogCloseGuardUntilRef.current = 0;
 
     // 🆕 关闭/重试时清理“待确认订单”，避免后续误判
     clearPendingOrderCache();
@@ -828,11 +830,12 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     return new Promise<void>((resolve, reject) => {
       console.log('Invoking JSAPI pay with WeixinJSBridge, params:', { ...params, paySign: '***' });
       let settled = false;
-      const noResponseTimeoutMs = /Android/i.test(navigator.userAgent) ? 4500 : 9000;
+      const noResponseTimeoutMs = /Android/i.test(navigator.userAgent) ? 12000 : 9000;
       const noResponseTimer = window.setTimeout(() => {
         if (settled) return;
         settled = true;
         jsapiSystemDialogActiveRef.current = false;
+        jsapiDialogCloseGuardUntilRef.current = Date.now() + 1500;
         console.warn('[Payment] JSAPI invoke no callback, exposing manual retry');
         trackPaymentEvent('payment_jsapi_no_response', {
           errorMessage: 'WeixinJSBridge.invoke no callback',
@@ -866,6 +869,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
         console.log('WeixinJSBridge ready, invoking getBrandWCPayRequest');
         trackPaymentEvent('payment_jsapi_bridge_ready');
         jsapiSystemDialogActiveRef.current = true;
+        jsapiDialogCloseGuardUntilRef.current = Date.now() + noResponseTimeoutMs + 1500;
         window.WeixinJSBridge.invoke(
           'getBrandWCPayRequest',
           params,
@@ -875,6 +879,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
             window.clearTimeout(noResponseTimer);
             console.log('WeixinJSBridge payment result:', res.err_msg);
             jsapiSystemDialogActiveRef.current = false;
+            jsapiDialogCloseGuardUntilRef.current = 0;
             trackPaymentEvent('payment_jsapi_callback', {
               metadata: { errMsg: res.err_msg },
             });
