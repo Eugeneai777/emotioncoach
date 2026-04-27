@@ -45,6 +45,7 @@ type ApiErrorListener = (errors: ApiError[], stats: ApiCallStats) => void;
 
 const MAX_ERRORS = 500;
 const DEFAULT_TIMEOUT_MS = 30000;
+const LONG_RUNNING_TIMEOUT_MS = 120000;
 
 let apiErrors: ApiError[] = [];
 let listeners: ApiErrorListener[] = [];
@@ -137,6 +138,11 @@ function classifyError(status: number | undefined, url: string, isTimeout: boole
   return 'client_error';
 }
 
+function getTimeoutMs(url: string): number {
+  if (url.includes('/functions/v1/mini-app-content-ai')) return LONG_RUNNING_TIMEOUT_MS;
+  return DEFAULT_TIMEOUT_MS;
+}
+
 /** 尝试从 Supabase JWT 中提取用户 ID */
 function extractUserId(): string | undefined {
   try {
@@ -180,8 +186,9 @@ export function installApiErrorTracker() {
 
     // If caller already provided a signal, respect it and skip our timeout
     const existingSignal = init?.signal || (args[0] as Request)?.signal;
+    const timeoutMs = getTimeoutMs(url);
     const controller = existingSignal ? null : new AbortController();
-    const timeoutId = controller ? setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS) : null;
+    const timeoutId = controller ? setTimeout(() => controller.abort(), timeoutMs) : null;
 
     try {
       const response = await originalFetch.apply(this, [
@@ -245,7 +252,7 @@ export function installApiErrorTracker() {
         responseTime,
         modelName: extractModelName(url, bodyStr),
         userId: extractUserId(),
-        message: isTimeout ? `请求超时 (>${DEFAULT_TIMEOUT_MS}ms)` : (err?.message || 'Network Error'),
+        message: isTimeout ? `请求超时 (>${timeoutMs}ms)` : (err?.message || 'Network Error'),
         timestamp: Date.now(),
         userAgent: navigator.userAgent,
         page: location.href,
