@@ -113,7 +113,7 @@ Deno.serve(async (req) => {
     const style = (['xiaohongshu', 'douyin', 'empathy', 'assessment'].includes(body.style) ? body.style : 'xiaohongshu') as Style;
     const contentFormat = (['video', 'xhs-article'].includes(body.contentFormat) ? body.contentFormat : 'video') as ContentFormat;
     const includeVoiceover = body.includeVoiceover === true;
-    const count = clampCount(body.count);
+    const count = contentFormat === 'xhs-article' && includeVoiceover ? Math.min(clampCount(body.count), 5) : clampCount(body.count);
     const seedItems = Array.isArray(body.seedItems) ? body.seedItems.slice(0, 60) : [];
 
     const userPrompt = `请生成 ${count} 条${contentFormat === 'xhs-article' ? '小红书爆款图文稿' : '短视频选题库'}。
