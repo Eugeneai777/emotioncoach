@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,7 @@ import {
   AlertTriangle, Ban, Clock, Server, Globe, Wifi, Search, ChevronDown, ChevronUp, Copy,
 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { useMonitorApiErrors } from "@/lib/monitorQueries";
 import MonitorFilters from "./shared/MonitorFilters";
 import type { MonitorPlatform } from "@/lib/platformDetector";
@@ -91,7 +92,17 @@ export default function ApiErrorMonitor() {
   const [keyword, setKeyword] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const { data: dbErrors = [], isLoading } = useMonitorApiErrors({ platform, timeRange });
+  const { data: dbErrors = [], isLoading, refetch } = useMonitorApiErrors({ platform, timeRange });
+
+  useEffect(() => {
+    let cancelled = false;
+    supabase.functions.invoke('check-monitor-alerts', { body: { mode: 'normalize' } })
+      .then(() => {
+        if (!cancelled) refetch();
+      })
+      .catch(() => undefined);
+    return () => { cancelled = true; };
+  }, [refetch]);
 
   const activeErrors = useMemo(() => dbErrors.filter((e: any) => e.status !== 'ignored'), [dbErrors]);
 
