@@ -38,6 +38,8 @@ const MP_PENDING_PAYMENT_DISMISSED_KEY = 'wealth_assessment_mp_pending_payment_d
 const MP_PENDING_PAYMENT_RESUME_GUARD_KEY = 'wealth_assessment_mp_pending_payment_resuming';
 // 🔧 标记本会话已发生过取消支付：禁止 resume 自动复用旧 pending 订单 / 旧 prepay_id
 const MP_POST_CANCEL_FLAG_KEY = 'wealth_assessment_mp_post_cancel';
+const WEALTH_RESULT_RESUME_KEY = 'wealth_block_result_resume_state';
+const WEALTH_CAMP_PENDING_PAY_KEY = 'wealth_block_camp_pending_pay';
 
 export default function WealthBlockAssessmentPage() {
   const navigate = useNavigate();
@@ -62,8 +64,61 @@ export default function WealthBlockAssessmentPage() {
   // 支付相关状态
   const [showPayDialog, setShowPayDialog] = useState(false);
   const [payDialogInstanceKey, setPayDialogInstanceKey] = useState(0);
+  const [autoOpenCampPay, setAutoOpenCampPay] = useState(false);
+  const [resumedCampOpenId, setResumedCampOpenId] = useState<string | undefined>();
   const [, setMiniProgramPayReturnSignal] = useState(0);
   const payDialogReopenTimerRef = useRef<number | null>(null);
+
+  const persistResultForResume = (shouldOpenCampPay = false) => {
+    if (!currentResult) return;
+    try {
+      sessionStorage.setItem(WEALTH_RESULT_RESUME_KEY, JSON.stringify({
+        result: currentResult,
+        answers: currentAnswers,
+        followUpInsights: currentFollowUpInsights,
+        deepFollowUpAnswers: currentDeepFollowUpAnswers,
+        savedAssessmentId,
+        previousAssessmentId,
+        isSaved,
+        shouldOpenCampPay,
+        updatedAt: Date.now(),
+      }));
+    } catch (err) {
+      console.warn('[WealthBlock] Failed to persist result resume state:', err);
+    }
+  };
+
+  const restoreResultForResume = (shouldOpenCampPay = false, openId?: string | null) => {
+    try {
+      const raw = sessionStorage.getItem(WEALTH_RESULT_RESUME_KEY);
+      if (!raw) return false;
+      const cached = JSON.parse(raw);
+      if (!cached?.result || !cached.updatedAt || Date.now() - cached.updatedAt > 30 * 60 * 1000) {
+        sessionStorage.removeItem(WEALTH_RESULT_RESUME_KEY);
+        return false;
+      }
+      setCurrentResult(cached.result);
+      setCurrentAnswers(cached.answers || {});
+      setCurrentFollowUpInsights(cached.followUpInsights);
+      setCurrentDeepFollowUpAnswers(cached.deepFollowUpAnswers);
+      setSavedAssessmentId(cached.savedAssessmentId || null);
+      setPreviousAssessmentId(cached.previousAssessmentId || null);
+      setIsSaved(!!cached.isSaved);
+      setShowIntro(false);
+      setShowResult(true);
+      if (openId) setResumedCampOpenId(openId);
+      if (shouldOpenCampPay || cached.shouldOpenCampPay) {
+        sessionStorage.removeItem(WEALTH_CAMP_PENDING_PAY_KEY);
+        setAutoOpenCampPay(false);
+        setTimeout(() => setAutoOpenCampPay(true), 120);
+      }
+      return true;
+    } catch (err) {
+      console.warn('[WealthBlock] Failed to restore result resume state:', err);
+      sessionStorage.removeItem(WEALTH_RESULT_RESUME_KEY);
+      return false;
+    }
+  };
 
   const resetMiniProgramPaymentStateAfterCancel = (orderNo?: string | null) => {
     try {
@@ -155,6 +210,11 @@ export default function WealthBlockAssessmentPage() {
   useEffect(() => {
     if (authLoading) return;
     if (!user) return;
+    const pendingCampPay = sessionStorage.getItem(WEALTH_CAMP_PENDING_PAY_KEY);
+    if (pendingCampPay === '1') {
+      restoreResultForResume(true);
+      return;
+    }
     const pending = sessionStorage.getItem('wealth_block_pending_pay');
     if (pending !== '1') return;
     sessionStorage.removeItem('wealth_block_pending_pay');
@@ -534,6 +594,10 @@ export default function WealthBlockAssessmentPage() {
         sessionStorage.setItem('cached_payment_openid_gzh', paymentOpenId);
       }
 
+      if (payFlow === 'camp_purchase' && restoreResultForResume(true, paymentOpenId)) {
+        return;
+      }
+
       // 如果有 tokenHash，先自动登录，等待登录状态更新后再打开弹窗
       if (paymentTokenHash) {
         console.log('[WealthBlock] Attempting auto-login with tokenHash...');
@@ -653,6 +717,12 @@ export default function WealthBlockAssessmentPage() {
     handleWeChatPayAuthReturn();
   }, []);
 
+  useEffect(() => {
+    if (!authLoading && !user) {
+      restoreResultForResume(false);
+    }
+  }, [authLoading, user]);
+
   // 页面访问埋点 + 加载历史记录
   // 注意：扫码追踪已由全局 GlobalRefTracker 统一处理
   useEffect(() => {
@@ -696,6 +766,19 @@ export default function WealthBlockAssessmentPage() {
     setCurrentDeepFollowUpAnswers(deepFollowUpAnswers);
     setShowResult(true);
     setIsSaved(false);
+    try {
+      sessionStorage.setItem(WEALTH_RESULT_RESUME_KEY, JSON.stringify({
+        result,
+        answers,
+        followUpInsights,
+        deepFollowUpAnswers,
+        isSaved: false,
+        shouldOpenCampPay: false,
+        updatedAt: Date.now(),
+      }));
+    } catch (err) {
+      console.warn('[WealthBlock] Failed to cache completed result:', err);
+    }
     
     // 埋点：测评完成
     trackAssessmentTocamp('assessment_completed', {
@@ -1085,6 +1168,18 @@ export default function WealthBlockAssessmentPage() {
                     isSaving={isSaving}
                     isSaved={isSaved}
                     onAiInsightReady={setAiInsight}
+                    onAuthRequired={(forCamp) => {
+                      if (user) return true;
+                      const currentPath = window.location.pathname + window.location.search;
+                      persistResultForResume(!!forCamp);
+                      if (forCamp) sessionStorage.setItem(WEALTH_CAMP_PENDING_PAY_KEY, '1');
+                      setPostAuthRedirect(currentPath);
+                      toast.info('请先登录');
+                      navigate(`/auth?redirect=${encodeURIComponent(currentPath)}`);
+                      return false;
+                    }}
+                    autoOpenPay={autoOpenCampPay}
+                    resumedOpenId={resumedCampOpenId}
                   />
                 </div>
               ) : (
