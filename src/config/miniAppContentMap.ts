@@ -1,5 +1,6 @@
 export type MiniAppSourceType = 'mini-scenes' | 'daily-tools' | 'assessments' | 'conversion';
 export type MiniAppContentStyle = 'xiaohongshu' | 'douyin' | 'empathy' | 'assessment';
+export type MiniAppContentFormat = 'video' | 'xhs-article';
 
 export interface MiniAppSeedItem {
   id: string;
@@ -26,6 +27,11 @@ export const MINI_APP_STYLE_OPTIONS: Array<{ id: MiniAppContentStyle; label: str
   { id: 'douyin', label: '抖音口播', description: '开场冲突更强，适合 30 秒短视频' },
   { id: 'empathy', label: '情绪共鸣', description: '先共情后转化，适合高压人群' },
   { id: 'assessment', label: '测评转化', description: '突出测一测、报告解读和自我洞察' },
+];
+
+export const MINI_APP_CONTENT_FORMAT_OPTIONS: Array<{ id: MiniAppContentFormat; label: string; description: string }> = [
+  { id: 'video', label: '短视频口播选题', description: '适合继续进入口播稿生成器' },
+  { id: 'xhs-article', label: '小红书爆款图文稿', description: '生成可复制发布的图文正文、卡片页和标签' },
 ];
 
 
