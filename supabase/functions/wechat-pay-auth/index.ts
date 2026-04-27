@@ -11,7 +11,7 @@ const corsHeaders = {
  * 
  * 功能：
  * 1. 生成静默授权 URL（snsapi_base，用户无感知）
- * 2. 用 code 换取支付 openId，默认不创建/切换登录态
+ * 2. 支付回调使用 openid_only 仅换取 openId；注册链路仍可显式使用 register flow
  * 
  * 这样前端在回调后可以：
  * - 直接用 openId 拉起 JSAPI 支付
@@ -39,8 +39,8 @@ serve(async (req) => {
     callbackUrl.searchParams.set('payment_auth_callback', '1');
     callbackUrl.searchParams.set('payment_redirect', redirectUri);
     if (flow) callbackUrl.searchParams.set('pay_flow', flow);
-    const state = `pay_openid_${Date.now()}`;
-    const scope = 'snsapi_base';
+    const state = flow === 'register' ? `register_${Date.now()}` : `pay_openid_${Date.now()}`;
+    const scope = flow === 'register' ? 'snsapi_userinfo' : 'snsapi_base';
     const wechatAuthUrl = `https://open.weixin.qq.com/connect/oauth2/authorize?appid=${appId}&redirect_uri=${encodeURIComponent(callbackUrl.toString())}&response_type=code&scope=${scope}&state=${state}#wechat_redirect`;
     console.log('[WechatPayAuth] GET redirect → 302 to WeChat for flow:', flow);
     return new Response(null, { status: 302, headers: { Location: wechatAuthUrl } });
@@ -96,7 +96,7 @@ serve(async (req) => {
  * 生成微信授权 URL
  * 固定回调到 /pay-entry，由 pay-entry 中转处理
  * 
- * 支付场景只获取 openId，固定使用 snsapi_base 静默授权。
+ * 支付场景只获取 openId，使用 snsapi_base；显式 register flow 仍用于注册获取头像昵称。
  */
 function generateAuthUrl(redirectUri: string, flow?: string): Response {
   const appId = Deno.env.get('WECHAT_APP_ID');
@@ -117,10 +117,9 @@ function generateAuthUrl(redirectUri: string, flow?: string): Response {
     callbackUrl.searchParams.set('pay_flow', flow);
   }
 
-  // state 仅标识支付 openId 授权，不承载登录/注册语义。
-  const state = `pay_openid_${Date.now()}`;
+  const state = flow === 'register' ? `register_${Date.now()}` : `pay_openid_${Date.now()}`;
 
-  const scope = 'snsapi_base';
+  const scope = flow === 'register' ? 'snsapi_userinfo' : 'snsapi_base';
   const wechatAuthUrl = `https://open.weixin.qq.com/connect/oauth2/authorize?appid=${appId}&redirect_uri=${encodeURIComponent(callbackUrl.toString())}&response_type=code&scope=${scope}&state=${state}#wechat_redirect`;
 
   console.log('[WechatPayAuth] Generated auth URL for flow:', flow, 'scope:', scope);
