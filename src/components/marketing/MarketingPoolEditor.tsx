@@ -130,13 +130,16 @@ export function MarketingPoolEditor({ type, products = [], gifts = [], onSaved }
     });
   };
 
+  const nextProductOrder = () => String((products.reduce((max, item) => Math.max(max, item.display_order || 0), 0) || 0) + 10);
+  const nextGiftOrder = () => String((gifts.reduce((max, item) => Math.max(max, item.display_order || 0), 0) || 0) + 10);
+
   const saveProduct = async () => {
     if (!productForm.label.trim()) {
       toast.error('请填写产品名称');
       return;
     }
 
-    const productKey = productForm.product_key.trim() || `cv-${slugify(productForm.label)}`;
+    const productKey = editingKey || productForm.product_key.trim() || `cv-${slugify(productForm.label)}`;
     setSaving(true);
     const { error } = await supabase.from('marketing_product_pool' as any).upsert({
       product_key: productKey,
@@ -144,7 +147,7 @@ export function MarketingPoolEditor({ type, products = [], gifts = [], onSaved }
       description: productForm.description.trim(),
       price: productForm.price.trim() ? Number(productForm.price) : null,
       category: productForm.category.trim() || '其他',
-      display_order: Number(productForm.display_order) || 999,
+      display_order: Number(productForm.display_order) || Number(nextProductOrder()),
       is_active: productForm.is_active,
     }, { onConflict: 'product_key' });
     setSaving(false);
@@ -166,7 +169,7 @@ export function MarketingPoolEditor({ type, products = [], gifts = [], onSaved }
       return;
     }
 
-    const giftKey = giftForm.gift_key.trim() || `gift-${slugify(productName)}`;
+    const giftKey = editingKey || giftForm.gift_key.trim() || `gift-${slugify(productName)}`;
     const giftDisplayName = giftForm.gift_display_name.trim() || `限时赠送「${productName}」`;
     setSaving(true);
     const { error } = await supabase.from('marketing_gift_pool' as any).upsert({
@@ -180,7 +183,7 @@ export function MarketingPoolEditor({ type, products = [], gifts = [], onSaved }
       topic_id: giftForm.topic_id.trim() || null,
       product_id: giftForm.product_id.trim() || null,
       report_name: giftForm.report_name.trim() || null,
-      display_order: Number(giftForm.display_order) || 999,
+      display_order: Number(giftForm.display_order) || Number(nextGiftOrder()),
       is_active: giftForm.is_active,
     }, { onConflict: 'gift_key' });
     setSaving(false);
