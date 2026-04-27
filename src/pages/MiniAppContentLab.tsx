@@ -381,7 +381,7 @@ const MiniAppContentLab: React.FC = () => {
             {giftValidation.issues.length ? <AlertTriangle className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
             <AlertTitle>{giftValidation.issues.length ? `发现 ${giftValidation.issues.length} 条赠品异常` : '赠品校验全部通过'}</AlertTitle>
             <AlertDescription className="space-y-3">
-              <p>共 {giftValidation.total} 条，命中 {giftValidation.passed} 条，标准赠品池 {MINI_APP_CANONICAL_GIFTS.length} 个。</p>
+              <p>共 {giftValidation.total} 条，命中 {giftValidation.passed} 条，标准赠品池 {canonicalGifts.length} 个。</p>
               {giftValidation.issues.length > 0 && (
                 <>
                   <div className="grid gap-2">
@@ -436,15 +436,15 @@ const MiniAppContentLab: React.FC = () => {
                       <p><span className="font-semibold text-foreground">痛点：</span><span className="text-muted-foreground">{item.painPoint}</span></p>
                       <p><span className="font-semibold text-foreground">爆款标题：</span><span className="text-muted-foreground">{item.viralTitle}</span></p>
                       <p><span className="font-semibold text-foreground">价值：</span><span className="text-muted-foreground">{item.value}</span></p>
-                      <p><span className="font-semibold text-foreground">产品/工具名：</span><span className="text-muted-foreground">{getGiftProductName(item) || '-'}</span></p>
-                      <p><span className="font-semibold text-foreground">限时赠品：</span><span className="text-muted-foreground">{getGiftDisplayName(item)}</span></p>
+                      <p><span className="font-semibold text-foreground">产品/工具名：</span><span className="text-muted-foreground">{getGiftProductName(item, canonicalGifts) || '-'}</span></p>
+                      <p><span className="font-semibold text-foreground">限时赠品：</span><span className="text-muted-foreground">{getGiftDisplayName(item, canonicalGifts)}</span></p>
                       <p><span className="font-semibold text-foreground">专业报告名称：</span><span className="text-muted-foreground">{item.reportPageName || '-'}</span></p>
                       <p><span className="font-semibold text-foreground">报告价值：</span><span className="text-muted-foreground">{item.aiReportValue}</span></p>
                       {(item.actionPlanValue || item.coachReportValue) && <p><span className="font-semibold text-foreground">下一步行动建议：</span><span className="text-muted-foreground">{item.actionPlanValue || item.coachReportValue}</span></p>}
                       <p><span className="font-semibold text-foreground">Hook：</span><span className="text-muted-foreground">{item.hook}</span></p>
                     </div>
                     <div className="flex flex-wrap gap-2 border-t pt-3">
-                      <Button variant="secondary" size="sm" onClick={() => copyText(formatItem(item), '整条选题已复制')}><Clipboard className="mr-2 h-4 w-4" />复制整条</Button>
+                      <Button variant="secondary" size="sm" onClick={() => copyText(formatItem(item, canonicalGifts), '整条选题已复制')}><Clipboard className="mr-2 h-4 w-4" />复制整条</Button>
                       <Button variant="outline" size="sm" onClick={() => copyText(item.viralTitle, '标题已复制')}><Download className="mr-2 h-4 w-4" />复制标题</Button>
                       <Button variant="outline" size="sm" onClick={() => goVideoGenerator(item)}><Video className="mr-2 h-4 w-4" />生成口播稿</Button>
                     </div>
@@ -476,14 +476,14 @@ const MiniAppContentLab: React.FC = () => {
                           <TableCell>{item.painPoint}</TableCell>
                           <TableCell className="font-medium">{item.viralTitle}</TableCell>
                           <TableCell>{item.value}</TableCell>
-                          <TableCell>{getGiftProductName(item) || '-'}</TableCell>
-                          <TableCell>{getGiftDisplayName(item)}</TableCell>
+                          <TableCell>{getGiftProductName(item, canonicalGifts) || '-'}</TableCell>
+                          <TableCell>{getGiftDisplayName(item, canonicalGifts)}</TableCell>
                           <TableCell>{giftValidation ? <Badge variant={issueMap.has(index) ? 'destructive' : 'secondary'}>{issueMap.has(index) ? '异常' : '通过'}</Badge> : '-'}</TableCell>
                           <TableCell>{item.reportPageName || '-'}</TableCell>
                           <TableCell>{item.aiReportValue}</TableCell>
                           <TableCell>{item.actionPlanValue || item.coachReportValue || '-'}</TableCell>
                           <TableCell>
-                            <Button variant="ghost" size="sm" onClick={() => copyText(formatItem(item))}>复制</Button>
+                            <Button variant="ghost" size="sm" onClick={() => copyText(formatItem(item, canonicalGifts))}>复制</Button>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -496,18 +496,28 @@ const MiniAppContentLab: React.FC = () => {
         )}
 
         <Card>
-          <CardHeader className="pb-3"><CardTitle className="text-base">可用转化产品池</CardTitle></CardHeader>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between gap-2">
+              <CardTitle className="text-base">可用转化产品池</CardTitle>
+              {isAdmin && <MarketingPoolEditor type="product" products={products} onSaved={() => refetchProducts()} />}
+            </div>
+          </CardHeader>
           <CardContent className="flex flex-wrap gap-2">
-            {CONVERSION_PRODUCTS.slice(0, 12).map(product => (
+            {products.slice(0, 12).map(product => (
               <Badge key={product.id} variant="secondary">{product.label}</Badge>
             ))}
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="pb-3"><CardTitle className="text-base">标准赠品池</CardTitle></CardHeader>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between gap-2">
+              <CardTitle className="text-base">标准赠品池</CardTitle>
+              {isAdmin && <MarketingPoolEditor type="gift" gifts={gifts as MarketingGift[]} onSaved={() => refetchGifts()} />}
+            </div>
+          </CardHeader>
           <CardContent className="flex flex-wrap gap-2">
-            {MINI_APP_CANONICAL_GIFTS.map(gift => (
+            {canonicalGifts.map(gift => (
               <Badge key={gift.id} variant="secondary">{gift.productName || gift.label}</Badge>
             ))}
           </CardContent>
