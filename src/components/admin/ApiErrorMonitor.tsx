@@ -91,19 +91,21 @@ export default function ApiErrorMonitor() {
 
   const { data: dbErrors = [], isLoading } = useMonitorApiErrors({ platform, timeRange });
 
+  const activeErrors = useMemo(() => dbErrors.filter((e: any) => e.status !== 'ignored'), [dbErrors]);
+
   const stats = useMemo(() => {
     const s = { rateLimitCount: 0, serverErrorCount: 0, timeoutCount: 0, thirdPartyErrorCount: 0 };
-    for (const e of dbErrors) {
+    for (const e of activeErrors) {
       if (e.error_type === 'rate_limit') s.rateLimitCount++;
       else if (e.error_type === 'server_error') s.serverErrorCount++;
       else if (e.error_type === 'timeout') s.timeoutCount++;
       else if (e.error_type === 'third_party') s.thirdPartyErrorCount++;
     }
     return s;
-  }, [dbErrors]);
+  }, [activeErrors]);
 
   const filtered = useMemo(() => {
-    let list = dbErrors;
+    let list = activeErrors;
     if (filter !== "all") list = list.filter((e: any) => e.error_type === filter);
     if (keyword.trim()) {
       const kw = keyword.toLowerCase();
@@ -114,7 +116,7 @@ export default function ApiErrorMonitor() {
       );
     }
     return list;
-  }, [dbErrors, filter, keyword]);
+  }, [activeErrors, filter, keyword]);
 
   const copyError = (err: any) => {
     navigator.clipboard.writeText(buildApiErrorText(err));
@@ -128,7 +130,7 @@ export default function ApiErrorMonitor() {
       <div className="grid gap-4 grid-cols-2 md:grid-cols-5">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">异常总数</CardTitle><AlertTriangle className="h-4 w-4 text-muted-foreground" /></CardHeader>
-          <CardContent className="!p-6"><div className="text-2xl font-bold">{dbErrors.length}</div><p className="text-xs text-muted-foreground">{isLoading ? '加载中...' : '已入库记录'}</p></CardContent>
+          <CardContent className="!p-6"><div className="text-2xl font-bold">{activeErrors.length}</div><p className="text-xs text-muted-foreground">{isLoading ? '加载中...' : `已自动降噪 ${dbErrors.length - activeErrors.length} 条`}</p></CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">429 限流</CardTitle><Ban className="h-4 w-4 text-amber-500" /></CardHeader>
