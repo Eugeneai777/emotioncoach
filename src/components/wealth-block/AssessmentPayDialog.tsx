@@ -176,6 +176,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, onCancelled
   const [pollingTimeout, setPollingTimeout] = useState<boolean>(false);
   const [jsapiPayDismissed, setJsapiPayDismissed] = useState<boolean>(false);
   const [isForceChecking, setIsForceChecking] = useState<boolean>(false);
+  const [createOrderSlow, setCreateOrderSlow] = useState<boolean>(false);
   // 🆕 邀请码入口
   const [showInviteCodeInput, setShowInviteCodeInput] = useState(false);
   const [inviteCode, setInviteCode] = useState("");
@@ -804,7 +805,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, onCancelled
     try {
       // 添加超时控制：小程序 WebView + 微信代理链路偶发超过全局 30s，需给下单更长窗口
       createOrderController = new AbortController();
-      const createOrderTimeoutMs = isMiniProgram ? 60000 : 45000;
+      const createOrderTimeoutMs = isMiniProgram ? 22000 : 18000;
       createOrderTimeoutId = setTimeout(() => {
         try {
           createOrderController?.abort(new Error(`create-wechat-order timeout after ${createOrderTimeoutMs}ms`));
@@ -812,6 +813,9 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, onCancelled
           createOrderController?.abort();
         }
       }, createOrderTimeoutMs);
+      const createOrderSlowTimerId = window.setTimeout(() => {
+        if (isPaymentSessionActive(sessionId)) setCreateOrderSlow(true);
+      }, 6000);
 
       // 确定支付类型：
       // - 微信浏览器：优先 JSAPI（弹窗）
@@ -924,6 +928,8 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, onCancelled
         signal: createOrderController.signal,
       });
 
+      clearTimeout(createOrderSlowTimerId);
+      setCreateOrderSlow(false);
       if (createOrderTimeoutId) clearTimeout(createOrderTimeoutId);
 
       if (!isPaymentSessionActive(sessionId)) return;
