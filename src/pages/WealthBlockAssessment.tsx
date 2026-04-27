@@ -594,6 +594,10 @@ export default function WealthBlockAssessmentPage() {
         sessionStorage.setItem('cached_payment_openid_gzh', paymentOpenId);
       }
 
+      if (payFlow === 'camp_purchase' && restoreResultForResume(true, paymentOpenId)) {
+        return;
+      }
+
       // 如果有 tokenHash，先自动登录，等待登录状态更新后再打开弹窗
       if (paymentTokenHash) {
         console.log('[WealthBlock] Attempting auto-login with tokenHash...');
@@ -713,6 +717,12 @@ export default function WealthBlockAssessmentPage() {
     handleWeChatPayAuthReturn();
   }, []);
 
+  useEffect(() => {
+    if (!authLoading && !user) {
+      restoreResultForResume(false);
+    }
+  }, [authLoading, user]);
+
   // 页面访问埋点 + 加载历史记录
   // 注意：扫码追踪已由全局 GlobalRefTracker 统一处理
   useEffect(() => {
@@ -756,6 +766,19 @@ export default function WealthBlockAssessmentPage() {
     setCurrentDeepFollowUpAnswers(deepFollowUpAnswers);
     setShowResult(true);
     setIsSaved(false);
+    try {
+      sessionStorage.setItem(WEALTH_RESULT_RESUME_KEY, JSON.stringify({
+        result,
+        answers,
+        followUpInsights,
+        deepFollowUpAnswers,
+        isSaved: false,
+        shouldOpenCampPay: false,
+        updatedAt: Date.now(),
+      }));
+    } catch (err) {
+      console.warn('[WealthBlock] Failed to cache completed result:', err);
+    }
     
     // 埋点：测评完成
     trackAssessmentTocamp('assessment_completed', {
