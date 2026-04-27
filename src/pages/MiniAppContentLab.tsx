@@ -246,6 +246,7 @@ const MiniAppContentLab: React.FC = () => {
           sourceType,
           style,
           contentFormat,
+            includeVoiceover: contentFormat === 'xhs-article' && includeVoiceover,
           count: Number(count),
           seedItems,
         },
@@ -257,7 +258,7 @@ const MiniAppContentLab: React.FC = () => {
       setItems(normalizeItems(data.items));
       setPreviewIndex(0);
       setGiftValidation(null);
-      toast.success(`已生成 ${data.items.length} 条${contentFormat === 'xhs-article' ? '小红书图文稿' : '短视频选题'}`);
+      toast.success(`已生成 ${data.items.length} 条${contentFormat === 'xhs-article' ? `小红书图文稿${includeVoiceover ? ' + 口播稿' : ''}` : '短视频选题'}`);
     } catch (err: any) {
       toast.error(`生成失败：${err.message || '请稍后重试'}`);
     } finally {
@@ -421,9 +422,18 @@ const MiniAppContentLab: React.FC = () => {
                 </SelectContent>
               </Select>
             </div>
+            {contentFormat === 'xhs-article' && (
+              <label className="md:col-span-5 flex items-center gap-3 rounded-xl border border-accent/25 bg-accent/10 p-3 text-sm text-foreground">
+                <Checkbox checked={includeVoiceover} onCheckedChange={checked => setIncludeVoiceover(checked === true)} disabled={loading} />
+                <span className="min-w-0">
+                  <span className="font-semibold">同时生成对应口播稿版本</span>
+                  <span className="ml-2 text-muted-foreground">每条图文稿会同步产出可直接念的短视频口播稿和镜头建议。</span>
+                </span>
+              </label>
+            )}
             <div className="md:col-span-5 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="text-xs text-muted-foreground">
-                当前将基于 <Badge variant="secondary">{selectedSource?.label}</Badge> 生成 <Badge variant="secondary">{selectedContentFormat?.label}</Badge>；赠品仅限现有 9.9/免费测评与工具：{canonicalGiftNames.slice(0, 4).join('、')}等，风格为 <Badge variant="secondary">{selectedStyle?.label}</Badge>
+                当前将基于 <Badge variant="secondary">{selectedSource?.label}</Badge> 生成 <Badge variant="secondary">{selectedContentFormat?.label}</Badge>{contentFormat === 'xhs-article' && includeVoiceover ? ' + 对应口播稿' : ''}；赠品仅限现有 9.9/免费测评与工具：{canonicalGiftNames.slice(0, 4).join('、')}等，风格为 <Badge variant="secondary">{selectedStyle?.label}</Badge>
               </div>
               <Button onClick={handleGenerate} disabled={loading} className="bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-md shadow-primary/20 sm:min-w-40">
                 {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
