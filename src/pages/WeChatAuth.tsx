@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { ArrowLeft, Loader2, CheckCircle2, Smartphone, Bell, Calendar, MessageCircle, RefreshCw, QrCode } from "lucide-react";
+import { ArrowLeft, Loader2, CheckCircle2, Smartphone, Bell, Calendar, MessageCircle, RefreshCw, QrCode, ShieldCheck, ArrowRight } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -183,12 +183,9 @@ export default function WeChatAuth() {
       const url = `https://open.weixin.qq.com/connect/oauth2/authorize?appid=${appid}&redirect_uri=${redirectUri}&response_type=code&scope=snsapi_userinfo&state=${state}#wechat_redirect`;
       setAuthUrl(url);
       
-      // 如果在微信浏览器中，直接跳转
-      if (isWeChatBrowser()) {
-        window.location.href = url;
-      } else {
-        setLoading(false);
-      }
+      // 不再自动跳转：让用户明确点击“继续授权”，降低多次跳转带来的不安全感。
+      // 授权 URL、state、scope 和后续回调逻辑保持不变，避免影响现有登录/注册/绑定业务。
+      setLoading(false);
     } catch (error) {
       console.error("生成授权链接失败:", error);
       toast.error("生成授权链接失败");
@@ -369,6 +366,67 @@ export default function WeChatAuth() {
           <CardContent className="flex flex-col items-center justify-center py-16">
             <Loader2 className="h-12 w-12 animate-spin text-teal-500 mb-4" />
             <p className="text-muted-foreground">正在加载微信授权...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // 微信内移动端 - 用户主动触发授权
+  if (isMobileDevice() && isWeChatBrowser()) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <Card className="w-full max-w-md border-border bg-card shadow-xl">
+          <CardHeader className="space-y-4 text-center">
+            <div className="flex items-center gap-2 text-left">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate("/auth")}
+                aria-label="返回其他登录方式"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+              <ShieldCheck className="h-7 w-7 text-primary" />
+            </div>
+            <div className="space-y-2">
+              <CardTitle>{mode === "register" ? "微信注册确认" : "微信登录确认"}</CardTitle>
+              <CardDescription>
+                点击后将前往微信官方授权页，完成后自动回到有劲AI。
+              </CardDescription>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            <div className="rounded-lg border border-border bg-muted/40 p-4 text-sm text-muted-foreground space-y-3">
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
+                <span>仅用于确认你的微信身份，不会自动发布内容。</span>
+              </div>
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
+                <span>授权完成后会回到刚才的业务页面或首页。</span>
+              </div>
+            </div>
+            <Button
+              className="w-full"
+              disabled={!authUrl}
+              onClick={() => {
+                if (!authUrl) return;
+                window.location.href = authUrl;
+              }}
+            >
+              继续微信授权
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              className="w-full"
+              onClick={() => navigate("/auth")}
+            >
+              使用手机号登录
+            </Button>
           </CardContent>
         </Card>
       </div>
