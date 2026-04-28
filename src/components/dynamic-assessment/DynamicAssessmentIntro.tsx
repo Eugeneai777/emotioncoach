@@ -23,6 +23,7 @@ interface DynamicAssessmentIntroProps {
   onStart: () => void;
   onShowHistory?: () => void;
   hasHistory?: boolean;
+  requireAuth?: boolean;
   requirePayment?: boolean;
   hasPurchased?: boolean;
   price?: number;
@@ -71,9 +72,34 @@ const enrichmentData: Record<string, {
       { score: 82, maxScore: 100, label: "关系经营力", emoji: "🤝" },
     ],
   },
+  male_midlife_vitality: {
+    painPoints: [
+      { emoji: "🔋", text: "白天像在硬撑，晚上却睡不踏实，身体总是充不上电" },
+      { emoji: "🧠", text: "一边担心指标、家庭和工作，一边又不想让别人看出来" },
+      { emoji: "🤐", text: "有些状态不好开口，只能自己在夜里反复琢磨" },
+      { emoji: "🏠", text: "不是不在乎家人，是最近连照顾自己的余力都变少了" },
+    ],
+    authority: [
+      { emoji: "📋", text: "参考 SHIM / IIEF-5 的短题快筛思路，聚焦信心、状态和关键时刻压力" },
+      { emoji: "🧭", text: "融合 AMS、睡眠质量和情绪压力筛查框架，覆盖精力、睡眠、关系与行动恢复" },
+      { emoji: "🛡️", text: "本测评是状态盘点，不做疾病诊断；如有明显身体不适，建议及时咨询专业医生" },
+    ],
+    comparison: {
+      traditional: "要么太医学化，让人一看就想退出；要么太娱乐化，看完没有行动方向",
+      ours: "用中年男性真实生活场景提问，既保留私密感，又能看见压力、睡眠和关键时刻信心的关系",
+    },
+    radarPreview: [
+      { score: 46, maxScore: 100, label: "精力续航", emoji: "🔋" },
+      { score: 39, maxScore: 100, label: "睡眠修复", emoji: "🌙" },
+      { score: 72, maxScore: 100, label: "压力内耗", emoji: "🧠" },
+      { score: 58, maxScore: 100, label: "关键时刻信心", emoji: "🛡️" },
+      { score: 51, maxScore: 100, label: "关系温度", emoji: "🏠" },
+      { score: 64, maxScore: 100, label: "行动恢复力", emoji: "🏃" },
+    ],
+  },
 };
 
-export function DynamicAssessmentIntro({ template, onStart, onShowHistory, hasHistory, requirePayment, hasPurchased, price, onPayClick }: DynamicAssessmentIntroProps) {
+export function DynamicAssessmentIntro({ template, onStart, onShowHistory, hasHistory, requireAuth = true, requirePayment, hasPurchased, price, onPayClick }: DynamicAssessmentIntroProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const needPay = requirePayment && !hasPurchased;
@@ -231,13 +257,13 @@ export function DynamicAssessmentIntro({ template, onStart, onShowHistory, hasHi
           <motion.div {...fadeUp(0.6)}>
             <Card className="border-border/40 bg-card/95 backdrop-blur-md shadow-lg">
               <CardContent className="p-5">
-                <h2 className="font-semibold text-foreground mb-3 text-sm flex items-center gap-2">
+                  <h2 className="font-semibold text-foreground mb-3 text-sm flex items-center gap-2">
                   <TrendingUp className="w-4 h-4 text-emerald-500" />
-                  AI深度测评 vs 传统测试
+                  {template.assessment_key === 'male_midlife_vitality' ? '为什么更适合公众号流量' : 'AI深度测评 vs 传统测试'}
                 </h2>
                 <div className="space-y-2">
                   <div className="p-3 rounded-lg bg-muted/40 border border-border/30">
-                    <p className="text-xs font-medium text-muted-foreground mb-1">❌ 传统职场测评</p>
+                    <p className="text-xs font-medium text-muted-foreground mb-1">❌ 传统测试</p>
                     <p className="text-xs text-muted-foreground/70">{enrichment.comparison.traditional}</p>
                   </div>
                   <div className="p-3 rounded-lg bg-primary/5 border border-primary/15">
@@ -279,7 +305,7 @@ export function DynamicAssessmentIntro({ template, onStart, onShowHistory, hasHi
         <motion.div {...fadeUp(enrichment ? 0.75 : 0.7)} className="pt-2">
           <Button
             onClick={() => {
-              if (!user) {
+              if (requireAuth && !user) {
                 toast.info("请先登录后开始测评");
                 setPostAuthRedirect(window.location.pathname + window.location.search);
                 navigate(`/auth?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`);
