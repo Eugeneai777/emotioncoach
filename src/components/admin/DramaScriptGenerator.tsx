@@ -343,11 +343,150 @@ export default function DramaScriptGenerator() {
         throw new Error(await extractEdgeFunctionError(data, error, "生成失败，请稍后重试"));
       }
       setResult(data as DramaScript);
+      setSavedScriptId(null);
+      setActiveSavedScript(null);
       toast.success("脚本生成成功！");
     } catch (e: any) {
       toast.error(e.message || "生成失败");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const clearGeneratedAssets = () => {
+    setSceneVideos({});
+    setVideoPreviewFallbacks({});
+    setSceneAudios({});
+    Object.values(pollingRefs.current).forEach(clearInterval);
+    pollingRefs.current = {};
+  };
+
+  const saveCurrentScript = async () => {
+    if (!result) return;
+    setSavingScript(true);
+    try {
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError || !userData.user) throw new Error("请先登录后再保存脚本");
+
+      const selectedProductDetails = getSelectedProductDetails();
+      const payload = {
+        creator_id: userData.user.id,
+        title: result.title,
+        synopsis: result.synopsis,
+        mode,
+        theme,
+        genre,
+        style,
+        conflict_intensity: conflictIntensity,
+        target_audience: mode === "youjin" ? targetAudience : null,
+        conversion_style: mode === "youjin" ? conversionStyle : null,
+        selected_products: selectedProductDetails,
+        script_data: result,
+        series_id: activeSavedScript?.series_id,
+        parent_script_id: activeSavedScript?.id || null,
+        episode_number: activeSavedScript ? activeSavedScript.episode_number + 1 : 1,
+      };
+
+      const query = savedScriptId
+        ? (supabase as any).from("drama_scripts").update(payload).eq("id", savedScriptId).select().limit(1)
+        : (supabase as any).from("drama_scripts").insert(payload).select().limit(1);
+      const { data, error } = await query;
+      if (error) throw error;
+      if (!data || data.length === 0) throw new Error("保存失败：权限不足或记录未写入");
+
+      const saved = data[0] as SavedDramaScript;
+      setSavedScriptId(saved.id);
+      setActiveSavedScript(saved);
+      await fetchSavedScripts();
+      toast.success("脚本已保存");
+    } catch (e: any) {
+      toast.error(e.message || "保存失败");
+    } finally {
+      setSavingScript(false);
+    }
+  };
+
+  const loadSavedScript = (script: SavedDramaScript) => {
+    setMode(script.mode || "generic");
+    setTheme(script.theme || script.title);
+    setGenre(script.genre || "suspense");
+    setStyle(script.style || "anime");
+    setConflictIntensity(script.conflict_intensity || "strong");
+    setTargetAudience(script.target_audience || "women");
+    setConversionStyle(script.conversion_style || "plot");
+    setSelectedProducts(new Set((script.selected_products || []).map((p) => p.key)));
+    setResult(script.script_data);
+    setSavedScriptId(script.id);
+    setActiveSavedScript(script);
+    clearGeneratedAssets();
+    toast.success(`已载入《${script.title}》第${script.episode_number}集`);
+  };
+
+  const deleteSavedScript = async (script: SavedDramaScript) => {
+    try {
+      const { data, error } = await (supabase as any)
+        .from("drama_scripts")
+        .delete()
+        .eq("id", script.id)
+        .select()
+        .limit(1);
+      if (error) throw error;
+      if (!data || data.length === 0) throw new Error("删除失败：权限不足或记录不存在");
+      if (savedScriptId === script.id) {
+        setSavedScriptId(null);
+        setActiveSavedScript(null);
+      }
+      await fetchSavedScripts();
+      toast.success("脚本已删除");
+    } catch (e: any) {
+      toast.error(e.message || "删除失败");
+    }
+  };
+
+  const generateSequel = async (script = activeSavedScript) => {
+    if (!script) {
+      toast.error("请先保存或载入一个脚本，再生成续集");
+      return;
+    }
+    setGeneratingSequel(true);
+    setResult(null);
+    clearGeneratedAssets();
+    try {
+      const productsForSequel = script.selected_products || [];
+      const body: any = {
+        action: "generate_sequel",
+        theme: `${script.title} 后续：冲突继续升级`,
+        genre: script.genre || genre,
+        style: script.style || style,
+        sceneCount,
+        mode: script.mode,
+        conflictIntensity,
+        previousScript: script,
+      };
+      if (script.mode === "youjin") {
+        body.products = productsForSequel;
+        body.targetAudience = script.target_audience || targetAudience;
+        body.conversionStyle = script.conversion_style || conversionStyle;
+      }
+      const { data, error } = await supabase.functions.invoke("drama-script-ai", { body });
+      if (data?.error || error) {
+        throw new Error(await extractEdgeFunctionError(data, error, "续集生成失败，请稍后重试"));
+      }
+      setMode(script.mode || "generic");
+      setGenre(script.genre || genre);
+      setStyle(script.style || style);
+      setTargetAudience(script.target_audience || targetAudience);
+      setConversionStyle(script.conversion_style || conversionStyle);
+      setSelectedProducts(new Set(productsForSequel.map((p) => p.key)));
+      setTheme((data as DramaScript).title);
+      setResult(data as DramaScript);
+      setSavedScriptId(null);
+      setActiveSavedScript(script);
+      toast.success(`第${script.episode_number + 1}集已生成，确认后可保存`);
+    } catch (e: any) {
+      toast.error(e.message || "续集生成失败");
+    } finally {
+      setGeneratingSequel(false);
     }
   };
 
