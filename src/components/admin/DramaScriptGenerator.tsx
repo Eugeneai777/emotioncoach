@@ -852,7 +852,7 @@ export default function DramaScriptGenerator() {
       description="输入故事主题，AI自动生成多场景分镜脚本，画面提示词可直接用于即梦/MJ生图"
     >
       {/* Mode Toggle */}
-      <div className="flex gap-2 mb-4">
+      <div className="flex flex-wrap gap-2 mb-4 min-w-0">
         <Button
           variant={mode === "generic" ? "default" : "outline"}
           onClick={() => setMode("generic")}
@@ -871,7 +871,7 @@ export default function DramaScriptGenerator() {
       </div>
 
       {/* Input Form */}
-      <Card>
+      <Card className="max-w-full overflow-hidden">
         <CardContent className="pt-6 space-y-5">
           <div className="space-y-2">
             <Label>故事主题 *</Label>
@@ -885,7 +885,7 @@ export default function DramaScriptGenerator() {
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 min-w-0">
             <div className="space-y-2">
               <Label>题材类型</Label>
               <div className="flex flex-wrap gap-2">
@@ -894,7 +894,7 @@ export default function DramaScriptGenerator() {
                     key={g.value}
                     onClick={() => setGenre(g.value)}
                     disabled={loading}
-                    className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
+                    className={`max-w-full px-3 py-1.5 rounded-full text-sm border transition-colors break-words ${
                       genre === g.value
                         ? "bg-primary text-primary-foreground border-primary"
                         : "bg-background border-border hover:bg-muted"
@@ -914,7 +914,7 @@ export default function DramaScriptGenerator() {
                     key={s.value}
                     onClick={() => setStyle(s.value)}
                     disabled={loading}
-                    className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
+                    className={`max-w-full px-3 py-1.5 rounded-full text-sm border transition-colors break-words ${
                       style === s.value
                         ? "bg-primary text-primary-foreground border-primary"
                         : "bg-background border-border hover:bg-muted"
@@ -935,7 +935,7 @@ export default function DramaScriptGenerator() {
                   key={level.value}
                   onClick={() => setConflictIntensity(level.value)}
                   disabled={loading}
-                  className={`text-left p-3 rounded-lg border transition-colors ${
+                    className={`min-w-0 text-left p-3 rounded-lg border transition-colors ${
                     conflictIntensity === level.value
                       ? "bg-primary/10 border-primary ring-1 ring-primary"
                       : "bg-background border-border hover:bg-muted/50"
@@ -951,7 +951,7 @@ export default function DramaScriptGenerator() {
           {/* Youjin-specific options */}
           {mode === "youjin" && (
             <>
-              <div className="space-y-2">
+              <div className="space-y-2 min-w-0">
                 <Label className="flex items-center gap-1.5">
                   <Target className="h-4 w-4" /> 目标人群
                 </Label>
@@ -961,7 +961,7 @@ export default function DramaScriptGenerator() {
                       key={a.value}
                       onClick={() => setTargetAudience(a.value)}
                       disabled={loading}
-                      className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
+                      className={`max-w-full px-3 py-1.5 rounded-full text-sm border transition-colors break-words ${
                         targetAudience === a.value
                           ? "bg-primary text-primary-foreground border-primary"
                           : "bg-background border-border hover:bg-muted"
@@ -973,7 +973,7 @@ export default function DramaScriptGenerator() {
                 </div>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-2 min-w-0">
                 <Label>转化方式（可多选）</Label>
                 <div className="flex flex-wrap gap-2">
                   {CONVERSION_STYLES.map((c) => (
@@ -981,7 +981,7 @@ export default function DramaScriptGenerator() {
                       key={c.value}
                       onClick={() => toggleConversionStyle(c.value)}
                       disabled={loading}
-                      className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
+                      className={`max-w-full px-3 py-1.5 rounded-full text-sm border transition-colors text-left break-words ${
                         conversionStyles.includes(c.value)
                           ? "bg-primary text-primary-foreground border-primary"
                           : "bg-background border-border hover:bg-muted"
@@ -999,9 +999,9 @@ export default function DramaScriptGenerator() {
                   <ShoppingCart className="h-4 w-4" /> 选择转化产品 *
                 </Label>
                 <Tabs defaultValue="assessment" className="w-full">
-                  <TabsList className="w-full flex">
+                  <TabsList className="w-full h-auto flex flex-wrap justify-start gap-1">
                     {Object.entries(PRODUCT_CATALOG).map(([key, cat]) => (
-                      <TabsTrigger key={key} value={key} className="flex-1 text-xs">
+                      <TabsTrigger key={key} value={key} className="flex-1 min-w-[72px] text-xs">
                         {cat.label}
                       </TabsTrigger>
                     ))}
@@ -1034,7 +1034,7 @@ export default function DramaScriptGenerator() {
                   ))}
                 </Tabs>
                 {selectedProducts.size > 0 && (
-                  <div className="text-xs text-muted-foreground">
+                  <div className="text-xs text-muted-foreground break-words">
                     已选 {selectedProducts.size} 个产品：{getSelectedProductDetails().map((p) => p.name).join("、")}
                   </div>
                 )}
@@ -1130,10 +1130,10 @@ export default function DramaScriptGenerator() {
       </Card>
 
       {/* Saved Scripts */}
-      <Card className="mt-4">
+      <Card className="mt-4 max-w-full overflow-hidden">
         <CardHeader className="pb-3">
-          <div className="flex items-center justify-between gap-3">
-            <CardTitle className="text-base flex items-center gap-2">
+          <div className="flex items-center justify-between gap-3 min-w-0">
+            <CardTitle className="text-base flex items-center gap-2 min-w-0">
               <Library className="h-4 w-4" /> 已保存脚本
             </CardTitle>
             <Button variant="outline" size="sm" onClick={fetchSavedScripts} disabled={loadingSavedScripts} className="h-8 gap-1.5 text-xs">
@@ -1152,7 +1152,7 @@ export default function DramaScriptGenerator() {
           ) : (
             <div className="space-y-2 max-h-72 overflow-auto pr-1">
               {savedScripts.map((script) => (
-                <div key={script.id} className="flex items-center justify-between gap-3 rounded-lg border p-3 min-w-0 overflow-hidden">
+                <div key={script.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-lg border p-3 min-w-0 overflow-hidden">
                   <button className="min-w-0 flex-1 text-left overflow-hidden" onClick={() => loadSavedScript(script)}>
                     <div className="flex items-center gap-2 flex-wrap min-w-0">
                       <span className="font-medium text-sm truncate min-w-0 max-w-full">{script.title}</span>
@@ -1165,7 +1165,7 @@ export default function DramaScriptGenerator() {
                       {script.synopsis || script.theme} · {new Date(script.created_at).toLocaleString()}
                     </div>
                   </button>
-                  <div className="flex items-center gap-1 shrink-0">
+                  <div className="flex flex-wrap items-center gap-1 shrink-0">
                     <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => loadSavedScript(script)}>载入</Button>
                     <Button variant="ghost" size="sm" className="h-8 text-xs gap-1" onClick={() => generateSequel(script)} disabled={generatingSequel}>
                       <Wand2 className="h-3 w-3" /> 续集
@@ -1185,11 +1185,11 @@ export default function DramaScriptGenerator() {
       {result && (
         <div className="space-y-4 mt-6">
           {/* Title & Synopsis */}
-          <Card>
+          <Card className="max-w-full overflow-hidden">
             <CardHeader className="pb-3">
-              <div className="flex items-start justify-between gap-3 min-w-0">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 min-w-0">
                 <CardTitle className="text-lg leading-snug break-words min-w-0 flex-1">{result.title}</CardTitle>
-                <div className="flex gap-2 flex-wrap justify-end">
+                <div className="flex gap-2 flex-wrap sm:justify-end min-w-0">
                   {activeSavedScript && (
                     <span className="text-xs text-primary bg-primary/10 px-2 py-1 rounded font-medium">
                       第{savedScriptId === activeSavedScript.id ? activeSavedScript.episode_number : activeSavedScript.episode_number + 1}集
@@ -1529,7 +1529,7 @@ export default function DramaScriptGenerator() {
                           <span className="text-xs text-muted-foreground mt-1">{scene.duration}</span>
                         </div>
 
-                        <div className="flex-1 space-y-2 min-w-0">
+                        <div className="flex-1 space-y-2 min-w-0 overflow-hidden">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded font-medium">
                               {scene.panel}
@@ -1590,7 +1590,7 @@ export default function DramaScriptGenerator() {
                             )}
 
                             {videoState.status === "done" && videoState.videoUrl && (
-                              <div className="flex items-center gap-2">
+                              <div className="flex flex-wrap items-center gap-2 min-w-0">
                                 <span className="text-xs text-primary flex items-center gap-1">
                                   <Check className="h-3 w-3" /> 已完成
                                 </span>
@@ -1614,7 +1614,7 @@ export default function DramaScriptGenerator() {
                             )}
 
                             {videoState.status === "failed" && (
-                              <div className="flex items-center gap-2">
+                              <div className="flex flex-wrap items-center gap-2 min-w-0">
                                 <span className="text-xs text-destructive">{videoState.error || "失败"}</span>
                                 <Button
                                   variant="ghost"
@@ -1684,7 +1684,7 @@ export default function DramaScriptGenerator() {
                                   </div>
                                 )}
                                 {(scene.narration || scene.dialogue) && audioState.status === "idle" && (
-                                  <span className="text-xs text-muted-foreground truncate max-w-[200px]">
+                                  <span className="text-xs text-muted-foreground truncate max-w-full sm:max-w-[200px]">
                                     📝 {(scene.narration || scene.dialogue).slice(0, 30)}...
                                   </span>
                                 )}
