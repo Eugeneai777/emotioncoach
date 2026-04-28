@@ -228,7 +228,7 @@ const CampIntro = () => {
     const { data: insertedCamps, error } = await supabase
       .from('training_camps')
       .insert({
-        user_id: user.id,
+        user_id: resolvedUserId,
         camp_name: campTemplate.camp_name,
         camp_type: 'emotion_stress_7',
         duration_days: campTemplate.duration_days,
@@ -575,11 +575,13 @@ const CampIntro = () => {
         }}
         onSuccess={async () => {
           setPaymentCompleted(true);
+          const { data: latestAuth } = await supabase.auth.getUser();
+          const resolvedUserId = user?.id || latestAuth.user?.id;
           // 记录购买到 user_camp_purchases（容错处理，避免插入失败阻断后续流程）
-          if (user) {
+          if (resolvedUserId) {
             try {
               await supabase.from('user_camp_purchases').insert({
-                user_id: user.id,
+                user_id: resolvedUserId,
                 camp_type: campType,
                 camp_name: campTemplate.camp_name,
                 purchase_price: campTemplate.price || 0,
@@ -593,7 +595,7 @@ const CampIntro = () => {
           refetchPurchase();
           if (campType === 'emotion_stress_7') {
             try {
-              await startEmotionStressCampAndEnter();
+              await startEmotionStressCampAndEnter(resolvedUserId);
             } catch (error) {
               console.error('Auto-start emotion stress camp after payment error:', error);
               toast.error('开启训练营失败，请稍后重试');
