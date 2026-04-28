@@ -4055,6 +4055,77 @@ export type Database = {
         }
         Relationships: []
       }
+      drama_scripts: {
+        Row: {
+          conflict_intensity: string | null
+          conversion_style: string | null
+          created_at: string
+          creator_id: string
+          episode_number: number
+          genre: string | null
+          id: string
+          mode: string
+          parent_script_id: string | null
+          script_data: Json
+          selected_products: Json
+          series_id: string
+          style: string | null
+          synopsis: string | null
+          target_audience: string | null
+          theme: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          conflict_intensity?: string | null
+          conversion_style?: string | null
+          created_at?: string
+          creator_id: string
+          episode_number?: number
+          genre?: string | null
+          id?: string
+          mode?: string
+          parent_script_id?: string | null
+          script_data: Json
+          selected_products?: Json
+          series_id?: string
+          style?: string | null
+          synopsis?: string | null
+          target_audience?: string | null
+          theme: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          conflict_intensity?: string | null
+          conversion_style?: string | null
+          created_at?: string
+          creator_id?: string
+          episode_number?: number
+          genre?: string | null
+          id?: string
+          mode?: string
+          parent_script_id?: string | null
+          script_data?: Json
+          selected_products?: Json
+          series_id?: string
+          style?: string | null
+          synopsis?: string | null
+          target_audience?: string | null
+          theme?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drama_scripts_parent_script_id_fkey"
+            columns: ["parent_script_id"]
+            isOneToOne: false
+            referencedRelation: "drama_scripts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       elder_mood_logs: {
         Row: {
           child_user_id: string
