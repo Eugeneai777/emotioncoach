@@ -201,6 +201,7 @@ export function DynamicAssessmentResult({
   // Score percentage for the ring
   const scorePercent = result.maxScore > 0 ? Math.round((result.totalScore / result.maxScore) * 100) : 0;
   const isSBTI = scoringType === 'sbti';
+  const isMaleMidlifeVitality = template.assessment_key === 'male_midlife_vitality';
   const sbtiGroups = isSBTI ? [
     { name: '自我模型', emoji: '🪞', keys: ['S1','S2','S3'] },
     { name: '情感模型', emoji: '💗', keys: ['E1','E2','E3'] },
@@ -574,6 +575,44 @@ export function DynamicAssessmentResult({
           </motion.div>
         )}
 
+        {isMaleMidlifeVitality && !isLiteMode && (
+          <motion.div custom={7} variants={fadeUp} initial="hidden" animate="visible" className="space-y-3">
+            <Card className="border-primary/25 bg-gradient-to-br from-primary/8 to-accent/8 shadow-sm overflow-hidden">
+              <CardContent className="p-4 space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center text-xl shrink-0">🔋</div>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-bold text-sm text-foreground">先用 7 天，把电量充回来</h3>
+                    <p className="text-xs text-muted-foreground leading-relaxed mt-1">
+                      适合压力大、睡不好、容易疲惫、关键时刻信心波动的人。先从睡眠、呼吸、身体节奏和每日小行动开始恢复。
+                    </p>
+                  </div>
+                </div>
+                <Button className="w-full h-11 rounded-xl gap-2" onClick={() => navigate('/camp-intro/emotion_stress_7')}>
+                  了解 7天有劲训练营 <ArrowRight className="w-4 h-4" />
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="border-border/40 bg-card/90 backdrop-blur-sm shadow-sm">
+              <CardContent className="p-4 space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center text-xl shrink-0">🧭</div>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-bold text-sm text-foreground">如果你累的不只是身体</h3>
+                    <p className="text-xs text-muted-foreground leading-relaxed mt-1">
+                      当责任、身份、自我价值感长期压在心里，可能需要更深一层的身份重建与人生节奏调整。
+                    </p>
+                  </div>
+                </div>
+                <Button variant="outline" className="w-full h-11 rounded-xl gap-2" onClick={() => navigate('/camp-intro/identity_bloom')}>
+                  看看身份绽放训练营 <ArrowRight className="w-4 h-4" />
+                </Button>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
         {/* SBTI-specific paid assessment recommendations */}
         {isSBTI && !isLiteMode && (
           <motion.div custom={7} variants={fadeUp} initial="hidden" animate="visible" className="space-y-3">
@@ -618,7 +657,7 @@ export function DynamicAssessmentResult({
         )}
 
         {/* Generic Recommended Training Camps (non-SBTI) */}
-        {!isSBTI && recommendedCamps.length > 0 && (
+        {!isSBTI && !isMaleMidlifeVitality && recommendedCamps.length > 0 && (
           <motion.div custom={7} variants={fadeUp} initial="hidden" animate="visible" className="space-y-2">
             <h3 className="font-semibold text-sm px-1 flex items-center gap-2">
               🏕️ 推荐训练营

@@ -229,6 +229,7 @@ export default function DynamicAssessmentPage() {
             onStart={() => setPhase("questions")}
             onShowHistory={() => setPhase("history")}
             hasHistory={historyRecords.length > 0}
+            requireAuth={_requireAuth}
             requirePayment={requirePayment}
             hasPurchased={hasPurchased}
             price={price}
