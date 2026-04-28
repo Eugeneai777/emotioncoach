@@ -142,7 +142,7 @@ export function PosterGenerator({
         toast.dismiss(toastId);
         setPreviewImageUrl(blobUrl);
         setIsPreviewRemoteReady(!blobUrl.startsWith('blob:'));
-        setShowImagePreview(true);
+        setShowImagePreview((wasOpen) => wasOpen || blobUrl.startsWith('blob:'));
       },
       onError: (error) => {
         toast.dismiss(toastId);
