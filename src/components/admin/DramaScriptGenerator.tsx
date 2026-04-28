@@ -1510,18 +1510,18 @@ export default function DramaScriptGenerator() {
           </Card>
 
           {/* Scenes Timeline */}
-          <div>
+          <div className="max-w-full min-w-0 overflow-hidden">
             <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
               <Film className="h-4 w-4" /> 分镜时间线
             </h3>
-            <div className="space-y-3">
+            <div className="space-y-3 max-w-full min-w-0 overflow-hidden">
               {result.scenes.map((scene) => {
                 const videoState = sceneVideos[scene.sceneNumber] || { status: "idle" as VideoStatus };
 
                 return (
-                  <Card key={scene.sceneNumber}>
-                    <CardContent className="pt-4">
-                      <div className="flex items-start gap-4">
+                  <Card key={scene.sceneNumber} className="max-w-full min-w-0 overflow-hidden">
+                    <CardContent className="pt-4 min-w-0 overflow-hidden">
+                      <div className="flex items-start gap-4 min-w-0">
                         <div className="flex flex-col items-center shrink-0">
                           <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">
                             {scene.sceneNumber}
@@ -1534,7 +1534,7 @@ export default function DramaScriptGenerator() {
                             <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded font-medium">
                               {scene.panel}
                             </span>
-                            <span className="text-xs text-muted-foreground">🎵 {scene.bgm}</span>
+                            <span className="text-xs text-muted-foreground break-words">🎵 {scene.bgm}</span>
                             {scene.relatedProduct && (
                               <span className="text-xs bg-accent text-accent-foreground px-2 py-0.5 rounded">
                                 🔗 {getProductName(scene.relatedProduct)}
@@ -1542,19 +1542,19 @@ export default function DramaScriptGenerator() {
                             )}
                           </div>
 
-                          <div className="text-sm">
+                          <div className="text-sm break-words">
                             <span className="text-muted-foreground">动作：</span>
                             {scene.characterAction}
                           </div>
                           {scene.dialogue && (
-                            <div className="text-sm italic border-l-2 border-primary/30 pl-3">
+                            <div className="text-sm italic border-l-2 border-primary/30 pl-3 break-words">
                               「{scene.dialogue}」
                             </div>
                           )}
 
-                          <div className="bg-muted/50 rounded-lg p-3">
-                            <div className="flex items-start justify-between gap-2">
-                              <code className="text-xs break-all flex-1 leading-relaxed">
+                          <div className="bg-muted/50 rounded-lg p-3 min-w-0 overflow-hidden">
+                            <div className="flex items-start justify-between gap-2 min-w-0">
+                              <code className="text-xs break-all flex-1 min-w-0 leading-relaxed">
                                 {scene.imagePrompt}
                               </code>
                               <Button
@@ -1650,14 +1650,14 @@ export default function DramaScriptGenerator() {
                                   </span>
                                 )}
                                 {audioState.status === "done" && audioState.audioBase64 && (
-                                  <div className="flex items-center gap-2">
+                                  <div className="flex flex-wrap items-center gap-2 min-w-0">
                                     <span className="text-xs text-primary flex items-center gap-1">
                                       <Volume2 className="h-3 w-3" /> 旁白已生成
                                     </span>
                                     <audio
                                       src={URL.createObjectURL(base64ToBlob(audioState.audioBase64, "audio/mpeg"))}
                                       controls
-                                      className="h-7 max-w-[200px]"
+                                      className="h-7 w-full max-w-[200px] min-w-0"
                                       preload="metadata"
                                     />
                                     <Button
@@ -1671,8 +1671,8 @@ export default function DramaScriptGenerator() {
                                   </div>
                                 )}
                                 {audioState.status === "failed" && (
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-xs text-destructive">{audioState.error || "旁白生成失败"}</span>
+                                  <div className="flex flex-wrap items-center gap-2 min-w-0">
+                                    <span className="text-xs text-destructive break-words">{audioState.error || "旁白生成失败"}</span>
                                     <Button
                                       variant="ghost"
                                       size="sm"
@@ -1694,7 +1694,7 @@ export default function DramaScriptGenerator() {
 
                           {/* Video preview */}
                           {videoState.status === "done" && videoState.videoUrl && (
-                            <div className="mt-2">
+                            <div className="mt-2 max-w-full min-w-0 overflow-hidden">
                               {videoPreviewFallbacks[scene.sceneNumber] ? (
                                 <div className="flex flex-wrap items-center gap-2 rounded-lg border border-dashed p-3">
                                   <span className="text-xs text-muted-foreground">当前环境无法直接预览，请点击打开或复制链接</span>
@@ -1720,7 +1720,7 @@ export default function DramaScriptGenerator() {
                                   key={`${scene.sceneNumber}-${videoState.videoUrl}`}
                                   src={videoState.videoUrl}
                                   controls
-                                  className="w-full max-w-md rounded-lg border"
+                                  className="w-full max-w-md max-h-[70vh] rounded-lg border"
                                   preload="metadata"
                                   onError={() => {
                                     setVideoPreviewFallbacks((prev) =>
