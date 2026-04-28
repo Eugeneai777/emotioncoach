@@ -49,6 +49,7 @@ export default function PosterCenter() {
   const [selectedPosterSize, setSelectedPosterSize] = useState<PosterSize>(POSTER_SIZES[0]);
   const [showPosterPreview, setShowPosterPreview] = useState(false);
   const [posterPreviewUrl, setPosterPreviewUrl] = useState<string | null>(null);
+  const [isPosterPreviewRemoteReady, setIsPosterPreviewRemoteReady] = useState(false);
   const [isPosterSharing, setIsPosterSharing] = useState(false);
   const posterRef = useRef<HTMLDivElement>(null);
 
@@ -76,7 +77,8 @@ export default function PosterCenter() {
       onShowPreview: (blobUrl) => {
         toast.dismiss(toastId);
         setPosterPreviewUrl(blobUrl);
-        setShowPosterPreview(true);
+        setIsPosterPreviewRemoteReady(!blobUrl.startsWith('blob:'));
+        setShowPosterPreview((wasOpen) => wasOpen || blobUrl.startsWith('blob:'));
       },
       onError: (error) => {
         toast.dismiss(toastId);
@@ -90,10 +92,11 @@ export default function PosterCenter() {
   // Close poster preview and cleanup
   const closePosterPreview = () => {
     setShowPosterPreview(false);
-    if (posterPreviewUrl) {
+    if (posterPreviewUrl?.startsWith('blob:')) {
       URL.revokeObjectURL(posterPreviewUrl);
-      setPosterPreviewUrl(null);
     }
+    setPosterPreviewUrl(null);
+    setIsPosterPreviewRemoteReady(false);
   };
 
   // Auth check
@@ -205,10 +208,12 @@ export default function PosterCenter() {
       if (data?.imageUrl) {
         setBackgroundImageUrl(data.imageUrl);
         toast.success('AI背景生成成功');
+      } else {
+        toast.error('AI背景生成失败，已保留当前背景，可继续生成海报');
       }
     } catch (e) {
       console.error('Failed to generate AI background:', e);
-      toast.error('生成失败，请重试');
+      toast.error('AI背景生成失败，已保留当前背景，可继续生成海报');
     } finally {
       setIsGeneratingAiBackground(false);
     }
@@ -237,6 +242,7 @@ export default function PosterCenter() {
       // 1. 立即用 blob URL 显示预览（毫秒级）
       const blobUrl = URL.createObjectURL(blob);
       setPosterPreviewUrl(blobUrl);
+      setIsPosterPreviewRemoteReady(false);
       setShowPosterPreview(true);
 
       // 2. 后台上传，完成后替换为 HTTPS URL（安卓微信长按保存需要）
@@ -244,6 +250,7 @@ export default function PosterCenter() {
         try {
           const httpsUrl = await uploadShareImage(blob);
           setPosterPreviewUrl(httpsUrl);
+          setIsPosterPreviewRemoteReady(true);
           URL.revokeObjectURL(blobUrl);
         } catch (e) {
           console.warn('[PosterCenter] Upload failed, keeping blob URL', e);
@@ -634,6 +641,7 @@ export default function PosterCenter() {
           open={showPosterPreview}
           onClose={closePosterPreview}
           imageUrl={posterPreviewUrl}
+          isRemoteReady={isPosterPreviewRemoteReady}
         />
       </div>
     );

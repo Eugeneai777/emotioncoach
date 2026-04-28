@@ -46,6 +46,7 @@ export function PosterGenerator({
   const [unsplashAuthor, setUnsplashAuthor] = useState<{ name: string; link: string } | null>(null);
   const [showImagePreview, setShowImagePreview] = useState(false);
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+  const [isPreviewRemoteReady, setIsPreviewRemoteReady] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
   const posterRef = useRef<HTMLDivElement>(null);
 
@@ -104,7 +105,7 @@ export function PosterGenerator({
       }
     } catch (error: any) {
       console.error("Generate error:", error);
-      toast.error(error.message || "生成失败，请重试");
+      toast.error("AI背景生成失败，已保留当前背景，可继续生成海报");
     } finally {
       setIsGenerating(false);
     }
@@ -140,7 +141,8 @@ export function PosterGenerator({
       onShowPreview: (blobUrl) => {
         toast.dismiss(toastId);
         setPreviewImageUrl(blobUrl);
-        setShowImagePreview(true);
+        setIsPreviewRemoteReady(!blobUrl.startsWith('blob:'));
+        setShowImagePreview((wasOpen) => wasOpen || blobUrl.startsWith('blob:'));
       },
       onError: (error) => {
         toast.dismiss(toastId);
@@ -154,10 +156,11 @@ export function PosterGenerator({
   // Close image preview and cleanup
   const closeImagePreview = () => {
     setShowImagePreview(false);
-    if (previewImageUrl) {
+    if (previewImageUrl?.startsWith('blob:')) {
       URL.revokeObjectURL(previewImageUrl);
-      setPreviewImageUrl(null);
     }
+    setPreviewImageUrl(null);
+    setIsPreviewRemoteReady(false);
   };
 
   const handleDownload = async () => {
@@ -185,6 +188,7 @@ export function PosterGenerator({
         title: `${template.name}-推广海报`,
         onShowPreview: (payload) => {
           setPreviewImageUrl(payload.url);
+          setIsPreviewRemoteReady(payload.isRemoteReady);
           setShowImagePreview(true);
         },
         onDownload: () => {
@@ -317,6 +321,7 @@ export function PosterGenerator({
         open={showImagePreview}
         onClose={closeImagePreview}
         imageUrl={previewImageUrl}
+        isRemoteReady={isPreviewRemoteReady}
       />
 
       {/* Attribution */}

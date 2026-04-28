@@ -37,6 +37,7 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
   const isDesktop = !isMobile;
   const isMobileWeChat = isWeChat && isMobile;
   const isDesktopWeChat = isWeChat && isDesktop;
+  const remoteReady = isRemoteReady || (!!imageUrl && /^https?:\/\//i.test(imageUrl));
 
   const cleanupScrollLock = () => {
     document.body.style.overflow = '';
@@ -68,14 +69,16 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
     if (!imageUrl) return;
     try {
       let downloadUrl = imageUrl;
+      let extension = imageUrl.startsWith('data:image/png') ? 'png' : 'jpg';
       if (!imageUrl.startsWith('blob:') && !imageUrl.startsWith('data:')) {
         const response = await fetch(imageUrl);
         const blob = await response.blob();
+        extension = blob.type === 'image/png' ? 'png' : 'jpg';
         downloadUrl = URL.createObjectURL(blob);
       }
       const link = document.createElement('a');
       link.href = downloadUrl;
-      link.download = `share-card-${Date.now()}.png`;
+      link.download = `share-card-${Date.now()}.${extension}`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -100,7 +103,9 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
       return (
         <div className="flex flex-col items-center gap-1 py-2">
           <p className="text-base font-medium text-foreground">👆 长按上方图片保存到相册</p>
-          <p className="text-muted-foreground text-xs">保存后可转发给朋友或朋友圈</p>
+          <p className="text-muted-foreground text-xs">
+            {remoteReady ? '高清图已准备好，可转发给朋友或朋友圈' : '图片已生成，正在准备高清保存图'}
+          </p>
         </div>
       );
     }
