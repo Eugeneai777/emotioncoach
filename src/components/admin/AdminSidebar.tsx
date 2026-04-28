@@ -231,39 +231,39 @@ export function AdminSidebar({ userRole }: AdminSidebarProps) {
   };
 
   return (
-    <Sidebar className="border-r border-border">
-      <SidebarHeader className="border-b border-border p-4">
-        <div className="flex items-center gap-3">
+    <Sidebar className="shrink-0 border-r border-border">
+      <SidebarHeader className="w-full min-w-0 shrink-0 overflow-hidden border-b border-border p-4">
+        <div className="flex w-full min-w-0 items-center gap-3">
           <Link to="/" className="flex-shrink-0 active:scale-95 transition-transform">
             <BrandLogo size="sm" />
           </Link>
           {!collapsed && (
-            <div>
-              <h2 className="font-semibold text-foreground">管理后台</h2>
-              <p className="text-xs text-muted-foreground">有劲生活</p>
+            <div className="min-w-0 flex-1 overflow-hidden">
+              <h2 className="truncate font-semibold text-foreground">管理后台</h2>
+              <p className="truncate text-xs text-muted-foreground">有劲生活</p>
             </div>
           )}
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="px-2 py-4">
+      <SidebarContent className="w-full min-w-0 overflow-x-hidden px-2 py-4">
         {NAV_GROUPS.filter(group => group.roles.includes(userRole)).map((group) => (
           <Collapsible
             key={group.title}
             open={openGroups[group.title]}
             onOpenChange={() => toggleGroup(group.title)}
           >
-            <SidebarGroup>
+            <SidebarGroup className="w-full min-w-0 overflow-hidden">
               <CollapsibleTrigger asChild>
-                <SidebarGroupLabel className="flex items-center justify-between cursor-pointer hover:bg-muted/50 rounded-md px-2 py-1.5 text-xs font-medium text-muted-foreground">
-                  <div className="flex items-center gap-2">
-                    <group.icon className="h-4 w-4" />
-                    {!collapsed && <span>{group.title}</span>}
+                <SidebarGroupLabel className="flex w-full min-w-0 cursor-pointer items-center justify-between rounded-md px-2 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted/50">
+                  <div className="flex min-w-0 flex-1 items-center gap-2">
+                    <group.icon className="h-4 w-4 shrink-0" />
+                    {!collapsed && <span className="truncate">{group.title}</span>}
                   </div>
                   {!collapsed && (
                     <ChevronDown 
                       className={cn(
-                        "h-4 w-4 transition-transform",
+                        "h-4 w-4 shrink-0 transition-transform",
                         openGroups[group.title] && "rotate-180"
                       )} 
                     />
