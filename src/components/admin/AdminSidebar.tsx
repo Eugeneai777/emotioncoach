@@ -272,8 +272,8 @@ export function AdminSidebar({ userRole }: AdminSidebarProps) {
               </CollapsibleTrigger>
               
               <CollapsibleContent>
-                <SidebarGroupContent>
-                  <SidebarMenu>
+                <SidebarGroupContent className="w-full min-w-0 overflow-hidden">
+                  <SidebarMenu className="w-full min-w-0 overflow-hidden">
                     {group.items.map((item) => (
                       'children' in item && item.children ? (
                         <Collapsible
@@ -281,20 +281,20 @@ export function AdminSidebar({ userRole }: AdminSidebarProps) {
                           open={openSubGroups[item.key] ?? item.children.some(c => isActive(c.path))}
                           onOpenChange={() => toggleSubGroup(item.key)}
                         >
-                          <SidebarMenuItem>
+                          <SidebarMenuItem className="w-full min-w-0 overflow-hidden">
                             <CollapsibleTrigger asChild>
                               <SidebarMenuButton
                                 className={cn(
-                                  "w-full cursor-pointer",
+                                  "w-full min-w-0 cursor-pointer",
                                   item.children.some(c => isActive(c.path)) && "text-primary font-medium"
                                 )}
                               >
-                                <div className="flex items-center gap-3 w-full">
-                                  <item.icon className="h-4 w-4" />
-                                  {!collapsed && <span>{item.label}</span>}
+                                <div className="flex w-full min-w-0 items-center gap-3">
+                                  <item.icon className="h-4 w-4 shrink-0" />
+                                  {!collapsed && <span className="truncate">{item.label}</span>}
                                   {!collapsed && (
                                     <ChevronDown className={cn(
-                                      "h-3 w-3 ml-auto transition-transform",
+                                      "ml-auto h-3 w-3 shrink-0 transition-transform",
                                       (openSubGroups[item.key] ?? item.children.some(c => isActive(c.path))) && "rotate-180"
                                     )} />
                                   )}
@@ -304,18 +304,18 @@ export function AdminSidebar({ userRole }: AdminSidebarProps) {
                           </SidebarMenuItem>
                           <CollapsibleContent>
                             {item.children.map((child) => (
-                              <SidebarMenuItem key={child.key}>
+                              <SidebarMenuItem key={child.key} className="w-full min-w-0 overflow-hidden">
                                 <SidebarMenuButton
                                   asChild
                                   isActive={isActive(child.path)}
                                   className={cn(
-                                    "w-full pl-7",
+                                    "w-full min-w-0 pl-7",
                                     isActive(child.path) && "bg-primary/10 text-primary font-medium"
                                   )}
                                 >
-                                  <Link to={child.path} className="flex items-center gap-3">
-                                    <child.icon className="h-4 w-4" />
-                                    {!collapsed && <span>{child.label}</span>}
+                                  <Link to={child.path} className="flex w-full min-w-0 items-center gap-3">
+                                    <child.icon className="h-4 w-4 shrink-0" />
+                                    {!collapsed && <span className="truncate">{child.label}</span>}
                                   </Link>
                                 </SidebarMenuButton>
                               </SidebarMenuItem>
@@ -323,18 +323,18 @@ export function AdminSidebar({ userRole }: AdminSidebarProps) {
                           </CollapsibleContent>
                         </Collapsible>
                       ) : (
-                        <SidebarMenuItem key={item.key}>
+                        <SidebarMenuItem key={item.key} className="w-full min-w-0 overflow-hidden">
                           <SidebarMenuButton
                             asChild
                             isActive={isActive(item.path)}
                             className={cn(
-                              "w-full",
+                              "w-full min-w-0",
                               isActive(item.path) && "bg-primary/10 text-primary font-medium"
                             )}
                           >
-                            <Link to={item.path} className="flex items-center gap-3">
-                              <item.icon className="h-4 w-4" />
-                              {!collapsed && <span>{item.label}</span>}
+                            <Link to={item.path} className="flex w-full min-w-0 items-center gap-3">
+                              <item.icon className="h-4 w-4 shrink-0" />
+                              {!collapsed && <span className="truncate">{item.label}</span>}
                             </Link>
                           </SidebarMenuButton>
                         </SidebarMenuItem>
@@ -348,11 +348,11 @@ export function AdminSidebar({ userRole }: AdminSidebarProps) {
         ))}
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-border p-4">
-        <Button variant="ghost" size="sm" asChild className="w-full justify-start">
-          <Link to="/" className="flex items-center gap-2">
-            <Home className="h-4 w-4" />
-            {!collapsed && <span>返回首页</span>}
+      <SidebarFooter className="w-full min-w-0 shrink-0 overflow-hidden border-t border-border p-4">
+        <Button variant="ghost" size="sm" asChild className="w-full min-w-0 justify-start">
+          <Link to="/" className="flex w-full min-w-0 items-center gap-2">
+            <Home className="h-4 w-4 shrink-0" />
+            {!collapsed && <span className="truncate">返回首页</span>}
           </Link>
         </Button>
       </SidebarFooter>
