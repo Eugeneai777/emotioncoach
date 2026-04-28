@@ -894,7 +894,7 @@ export default function DramaScriptGenerator() {
                     key={g.value}
                     onClick={() => setGenre(g.value)}
                     disabled={loading}
-                    className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
+                    className={`max-w-full px-3 py-1.5 rounded-full text-sm border transition-colors break-words ${
                       genre === g.value
                         ? "bg-primary text-primary-foreground border-primary"
                         : "bg-background border-border hover:bg-muted"
@@ -914,7 +914,7 @@ export default function DramaScriptGenerator() {
                     key={s.value}
                     onClick={() => setStyle(s.value)}
                     disabled={loading}
-                    className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
+                    className={`max-w-full px-3 py-1.5 rounded-full text-sm border transition-colors break-words ${
                       style === s.value
                         ? "bg-primary text-primary-foreground border-primary"
                         : "bg-background border-border hover:bg-muted"
@@ -935,7 +935,7 @@ export default function DramaScriptGenerator() {
                   key={level.value}
                   onClick={() => setConflictIntensity(level.value)}
                   disabled={loading}
-                  className={`text-left p-3 rounded-lg border transition-colors ${
+                    className={`min-w-0 text-left p-3 rounded-lg border transition-colors ${
                     conflictIntensity === level.value
                       ? "bg-primary/10 border-primary ring-1 ring-primary"
                       : "bg-background border-border hover:bg-muted/50"
@@ -961,7 +961,7 @@ export default function DramaScriptGenerator() {
                       key={a.value}
                       onClick={() => setTargetAudience(a.value)}
                       disabled={loading}
-                      className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
+                      className={`max-w-full px-3 py-1.5 rounded-full text-sm border transition-colors break-words ${
                         targetAudience === a.value
                           ? "bg-primary text-primary-foreground border-primary"
                           : "bg-background border-border hover:bg-muted"
@@ -981,7 +981,7 @@ export default function DramaScriptGenerator() {
                       key={c.value}
                       onClick={() => toggleConversionStyle(c.value)}
                       disabled={loading}
-                      className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
+                      className={`max-w-full px-3 py-1.5 rounded-full text-sm border transition-colors text-left break-words ${
                         conversionStyles.includes(c.value)
                           ? "bg-primary text-primary-foreground border-primary"
                           : "bg-background border-border hover:bg-muted"
