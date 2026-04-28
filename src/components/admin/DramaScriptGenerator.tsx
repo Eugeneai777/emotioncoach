@@ -852,7 +852,7 @@ export default function DramaScriptGenerator() {
       description="输入故事主题，AI自动生成多场景分镜脚本，画面提示词可直接用于即梦/MJ生图"
     >
       {/* Mode Toggle */}
-      <div className="flex flex-wrap gap-2 mb-4 min-w-0">
+      <div className="mb-4 flex w-full min-w-0 flex-wrap gap-2 overflow-hidden">
         <Button
           variant={mode === "generic" ? "default" : "outline"}
           onClick={() => setMode("generic")}
@@ -871,9 +871,9 @@ export default function DramaScriptGenerator() {
       </div>
 
       {/* Input Form */}
-      <Card className="max-w-full overflow-hidden">
-        <CardContent className="pt-6 space-y-5">
-          <div className="space-y-2">
+      <Card className="w-full max-w-full min-w-0 shrink overflow-hidden">
+        <CardContent className="w-full min-w-0 space-y-5 overflow-hidden pt-6">
+          <div className="w-full min-w-0 space-y-2 overflow-hidden">
             <Label>故事主题 *</Label>
             <Input
               placeholder={mode === "youjin" 
@@ -885,10 +885,10 @@ export default function DramaScriptGenerator() {
             />
           </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 min-w-0">
-            <div className="space-y-2">
+            <div className="grid w-full min-w-0 grid-cols-1 gap-4 overflow-hidden lg:grid-cols-2">
+            <div className="w-full min-w-0 space-y-2 overflow-hidden">
               <Label>题材类型</Label>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex w-full min-w-0 flex-wrap gap-2 overflow-hidden">
                 {GENRES.map((g) => (
                   <button
                     key={g.value}
@@ -906,9 +906,9 @@ export default function DramaScriptGenerator() {
               </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="w-full min-w-0 space-y-2 overflow-hidden">
               <Label>画风选择</Label>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex w-full min-w-0 flex-wrap gap-2 overflow-hidden">
                 {STYLES.map((s) => (
                   <button
                     key={s.value}
@@ -927,9 +927,9 @@ export default function DramaScriptGenerator() {
             </div>
           </div>
 
-          <div className="space-y-2">
+          <div className="w-full min-w-0 space-y-2 overflow-hidden">
             <Label>冲突强度</Label>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <div className="grid w-full min-w-0 grid-cols-1 gap-2 overflow-hidden sm:grid-cols-3">
               {CONFLICT_LEVELS.map((level) => (
                 <button
                   key={level.value}
@@ -955,7 +955,7 @@ export default function DramaScriptGenerator() {
                 <Label className="flex items-center gap-1.5">
                   <Target className="h-4 w-4" /> 目标人群
                 </Label>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex w-full min-w-0 flex-wrap gap-2 overflow-hidden">
                   {TARGET_AUDIENCES.map((a) => (
                     <button
                       key={a.value}
@@ -975,7 +975,7 @@ export default function DramaScriptGenerator() {
 
               <div className="space-y-2 min-w-0">
                 <Label>转化方式（可多选）</Label>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex w-full min-w-0 flex-wrap gap-2 overflow-hidden">
                   {CONVERSION_STYLES.map((c) => (
                     <button
                       key={c.value}
@@ -994,12 +994,12 @@ export default function DramaScriptGenerator() {
                 </div>
               </div>
 
-              <div className="space-y-2">
+              <div className="w-full min-w-0 space-y-2 overflow-hidden">
                 <Label className="flex items-center gap-1.5">
                   <ShoppingCart className="h-4 w-4" /> 选择转化产品 *
                 </Label>
-                <Tabs defaultValue="assessment" className="w-full">
-                  <TabsList className="w-full h-auto flex flex-wrap justify-start gap-1">
+                <Tabs defaultValue="assessment" className="w-full min-w-0 overflow-hidden">
+                  <TabsList className="flex h-auto w-full min-w-0 flex-wrap justify-start gap-1 overflow-hidden">
                     {Object.entries(PRODUCT_CATALOG).map(([key, cat]) => (
                       <TabsTrigger key={key} value={key} className="flex-1 min-w-[72px] text-xs">
                         {cat.label}
@@ -1007,12 +1007,12 @@ export default function DramaScriptGenerator() {
                     ))}
                   </TabsList>
                   {Object.entries(PRODUCT_CATALOG).map(([key, cat]) => (
-                    <TabsContent key={key} value={key}>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <TabsContent key={key} value={key} className="w-full min-w-0 overflow-hidden">
+                      <div className="grid w-full min-w-0 grid-cols-1 gap-2 overflow-hidden sm:grid-cols-2">
                         {cat.items.map((item) => (
                           <label
                             key={item.key}
-                            className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                             className={`flex w-full min-w-0 items-start gap-3 overflow-hidden rounded-lg border p-3 transition-colors cursor-pointer ${
                               selectedProducts.has(item.key)
                                 ? "border-primary bg-primary/5"
                                 : "border-border hover:bg-muted/50"
@@ -1023,9 +1023,9 @@ export default function DramaScriptGenerator() {
                               onCheckedChange={() => toggleProduct(item.key)}
                               disabled={loading}
                             />
-                            <div className="min-w-0">
-                              <div className="text-sm font-medium">{item.name}</div>
-                              <div className="text-xs text-muted-foreground mt-0.5">{item.description}</div>
+                            <div className="min-w-0 flex-1 overflow-hidden">
+                              <div className="break-words text-sm font-medium">{item.name}</div>
+                              <div className="mt-0.5 break-words text-xs text-muted-foreground">{item.description}</div>
                             </div>
                           </label>
                         ))}
@@ -1150,7 +1150,7 @@ export default function DramaScriptGenerator() {
           ) : savedScripts.length === 0 ? (
             <p className="text-sm text-muted-foreground">还没有保存的脚本，生成后点击保存即可沉淀为系列。</p>
           ) : (
-            <div className="space-y-2 max-h-72 overflow-auto pr-1">
+            <div className="max-h-72 w-full min-w-0 space-y-2 overflow-auto overflow-x-hidden pr-1">
               {savedScripts.map((script) => (
                 <div key={script.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-lg border p-3 min-w-0 overflow-hidden">
                   <button className="min-w-0 flex-1 text-left overflow-hidden" onClick={() => loadSavedScript(script)}>
@@ -1381,17 +1381,17 @@ export default function DramaScriptGenerator() {
           </div>
 
           {/* Video Generation Settings */}
-          <Card className="border-dashed border-primary/40 max-w-full min-w-0 overflow-hidden">
+          <Card className="w-full max-w-full min-w-0 shrink overflow-hidden border-dashed border-primary/40">
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
                 <Video className="h-4 w-4" /> 视频生成设置
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
+              <div className="grid w-full min-w-0 grid-cols-1 gap-4 overflow-hidden sm:grid-cols-2">
+                <div className="w-full min-w-0 space-y-2 overflow-hidden">
                   <Label className="text-xs">画面比例</Label>
-                  <div className="flex gap-2">
+                  <div className="flex w-full min-w-0 flex-wrap gap-2 overflow-hidden">
                     {ASPECT_RATIOS.map(ar => (
                       <button
                         key={ar.value}
@@ -1408,9 +1408,9 @@ export default function DramaScriptGenerator() {
                     ))}
                   </div>
                 </div>
-                <div className="space-y-2">
+                <div className="w-full min-w-0 space-y-2 overflow-hidden">
                   <Label className="text-xs">片段时长</Label>
-                  <div className="flex gap-2">
+                  <div className="flex w-full min-w-0 flex-wrap gap-2 overflow-hidden">
                     {VIDEO_DURATIONS.map(d => (
                       <button
                         key={d.value}
@@ -1430,7 +1430,7 @@ export default function DramaScriptGenerator() {
               </div>
 
               {/* Batch controls */}
-              <div className="flex items-center gap-3 flex-wrap">
+              <div className="flex w-full min-w-0 flex-wrap items-center gap-3 overflow-hidden">
                 <Button
                   onClick={handleBatchGenerate}
                   disabled={batchGenerating || anyVideoGenerating}
