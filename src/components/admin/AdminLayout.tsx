@@ -50,6 +50,7 @@ import WechatBroadcast from "./WechatBroadcast";
 import WechatArticlesManagement from "./WechatArticlesManagement";
 import XhsAnalysis from "./xhs/XhsAnalysis";
 import DramaScriptGenerator from "./DramaScriptGenerator";
+import { AdminLayoutDebugToggle } from "./AdminLayoutDebugToggle";
 export type AdminRole = 'admin' | 'content_admin' | 'partner_admin';
 
 interface AdminLayoutProps {
@@ -68,8 +69,10 @@ export function AdminLayout({ userRole }: AdminLayoutProps) {
         <SidebarInset className="flex-1 flex flex-col min-h-0 min-w-0 overflow-hidden">
           <header className="flex h-14 items-center gap-4 border-b border-border bg-background px-6 shrink-0">
             <SidebarTrigger className="-ml-2" />
+            <AdminLayoutDebugToggle routeKey={location.pathname} />
           </header>
           <main 
+            data-admin-main
             className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden overscroll-contain p-6"
             style={{ WebkitOverflowScrolling: 'touch' }}
           >
