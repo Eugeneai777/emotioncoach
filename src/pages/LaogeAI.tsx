@@ -23,6 +23,12 @@ export interface ToolConfig {
   rounds: RoundConfig[];
 }
 
+interface MaleVitalityTemplateStatus {
+  id: string;
+  package_key?: string | null;
+  require_payment?: boolean | null;
+}
+
 const TOOLS: ToolConfig[] = [
   {
     tool: "opportunity",
@@ -87,12 +93,13 @@ export default function LaogeAI() {
   const { data: maleVitalityStatus } = useQuery({
     queryKey: ['male-midlife-vitality-status', user?.id],
     queryFn: async () => {
-      const { data: template, error: templateError } = await supabase
-        .from('partner_assessment_templates' as any)
+      const { data: templateRaw, error: templateError } = await supabase
+        .from('partner_assessment_templates' as never)
         .select('id, package_key, require_payment')
         .eq('assessment_key', 'male_midlife_vitality')
         .eq('is_active', true)
         .maybeSingle();
+      const template = templateRaw as MaleVitalityTemplateStatus | null;
 
       if (templateError || !template) {
         return { available: false, completed: false, purchased: false };
@@ -103,16 +110,16 @@ export default function LaogeAI() {
       }
 
       const { data: resultData } = await supabase
-        .from('partner_assessment_results' as any)
+        .from('partner_assessment_results' as never)
         .select('id')
         .eq('user_id', user.id)
-        .eq('template_id', (template as any).id)
+        .eq('template_id', template.id)
         .limit(1)
         .maybeSingle();
 
       let purchased = false;
-      const packageKey = (template as any).package_key;
-      if ((template as any).require_payment && packageKey) {
+      const packageKey = template.package_key;
+      if (template.require_payment && packageKey) {
         const { data: orderData } = await supabase
           .from('orders')
           .select('id')
@@ -137,7 +144,7 @@ export default function LaogeAI() {
     queryFn: async () => {
       if (!user) return false;
       const { data, error } = await supabase
-        .from('midlife_awakening_assessments' as any)
+        .from('midlife_awakening_assessments' as never)
         .select('id')
         .eq('user_id', user.id)
         .limit(1)
