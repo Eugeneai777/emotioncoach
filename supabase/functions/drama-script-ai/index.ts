@@ -251,6 +251,13 @@ ${productList}
       usage: "角色使用（主角在关键时刻使用产品，展示产品效果）",
     };
 
+    const conflictIntensityMap: Record<string, string> = {
+      standard: "标准冲突：矛盾清晰，情绪真实，中后段有一次温和反转",
+      strong: "强冲突：前3秒高压开场，人物对立鲜明，情绪层层升级，中后段必须有反转",
+      viral: "爆款夸张：前3秒必须反常/羞辱/逼迫式开场，制造极限误会或强压迫感，结尾必须强反转；可夸张但不得低俗、违法、血腥或恐吓营销",
+    };
+    const conflictStr = conflictIntensityMap[conflictIntensity] || conflictIntensityMap.strong;
+
     const count = Math.min(12, Math.max(6, sceneCount || 8));
     const isYoujin = mode === "youjin";
 
@@ -259,6 +266,7 @@ ${productList}
 【故事主题】${theme}
 【题材类型】${genreMap[genre] || genre || "不限"}
 【画风要求】${styleMap[style] || style || "不限"}
+【冲突强度】${conflictStr}
 【分镜数量】${count}个场景`;
 
     if (isYoujin) {
@@ -283,7 +291,18 @@ ${productInfo || "无指定产品"}
 4. 在相关分镜中标注 relatedProduct 字段`;
     }
 
-    userPrompt += "\n\n请使用 suggest_drama_script 工具输出完整的分镜脚本。";
+    userPrompt += `
+
+剧情执行要求：
+1. 标题要像短视频爆款钩子，强悬念、强冲突，避免温吞标题
+2. synopsis 必须写出核心矛盾、对立关系和中后段反转
+3. 第1个分镜必须是冲突爆点，不要铺垫世界观
+4. 每个分镜的 dialogue 控制在1-2句，短句、狠话、口语化，避免解释过多
+5. 场景之间要逐步升级：误会/压迫 → 失控/爆发 → 反转/醒悟 → 行动/转化
+6. imagePrompt 要强化镜头压迫感：close-up tense expression, dramatic backlight, split composition, high contrast lighting, cinematic tension 等
+7. bgm 要配合短剧节奏：心跳、低频鼓点、突然静音、反转音效、压迫感弦乐等
+
+请使用 suggest_drama_script 工具输出完整的分镜脚本。`;
 
     // Build tool schema
     const sceneProperties: Record<string, any> = {
