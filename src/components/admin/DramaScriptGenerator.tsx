@@ -256,6 +256,16 @@ export default function DramaScriptGenerator() {
     });
   };
 
+  const toggleConversionStyle = (value: string) => {
+    setConversionStyles((prev) => {
+      if (prev.includes(value)) {
+        const next = prev.filter((item) => item !== value);
+        return next.length > 0 ? next : ["plot"];
+      }
+      return [...prev, value];
+    });
+  };
+
   const getSelectedProductDetails = useCallback((): ProductItem[] => {
     const all: ProductItem[] = [];
     Object.values(PRODUCT_CATALOG).forEach((cat) => {
@@ -360,7 +370,8 @@ export default function DramaScriptGenerator() {
       if (mode === "youjin") {
         body.products = getSelectedProductDetails();
         body.targetAudience = targetAudience;
-        body.conversionStyle = conversionStyle;
+        body.conversionStyles = conversionStyles;
+        body.conversionStyle = conversionStyles[0] || "plot";
       }
       const { data, error } = await supabase.functions.invoke("drama-script-ai", { body });
       if (data?.error || error) {
@@ -404,9 +415,9 @@ export default function DramaScriptGenerator() {
         style,
         conflict_intensity: conflictIntensity,
         target_audience: mode === "youjin" ? targetAudience : null,
-        conversion_style: mode === "youjin" ? conversionStyle : null,
+        conversion_style: mode === "youjin" ? conversionStyles[0] || "plot" : null,
         selected_products: selectedProductDetails,
-        script_data: result,
+        script_data: { ...result, conversionStyles: mode === "youjin" ? conversionStyles : undefined },
         series_id: isUpdatingExisting ? activeSavedScript?.series_id : activeSavedScript?.series_id,
         parent_script_id: isUpdatingExisting ? activeSavedScript?.parent_script_id : activeSavedScript?.id || null,
         episode_number: isUpdatingExisting ? activeSavedScript?.episode_number || 1 : activeSavedScript ? activeSavedScript.episode_number + 1 : 1,
