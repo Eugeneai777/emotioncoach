@@ -35,7 +35,7 @@ export interface OneClickShareConfig {
   cardName?: string;
   cardType?: CardType;
   onProgress?: (status: 'generating' | 'sharing' | 'preview' | 'done' | 'error') => void;
-  onShowPreview?: (payload: string | { url: string; isRemoteReady: boolean }) => void;
+  onShowPreview?: (blobUrl: string) => void;
   onSuccess?: () => void;
   onError?: (error: string) => void;
 }
@@ -117,14 +117,14 @@ export const executeOneClickShare = async (config: OneClickShareConfig): Promise
     const showUploadedPreview = async () => {
       const blobUrl = URL.createObjectURL(blob);
       onProgress?.('preview');
-      onShowPreview?.({ url: blobUrl, isRemoteReady: false });
+      onShowPreview?.(blobUrl);
 
       // 上传不阻塞预览，小程序/微信先看到图，再后台升级为 HTTPS 图
       (async () => {
       try {
         const { uploadShareImage } = await import('./shareImageUploader');
         const httpsUrl = await uploadShareImage(blob);
-          onShowPreview?.({ url: httpsUrl, isRemoteReady: true });
+          onShowPreview?.(httpsUrl);
           URL.revokeObjectURL(blobUrl);
       } catch (uploadErr) {
           console.warn('[oneClickShare] Upload failed, keeping blob preview', uploadErr);
