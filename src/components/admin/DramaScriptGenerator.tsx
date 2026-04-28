@@ -13,7 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { extractEdgeFunctionError } from "@/lib/edgeFunctionError";
 import { mergeVideosClientSide } from "@/utils/videoMerger";
 import { toast } from "sonner";
-import { Copy, Loader2, Download, Clapperboard, User, Film, Sparkles, ShoppingCart, Target, MessageSquare, Video, Play, Square, Check, X, Mic, Volume2, RefreshCw } from "lucide-react";
+import { Copy, Loader2, Download, Clapperboard, User, Film, Sparkles, ShoppingCart, Target, MessageSquare, Video, Play, Square, Check, X, Mic, Volume2, RefreshCw, Save, Library, Trash2, Wand2 } from "lucide-react";
 
 const GENRES = [
   { value: "suspense", label: "🔍 悬疑推理" },
@@ -131,6 +131,26 @@ interface DramaScript {
   commentHook?: string;
 }
 
+interface SavedDramaScript {
+  id: string;
+  creator_id: string;
+  title: string;
+  synopsis: string | null;
+  mode: "generic" | "youjin";
+  theme: string;
+  genre: string | null;
+  style: string | null;
+  conflict_intensity: string | null;
+  target_audience: string | null;
+  conversion_style: string | null;
+  selected_products: ProductItem[];
+  script_data: DramaScript;
+  series_id: string;
+  parent_script_id: string | null;
+  episode_number: number;
+  created_at: string;
+}
+
 type VideoStatus = "idle" | "submitting" | "in_queue" | "generating" | "done" | "failed";
 
 interface SceneVideoState {
@@ -179,6 +199,12 @@ export default function DramaScriptGenerator() {
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<DramaScript | null>(null);
+  const [savedScripts, setSavedScripts] = useState<SavedDramaScript[]>([]);
+  const [savedScriptId, setSavedScriptId] = useState<string | null>(null);
+  const [activeSavedScript, setActiveSavedScript] = useState<SavedDramaScript | null>(null);
+  const [savingScript, setSavingScript] = useState(false);
+  const [loadingSavedScripts, setLoadingSavedScripts] = useState(false);
+  const [generatingSequel, setGeneratingSequel] = useState(false);
   const [suggestedThemes, setSuggestedThemes] = useState<{ title: string; description: string }[]>([]);
   const [loadingThemes, setLoadingThemes] = useState(false);
   const [selectedThemeIdx, setSelectedThemeIdx] = useState<number | null>(null);
@@ -223,6 +249,27 @@ export default function DramaScriptGenerator() {
     }
     return key;
   };
+
+  const fetchSavedScripts = useCallback(async () => {
+    setLoadingSavedScripts(true);
+    try {
+      const { data, error } = await (supabase as any)
+        .from("drama_scripts")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(30);
+      if (error) throw error;
+      setSavedScripts((data || []) as unknown as SavedDramaScript[]);
+    } catch (e: any) {
+      toast.error(e.message || "脚本库加载失败");
+    } finally {
+      setLoadingSavedScripts(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchSavedScripts();
+  }, [fetchSavedScripts]);
 
   // Auto-fetch suggested themes when products change in youjin mode
   const fetchSuggestedThemes = useCallback(async (avoidTitles: string[] = []) => {
@@ -296,11 +343,152 @@ export default function DramaScriptGenerator() {
         throw new Error(await extractEdgeFunctionError(data, error, "生成失败，请稍后重试"));
       }
       setResult(data as DramaScript);
+      setSavedScriptId(null);
+      setActiveSavedScript(null);
       toast.success("脚本生成成功！");
     } catch (e: any) {
       toast.error(e.message || "生成失败");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const clearGeneratedAssets = () => {
+    setSceneVideos({});
+    setVideoPreviewFallbacks({});
+    setSceneAudios({});
+    Object.values(pollingRefs.current).forEach(clearInterval);
+    pollingRefs.current = {};
+  };
+
+  const saveCurrentScript = async () => {
+    if (!result) return;
+    setSavingScript(true);
+    try {
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError || !userData.user) throw new Error("请先登录后再保存脚本");
+
+      const selectedProductDetails = getSelectedProductDetails();
+      const isUpdatingExisting = Boolean(savedScriptId && activeSavedScript?.id === savedScriptId);
+      const payload = {
+        creator_id: userData.user.id,
+        title: result.title,
+        synopsis: result.synopsis,
+        mode,
+        theme,
+        genre,
+        style,
+        conflict_intensity: conflictIntensity,
+        target_audience: mode === "youjin" ? targetAudience : null,
+        conversion_style: mode === "youjin" ? conversionStyle : null,
+        selected_products: selectedProductDetails,
+        script_data: result,
+        series_id: isUpdatingExisting ? activeSavedScript?.series_id : activeSavedScript?.series_id,
+        parent_script_id: isUpdatingExisting ? activeSavedScript?.parent_script_id : activeSavedScript?.id || null,
+        episode_number: isUpdatingExisting ? activeSavedScript?.episode_number || 1 : activeSavedScript ? activeSavedScript.episode_number + 1 : 1,
+      };
+      if (!payload.series_id) delete (payload as any).series_id;
+
+      const query = savedScriptId
+        ? (supabase as any).from("drama_scripts").update(payload).eq("id", savedScriptId).select().limit(1)
+        : (supabase as any).from("drama_scripts").insert(payload).select().limit(1);
+      const { data, error } = await query;
+      if (error) throw error;
+      if (!data || data.length === 0) throw new Error("保存失败：权限不足或记录未写入");
+
+      const saved = data[0] as SavedDramaScript;
+      setSavedScriptId(saved.id);
+      setActiveSavedScript(saved);
+      await fetchSavedScripts();
+      toast.success("脚本已保存");
+    } catch (e: any) {
+      toast.error(e.message || "保存失败");
+    } finally {
+      setSavingScript(false);
+    }
+  };
+
+  const loadSavedScript = (script: SavedDramaScript) => {
+    setMode(script.mode || "generic");
+    setTheme(script.theme || script.title);
+    setGenre(script.genre || "suspense");
+    setStyle(script.style || "anime");
+    setConflictIntensity(script.conflict_intensity || "strong");
+    setTargetAudience(script.target_audience || "women");
+    setConversionStyle(script.conversion_style || "plot");
+    setSelectedProducts(new Set((script.selected_products || []).map((p) => p.key)));
+    setResult(script.script_data);
+    setSavedScriptId(script.id);
+    setActiveSavedScript(script);
+    clearGeneratedAssets();
+    toast.success(`已载入《${script.title}》第${script.episode_number}集`);
+  };
+
+  const deleteSavedScript = async (script: SavedDramaScript) => {
+    try {
+      const { data, error } = await (supabase as any)
+        .from("drama_scripts")
+        .delete()
+        .eq("id", script.id)
+        .select()
+        .limit(1);
+      if (error) throw error;
+      if (!data || data.length === 0) throw new Error("删除失败：权限不足或记录不存在");
+      if (savedScriptId === script.id) {
+        setSavedScriptId(null);
+        setActiveSavedScript(null);
+      }
+      await fetchSavedScripts();
+      toast.success("脚本已删除");
+    } catch (e: any) {
+      toast.error(e.message || "删除失败");
+    }
+  };
+
+  const generateSequel = async (script = activeSavedScript) => {
+    if (!script) {
+      toast.error("请先保存或载入一个脚本，再生成续集");
+      return;
+    }
+    setGeneratingSequel(true);
+    setResult(null);
+    clearGeneratedAssets();
+    try {
+      const productsForSequel = script.selected_products || [];
+      const body: any = {
+        action: "generate_sequel",
+        theme: `${script.title} 后续：冲突继续升级`,
+        genre: script.genre || genre,
+        style: script.style || style,
+        sceneCount,
+        mode: script.mode,
+        conflictIntensity,
+        previousScript: script,
+      };
+      if (script.mode === "youjin") {
+        body.products = productsForSequel;
+        body.targetAudience = script.target_audience || targetAudience;
+        body.conversionStyle = script.conversion_style || conversionStyle;
+      }
+      const { data, error } = await supabase.functions.invoke("drama-script-ai", { body });
+      if (data?.error || error) {
+        throw new Error(await extractEdgeFunctionError(data, error, "续集生成失败，请稍后重试"));
+      }
+      setMode(script.mode || "generic");
+      setGenre(script.genre || genre);
+      setStyle(script.style || style);
+      setTargetAudience(script.target_audience || targetAudience);
+      setConversionStyle(script.conversion_style || conversionStyle);
+      setSelectedProducts(new Set(productsForSequel.map((p) => p.key)));
+      setTheme((data as DramaScript).title);
+      setResult(data as DramaScript);
+      setSavedScriptId(null);
+      setActiveSavedScript(script);
+      toast.success(`第${script.episode_number + 1}集已生成，确认后可保存`);
+    } catch (e: any) {
+      toast.error(e.message || "续集生成失败");
+    } finally {
+      setGeneratingSequel(false);
     }
   };
 
@@ -899,6 +1087,58 @@ export default function DramaScriptGenerator() {
         </CardContent>
       </Card>
 
+      {/* Saved Scripts */}
+      <Card className="mt-4">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between gap-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Library className="h-4 w-4" /> 已保存脚本
+            </CardTitle>
+            <Button variant="outline" size="sm" onClick={fetchSavedScripts} disabled={loadingSavedScripts} className="h-8 gap-1.5 text-xs">
+              {loadingSavedScripts ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+              刷新
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {loadingSavedScripts ? (
+            <div className="space-y-2">
+              {[1, 2, 3].map((i) => <Skeleton key={i} className="h-14 w-full" />)}
+            </div>
+          ) : savedScripts.length === 0 ? (
+            <p className="text-sm text-muted-foreground">还没有保存的脚本，生成后点击保存即可沉淀为系列。</p>
+          ) : (
+            <div className="space-y-2 max-h-72 overflow-auto pr-1">
+              {savedScripts.map((script) => (
+                <div key={script.id} className="flex items-center justify-between gap-3 rounded-lg border p-3">
+                  <button className="min-w-0 flex-1 text-left" onClick={() => loadSavedScript(script)}>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-medium text-sm truncate">{script.title}</span>
+                      <span className="text-xs bg-muted px-2 py-0.5 rounded">第{script.episode_number}集</span>
+                      <span className="text-xs text-muted-foreground bg-muted/60 px-2 py-0.5 rounded">
+                        {script.mode === "youjin" ? "有劲AI" : "通用"}
+                      </span>
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1 truncate">
+                      {script.synopsis || script.theme} · {new Date(script.created_at).toLocaleString()}
+                    </div>
+                  </button>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => loadSavedScript(script)}>载入</Button>
+                    <Button variant="ghost" size="sm" className="h-8 text-xs gap-1" onClick={() => generateSequel(script)} disabled={generatingSequel}>
+                      <Wand2 className="h-3 w-3" /> 续集
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteSavedScript(script)}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Results */}
       {result && (
         <div className="space-y-4 mt-6">
@@ -907,7 +1147,12 @@ export default function DramaScriptGenerator() {
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg">{result.title}</CardTitle>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap justify-end">
+                  {activeSavedScript && (
+                    <span className="text-xs text-primary bg-primary/10 px-2 py-1 rounded font-medium">
+                      第{savedScriptId === activeSavedScript.id ? activeSavedScript.episode_number : activeSavedScript.episode_number + 1}集
+                    </span>
+                  )}
                   {mode === "youjin" && (
                     <span className="text-xs text-primary bg-primary/10 px-2 py-1 rounded font-medium">
                       有劲AI专属
@@ -924,6 +1169,19 @@ export default function DramaScriptGenerator() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground leading-relaxed">{result.synopsis}</p>
+              <div className="flex flex-wrap gap-2 mt-4">
+                <Button onClick={saveCurrentScript} disabled={savingScript} className="gap-2">
+                  {savingScript ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                  {savedScriptId ? "更新已保存脚本" : "保存脚本"}
+                </Button>
+                <Button variant="outline" onClick={() => generateSequel()} disabled={generatingSequel || (!activeSavedScript && !savedScriptId)} className="gap-2">
+                  {generatingSequel ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
+                  生成续集
+                </Button>
+                {!activeSavedScript && !savedScriptId && (
+                  <span className="text-xs text-muted-foreground self-center">先保存当前脚本后，可继续生成第2集。</span>
+                )}
+              </div>
             </CardContent>
           </Card>
 
