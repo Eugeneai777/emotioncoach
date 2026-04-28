@@ -96,7 +96,7 @@ Deno.serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const { theme, genre, style, sceneCount, mode, products, targetAudience, conversionStyle, conflictIntensity, action, avoidTitles, previousScript } = await req.json();
+    const { theme, genre, style, sceneCount, mode, products, targetAudience, conversionStyle, conversionStyles, conflictIntensity, action, avoidTitles, previousScript } = await req.json();
 
     // --- Suggest Themes Mode ---
     if (action === "suggest_themes") {
@@ -261,6 +261,12 @@ ${productList}${avoidTitlePrompt}
       usage: "角色使用（主角在关键时刻使用产品，展示产品效果）",
     };
 
+    const normalizedConversionStyles = Array.isArray(conversionStyles) && conversionStyles.length > 0
+      ? conversionStyles
+      : conversionStyle
+        ? [conversionStyle]
+        : ["plot"];
+
     const conflictIntensityMap: Record<string, string> = {
       standard: "标准冲突：矛盾清晰，情绪真实，中后段有一次温和反转",
       strong: "强冲突：前3秒高压开场，人物对立鲜明，情绪层层升级，中后段必须有反转",
@@ -315,7 +321,9 @@ ${productList}${avoidTitlePrompt}
 
     if (isYoujin) {
       const audienceStr = audienceMap[targetAudience] || targetAudience || "通用人群";
-      const convStyleStr = conversionStyleMap[conversionStyle] || conversionStyle || "剧情植入";
+      const convStyleStr = normalizedConversionStyles
+        .map((style: string) => conversionStyleMap[style] || style)
+        .join("；");
       
       let productInfo = "";
       if (products && Array.isArray(products) && products.length > 0) {

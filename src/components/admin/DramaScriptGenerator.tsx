@@ -123,6 +123,7 @@ interface Scene {
 interface DramaScript {
   title: string;
   synopsis: string;
+  conversionStyles?: string[];
   coverPoster?: {
     headline: string;
     subheadline: string;
@@ -205,6 +206,12 @@ const VIDEO_DURATIONS = [
 
 const CONSISTENCY_THRESHOLD = 85;
 
+const normalizeConversionStyles = (styles?: string[] | string | null) => {
+  const values = Array.isArray(styles) ? styles : styles ? [styles] : ["plot"];
+  const validValues = values.filter((value) => CONVERSION_STYLES.some((style) => style.value === value));
+  return validValues.length > 0 ? validValues : ["plot"];
+};
+
 export default function DramaScriptGenerator() {
   const [mode, setMode] = useState<"generic" | "youjin">("generic");
   const [theme, setTheme] = useState("");
@@ -213,7 +220,7 @@ export default function DramaScriptGenerator() {
   const [sceneCount, setSceneCount] = useState(8);
   const [conflictIntensity, setConflictIntensity] = useState("strong");
   const [targetAudience, setTargetAudience] = useState("women");
-  const [conversionStyle, setConversionStyle] = useState("plot");
+  const [conversionStyles, setConversionStyles] = useState<string[]>(["plot"]);
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<DramaScript | null>(null);
@@ -247,6 +254,16 @@ export default function DramaScriptGenerator() {
       if (next.has(key)) next.delete(key);
       else next.add(key);
       return next;
+    });
+  };
+
+  const toggleConversionStyle = (value: string) => {
+    setConversionStyles((prev) => {
+      if (prev.includes(value)) {
+        const next = prev.filter((item) => item !== value);
+        return next.length > 0 ? next : ["plot"];
+      }
+      return [...prev, value];
     });
   };
 
@@ -354,7 +371,8 @@ export default function DramaScriptGenerator() {
       if (mode === "youjin") {
         body.products = getSelectedProductDetails();
         body.targetAudience = targetAudience;
-        body.conversionStyle = conversionStyle;
+        body.conversionStyles = conversionStyles;
+        body.conversionStyle = conversionStyles[0] || "plot";
       }
       const { data, error } = await supabase.functions.invoke("drama-script-ai", { body });
       if (data?.error || error) {
@@ -398,9 +416,9 @@ export default function DramaScriptGenerator() {
         style,
         conflict_intensity: conflictIntensity,
         target_audience: mode === "youjin" ? targetAudience : null,
-        conversion_style: mode === "youjin" ? conversionStyle : null,
+        conversion_style: mode === "youjin" ? conversionStyles[0] || "plot" : null,
         selected_products: selectedProductDetails,
-        script_data: result,
+        script_data: { ...result, conversionStyles: mode === "youjin" ? conversionStyles : undefined },
         series_id: isUpdatingExisting ? activeSavedScript?.series_id : activeSavedScript?.series_id,
         parent_script_id: isUpdatingExisting ? activeSavedScript?.parent_script_id : activeSavedScript?.id || null,
         episode_number: isUpdatingExisting ? activeSavedScript?.episode_number || 1 : activeSavedScript ? activeSavedScript.episode_number + 1 : 1,
@@ -433,7 +451,7 @@ export default function DramaScriptGenerator() {
     setStyle(script.style || "anime");
     setConflictIntensity(script.conflict_intensity || "strong");
     setTargetAudience(script.target_audience || "women");
-    setConversionStyle(script.conversion_style || "plot");
+    setConversionStyles(normalizeConversionStyles(script.script_data?.conversionStyles || script.conversion_style));
     setSelectedProducts(new Set((script.selected_products || []).map((p) => p.key)));
     setResult(script.script_data);
     setSavedScriptId(script.id);
@@ -484,9 +502,11 @@ export default function DramaScriptGenerator() {
         previousScript: script,
       };
       if (script.mode === "youjin") {
+        const sequelConversionStyles = normalizeConversionStyles(script.script_data?.conversionStyles || script.conversion_style || conversionStyles);
         body.products = productsForSequel;
         body.targetAudience = script.target_audience || targetAudience;
-        body.conversionStyle = script.conversion_style || conversionStyle;
+        body.conversionStyles = sequelConversionStyles;
+        body.conversionStyle = sequelConversionStyles[0] || "plot";
       }
       const { data, error } = await supabase.functions.invoke("drama-script-ai", { body });
       if (data?.error || error) {
@@ -496,7 +516,7 @@ export default function DramaScriptGenerator() {
       setGenre(script.genre || genre);
       setStyle(script.style || style);
       setTargetAudience(script.target_audience || targetAudience);
-      setConversionStyle(script.conversion_style || conversionStyle);
+      setConversionStyles(normalizeConversionStyles(script.script_data?.conversionStyles || script.conversion_style || conversionStyles));
       setSelectedProducts(new Set(productsForSequel.map((p) => p.key)));
       setTheme((data as DramaScript).title);
       setResult(data as DramaScript);
@@ -954,15 +974,15 @@ export default function DramaScriptGenerator() {
               </div>
 
               <div className="space-y-2">
-                <Label>转化方式</Label>
+                <Label>转化方式（可多选）</Label>
                 <div className="flex flex-wrap gap-2">
                   {CONVERSION_STYLES.map((c) => (
                     <button
                       key={c.value}
-                      onClick={() => setConversionStyle(c.value)}
+                      onClick={() => toggleConversionStyle(c.value)}
                       disabled={loading}
                       className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
-                        conversionStyle === c.value
+                        conversionStyles.includes(c.value)
                           ? "bg-primary text-primary-foreground border-primary"
                           : "bg-background border-border hover:bg-muted"
                       }`}
