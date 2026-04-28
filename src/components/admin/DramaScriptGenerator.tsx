@@ -999,9 +999,9 @@ export default function DramaScriptGenerator() {
                   <ShoppingCart className="h-4 w-4" /> 选择转化产品 *
                 </Label>
                 <Tabs defaultValue="assessment" className="w-full">
-                  <TabsList className="w-full flex">
+                  <TabsList className="w-full h-auto flex flex-wrap justify-start gap-1">
                     {Object.entries(PRODUCT_CATALOG).map(([key, cat]) => (
-                      <TabsTrigger key={key} value={key} className="flex-1 text-xs">
+                      <TabsTrigger key={key} value={key} className="flex-1 min-w-[72px] text-xs">
                         {cat.label}
                       </TabsTrigger>
                     ))}
@@ -1034,7 +1034,7 @@ export default function DramaScriptGenerator() {
                   ))}
                 </Tabs>
                 {selectedProducts.size > 0 && (
-                  <div className="text-xs text-muted-foreground">
+                  <div className="text-xs text-muted-foreground break-words">
                     已选 {selectedProducts.size} 个产品：{getSelectedProductDetails().map((p) => p.name).join("、")}
                   </div>
                 )}
