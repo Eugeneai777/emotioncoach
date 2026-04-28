@@ -1183,7 +1183,7 @@ export default function DramaScriptGenerator() {
 
       {/* Results */}
       {result && (
-        <div className="space-y-4 mt-6">
+        <div className="space-y-4 mt-6 w-full max-w-full min-w-0 overflow-hidden">
           {/* Title & Synopsis */}
           <Card className="max-w-full overflow-hidden">
             <CardHeader className="pb-3">
@@ -1229,7 +1229,7 @@ export default function DramaScriptGenerator() {
 
           {/* Sequel Consistency Check */}
           {result.consistencyCheck && (
-            <Card className={result.consistencyCheck.overallScore < CONSISTENCY_THRESHOLD ? "border-destructive/50" : "border-primary/30"}>
+            <Card className={`max-w-full min-w-0 overflow-hidden ${result.consistencyCheck.overallScore < CONSISTENCY_THRESHOLD ? "border-destructive/50" : "border-primary/30"}`}>
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center justify-between gap-3">
                   <span className="flex items-center gap-2"><Check className="h-4 w-4" /> 角色/剧情一致性检查</span>
@@ -1263,30 +1263,30 @@ export default function DramaScriptGenerator() {
 
           {/* Cover Poster Draft */}
           {result.coverPoster && (
-            <Card className="border-primary/30">
+            <Card className="border-primary/30 max-w-full min-w-0 overflow-hidden">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center gap-2">
                   <ImageIcon className="h-4 w-4" /> 本集封面海报草案
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <div className="rounded-lg bg-muted/50 p-3">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 min-w-0">
+                  <div className="rounded-lg bg-muted/50 p-3 min-w-0 overflow-hidden">
                     <Label className="text-xs text-muted-foreground">封面主标题</Label>
-                    <p className="text-sm font-semibold mt-1">{result.coverPoster.headline}</p>
+                    <p className="text-sm font-semibold mt-1 break-words">{result.coverPoster.headline}</p>
                   </div>
-                  <div className="rounded-lg bg-muted/50 p-3">
+                  <div className="rounded-lg bg-muted/50 p-3 min-w-0 overflow-hidden">
                     <Label className="text-xs text-muted-foreground">辅助文案</Label>
-                    <p className="text-sm mt-1">{result.coverPoster.subheadline}</p>
+                    <p className="text-sm mt-1 break-words">{result.coverPoster.subheadline}</p>
                   </div>
-                  <div className="rounded-lg bg-muted/50 p-3">
+                  <div className="rounded-lg bg-muted/50 p-3 min-w-0 overflow-hidden">
                     <Label className="text-xs text-muted-foreground">封面钩子</Label>
-                    <p className="text-sm font-medium mt-1">{result.coverPoster.hookText}</p>
+                    <p className="text-sm font-medium mt-1 break-words">{result.coverPoster.hookText}</p>
                   </div>
                 </div>
-                <div className="bg-muted/50 rounded-lg p-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <code className="text-xs break-all flex-1 leading-relaxed">{result.coverPoster.posterImagePrompt}</code>
+                <div className="bg-muted/50 rounded-lg p-3 min-w-0 overflow-hidden">
+                  <div className="flex items-start justify-between gap-2 min-w-0">
+                    <code className="text-xs break-all flex-1 min-w-0 leading-relaxed">{result.coverPoster.posterImagePrompt}</code>
                     <Button
                       variant="ghost"
                       size="icon"
