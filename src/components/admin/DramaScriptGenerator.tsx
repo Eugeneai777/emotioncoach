@@ -502,6 +502,10 @@ export default function DramaScriptGenerator() {
       setResult(data as DramaScript);
       setSavedScriptId(null);
       setActiveSavedScript(script);
+      const check = (data as DramaScript).consistencyCheck;
+      if (check && check.overallScore < CONSISTENCY_THRESHOLD) {
+        toast.error(`一致性评分 ${check.overallScore}，低于${CONSISTENCY_THRESHOLD}，建议重新生成`);
+      }
       toast.success(`第${script.episode_number + 1}集已生成，确认后可保存`);
     } catch (e: any) {
       toast.error(e.message || "续集生成失败");
