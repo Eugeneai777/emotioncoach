@@ -13,7 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { extractEdgeFunctionError } from "@/lib/edgeFunctionError";
 import { mergeVideosClientSide } from "@/utils/videoMerger";
 import { toast } from "sonner";
-import { Copy, Loader2, Download, Clapperboard, User, Film, Sparkles, ShoppingCart, Target, MessageSquare, Video, Play, Square, Check, X, Mic, Volume2 } from "lucide-react";
+import { Copy, Loader2, Download, Clapperboard, User, Film, Sparkles, ShoppingCart, Target, MessageSquare, Video, Play, Square, Check, X, Mic, Volume2, RefreshCw } from "lucide-react";
 
 const GENRES = [
   { value: "suspense", label: "🔍 悬疑推理" },
@@ -206,7 +206,7 @@ export default function DramaScriptGenerator() {
     });
   };
 
-  const getSelectedProductDetails = (): ProductItem[] => {
+  const getSelectedProductDetails = useCallback((): ProductItem[] => {
     const all: ProductItem[] = [];
     Object.values(PRODUCT_CATALOG).forEach((cat) => {
       cat.items.forEach((item) => {
@@ -214,7 +214,7 @@ export default function DramaScriptGenerator() {
       });
     });
     return all;
-  };
+  }, [selectedProducts]);
 
   const getProductName = (key: string): string => {
     for (const cat of Object.values(PRODUCT_CATALOG)) {
@@ -225,7 +225,7 @@ export default function DramaScriptGenerator() {
   };
 
   // Auto-fetch suggested themes when products change in youjin mode
-  const fetchSuggestedThemes = useCallback(async () => {
+  const fetchSuggestedThemes = useCallback(async (avoidTitles: string[] = []) => {
     if (mode !== "youjin" || selectedProducts.size === 0) {
       setSuggestedThemes([]);
       return;
@@ -236,7 +236,7 @@ export default function DramaScriptGenerator() {
     try {
       const products = getSelectedProductDetails();
       const { data, error } = await supabase.functions.invoke("drama-script-ai", {
-        body: { action: "suggest_themes", products, targetAudience, conflictIntensity },
+        body: { action: "suggest_themes", products, targetAudience, conflictIntensity, avoidTitles },
       });
       if (data?.themes && Array.isArray(data.themes)) {
         setSuggestedThemes(data.themes.slice(0, 3));
@@ -246,7 +246,7 @@ export default function DramaScriptGenerator() {
     } finally {
       setLoadingThemes(false);
     }
-  }, [mode, selectedProducts, targetAudience, conflictIntensity]);
+  }, [mode, selectedProducts, targetAudience, conflictIntensity, getSelectedProductDetails]);
 
   useEffect(() => {
     if (mode !== "youjin" || selectedProducts.size === 0) {
@@ -260,7 +260,11 @@ export default function DramaScriptGenerator() {
     return () => {
       if (themeFetchRef.current) clearTimeout(themeFetchRef.current);
     };
-  }, [selectedProducts, targetAudience, mode]);
+  }, [selectedProducts, targetAudience, mode, conflictIntensity, fetchSuggestedThemes]);
+
+  const refreshSuggestedThemes = () => {
+    fetchSuggestedThemes(suggestedThemes.map((item) => item.title));
+  };
 
   const handleGenerate = async () => {
     if (!theme.trim()) {
@@ -811,9 +815,22 @@ export default function DramaScriptGenerator() {
           {/* Suggested Themes for Youjin mode */}
           {mode === "youjin" && (loadingThemes || suggestedThemes.length > 0) && (
             <div className="space-y-2">
-              <Label className="flex items-center gap-1.5">
-                <Sparkles className="h-4 w-4 text-primary" /> AI推荐爆款主题
-              </Label>
+              <div className="flex items-center justify-between gap-3">
+                <Label className="flex items-center gap-1.5">
+                  <Sparkles className="h-4 w-4 text-primary" /> AI推荐爆款主题
+                </Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={refreshSuggestedThemes}
+                  disabled={loadingThemes || loading || selectedProducts.size === 0}
+                  className="h-8 gap-1.5 px-2 text-xs"
+                >
+                  {loadingThemes ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                  再换3个
+                </Button>
+              </div>
               {loadingThemes ? (
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {[1, 2, 3].map((i) => (
@@ -847,7 +864,7 @@ export default function DramaScriptGenerator() {
                   ))}
                 </div>
               )}
-              <p className="text-xs text-muted-foreground">点击选用推荐主题，或在下方输入自定义主题</p>
+              <p className="text-xs text-muted-foreground">点击选用推荐主题，不满意可再换3个，或在下方输入自定义主题</p>
             </div>
           )}
 
