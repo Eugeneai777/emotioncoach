@@ -225,6 +225,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
   const canUseJsapi = (isMiniProgram || isWechat) && !!userOpenId;
 
   const shouldWaitForOpenId = (isMiniProgram || isWechat) && !propOpenId;
+  const bypassGuestActivationPrompt = packageInfo?.key === 'camp-emotion_stress_7';
 
   // 微信 Android/XWEB 下 Bridge 可能延迟注入，等待 5 秒避免过早误判并降级扫码
   const waitForWeixinJSBridge = useCallback((timeout = 5000): Promise<boolean> => {
@@ -1419,8 +1420,8 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
           clearTimers();
           clearPendingOrderCache();
           
-          // 未登录用户：存储订单号，显示引导登录界面
-          if (!user) {
+          // 未登录用户：存储订单号，显示引导登录界面；7天有劲训练营支付成功后直接进入成功态
+          if (!user && !bypassGuestActivationPrompt) {
             localStorage.setItem('pending_claim_order', data.orderNo || orderNo);
             const guestRedirectPath = getPostPaymentRedirectPath(packageInfo?.key, returnUrl);
             setPostAuthRedirect(guestRedirectPath);
@@ -1521,8 +1522,8 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
           clearTimers();
           clearPendingOrderCache();
 
-          // 未登录用户：存储订单号，显示引导登录界面
-          if (!user) {
+          // 未登录用户：存储订单号，显示引导登录界面；7天有劲训练营支付成功后直接进入成功态
+          if (!user && !bypassGuestActivationPrompt) {
             localStorage.setItem('pending_claim_order', pendingOrderNo);
             const guestRedirectPath = getPostPaymentRedirectPath(packageInfo?.key, returnUrl);
             setPostAuthRedirect(guestRedirectPath);
@@ -1570,7 +1571,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
       window.removeEventListener('pageshow', maybeResumeCheck);
       document.removeEventListener('visibilitychange', maybeResumeCheck);
     };
-  }, [open, isMiniProgram, status, orderNo, onSuccess, onOpenChange]);
+  }, [open, isMiniProgram, status, orderNo, onSuccess, onOpenChange, bypassGuestActivationPrompt, user, packageInfo?.key, returnUrl]);
 
   // 🆕 支付回调场景：小程序支付完成后返回，自动验证订单并触发成功
   useEffect(() => {
