@@ -13,7 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { extractEdgeFunctionError } from "@/lib/edgeFunctionError";
 import { mergeVideosClientSide } from "@/utils/videoMerger";
 import { toast } from "sonner";
-import { Copy, Loader2, Download, Clapperboard, User, Film, Sparkles, ShoppingCart, Target, MessageSquare, Video, Play, Square, Check, X, Mic, Volume2 } from "lucide-react";
+import { Copy, Loader2, Download, Clapperboard, User, Film, Sparkles, ShoppingCart, Target, MessageSquare, Video, Play, Square, Check, X, Mic, Volume2, RefreshCw } from "lucide-react";
 
 const GENRES = [
   { value: "suspense", label: "🔍 悬疑推理" },
@@ -225,7 +225,7 @@ export default function DramaScriptGenerator() {
   };
 
   // Auto-fetch suggested themes when products change in youjin mode
-  const fetchSuggestedThemes = useCallback(async () => {
+  const fetchSuggestedThemes = useCallback(async (avoidTitles: string[] = []) => {
     if (mode !== "youjin" || selectedProducts.size === 0) {
       setSuggestedThemes([]);
       return;
@@ -236,7 +236,7 @@ export default function DramaScriptGenerator() {
     try {
       const products = getSelectedProductDetails();
       const { data, error } = await supabase.functions.invoke("drama-script-ai", {
-        body: { action: "suggest_themes", products, targetAudience, conflictIntensity },
+        body: { action: "suggest_themes", products, targetAudience, conflictIntensity, avoidTitles },
       });
       if (data?.themes && Array.isArray(data.themes)) {
         setSuggestedThemes(data.themes.slice(0, 3));
@@ -260,7 +260,11 @@ export default function DramaScriptGenerator() {
     return () => {
       if (themeFetchRef.current) clearTimeout(themeFetchRef.current);
     };
-  }, [selectedProducts, targetAudience, mode]);
+  }, [selectedProducts, targetAudience, mode, conflictIntensity, fetchSuggestedThemes]);
+
+  const refreshSuggestedThemes = () => {
+    fetchSuggestedThemes(suggestedThemes.map((item) => item.title));
+  };
 
   const handleGenerate = async () => {
     if (!theme.trim()) {
