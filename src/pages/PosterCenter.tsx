@@ -78,7 +78,7 @@ export default function PosterCenter() {
         toast.dismiss(toastId);
         setPosterPreviewUrl(blobUrl);
         setIsPosterPreviewRemoteReady(!blobUrl.startsWith('blob:'));
-        setShowPosterPreview(true);
+        setShowPosterPreview((wasOpen) => wasOpen || blobUrl.startsWith('blob:'));
       },
       onError: (error) => {
         toast.dismiss(toastId);
