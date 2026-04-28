@@ -92,7 +92,7 @@ Deno.serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const { theme, genre, style, sceneCount, mode, products, targetAudience, conversionStyle, conflictIntensity, action, avoidTitles } = await req.json();
+    const { theme, genre, style, sceneCount, mode, products, targetAudience, conversionStyle, conflictIntensity, action, avoidTitles, previousScript } = await req.json();
 
     // --- Suggest Themes Mode ---
     if (action === "suggest_themes") {
@@ -267,6 +267,10 @@ ${productList}${avoidTitlePrompt}
     const count = Math.min(12, Math.max(6, sceneCount || 8));
     const isYoujin = mode === "youjin";
 
+    const isSequel = action === "generate_sequel" && previousScript?.script_data;
+    const previousData = isSequel ? previousScript.script_data : null;
+    const previousLastScene = previousData?.scenes?.[previousData.scenes.length - 1];
+
     let userPrompt = `请为以下主题创作一个${count}个分镜的漫剧脚本：
 
 【故事主题】${theme}
@@ -274,6 +278,25 @@ ${productList}${avoidTitlePrompt}
 【画风要求】${styleMap[style] || style || "不限"}
 【冲突强度】${conflictStr}
 【分镜数量】${count}个场景`;
+
+    if (isSequel) {
+      userPrompt += `
+
+【续集创作要求】
+这是一个系列短剧的第 ${(previousScript.episode_number || 1) + 1} 集，不是新故事。必须承接上一集继续写。
+上一集标题：${previousData.title || previousScript.title}
+上一集梗概：${previousData.synopsis || previousScript.synopsis || "无"}
+上一集角色设定：${JSON.stringify(previousData.characters || [])}
+上一集最后分镜：${previousLastScene ? JSON.stringify(previousLastScene) : "无"}
+
+续集硬性要求：
+1. 延续同一批核心角色、外貌特征、人物关系和画风，不要重启世界观。
+2. 第1个分镜必须承接上一集最后一个动作、悬念或台词，并立即制造新压力。
+3. 不要重复上一集的冲突套路，要升级为新的误会、新对手、新证据或更大的情绪爆点。
+4. 中后段必须出现比上一集更强的反转，让观众重新判断人物动机。
+5. 结尾必须留下下一集钩子，但本集也要有一个明确情绪落点。
+6. title 要体现“续集感”和新冲突，不要直接复用上一集标题。`;
+    }
 
     if (isYoujin) {
       const audienceStr = audienceMap[targetAudience] || targetAudience || "通用人群";
@@ -302,7 +325,7 @@ ${productInfo || "无指定产品"}
 剧情执行要求：
 1. 标题要像短视频爆款钩子，强悬念、强冲突，避免温吞标题
 2. synopsis 必须写出核心矛盾、对立关系和中后段反转
-3. 第1个分镜必须是冲突爆点，不要铺垫世界观
+3. 第1个分镜必须是冲突爆点，不要铺垫世界观；如果是续集，必须承接上一集结尾
 4. 每个分镜的 dialogue 控制在1-2句，短句、狠话、口语化，避免解释过多
 5. 场景之间要逐步升级：误会/压迫 → 失控/爆发 → 反转/醒悟 → 行动/转化
 6. imagePrompt 要强化镜头压迫感：close-up tense expression, dramatic backlight, split composition, high contrast lighting, cinematic tension 等
