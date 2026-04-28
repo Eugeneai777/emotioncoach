@@ -815,9 +815,22 @@ export default function DramaScriptGenerator() {
           {/* Suggested Themes for Youjin mode */}
           {mode === "youjin" && (loadingThemes || suggestedThemes.length > 0) && (
             <div className="space-y-2">
-              <Label className="flex items-center gap-1.5">
-                <Sparkles className="h-4 w-4 text-primary" /> AI推荐爆款主题
-              </Label>
+              <div className="flex items-center justify-between gap-3">
+                <Label className="flex items-center gap-1.5">
+                  <Sparkles className="h-4 w-4 text-primary" /> AI推荐爆款主题
+                </Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={refreshSuggestedThemes}
+                  disabled={loadingThemes || loading || selectedProducts.size === 0}
+                  className="h-8 gap-1.5 px-2 text-xs"
+                >
+                  {loadingThemes ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                  再换3个
+                </Button>
+              </div>
               {loadingThemes ? (
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {[1, 2, 3].map((i) => (
@@ -851,7 +864,7 @@ export default function DramaScriptGenerator() {
                   ))}
                 </div>
               )}
-              <p className="text-xs text-muted-foreground">点击选用推荐主题，或在下方输入自定义主题</p>
+              <p className="text-xs text-muted-foreground">点击选用推荐主题，不满意可再换3个，或在下方输入自定义主题</p>
             </div>
           )}
 
