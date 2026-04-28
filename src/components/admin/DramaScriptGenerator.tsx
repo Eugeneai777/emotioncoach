@@ -1303,7 +1303,7 @@ export default function DramaScriptGenerator() {
 
           {/* Conversion Script & Comment Hook (Youjin mode) */}
           {mode === "youjin" && (result.conversionScript || result.commentHook) && (
-            <Card className="border-primary/30">
+            <Card className="border-primary/30 max-w-full min-w-0 overflow-hidden">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center gap-2">
                   <MessageSquare className="h-4 w-4" /> 转化文案
@@ -1313,9 +1313,9 @@ export default function DramaScriptGenerator() {
                 {result.conversionScript && (
                   <div className="space-y-2">
                     <Label className="text-xs font-medium">视频描述文案</Label>
-                    <div className="bg-muted/50 rounded-lg p-3">
-                      <div className="flex items-start justify-between gap-2">
-                        <p className="text-sm whitespace-pre-wrap flex-1">{buildFullConversionText()}</p>
+                    <div className="bg-muted/50 rounded-lg p-3 min-w-0 overflow-hidden">
+                      <div className="flex items-start justify-between gap-2 min-w-0">
+                        <p className="text-sm whitespace-pre-wrap break-words flex-1 min-w-0">{buildFullConversionText()}</p>
                         <Button
                           variant="ghost"
                           size="icon"
@@ -1331,9 +1331,9 @@ export default function DramaScriptGenerator() {
                 {result.commentHook && (
                   <div className="space-y-2">
                     <Label className="text-xs font-medium">评论区置顶话术</Label>
-                    <div className="bg-muted/50 rounded-lg p-3">
-                      <div className="flex items-start justify-between gap-2">
-                        <p className="text-sm whitespace-pre-wrap flex-1">{result.commentHook}</p>
+                    <div className="bg-muted/50 rounded-lg p-3 min-w-0 overflow-hidden">
+                      <div className="flex items-start justify-between gap-2 min-w-0">
+                        <p className="text-sm whitespace-pre-wrap break-words flex-1 min-w-0">{result.commentHook}</p>
                         <Button
                           variant="ghost"
                           size="icon"
@@ -1351,19 +1351,19 @@ export default function DramaScriptGenerator() {
           )}
 
           {/* Characters */}
-          <div>
+          <div className="max-w-full min-w-0 overflow-hidden">
             <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
               <User className="h-4 w-4" /> 角色设定
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 min-w-0">
               {result.characters.map((char, i) => (
-                <Card key={i} className="border-dashed">
+                <Card key={i} className="border-dashed max-w-full min-w-0 overflow-hidden">
                   <CardContent className="pt-4 space-y-2">
-                    <div className="font-medium">{char.name}</div>
-                    <p className="text-sm text-muted-foreground">{char.description}</p>
-                    <div className="bg-muted/50 rounded-lg p-3">
-                      <div className="flex items-start justify-between gap-2">
-                        <code className="text-xs break-all flex-1">{char.imagePrompt}</code>
+                    <div className="font-medium break-words">{char.name}</div>
+                    <p className="text-sm text-muted-foreground break-words">{char.description}</p>
+                    <div className="bg-muted/50 rounded-lg p-3 min-w-0 overflow-hidden">
+                      <div className="flex items-start justify-between gap-2 min-w-0">
+                        <code className="text-xs break-all flex-1 min-w-0">{char.imagePrompt}</code>
                         <Button
                           variant="ghost"
                           size="icon"
@@ -1381,7 +1381,7 @@ export default function DramaScriptGenerator() {
           </div>
 
           {/* Video Generation Settings */}
-          <Card className="border-dashed border-primary/40">
+          <Card className="border-dashed border-primary/40 max-w-full min-w-0 overflow-hidden">
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
                 <Video className="h-4 w-4" /> 视频生成设置
