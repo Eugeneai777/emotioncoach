@@ -1152,10 +1152,10 @@ export default function DramaScriptGenerator() {
           ) : (
             <div className="space-y-2 max-h-72 overflow-auto pr-1">
               {savedScripts.map((script) => (
-                <div key={script.id} className="flex items-center justify-between gap-3 rounded-lg border p-3">
-                  <button className="min-w-0 flex-1 text-left" onClick={() => loadSavedScript(script)}>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-medium text-sm truncate">{script.title}</span>
+                <div key={script.id} className="flex items-center justify-between gap-3 rounded-lg border p-3 min-w-0 overflow-hidden">
+                  <button className="min-w-0 flex-1 text-left overflow-hidden" onClick={() => loadSavedScript(script)}>
+                    <div className="flex items-center gap-2 flex-wrap min-w-0">
+                      <span className="font-medium text-sm truncate min-w-0 max-w-full">{script.title}</span>
                       <span className="text-xs bg-muted px-2 py-0.5 rounded">第{script.episode_number}集</span>
                       <span className="text-xs text-muted-foreground bg-muted/60 px-2 py-0.5 rounded">
                         {script.mode === "youjin" ? "有劲AI" : "通用"}
@@ -1187,8 +1187,8 @@ export default function DramaScriptGenerator() {
           {/* Title & Synopsis */}
           <Card>
             <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">{result.title}</CardTitle>
+              <div className="flex items-start justify-between gap-3 min-w-0">
+                <CardTitle className="text-lg leading-snug break-words min-w-0 flex-1">{result.title}</CardTitle>
                 <div className="flex gap-2 flex-wrap justify-end">
                   {activeSavedScript && (
                     <span className="text-xs text-primary bg-primary/10 px-2 py-1 rounded font-medium">
@@ -1210,7 +1210,7 @@ export default function DramaScriptGenerator() {
               </div>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground leading-relaxed">{result.synopsis}</p>
+              <p className="text-sm text-muted-foreground leading-relaxed break-words whitespace-pre-wrap">{result.synopsis}</p>
               <div className="flex flex-wrap gap-2 mt-4">
                 <Button onClick={saveCurrentScript} disabled={savingScript} className="gap-2">
                   {savingScript ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
