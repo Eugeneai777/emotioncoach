@@ -450,7 +450,7 @@ export default function DramaScriptGenerator() {
     setStyle(script.style || "anime");
     setConflictIntensity(script.conflict_intensity || "strong");
     setTargetAudience(script.target_audience || "women");
-    setConversionStyle(script.conversion_style || "plot");
+    setConversionStyles(normalizeConversionStyles(script.script_data?.conversionStyles || script.conversion_style));
     setSelectedProducts(new Set((script.selected_products || []).map((p) => p.key)));
     setResult(script.script_data);
     setSavedScriptId(script.id);
@@ -501,9 +501,11 @@ export default function DramaScriptGenerator() {
         previousScript: script,
       };
       if (script.mode === "youjin") {
+        const sequelConversionStyles = normalizeConversionStyles(script.script_data?.conversionStyles || script.conversion_style || conversionStyles);
         body.products = productsForSequel;
         body.targetAudience = script.target_audience || targetAudience;
-        body.conversionStyle = script.conversion_style || conversionStyle;
+        body.conversionStyles = sequelConversionStyles;
+        body.conversionStyle = sequelConversionStyles[0] || "plot";
       }
       const { data, error } = await supabase.functions.invoke("drama-script-ai", { body });
       if (data?.error || error) {
@@ -513,7 +515,7 @@ export default function DramaScriptGenerator() {
       setGenre(script.genre || genre);
       setStyle(script.style || style);
       setTargetAudience(script.target_audience || targetAudience);
-      setConversionStyle(script.conversion_style || conversionStyle);
+      setConversionStyles(normalizeConversionStyles(script.script_data?.conversionStyles || script.conversion_style || conversionStyles));
       setSelectedProducts(new Set(productsForSequel.map((p) => p.key)));
       setTheme((data as DramaScript).title);
       setResult(data as DramaScript);
