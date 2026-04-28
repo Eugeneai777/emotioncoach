@@ -1185,11 +1185,11 @@ export default function DramaScriptGenerator() {
       {result && (
         <div className="space-y-4 mt-6">
           {/* Title & Synopsis */}
-          <Card>
+          <Card className="max-w-full overflow-hidden">
             <CardHeader className="pb-3">
-              <div className="flex items-start justify-between gap-3 min-w-0">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 min-w-0">
                 <CardTitle className="text-lg leading-snug break-words min-w-0 flex-1">{result.title}</CardTitle>
-                <div className="flex gap-2 flex-wrap justify-end">
+                <div className="flex gap-2 flex-wrap sm:justify-end min-w-0">
                   {activeSavedScript && (
                     <span className="text-xs text-primary bg-primary/10 px-2 py-1 rounded font-medium">
                       第{savedScriptId === activeSavedScript.id ? activeSavedScript.episode_number : activeSavedScript.episode_number + 1}集
