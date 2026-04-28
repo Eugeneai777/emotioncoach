@@ -115,6 +115,10 @@ export interface ShareOptions {
   onDownload?: () => void;
 }
 
+const getBlobFileExtension = (blob: Blob): 'jpg' | 'png' => {
+  return blob.type === 'image/png' ? 'png' : 'jpg';
+};
+
 export const handleShareWithFallback = async (
   blob: Blob,
   filename: string,
@@ -122,7 +126,8 @@ export const handleShareWithFallback = async (
 ): Promise<ShareResult> => {
   const { reportShareAction } = await import("@/lib/ogHealthReporter");
   const { isIOS, isMiniProgram, isAndroid, isWeChat } = getShareEnvironment();
-  const file = new File([blob], filename, { type: 'image/png' });
+  const cleanName = filename.replace(/\.(png|jpg|jpeg|webp)$/i, '');
+  const file = new File([blob], `${cleanName}.${getBlobFileExtension(blob)}`, { type: blob.type || 'image/jpeg' });
   
   const reportShare = (result: ShareResult) => {
     try {
