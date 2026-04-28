@@ -693,6 +693,27 @@ export default function DramaScriptGenerator() {
             </div>
           </div>
 
+          <div className="space-y-2">
+            <Label>冲突强度</Label>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              {CONFLICT_LEVELS.map((level) => (
+                <button
+                  key={level.value}
+                  onClick={() => setConflictIntensity(level.value)}
+                  disabled={loading}
+                  className={`text-left p-3 rounded-lg border transition-colors ${
+                    conflictIntensity === level.value
+                      ? "bg-primary/10 border-primary ring-1 ring-primary"
+                      : "bg-background border-border hover:bg-muted/50"
+                  }`}
+                >
+                  <div className="text-sm font-medium">{level.label}</div>
+                  <div className="text-xs text-muted-foreground mt-1">{level.desc}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Youjin-specific options */}
           {mode === "youjin" && (
             <>
