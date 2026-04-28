@@ -1207,6 +1207,40 @@ export default function DramaScriptGenerator() {
             </CardContent>
           </Card>
 
+          {/* Sequel Consistency Check */}
+          {result.consistencyCheck && (
+            <Card className={result.consistencyCheck.overallScore < CONSISTENCY_THRESHOLD ? "border-destructive/50" : "border-primary/30"}>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center justify-between gap-3">
+                  <span className="flex items-center gap-2"><Check className="h-4 w-4" /> 角色/剧情一致性检查</span>
+                  <span className={result.consistencyCheck.overallScore < CONSISTENCY_THRESHOLD ? "text-destructive" : "text-primary"}>
+                    {result.consistencyCheck.overallScore}/100
+                  </span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Progress value={result.consistencyCheck.overallScore} className="h-2" />
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                  <div className="rounded-lg bg-muted/50 p-2">角色 {result.consistencyCheck.characterScore}</div>
+                  <div className="rounded-lg bg-muted/50 p-2">剧情 {result.consistencyCheck.plotScore}</div>
+                  <div className="rounded-lg bg-muted/50 p-2">画面 {result.consistencyCheck.visualScore}</div>
+                  <div className="rounded-lg bg-muted/50 p-2">产品 {result.consistencyCheck.productScore}</div>
+                </div>
+                {result.consistencyCheck.overallScore < CONSISTENCY_THRESHOLD && (
+                  <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 space-y-2">
+                    <p className="text-sm font-medium text-destructive">评分低于阈值，建议不要保存，直接重新生成续集。</p>
+                    <p className="text-xs text-muted-foreground">{result.consistencyCheck.regenerationAdvice}</p>
+                  </div>
+                )}
+                {result.consistencyCheck.issues.length > 0 && (
+                  <ul className="list-disc pl-5 text-xs text-muted-foreground space-y-1">
+                    {result.consistencyCheck.issues.map((issue, idx) => <li key={idx}>{issue}</li>)}
+                  </ul>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
           {/* Cover Poster Draft */}
           {result.coverPoster && (
             <Card className="border-primary/30">
