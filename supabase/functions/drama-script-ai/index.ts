@@ -92,7 +92,7 @@ Deno.serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const { theme, genre, style, sceneCount, mode, products, targetAudience, conversionStyle, action } = await req.json();
+    const { theme, genre, style, sceneCount, mode, products, targetAudience, conversionStyle, conflictIntensity, action } = await req.json();
 
     // --- Suggest Themes Mode ---
     if (action === "suggest_themes") {
@@ -111,20 +111,29 @@ Deno.serve(async (req) => {
       };
       const audienceStr = audienceMap[targetAudience] || targetAudience || "通用人群";
       const productList = products.map((p: any) => `${p.name}：${p.description}`).join("\n");
+      const conflictMap: Record<string, string> = {
+        standard: "标准冲突：清晰矛盾、温和反转、情绪真实",
+        strong: "强冲突：高压开场、人物对立明显、情绪层层升级",
+        viral: "爆款夸张：极限误会、强羞辱/强压迫场景、结尾必须反转，但避免低俗和违法伤害",
+      };
+      const conflictStr = conflictMap[conflictIntensity] || conflictMap.strong;
 
       const suggestPrompt = `你是一位擅长短视频爆款内容策划的营销专家。
 
 根据以下产品和目标人群，推荐3个最容易在短视频平台爆火的漫剧脚本主题。
 
 【目标人群】${audienceStr}
+【冲突强度】${conflictStr}
 【产品列表】
 ${productList}
 
 要求：
 - 每个主题要有明确的故事冲突和情感共鸣点
+- 标题必须像短视频钩子，带冲突、悬念或反常识，不要平淡
+- description 必须写清楚：冲突对象 + 情绪痛点 + 反转点
 - 主题要与产品卖点自然关联，但不能太像广告
 - 优先选择容易引起 ${audienceStr} 共鸣的情感场景
-- 标题要抓人眼球，有悬念感或冲突感
+- 冲突可以夸张，但不能低俗、违法、血腥或恐吓营销
 
 请使用 suggest_themes 工具返回3个爆款主题。`;
 
