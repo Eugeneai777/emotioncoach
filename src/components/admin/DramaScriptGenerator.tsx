@@ -973,15 +973,15 @@ export default function DramaScriptGenerator() {
               </div>
 
               <div className="space-y-2">
-                <Label>转化方式</Label>
+                <Label>转化方式（可多选）</Label>
                 <div className="flex flex-wrap gap-2">
                   {CONVERSION_STYLES.map((c) => (
                     <button
                       key={c.value}
-                      onClick={() => setConversionStyle(c.value)}
+                      onClick={() => toggleConversionStyle(c.value)}
                       disabled={loading}
                       className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
-                        conversionStyle === c.value
+                        conversionStyles.includes(c.value)
                           ? "bg-primary text-primary-foreground border-primary"
                           : "bg-background border-border hover:bg-muted"
                       }`}
