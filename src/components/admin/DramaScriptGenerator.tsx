@@ -1146,7 +1146,12 @@ export default function DramaScriptGenerator() {
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg">{result.title}</CardTitle>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap justify-end">
+                  {activeSavedScript && (
+                    <span className="text-xs text-primary bg-primary/10 px-2 py-1 rounded font-medium">
+                      第{savedScriptId === activeSavedScript.id ? activeSavedScript.episode_number : activeSavedScript.episode_number + 1}集
+                    </span>
+                  )}
                   {mode === "youjin" && (
                     <span className="text-xs text-primary bg-primary/10 px-2 py-1 rounded font-medium">
                       有劲AI专属
@@ -1163,6 +1168,19 @@ export default function DramaScriptGenerator() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground leading-relaxed">{result.synopsis}</p>
+              <div className="flex flex-wrap gap-2 mt-4">
+                <Button onClick={saveCurrentScript} disabled={savingScript} className="gap-2">
+                  {savingScript ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                  {savedScriptId ? "更新已保存脚本" : "保存脚本"}
+                </Button>
+                <Button variant="outline" onClick={() => generateSequel()} disabled={generatingSequel || (!activeSavedScript && !savedScriptId)} className="gap-2">
+                  {generatingSequel ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
+                  生成续集
+                </Button>
+                {!activeSavedScript && !savedScriptId && (
+                  <span className="text-xs text-muted-foreground self-center">先保存当前脚本后，可继续生成第2集。</span>
+                )}
+              </div>
             </CardContent>
           </Card>
 
