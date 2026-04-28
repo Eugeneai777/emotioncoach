@@ -13,7 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { extractEdgeFunctionError } from "@/lib/edgeFunctionError";
 import { mergeVideosClientSide } from "@/utils/videoMerger";
 import { toast } from "sonner";
-import { Copy, Loader2, Download, Clapperboard, User, Film, Sparkles, ShoppingCart, Target, MessageSquare, Video, Play, Square, Check, X, Mic, Volume2, RefreshCw } from "lucide-react";
+import { Copy, Loader2, Download, Clapperboard, User, Film, Sparkles, ShoppingCart, Target, MessageSquare, Video, Play, Square, Check, X, Mic, Volume2, RefreshCw, Save, Library, Trash2, Wand2 } from "lucide-react";
 
 const GENRES = [
   { value: "suspense", label: "🔍 悬疑推理" },
@@ -129,6 +129,26 @@ interface DramaScript {
   estimatedDuration: string;
   conversionScript?: string;
   commentHook?: string;
+}
+
+interface SavedDramaScript {
+  id: string;
+  creator_id: string;
+  title: string;
+  synopsis: string | null;
+  mode: "generic" | "youjin";
+  theme: string;
+  genre: string | null;
+  style: string | null;
+  conflict_intensity: string | null;
+  target_audience: string | null;
+  conversion_style: string | null;
+  selected_products: ProductItem[];
+  script_data: DramaScript;
+  series_id: string;
+  parent_script_id: string | null;
+  episode_number: number;
+  created_at: string;
 }
 
 type VideoStatus = "idle" | "submitting" | "in_queue" | "generating" | "done" | "failed";
