@@ -1529,7 +1529,7 @@ export default function DramaScriptGenerator() {
                           <span className="text-xs text-muted-foreground mt-1">{scene.duration}</span>
                         </div>
 
-                        <div className="flex-1 space-y-2 min-w-0">
+                        <div className="flex-1 space-y-2 min-w-0 overflow-hidden">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded font-medium">
                               {scene.panel}
@@ -1590,7 +1590,7 @@ export default function DramaScriptGenerator() {
                             )}
 
                             {videoState.status === "done" && videoState.videoUrl && (
-                              <div className="flex items-center gap-2">
+                              <div className="flex flex-wrap items-center gap-2 min-w-0">
                                 <span className="text-xs text-primary flex items-center gap-1">
                                   <Check className="h-3 w-3" /> 已完成
                                 </span>
@@ -1614,7 +1614,7 @@ export default function DramaScriptGenerator() {
                             )}
 
                             {videoState.status === "failed" && (
-                              <div className="flex items-center gap-2">
+                              <div className="flex flex-wrap items-center gap-2 min-w-0">
                                 <span className="text-xs text-destructive">{videoState.error || "失败"}</span>
                                 <Button
                                   variant="ghost"
@@ -1684,7 +1684,7 @@ export default function DramaScriptGenerator() {
                                   </div>
                                 )}
                                 {(scene.narration || scene.dialogue) && audioState.status === "idle" && (
-                                  <span className="text-xs text-muted-foreground truncate max-w-[200px]">
+                                  <span className="text-xs text-muted-foreground truncate max-w-full sm:max-w-[200px]">
                                     📝 {(scene.narration || scene.dialogue).slice(0, 30)}...
                                   </span>
                                 )}
