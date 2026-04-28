@@ -65,12 +65,12 @@ export function AdminLayout({ userRole }: AdminLayoutProps) {
     <SidebarProvider>
       <div className="h-screen overflow-hidden flex w-full">
         <AdminSidebar userRole={userRole} />
-        <SidebarInset className="flex-1 flex flex-col min-h-0">
+        <SidebarInset className="flex-1 flex flex-col min-h-0 min-w-0 overflow-hidden">
           <header className="flex h-14 items-center gap-4 border-b border-border bg-background px-6 shrink-0">
             <SidebarTrigger className="-ml-2" />
           </header>
           <main 
-            className="flex-1 overflow-auto overscroll-contain p-6"
+            className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden overscroll-contain p-6"
             style={{ WebkitOverflowScrolling: 'touch' }}
           >
             <Routes>
