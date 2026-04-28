@@ -1191,6 +1191,46 @@ export default function DramaScriptGenerator() {
             </CardContent>
           </Card>
 
+          {/* Cover Poster Draft */}
+          {result.coverPoster && (
+            <Card className="border-primary/30">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <ImageIcon className="h-4 w-4" /> 本集封面海报草案
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="rounded-lg bg-muted/50 p-3">
+                    <Label className="text-xs text-muted-foreground">封面主标题</Label>
+                    <p className="text-sm font-semibold mt-1">{result.coverPoster.headline}</p>
+                  </div>
+                  <div className="rounded-lg bg-muted/50 p-3">
+                    <Label className="text-xs text-muted-foreground">辅助文案</Label>
+                    <p className="text-sm mt-1">{result.coverPoster.subheadline}</p>
+                  </div>
+                  <div className="rounded-lg bg-muted/50 p-3">
+                    <Label className="text-xs text-muted-foreground">封面钩子</Label>
+                    <p className="text-sm font-medium mt-1">{result.coverPoster.hookText}</p>
+                  </div>
+                </div>
+                <div className="bg-muted/50 rounded-lg p-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <code className="text-xs break-all flex-1 leading-relaxed">{result.coverPoster.posterImagePrompt}</code>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="shrink-0 h-7 w-7"
+                      onClick={() => copyToClipboard(result.coverPoster!.posterImagePrompt, "封面图片提示词")}
+                    >
+                      <Copy className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Conversion Script & Comment Hook (Youjin mode) */}
           {mode === "youjin" && (result.conversionScript || result.commentHook) && (
             <Card className="border-primary/30">
