@@ -1150,7 +1150,7 @@ export default function DramaScriptGenerator() {
           ) : savedScripts.length === 0 ? (
             <p className="text-sm text-muted-foreground">还没有保存的脚本，生成后点击保存即可沉淀为系列。</p>
           ) : (
-            <div className="space-y-2 max-h-72 overflow-auto pr-1">
+            <div className="max-h-72 w-full min-w-0 space-y-2 overflow-auto overflow-x-hidden pr-1">
               {savedScripts.map((script) => (
                 <div key={script.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-lg border p-3 min-w-0 overflow-hidden">
                   <button className="min-w-0 flex-1 text-left overflow-hidden" onClick={() => loadSavedScript(script)}>
@@ -1381,17 +1381,17 @@ export default function DramaScriptGenerator() {
           </div>
 
           {/* Video Generation Settings */}
-          <Card className="border-dashed border-primary/40 max-w-full min-w-0 overflow-hidden">
+          <Card className="w-full max-w-full min-w-0 shrink overflow-hidden border-dashed border-primary/40">
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
                 <Video className="h-4 w-4" /> 视频生成设置
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
+              <div className="grid w-full min-w-0 grid-cols-1 gap-4 overflow-hidden sm:grid-cols-2">
+                <div className="w-full min-w-0 space-y-2 overflow-hidden">
                   <Label className="text-xs">画面比例</Label>
-                  <div className="flex gap-2">
+                  <div className="flex w-full min-w-0 flex-wrap gap-2 overflow-hidden">
                     {ASPECT_RATIOS.map(ar => (
                       <button
                         key={ar.value}
@@ -1408,9 +1408,9 @@ export default function DramaScriptGenerator() {
                     ))}
                   </div>
                 </div>
-                <div className="space-y-2">
+                <div className="w-full min-w-0 space-y-2 overflow-hidden">
                   <Label className="text-xs">片段时长</Label>
-                  <div className="flex gap-2">
+                  <div className="flex w-full min-w-0 flex-wrap gap-2 overflow-hidden">
                     {VIDEO_DURATIONS.map(d => (
                       <button
                         key={d.value}
@@ -1430,7 +1430,7 @@ export default function DramaScriptGenerator() {
               </div>
 
               {/* Batch controls */}
-              <div className="flex items-center gap-3 flex-wrap">
+              <div className="flex w-full min-w-0 flex-wrap items-center gap-3 overflow-hidden">
                 <Button
                   onClick={handleBatchGenerate}
                   disabled={batchGenerating || anyVideoGenerating}
