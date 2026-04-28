@@ -826,7 +826,7 @@ export default function DramaScriptGenerator() {
       title={
         <span className="flex items-center gap-2">
           <Clapperboard className="h-5 w-5" />
-          AI漫剧分镜脚本
+          AI短剧分镜脚本
         </span>
       }
       description="输入故事主题，AI自动生成多场景分镜脚本，画面提示词可直接用于即梦/MJ生图"
@@ -838,7 +838,7 @@ export default function DramaScriptGenerator() {
           onClick={() => setMode("generic")}
           disabled={loading}
         >
-          🎬 通用漫剧
+          🎬 通用短剧
         </Button>
         <Button
           variant={mode === "youjin" ? "default" : "outline"}
