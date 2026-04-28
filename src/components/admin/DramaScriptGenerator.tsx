@@ -199,6 +199,12 @@ export default function DramaScriptGenerator() {
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<DramaScript | null>(null);
+  const [savedScripts, setSavedScripts] = useState<SavedDramaScript[]>([]);
+  const [savedScriptId, setSavedScriptId] = useState<string | null>(null);
+  const [activeSavedScript, setActiveSavedScript] = useState<SavedDramaScript | null>(null);
+  const [savingScript, setSavingScript] = useState(false);
+  const [loadingSavedScripts, setLoadingSavedScripts] = useState(false);
+  const [generatingSequel, setGeneratingSequel] = useState(false);
   const [suggestedThemes, setSuggestedThemes] = useState<{ title: string; description: string }[]>([]);
   const [loadingThemes, setLoadingThemes] = useState(false);
   const [selectedThemeIdx, setSelectedThemeIdx] = useState<number | null>(null);
@@ -243,6 +249,27 @@ export default function DramaScriptGenerator() {
     }
     return key;
   };
+
+  const fetchSavedScripts = useCallback(async () => {
+    setLoadingSavedScripts(true);
+    try {
+      const { data, error } = await supabase
+        .from("drama_scripts")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(30);
+      if (error) throw error;
+      setSavedScripts((data || []) as unknown as SavedDramaScript[]);
+    } catch (e: any) {
+      toast.error(e.message || "脚本库加载失败");
+    } finally {
+      setLoadingSavedScripts(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchSavedScripts();
+  }, [fetchSavedScripts]);
 
   // Auto-fetch suggested themes when products change in youjin mode
   const fetchSuggestedThemes = useCallback(async (avoidTitles: string[] = []) => {
