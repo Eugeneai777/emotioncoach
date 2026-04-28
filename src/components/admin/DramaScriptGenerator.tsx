@@ -852,7 +852,7 @@ export default function DramaScriptGenerator() {
       description="输入故事主题，AI自动生成多场景分镜脚本，画面提示词可直接用于即梦/MJ生图"
     >
       {/* Mode Toggle */}
-      <div className="flex flex-wrap gap-2 mb-4 min-w-0">
+      <div className="mb-4 flex w-full min-w-0 flex-wrap gap-2 overflow-hidden">
         <Button
           variant={mode === "generic" ? "default" : "outline"}
           onClick={() => setMode("generic")}
@@ -871,9 +871,9 @@ export default function DramaScriptGenerator() {
       </div>
 
       {/* Input Form */}
-      <Card className="max-w-full overflow-hidden">
-        <CardContent className="pt-6 space-y-5">
-          <div className="space-y-2">
+      <Card className="w-full max-w-full min-w-0 shrink overflow-hidden">
+        <CardContent className="w-full min-w-0 space-y-5 overflow-hidden pt-6">
+          <div className="w-full min-w-0 space-y-2 overflow-hidden">
             <Label>故事主题 *</Label>
             <Input
               placeholder={mode === "youjin" 
@@ -885,10 +885,10 @@ export default function DramaScriptGenerator() {
             />
           </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 min-w-0">
-            <div className="space-y-2">
+            <div className="grid w-full min-w-0 grid-cols-1 gap-4 overflow-hidden lg:grid-cols-2">
+            <div className="w-full min-w-0 space-y-2 overflow-hidden">
               <Label>题材类型</Label>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex w-full min-w-0 flex-wrap gap-2 overflow-hidden">
                 {GENRES.map((g) => (
                   <button
                     key={g.value}
@@ -906,9 +906,9 @@ export default function DramaScriptGenerator() {
               </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="w-full min-w-0 space-y-2 overflow-hidden">
               <Label>画风选择</Label>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex w-full min-w-0 flex-wrap gap-2 overflow-hidden">
                 {STYLES.map((s) => (
                   <button
                     key={s.value}
@@ -927,9 +927,9 @@ export default function DramaScriptGenerator() {
             </div>
           </div>
 
-          <div className="space-y-2">
+          <div className="w-full min-w-0 space-y-2 overflow-hidden">
             <Label>冲突强度</Label>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <div className="grid w-full min-w-0 grid-cols-1 gap-2 overflow-hidden sm:grid-cols-3">
               {CONFLICT_LEVELS.map((level) => (
                 <button
                   key={level.value}
