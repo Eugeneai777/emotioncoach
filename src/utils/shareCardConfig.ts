@@ -591,7 +591,8 @@ export const generateCardBlob = async (
 ): Promise<Blob | null> => {
   let canvas = await generateCanvas(cardRef, options);
 
-  if (!canvas && !options.forceScale) {
+  const canRetrySafely = !options.forceScale || options.forceScale > 1.2;
+  if (!canvas && canRetrySafely) {
     console.warn('[shareCardConfig] Primary generation failed, retrying with safe settings...');
     const safeScale = isMiniProgramBrowser() || isWeChatBrowser() ? 1.2 : 1.5;
     canvas = await generateCanvas(cardRef, {
