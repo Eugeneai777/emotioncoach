@@ -12,6 +12,40 @@ interface DimensionRadarChartProps {
   compareScores?: DimensionScore[];
 }
 
+const splitDimensionLabel = (value: string) => {
+  const [emoji = "", ...labelParts] = value.split(" ");
+  const label = labelParts.join(" ");
+  if (label.length <= 5) return [`${emoji} ${label}`];
+  return [`${emoji} ${label.slice(0, 4)}`, label.slice(4)];
+};
+
+const renderAxisTick = (props: any) => {
+  const { x, y, cx, cy, payload } = props;
+  const lines = splitDimensionLabel(String(payload?.value || ""));
+  const isLeft = x < cx - 12;
+  const isRight = x > cx + 12;
+  const isBottom = y > cy + 18;
+  const isTop = y < cy - 18;
+
+  return (
+    <g transform={`translate(${x},${y})`}>
+      <text
+        textAnchor={isLeft ? "end" : isRight ? "start" : "middle"}
+        dominantBaseline={isTop ? "auto" : isBottom ? "hanging" : "middle"}
+        fill="hsl(var(--muted-foreground))"
+        fontSize={11}
+        fontWeight={500}
+      >
+        {lines.map((line, index) => (
+          <tspan key={line} x={0} dy={index === 0 ? 0 : 14}>
+            {line}
+          </tspan>
+        ))}
+      </text>
+    </g>
+  );
+};
+
 export function DimensionRadarChart({ dimensionScores, compareScores }: DimensionRadarChartProps) {
   if (!dimensionScores?.length) return null;
 
@@ -26,13 +60,14 @@ export function DimensionRadarChart({ dimensionScores, compareScores }: Dimensio
   }));
 
   return (
-    <div className="w-full h-[260px]">
+    <div className="w-full h-full min-h-[280px] sm:min-h-[300px]">
       <ResponsiveContainer width="100%" height="100%">
-        <RadarChart data={data} cx="50%" cy="50%" outerRadius="72%">
+        <RadarChart data={data} cx="50%" cy="48%" outerRadius="60%" margin={{ top: 22, right: 48, bottom: 34, left: 48 }}>
           <PolarGrid stroke="hsl(var(--border))" />
           <PolarAngleAxis
             dataKey="subject"
-            tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+            tick={renderAxisTick}
+            tickLine={false}
           />
           <PolarRadiusAxis
             angle={90}
