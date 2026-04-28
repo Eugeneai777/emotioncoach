@@ -955,7 +955,7 @@ export default function DramaScriptGenerator() {
                 <Label className="flex items-center gap-1.5">
                   <Target className="h-4 w-4" /> 目标人群
                 </Label>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex w-full min-w-0 flex-wrap gap-2 overflow-hidden">
                   {TARGET_AUDIENCES.map((a) => (
                     <button
                       key={a.value}
@@ -975,7 +975,7 @@ export default function DramaScriptGenerator() {
 
               <div className="space-y-2 min-w-0">
                 <Label>转化方式（可多选）</Label>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex w-full min-w-0 flex-wrap gap-2 overflow-hidden">
                   {CONVERSION_STYLES.map((c) => (
                     <button
                       key={c.value}
@@ -994,12 +994,12 @@ export default function DramaScriptGenerator() {
                 </div>
               </div>
 
-              <div className="space-y-2">
+              <div className="w-full min-w-0 space-y-2 overflow-hidden">
                 <Label className="flex items-center gap-1.5">
                   <ShoppingCart className="h-4 w-4" /> 选择转化产品 *
                 </Label>
-                <Tabs defaultValue="assessment" className="w-full">
-                  <TabsList className="w-full h-auto flex flex-wrap justify-start gap-1">
+                <Tabs defaultValue="assessment" className="w-full min-w-0 overflow-hidden">
+                  <TabsList className="flex h-auto w-full min-w-0 flex-wrap justify-start gap-1 overflow-hidden">
                     {Object.entries(PRODUCT_CATALOG).map(([key, cat]) => (
                       <TabsTrigger key={key} value={key} className="flex-1 min-w-[72px] text-xs">
                         {cat.label}
@@ -1007,12 +1007,12 @@ export default function DramaScriptGenerator() {
                     ))}
                   </TabsList>
                   {Object.entries(PRODUCT_CATALOG).map(([key, cat]) => (
-                    <TabsContent key={key} value={key}>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <TabsContent key={key} value={key} className="w-full min-w-0 overflow-hidden">
+                      <div className="grid w-full min-w-0 grid-cols-1 gap-2 overflow-hidden sm:grid-cols-2">
                         {cat.items.map((item) => (
                           <label
                             key={item.key}
-                            className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                             className={`flex w-full min-w-0 items-start gap-3 overflow-hidden rounded-lg border p-3 transition-colors cursor-pointer ${
                               selectedProducts.has(item.key)
                                 ? "border-primary bg-primary/5"
                                 : "border-border hover:bg-muted/50"
@@ -1023,9 +1023,9 @@ export default function DramaScriptGenerator() {
                               onCheckedChange={() => toggleProduct(item.key)}
                               disabled={loading}
                             />
-                            <div className="min-w-0">
-                              <div className="text-sm font-medium">{item.name}</div>
-                              <div className="text-xs text-muted-foreground mt-0.5">{item.description}</div>
+                            <div className="min-w-0 flex-1 overflow-hidden">
+                              <div className="break-words text-sm font-medium">{item.name}</div>
+                              <div className="mt-0.5 break-words text-xs text-muted-foreground">{item.description}</div>
                             </div>
                           </label>
                         ))}
