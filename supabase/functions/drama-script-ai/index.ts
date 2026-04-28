@@ -92,7 +92,7 @@ Deno.serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const { theme, genre, style, sceneCount, mode, products, targetAudience, conversionStyle, conflictIntensity, action } = await req.json();
+    const { theme, genre, style, sceneCount, mode, products, targetAudience, conversionStyle, conflictIntensity, action, avoidTitles } = await req.json();
 
     // --- Suggest Themes Mode ---
     if (action === "suggest_themes") {
@@ -117,6 +117,12 @@ Deno.serve(async (req) => {
         viral: "爆款夸张：极限误会、强羞辱/强压迫场景、结尾必须反转，但避免低俗和违法伤害",
       };
       const conflictStr = conflictMap[conflictIntensity] || conflictMap.strong;
+      const avoidTitleList = Array.isArray(avoidTitles)
+        ? avoidTitles.filter((item) => typeof item === "string" && item.trim()).slice(0, 12)
+        : [];
+      const avoidTitlePrompt = avoidTitleList.length > 0
+        ? `\n【本次必须避开的旧主题】\n${avoidTitleList.map((item) => `- ${item}`).join("\n")}\n请不要复用以上标题、冲突对象和反转套路，换一批完全不同的场景。`
+        : "";
 
       const suggestPrompt = `你是一位擅长短视频爆款内容策划的营销专家。
 
@@ -125,7 +131,7 @@ Deno.serve(async (req) => {
 【目标人群】${audienceStr}
 【冲突强度】${conflictStr}
 【产品列表】
-${productList}
+${productList}${avoidTitlePrompt}
 
 要求：
 - 每个主题要有明确的故事冲突和情感共鸣点
