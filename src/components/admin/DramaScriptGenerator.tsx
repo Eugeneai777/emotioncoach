@@ -129,6 +129,16 @@ interface DramaScript {
     hookText: string;
     posterImagePrompt: string;
   };
+  consistencyCheck?: {
+    overallScore: number;
+    characterScore: number;
+    plotScore: number;
+    visualScore: number;
+    productScore: number;
+    verdict: string;
+    issues: string[];
+    regenerationAdvice: string;
+  };
   characters: Character[];
   scenes: Scene[];
   totalScenes: number;
@@ -192,6 +202,8 @@ const VIDEO_DURATIONS = [
   { value: 5, label: "5秒" },
   { value: 10, label: "10秒" },
 ];
+
+const CONSISTENCY_THRESHOLD = 85;
 
 export default function DramaScriptGenerator() {
   const [mode, setMode] = useState<"generic" | "youjin">("generic");
