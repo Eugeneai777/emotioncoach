@@ -45,6 +45,12 @@ const CONVERSION_STYLES = [
   { value: "usage", label: "📱 角色使用", desc: "主角使用产品解决问题" },
 ];
 
+const CONFLICT_LEVELS = [
+  { value: "standard", label: "标准冲突", desc: "清晰矛盾 + 温和反转" },
+  { value: "strong", label: "强冲突", desc: "高压开场 + 情绪升级" },
+  { value: "viral", label: "爆款夸张", desc: "极限误会 + 强反转结尾" },
+];
+
 const BASE_URL = "https://wechat.eugenewe.net";
 
 interface ProductItem {
@@ -167,6 +173,7 @@ export default function DramaScriptGenerator() {
   const [genre, setGenre] = useState("suspense");
   const [style, setStyle] = useState("anime");
   const [sceneCount, setSceneCount] = useState(8);
+  const [conflictIntensity, setConflictIntensity] = useState("strong");
   const [targetAudience, setTargetAudience] = useState("women");
   const [conversionStyle, setConversionStyle] = useState("plot");
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
@@ -229,7 +236,7 @@ export default function DramaScriptGenerator() {
     try {
       const products = getSelectedProductDetails();
       const { data, error } = await supabase.functions.invoke("drama-script-ai", {
-        body: { action: "suggest_themes", products, targetAudience },
+        body: { action: "suggest_themes", products, targetAudience, conflictIntensity },
       });
       if (data?.themes && Array.isArray(data.themes)) {
         setSuggestedThemes(data.themes.slice(0, 3));
@@ -239,7 +246,7 @@ export default function DramaScriptGenerator() {
     } finally {
       setLoadingThemes(false);
     }
-  }, [mode, selectedProducts, targetAudience]);
+  }, [mode, selectedProducts, targetAudience, conflictIntensity]);
 
   useEffect(() => {
     if (mode !== "youjin" || selectedProducts.size === 0) {
@@ -274,7 +281,7 @@ export default function DramaScriptGenerator() {
     pollingRefs.current = {};
 
     try {
-      const body: any = { theme, genre, style, sceneCount, mode };
+      const body: any = { theme, genre, style, sceneCount, mode, conflictIntensity };
       if (mode === "youjin") {
         body.products = getSelectedProductDetails();
         body.targetAudience = targetAudience;
@@ -683,6 +690,27 @@ export default function DramaScriptGenerator() {
                   </button>
                 ))}
               </div>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>冲突强度</Label>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              {CONFLICT_LEVELS.map((level) => (
+                <button
+                  key={level.value}
+                  onClick={() => setConflictIntensity(level.value)}
+                  disabled={loading}
+                  className={`text-left p-3 rounded-lg border transition-colors ${
+                    conflictIntensity === level.value
+                      ? "bg-primary/10 border-primary ring-1 ring-primary"
+                      : "bg-background border-border hover:bg-muted/50"
+                  }`}
+                >
+                  <div className="text-sm font-medium">{level.label}</div>
+                  <div className="text-xs text-muted-foreground mt-1">{level.desc}</div>
+                </button>
+              ))}
             </div>
           </div>
 
