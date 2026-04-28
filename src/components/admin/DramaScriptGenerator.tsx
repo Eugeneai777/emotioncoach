@@ -123,6 +123,7 @@ interface Scene {
 interface DramaScript {
   title: string;
   synopsis: string;
+  conversionStyles?: string[];
   coverPoster?: {
     headline: string;
     subheadline: string;
@@ -205,6 +206,11 @@ const VIDEO_DURATIONS = [
 
 const CONSISTENCY_THRESHOLD = 85;
 
+const normalizeConversionStyles = (styles?: string[] | string | null) => {
+  const values = Array.isArray(styles) ? styles : styles ? [styles] : ["plot"];
+  return values.filter((value) => CONVERSION_STYLES.some((style) => style.value === value));
+};
+
 export default function DramaScriptGenerator() {
   const [mode, setMode] = useState<"generic" | "youjin">("generic");
   const [theme, setTheme] = useState("");
@@ -213,7 +219,7 @@ export default function DramaScriptGenerator() {
   const [sceneCount, setSceneCount] = useState(8);
   const [conflictIntensity, setConflictIntensity] = useState("strong");
   const [targetAudience, setTargetAudience] = useState("women");
-  const [conversionStyle, setConversionStyle] = useState("plot");
+  const [conversionStyles, setConversionStyles] = useState<string[]>(["plot"]);
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<DramaScript | null>(null);
