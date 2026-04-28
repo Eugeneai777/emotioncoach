@@ -84,6 +84,53 @@ export default function LaogeAI() {
   const emotionPurchased = !!user && !!purchasedMap?.['emotion_health_assessment'];
   const identityPurchased = !!user && !!purchasedMap?.['identity_bloom'];
 
+  const { data: maleVitalityStatus } = useQuery({
+    queryKey: ['male-midlife-vitality-status', user?.id],
+    queryFn: async () => {
+      const { data: template, error: templateError } = await supabase
+        .from('partner_assessment_templates' as any)
+        .select('id, package_key, require_payment')
+        .eq('assessment_key', 'male_midlife_vitality')
+        .eq('is_active', true)
+        .maybeSingle();
+
+      if (templateError || !template) {
+        return { available: false, completed: false, purchased: false };
+      }
+
+      if (!user) {
+        return { available: true, completed: false, purchased: false };
+      }
+
+      const { data: resultData } = await supabase
+        .from('partner_assessment_results' as any)
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('template_id', (template as any).id)
+        .limit(1)
+        .maybeSingle();
+
+      let purchased = false;
+      const packageKey = (template as any).package_key;
+      if ((template as any).require_payment && packageKey) {
+        const { data: orderData } = await supabase
+          .from('orders')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('package_key', packageKey)
+          .eq('status', 'paid')
+          .limit(1)
+          .maybeSingle();
+        purchased = !!orderData;
+      }
+
+      return { available: true, completed: !!resultData, purchased };
+    },
+    staleTime: 30 * 1000,
+  });
+  const maleVitalityAvailable = maleVitalityStatus?.available ?? true;
+  const maleVitalityDone = !!maleVitalityStatus?.completed || !!maleVitalityStatus?.purchased;
+
   // 检查觉醒力测评是否已完成
   const { data: midlifeCompleted } = useQuery({
     queryKey: ['midlife-awakening-completed', user?.id],
@@ -102,7 +149,7 @@ export default function LaogeAI() {
     staleTime: 30 * 1000,
   });
 
-  const allAssessmentsDone = wealthPurchased && emotionPurchased && !!midlifeCompleted;
+  const allAssessmentsDone = wealthPurchased && emotionPurchased && !!midlifeCompleted && (!maleVitalityAvailable || maleVitalityDone);
   const allCampsDone = campPurchased && identityPurchased;
 
   return (
@@ -201,11 +248,11 @@ export default function LaogeAI() {
           <p className="text-xs text-[hsl(var(--laoge-text-muted))] mb-3 -mt-2">
             老哥建议：先测一下，再对症下药
           </p>
-          <div className="grid grid-cols-3 gap-2.5">
+          <div className="grid grid-cols-2 gap-2.5">
             {!wealthPurchased && (
               <button
                 onClick={() => navigate("/wealth-block")}
-                className="flex flex-col items-start gap-1.5 p-3.5 rounded-xl bg-[hsl(var(--laoge-card))] border border-[hsl(var(--laoge-border))] hover:border-[hsl(var(--laoge-accent))] transition-all text-left"
+                className="min-h-[112px] flex flex-col items-start gap-1.5 p-3.5 rounded-xl bg-[hsl(var(--laoge-card))] border border-[hsl(var(--laoge-border))] hover:border-[hsl(var(--laoge-accent))] transition-all text-left active:scale-[0.98]"
               >
                 <span className="text-2xl">💰</span>
                 <span className="font-bold text-xs text-[hsl(var(--laoge-text))]">财富卡点</span>
@@ -216,7 +263,7 @@ export default function LaogeAI() {
             {!emotionPurchased && (
               <button
                 onClick={() => navigate("/emotion-health")}
-                className="flex flex-col items-start gap-1.5 p-3.5 rounded-xl bg-[hsl(var(--laoge-card))] border border-[hsl(var(--laoge-border))] hover:border-[hsl(var(--laoge-accent))] transition-all text-left"
+                className="min-h-[112px] flex flex-col items-start gap-1.5 p-3.5 rounded-xl bg-[hsl(var(--laoge-card))] border border-[hsl(var(--laoge-border))] hover:border-[hsl(var(--laoge-accent))] transition-all text-left active:scale-[0.98]"
               >
                 <span className="text-2xl">💚</span>
                 <span className="font-bold text-xs text-[hsl(var(--laoge-text))]">情绪健康</span>
@@ -227,12 +274,23 @@ export default function LaogeAI() {
             {!midlifeCompleted && (
               <button
                 onClick={() => navigate("/midlife-awakening")}
-                className="flex flex-col items-start gap-1.5 p-3.5 rounded-xl bg-[hsl(var(--laoge-card))] border border-[hsl(var(--laoge-border))] hover:border-[hsl(var(--laoge-accent))] transition-all text-left"
+                className="min-h-[112px] flex flex-col items-start gap-1.5 p-3.5 rounded-xl bg-[hsl(var(--laoge-card))] border border-[hsl(var(--laoge-border))] hover:border-[hsl(var(--laoge-accent))] transition-all text-left active:scale-[0.98]"
               >
                 <span className="text-2xl">🧭</span>
                 <span className="font-bold text-xs text-[hsl(var(--laoge-text))]">觉醒力</span>
                 <span className="text-[9px] text-[hsl(var(--laoge-text-muted))]">30题·8分钟</span>
                 <span className="text-[9px] font-bold text-[hsl(var(--laoge-accent))]">专业版</span>
+              </button>
+            )}
+            {maleVitalityAvailable && !maleVitalityDone && (
+              <button
+                onClick={() => navigate("/assessment/male_midlife_vitality?source=laoge")}
+                className="min-h-[112px] flex flex-col items-start gap-1.5 p-3.5 rounded-xl bg-[hsl(var(--laoge-card))] border border-[hsl(var(--laoge-border))] hover:border-[hsl(var(--laoge-accent))] transition-all text-left active:scale-[0.98]"
+              >
+                <span className="text-2xl">🔋</span>
+                <span className="font-bold text-xs text-[hsl(var(--laoge-text))]">男性活力</span>
+                <span className="text-[9px] text-[hsl(var(--laoge-text-muted))]">18题·约4分钟</span>
+                <span className="text-[9px] font-bold text-[hsl(var(--laoge-accent))]">状态盘点</span>
               </button>
             )}
           </div>
