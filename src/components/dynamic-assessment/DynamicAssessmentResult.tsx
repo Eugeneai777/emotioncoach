@@ -11,6 +11,7 @@ import { ClinicalResultSection } from "./ClinicalResultSection";
 import { DimensionRadarChart } from "./DimensionRadarChart";
 import DynamicAssessmentShareCard from "./DynamicAssessmentShareCard";
 import SBTIShareCard from "./SBTIShareCard";
+import MaleMidlifeVitalityShareCard from "./MaleMidlifeVitalityShareCard";
 import ShareImagePreview from "@/components/ui/share-image-preview";
 import { executeOneClickShare } from "@/utils/oneClickShare";
 import { useAuth } from "@/hooks/useAuth";
@@ -537,6 +538,18 @@ export function DynamicAssessmentResult({
           </motion.div>
         )}
 
+        {isMaleMidlifeVitality && (
+          <motion.div custom={4} variants={fadeUp} initial="hidden" animate="visible">
+            <Button
+              onClick={handleShare}
+              disabled={isSharing}
+              className="w-full h-12 gap-2 rounded-xl bg-gradient-to-r from-teal-700 to-amber-600 hover:from-teal-600 hover:to-amber-500 text-white shadow-lg shadow-teal-700/20"
+            >
+              <Share2 className="w-5 h-5" /> 分享我的有劲状态报告
+            </Button>
+          </motion.div>
+        )}
+
         {/* AI Insight (hidden in lite mode) */}
         {!isLiteMode && (
           <motion.div custom={5} variants={fadeUp} initial="hidden" animate="visible">
@@ -717,6 +730,16 @@ export function DynamicAssessmentResult({
             quote={result.meta?.quote}
             traits={result.primaryPattern?.traits || []}
             matchPercent={Math.max(0, Math.round(100 - (result.meta?.matchDistance || 0) / 15 * 100))}
+            displayName={profileData.displayName}
+            avatarUrl={profileData.avatarUrl}
+          />
+        ) : isMaleMidlifeVitality ? (
+          <MaleMidlifeVitalityShareCard
+            ref={shareCardRef}
+            totalScore={result.totalScore}
+            maxScore={result.maxScore}
+            dimensionScores={result.dimensionScores}
+            primaryPattern={result.primaryPattern}
             displayName={profileData.displayName}
             avatarUrl={profileData.avatarUrl}
           />
