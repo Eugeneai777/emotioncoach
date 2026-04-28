@@ -49,6 +49,7 @@ const CampIntro = () => {
   const [showPayDialog, setShowPayDialog] = useState(false);
   const { user } = useAuth();
   const [resumedOpenId, setResumedOpenId] = useState<string | undefined>();
+  const [paymentCompleted, setPaymentCompleted] = useState(false);
 
   // ─── 微信 OAuth 支付回跳后自动打开支付弹窗 ───
   const payResumeHandledRef = useRef(false);
@@ -161,7 +162,7 @@ const CampIntro = () => {
   });
   
   // 以 orders 表（财务事实来源）为准，避免 user_camp_purchases 中残留记录导致误判
-  const hasPurchased = !!orderPurchase;
+  const hasPurchased = !!orderPurchase || paymentCompleted;
 
   const { data: campTemplate, isLoading } = useQuery({
     queryKey: ['camp-template', campType],
@@ -573,6 +574,7 @@ const CampIntro = () => {
           price: campTemplate.price || 0
         }}
         onSuccess={async () => {
+          setPaymentCompleted(true);
           // 记录购买到 user_camp_purchases（容错处理，避免插入失败阻断后续流程）
           if (user) {
             try {
