@@ -49,6 +49,7 @@ const CampIntro = () => {
   const [showPayDialog, setShowPayDialog] = useState(false);
   const { user } = useAuth();
   const [resumedOpenId, setResumedOpenId] = useState<string | undefined>();
+  const [paymentCompleted, setPaymentCompleted] = useState(false);
 
   // ─── 微信 OAuth 支付回跳后自动打开支付弹窗 ───
   const payResumeHandledRef = useRef(false);
@@ -161,7 +162,7 @@ const CampIntro = () => {
   });
   
   // 以 orders 表（财务事实来源）为准，避免 user_camp_purchases 中残留记录导致误判
-  const hasPurchased = !!orderPurchase;
+  const hasPurchased = !!orderPurchase || paymentCompleted;
 
   const { data: campTemplate, isLoading } = useQuery({
     queryKey: ['camp-template', campType],
@@ -204,13 +205,13 @@ const CampIntro = () => {
 
   const hasJoinedCamp = !!existingCamp;
 
-  const startEmotionStressCampAndEnter = async () => {
-    if (!user || !campTemplate || campType !== 'emotion_stress_7') return false;
+  const startEmotionStressCampAndEnter = async (resolvedUserId = user?.id) => {
+    if (!resolvedUserId || !campTemplate || campType !== 'emotion_stress_7') return false;
 
     const { data: activeCamp } = await supabase
       .from('training_camps')
       .select('id')
-      .eq('user_id', user.id)
+      .eq('user_id', resolvedUserId)
       .eq('camp_type', 'emotion_stress_7')
       .eq('status', 'active')
       .order('created_at', { ascending: false })
@@ -227,7 +228,7 @@ const CampIntro = () => {
     const { data: insertedCamps, error } = await supabase
       .from('training_camps')
       .insert({
-        user_id: user.id,
+        user_id: resolvedUserId,
         camp_name: campTemplate.camp_name,
         camp_type: 'emotion_stress_7',
         duration_days: campTemplate.duration_days,
@@ -245,7 +246,7 @@ const CampIntro = () => {
         const { data: existingAfterConflict } = await supabase
           .from('training_camps')
           .select('id')
-          .eq('user_id', user.id)
+          .eq('user_id', resolvedUserId)
           .eq('camp_type', 'emotion_stress_7')
           .eq('status', 'active')
           .order('created_at', { ascending: false })
@@ -259,7 +260,7 @@ const CampIntro = () => {
       throw error;
     }
 
-    await supabase.from('profiles').update({ preferred_coach: 'emotion' }).eq('id', user.id);
+    await supabase.from('profiles').update({ preferred_coach: 'emotion' }).eq('id', resolvedUserId);
 
     if (insertedCamps?.[0]?.id) {
       toast.success("训练营已开启，开始训练吧！");
@@ -573,11 +574,14 @@ const CampIntro = () => {
           price: campTemplate.price || 0
         }}
         onSuccess={async () => {
+          setPaymentCompleted(true);
+          const { data: latestAuth } = await supabase.auth.getUser();
+          const resolvedUserId = user?.id || latestAuth.user?.id;
           // 记录购买到 user_camp_purchases（容错处理，避免插入失败阻断后续流程）
-          if (user) {
+          if (resolvedUserId) {
             try {
               await supabase.from('user_camp_purchases').insert({
-                user_id: user.id,
+                user_id: resolvedUserId,
                 camp_type: campType,
                 camp_name: campTemplate.camp_name,
                 purchase_price: campTemplate.price || 0,
@@ -591,7 +595,7 @@ const CampIntro = () => {
           refetchPurchase();
           if (campType === 'emotion_stress_7') {
             try {
-              await startEmotionStressCampAndEnter();
+              await startEmotionStressCampAndEnter(resolvedUserId);
             } catch (error) {
               console.error('Auto-start emotion stress camp after payment error:', error);
               toast.error('开启训练营失败，请稍后重试');
