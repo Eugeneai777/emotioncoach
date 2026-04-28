@@ -205,13 +205,13 @@ const CampIntro = () => {
 
   const hasJoinedCamp = !!existingCamp;
 
-  const startEmotionStressCampAndEnter = async () => {
-    if (!user || !campTemplate || campType !== 'emotion_stress_7') return false;
+  const startEmotionStressCampAndEnter = async (resolvedUserId = user?.id) => {
+    if (!resolvedUserId || !campTemplate || campType !== 'emotion_stress_7') return false;
 
     const { data: activeCamp } = await supabase
       .from('training_camps')
       .select('id')
-      .eq('user_id', user.id)
+      .eq('user_id', resolvedUserId)
       .eq('camp_type', 'emotion_stress_7')
       .eq('status', 'active')
       .order('created_at', { ascending: false })
@@ -246,7 +246,7 @@ const CampIntro = () => {
         const { data: existingAfterConflict } = await supabase
           .from('training_camps')
           .select('id')
-          .eq('user_id', user.id)
+          .eq('user_id', resolvedUserId)
           .eq('camp_type', 'emotion_stress_7')
           .eq('status', 'active')
           .order('created_at', { ascending: false })
@@ -260,7 +260,7 @@ const CampIntro = () => {
       throw error;
     }
 
-    await supabase.from('profiles').update({ preferred_coach: 'emotion' }).eq('id', user.id);
+    await supabase.from('profiles').update({ preferred_coach: 'emotion' }).eq('id', resolvedUserId);
 
     if (insertedCamps?.[0]?.id) {
       toast.success("训练营已开启，开始训练吧！");
