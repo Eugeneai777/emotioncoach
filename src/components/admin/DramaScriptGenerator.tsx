@@ -208,7 +208,8 @@ const CONSISTENCY_THRESHOLD = 85;
 
 const normalizeConversionStyles = (styles?: string[] | string | null) => {
   const values = Array.isArray(styles) ? styles : styles ? [styles] : ["plot"];
-  return values.filter((value) => CONVERSION_STYLES.some((style) => style.value === value));
+  const validValues = values.filter((value) => CONVERSION_STYLES.some((style) => style.value === value));
+  return validValues.length > 0 ? validValues : ["plot"];
 };
 
 export default function DramaScriptGenerator() {
