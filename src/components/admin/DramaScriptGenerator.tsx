@@ -1086,6 +1086,58 @@ export default function DramaScriptGenerator() {
         </CardContent>
       </Card>
 
+      {/* Saved Scripts */}
+      <Card className="mt-4">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between gap-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Library className="h-4 w-4" /> 已保存脚本
+            </CardTitle>
+            <Button variant="outline" size="sm" onClick={fetchSavedScripts} disabled={loadingSavedScripts} className="h-8 gap-1.5 text-xs">
+              {loadingSavedScripts ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+              刷新
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {loadingSavedScripts ? (
+            <div className="space-y-2">
+              {[1, 2, 3].map((i) => <Skeleton key={i} className="h-14 w-full" />)}
+            </div>
+          ) : savedScripts.length === 0 ? (
+            <p className="text-sm text-muted-foreground">还没有保存的脚本，生成后点击保存即可沉淀为系列。</p>
+          ) : (
+            <div className="space-y-2 max-h-72 overflow-auto pr-1">
+              {savedScripts.map((script) => (
+                <div key={script.id} className="flex items-center justify-between gap-3 rounded-lg border p-3">
+                  <button className="min-w-0 flex-1 text-left" onClick={() => loadSavedScript(script)}>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-medium text-sm truncate">{script.title}</span>
+                      <span className="text-xs bg-muted px-2 py-0.5 rounded">第{script.episode_number}集</span>
+                      <span className="text-xs text-muted-foreground bg-muted/60 px-2 py-0.5 rounded">
+                        {script.mode === "youjin" ? "有劲AI" : "通用"}
+                      </span>
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1 truncate">
+                      {script.synopsis || script.theme} · {new Date(script.created_at).toLocaleString()}
+                    </div>
+                  </button>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => loadSavedScript(script)}>载入</Button>
+                    <Button variant="ghost" size="sm" className="h-8 text-xs gap-1" onClick={() => generateSequel(script)} disabled={generatingSequel}>
+                      <Wand2 className="h-3 w-3" /> 续集
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteSavedScript(script)}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Results */}
       {result && (
         <div className="space-y-4 mt-6">
