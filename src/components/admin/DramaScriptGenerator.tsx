@@ -206,7 +206,7 @@ export default function DramaScriptGenerator() {
     });
   };
 
-  const getSelectedProductDetails = (): ProductItem[] => {
+  const getSelectedProductDetails = useCallback((): ProductItem[] => {
     const all: ProductItem[] = [];
     Object.values(PRODUCT_CATALOG).forEach((cat) => {
       cat.items.forEach((item) => {
@@ -214,7 +214,7 @@ export default function DramaScriptGenerator() {
       });
     });
     return all;
-  };
+  }, [selectedProducts]);
 
   const getProductName = (key: string): string => {
     for (const cat of Object.values(PRODUCT_CATALOG)) {
