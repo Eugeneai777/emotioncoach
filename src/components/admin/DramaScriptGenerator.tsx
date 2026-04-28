@@ -1130,10 +1130,10 @@ export default function DramaScriptGenerator() {
       </Card>
 
       {/* Saved Scripts */}
-      <Card className="mt-4">
+      <Card className="mt-4 max-w-full overflow-hidden">
         <CardHeader className="pb-3">
-          <div className="flex items-center justify-between gap-3">
-            <CardTitle className="text-base flex items-center gap-2">
+          <div className="flex items-center justify-between gap-3 min-w-0">
+            <CardTitle className="text-base flex items-center gap-2 min-w-0">
               <Library className="h-4 w-4" /> 已保存脚本
             </CardTitle>
             <Button variant="outline" size="sm" onClick={fetchSavedScripts} disabled={loadingSavedScripts} className="h-8 gap-1.5 text-xs">
@@ -1152,7 +1152,7 @@ export default function DramaScriptGenerator() {
           ) : (
             <div className="space-y-2 max-h-72 overflow-auto pr-1">
               {savedScripts.map((script) => (
-                <div key={script.id} className="flex items-center justify-between gap-3 rounded-lg border p-3 min-w-0 overflow-hidden">
+                <div key={script.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-lg border p-3 min-w-0 overflow-hidden">
                   <button className="min-w-0 flex-1 text-left overflow-hidden" onClick={() => loadSavedScript(script)}>
                     <div className="flex items-center gap-2 flex-wrap min-w-0">
                       <span className="font-medium text-sm truncate min-w-0 max-w-full">{script.title}</span>
@@ -1165,7 +1165,7 @@ export default function DramaScriptGenerator() {
                       {script.synopsis || script.theme} · {new Date(script.created_at).toLocaleString()}
                     </div>
                   </button>
-                  <div className="flex items-center gap-1 shrink-0">
+                  <div className="flex flex-wrap items-center gap-1 shrink-0">
                     <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => loadSavedScript(script)}>载入</Button>
                     <Button variant="ghost" size="sm" className="h-8 text-xs gap-1" onClick={() => generateSequel(script)} disabled={generatingSequel}>
                       <Wand2 className="h-3 w-3" /> 续集
