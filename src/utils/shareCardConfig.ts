@@ -32,6 +32,15 @@ const isWeChatBrowser = (): boolean => {
   return /micromessenger/i.test(navigator.userAgent);
 };
 
+/** 检测微信小程序 WebView */
+const isMiniProgramBrowser = (): boolean => {
+  const ua = navigator.userAgent.toLowerCase();
+  return ua.includes('micromessenger') && (
+    ua.includes('miniprogram') ||
+    (typeof window !== 'undefined' && (window as unknown as { __wxjs_environment?: string }).__wxjs_environment === 'miniprogram')
+  );
+};
+
 /** 检测 iOS 设备 */
 const isIOSDevice = (): boolean => {
   return /iphone|ipad|ipod/i.test(navigator.userAgent);
@@ -39,8 +48,9 @@ const isIOSDevice = (): boolean => {
 
 /** 获取最优分辨率倍数 - 优先速度 */
 const getOptimalScale = (): number => {
+  if (isMiniProgramBrowser()) return isLowEndDevice() ? 1.2 : 1.5;
   if (isIOSDevice()) return 2;
-  if (isWeChatBrowser()) return isLowEndDevice() ? 1.5 : 2;
+  if (isWeChatBrowser()) return isLowEndDevice() ? 1.3 : 1.8;
   // 桌面端
   return isLowEndDevice() ? 2 : 2.5;
 };
@@ -558,6 +568,10 @@ export const canvasToBlob = (canvas: HTMLCanvasElement, quality = 0.85): Promise
   });
 };
 
+export const getBlobFileExtension = (blob: Blob): 'jpg' | 'png' => {
+  return blob.type === 'image/png' ? 'png' : 'jpg';
+};
+
 /** Canvas 转 DataURL - 优化版 */
 export const canvasToDataUrl = (canvas: HTMLCanvasElement): string => {
   // 大图使用 JPEG 减少数据量
@@ -575,7 +589,19 @@ export const generateCardBlob = async (
   cardRef: React.RefObject<HTMLDivElement | null>,
   options: GenerateCanvasOptions = {}
 ): Promise<Blob | null> => {
-  const canvas = await generateCanvas(cardRef, options);
+  let canvas = await generateCanvas(cardRef, options);
+
+  if (!canvas && !options.forceScale) {
+    console.warn('[shareCardConfig] Primary generation failed, retrying with safe settings...');
+    const safeScale = isMiniProgramBrowser() || isWeChatBrowser() ? 1.2 : 1.5;
+    canvas = await generateCanvas(cardRef, {
+      ...options,
+      forceScale: safeScale,
+      skipFontWait: true,
+      skipImageWait: true,
+    });
+  }
+
   if (!canvas) return null;
   return canvasToBlob(canvas);
 };
