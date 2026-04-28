@@ -253,7 +253,7 @@ export default function DramaScriptGenerator() {
   const fetchSavedScripts = useCallback(async () => {
     setLoadingSavedScripts(true);
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("drama_scripts")
         .select("*")
         .order("created_at", { ascending: false })
@@ -369,6 +369,7 @@ export default function DramaScriptGenerator() {
       if (userError || !userData.user) throw new Error("请先登录后再保存脚本");
 
       const selectedProductDetails = getSelectedProductDetails();
+      const isUpdatingExisting = Boolean(savedScriptId && activeSavedScript?.id === savedScriptId);
       const payload = {
         creator_id: userData.user.id,
         title: result.title,
@@ -382,9 +383,9 @@ export default function DramaScriptGenerator() {
         conversion_style: mode === "youjin" ? conversionStyle : null,
         selected_products: selectedProductDetails,
         script_data: result,
-        series_id: activeSavedScript?.series_id,
-        parent_script_id: activeSavedScript?.id || null,
-        episode_number: activeSavedScript ? activeSavedScript.episode_number + 1 : 1,
+        series_id: isUpdatingExisting ? activeSavedScript?.series_id : activeSavedScript?.series_id,
+        parent_script_id: isUpdatingExisting ? activeSavedScript?.parent_script_id : activeSavedScript?.id || null,
+        episode_number: isUpdatingExisting ? activeSavedScript?.episode_number || 1 : activeSavedScript ? activeSavedScript.episode_number + 1 : 1,
       };
 
       const query = savedScriptId
