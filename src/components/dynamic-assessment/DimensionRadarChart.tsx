@@ -12,6 +12,16 @@ interface DimensionRadarChartProps {
   compareScores?: DimensionScore[];
 }
 
+interface AxisTickProps {
+  x: number;
+  y: number;
+  cx: number;
+  cy: number;
+  payload?: {
+    value?: string;
+  };
+}
+
 const splitDimensionLabel = (value: string) => {
   const [emoji = "", ...labelParts] = value.split(" ");
   const label = labelParts.join(" ");
@@ -19,7 +29,7 @@ const splitDimensionLabel = (value: string) => {
   return [`${emoji} ${label.slice(0, 4)}`, label.slice(4)];
 };
 
-const renderAxisTick = (props: any) => {
+const renderAxisTick = (props: AxisTickProps) => {
   const { x, y, cx, cy, payload } = props;
   const lines = splitDimensionLabel(String(payload?.value || ""));
   const isLeft = x < cx - 12;
