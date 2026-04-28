@@ -246,7 +246,7 @@ export default function DramaScriptGenerator() {
     } finally {
       setLoadingThemes(false);
     }
-  }, [mode, selectedProducts, targetAudience, conflictIntensity]);
+  }, [mode, selectedProducts, targetAudience, conflictIntensity, getSelectedProductDetails]);
 
   useEffect(() => {
     if (mode !== "youjin" || selectedProducts.size === 0) {
