@@ -13,7 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { extractEdgeFunctionError } from "@/lib/edgeFunctionError";
 import { mergeVideosClientSide } from "@/utils/videoMerger";
 import { toast } from "sonner";
-import { Copy, Loader2, Download, Clapperboard, User, Film, Sparkles, ShoppingCart, Target, MessageSquare, Video, Play, Square, Check, X, Mic, Volume2, RefreshCw, Save, Library, Trash2, Wand2 } from "lucide-react";
+import { Copy, Loader2, Download, Clapperboard, User, Film, Sparkles, ShoppingCart, Target, MessageSquare, Video, Play, Square, Check, X, Mic, Volume2, RefreshCw, Save, Library, Trash2, Wand2, Image as ImageIcon } from "lucide-react";
 
 const GENRES = [
   { value: "suspense", label: "🔍 悬疑推理" },
@@ -123,6 +123,12 @@ interface Scene {
 interface DramaScript {
   title: string;
   synopsis: string;
+  coverPoster?: {
+    headline: string;
+    subheadline: string;
+    hookText: string;
+    posterImagePrompt: string;
+  };
   characters: Character[];
   scenes: Scene[];
   totalScenes: number;
