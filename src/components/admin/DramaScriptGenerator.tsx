@@ -387,6 +387,7 @@ export default function DramaScriptGenerator() {
         parent_script_id: isUpdatingExisting ? activeSavedScript?.parent_script_id : activeSavedScript?.id || null,
         episode_number: isUpdatingExisting ? activeSavedScript?.episode_number || 1 : activeSavedScript ? activeSavedScript.episode_number + 1 : 1,
       };
+      if (!payload.series_id) delete (payload as any).series_id;
 
       const query = savedScriptId
         ? (supabase as any).from("drama_scripts").update(payload).eq("id", savedScriptId).select().limit(1)
