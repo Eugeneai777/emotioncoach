@@ -9,6 +9,7 @@ import { getShareEnvironment } from './shareUtils';
 import { 
   generateCanvas as generateCardCanvas, 
   canvasToBlob,
+  getBlobFileExtension,
   CARD_BACKGROUND_COLORS,
   type CardBackgroundType 
 } from './shareCardConfig';
@@ -34,7 +35,7 @@ export interface OneClickShareConfig {
   cardName?: string;
   cardType?: CardType;
   onProgress?: (status: 'generating' | 'sharing' | 'preview' | 'done' | 'error') => void;
-  onShowPreview?: (blobUrl: string) => void;
+  onShowPreview?: (payload: string | { url: string; isRemoteReady: boolean }) => void;
   onSuccess?: () => void;
   onError?: (error: string) => void;
 }
@@ -109,25 +110,29 @@ export const executeOneClickShare = async (config: OneClickShareConfig): Promise
 
     console.log('[oneClickShare] Image generated successfully, blob size:', blob.size);
 
-    const file = new File([blob], `${cardName}.png`, { type: 'image/png' });
+    const extension = getBlobFileExtension(blob);
+    const file = new File([blob], `${cardName}.${extension}`, { type: blob.type || 'image/jpeg' });
 
     // Helper: upload blob and show preview with HTTPS URL
     const showUploadedPreview = async () => {
+      const blobUrl = URL.createObjectURL(blob);
+      onProgress?.('preview');
+      onShowPreview?.({ url: blobUrl, isRemoteReady: false });
+
+      // 上传不阻塞预览，小程序/微信先看到图，再后台升级为 HTTPS 图
+      (async () => {
       try {
         const { uploadShareImage } = await import('./shareImageUploader');
         const httpsUrl = await uploadShareImage(blob);
-        onProgress?.('preview');
-        onShowPreview?.(httpsUrl);
-        onSuccess?.();
-        return true;
+          onShowPreview?.({ url: httpsUrl, isRemoteReady: true });
+          URL.revokeObjectURL(blobUrl);
       } catch (uploadErr) {
-        console.warn('[oneClickShare] Upload failed, falling back to blob URL', uploadErr);
-        const blobUrl = URL.createObjectURL(blob);
-        onProgress?.('preview');
-        onShowPreview?.(blobUrl);
-        onSuccess?.();
-        return true;
+          console.warn('[oneClickShare] Upload failed, keeping blob preview', uploadErr);
       }
+      })();
+
+      onSuccess?.();
+      return true;
     };
 
     // 1. Mini Program: Only image preview is supported
