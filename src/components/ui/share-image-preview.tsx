@@ -37,6 +37,7 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
   const isDesktop = !isMobile;
   const isMobileWeChat = isWeChat && isMobile;
   const isDesktopWeChat = isWeChat && isDesktop;
+  const remoteReady = isRemoteReady || (!!imageUrl && /^https?:\/\//i.test(imageUrl));
 
   const cleanupScrollLock = () => {
     document.body.style.overflow = '';
@@ -103,7 +104,7 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
         <div className="flex flex-col items-center gap-1 py-2">
           <p className="text-base font-medium text-foreground">👆 长按上方图片保存到相册</p>
           <p className="text-muted-foreground text-xs">
-            {isRemoteReady ? '高清图已准备好，可转发给朋友或朋友圈' : '图片已生成，正在准备高清保存图'}
+            {remoteReady ? '高清图已准备好，可转发给朋友或朋友圈' : '图片已生成，正在准备高清保存图'}
           </p>
         </div>
       );
