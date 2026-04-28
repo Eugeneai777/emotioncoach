@@ -1,40 +1,35 @@
-计划如下：
+我会在原方案基础上，补充电脑端、手机端在“开始测评页”和“测评结果页”的兼容优化，确保只改善排版和可读性，不改变当前面向中年男性用户的文案调性与转化逻辑。
 
-1. 新增“男人有劲状态自测”的专属推广海报配置
-   - 在现有测评推广海报配置中加入 `male_midlife_vitality`。
-   - 文案方向贴合施强健康公众号流量：中年男性、状态自测、精力/睡眠/压力/关键时刻信心、非诊断、3分钟完成。
-   - 这样未开始做题时，页面右上角分享按钮可生成完整推广海报，而不是因为缺少配置无法展示。
+实施方案：
 
-2. 未开始做题页复用 SBTI 的“推广海报”逻辑
-   - 保持当前 `/assessment/male_midlife_vitality` intro 页右上角分享入口。
-   - 使用现有 `AssessmentPromoShareDialog` + `AssessmentPromoShareCard` 生成带二维码的邀请海报。
-   - 分享路径固定为 `/assessment/male_midlife_vitality`，支持当前统一推广域名 `wechat.eugenewe.net`。
+1. 优化报告预览雷达图标签
+   - 将 `DimensionRadarChart` 的维度标签改成自定义渲染，支持较长标签自动换行。
+   - 对“关键时刻信心”这类长标签拆为更清晰的两行，避免底部文字挤压。
+   - 调整雷达图外半径、中心位置和上下留白，保证 6 个维度标签在手机与电脑端都不贴边、不重叠。
 
-3. 测评结果页新增男士专属结果海报
-   - 参考 SBTI 结果页的逻辑：隐藏渲染分享卡片，通过 `executeOneClickShare` 生成图片，微信环境展示可长按保存的图片预览。
-   - 新建一个 `MaleMidlifeVitalityShareCard`，使用统一 `ShareCardBase`，带二维码、品牌和扫码入口。
-   - 海报内容包含：用户昵称、测评名称、结果画像、总分/状态百分比、核心维度条、轻量行动提示和“扫码测你的有劲状态”。
-   - 结果页分享按钮文案针对该测评调整为“分享我的有劲状态报告”，区别于普通动态测评。
+2. 优化开始测评页响应式排版
+   - 调整报告预览卡片高度，让雷达图与底部说明之间保留安全距离。
+   - 针对小屏手机降低标签字号或启用两行标签，避免横向溢出。
+   - 针对电脑/平板保持卡片居中、比例稳定，不出现图表过大或文字漂移。
+   - 保持现有“中年男性、轻松但私密、状态盘点”的文案与视觉风格不变。
 
-4. 保留现有 SBTI 和通用动态测评逻辑不变
-   - SBTI 继续使用 `SBTIShareCard`。
-   - 其他动态测评继续使用 `DynamicAssessmentShareCard`。
-   - 仅当 `assessment_key === 'male_midlife_vitality'` 时切换到新的男士专属海报。
+3. 检查并优化测评结果页图表展示
+   - 检查结果页是否也使用 `DimensionRadarChart` 展示维度雷达图。
+   - 如果结果页复用该组件，则同步受益；如果结果页另有容器高度/间距问题，会单独调整结果页容器。
+   - 确保结果页的“7天有劲训练营”和“3980身份绽放训练营”转化卡片不被图表调整影响。
 
-技术细节：
-```text
+4. 控制影响范围
+   - 优先做通用组件的兼容增强，不硬编码破坏其他测评。
+   - 仅对 `male_midlife_vitality` 入口页必要处增加容器高度或间距。
+   - 不修改测评题目、分数逻辑、海报生成逻辑、支付/训练营跳转逻辑。
+
 涉及文件：
-- src/components/dynamic-assessment/AssessmentPromoShareCard.tsx
-- src/components/dynamic-assessment/DynamicAssessmentResult.tsx
-- 新增 src/components/dynamic-assessment/MaleMidlifeVitalityShareCard.tsx
+- `src/components/dynamic-assessment/DimensionRadarChart.tsx`
+- `src/components/dynamic-assessment/DynamicAssessmentIntro.tsx`
+- 如结果页容器需要微调，再涉及：`src/components/dynamic-assessment/DynamicAssessmentResult.tsx`
 
-复用能力：
-- ShareCardBase：二维码、统一推广域名、底部品牌
-- executeOneClickShare：生成图片、微信/小程序/iOS 预览兼容
-- getProxiedAvatarUrl：头像跨域兼容
-```
-
-预期效果：
-- 用户未开始做题时，可以一键生成该测评的推广海报。
-- 用户完成测评后，可以一键生成自己的结果海报。
-- 海报风格比通用测评更贴合中年男性内容流量，更利于公众号投放和后续训练营转化。
+验收效果：
+- “关键时刻信心”底部标签清楚可读。
+- 手机端、平板端、电脑端进入开始测评页时雷达图不拥挤、不遮挡。
+- 测评结果页维度展示排版稳定流畅。
+- 整体文案和视觉仍保持适合施强健康公众号中年男性用户的克制、轻松、私密感。
