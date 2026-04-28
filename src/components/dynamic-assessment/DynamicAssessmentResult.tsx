@@ -344,7 +344,9 @@ export function DynamicAssessmentResult({
                   <Target className="w-4 h-4 text-primary" />
                   <h3 className="font-semibold text-sm">能力雷达</h3>
                 </div>
-                <DimensionRadarChart dimensionScores={result.dimensionScores} />
+                <div className="h-[300px] sm:h-[320px]">
+                  <DimensionRadarChart dimensionScores={result.dimensionScores} />
+                </div>
               </CardContent>
             </Card>
           </motion.div>
