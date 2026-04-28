@@ -852,7 +852,7 @@ export default function DramaScriptGenerator() {
       description="输入故事主题，AI自动生成多场景分镜脚本，画面提示词可直接用于即梦/MJ生图"
     >
       {/* Mode Toggle */}
-      <div className="flex gap-2 mb-4">
+      <div className="flex flex-wrap gap-2 mb-4 min-w-0">
         <Button
           variant={mode === "generic" ? "default" : "outline"}
           onClick={() => setMode("generic")}
@@ -871,7 +871,7 @@ export default function DramaScriptGenerator() {
       </div>
 
       {/* Input Form */}
-      <Card>
+      <Card className="max-w-full overflow-hidden">
         <CardContent className="pt-6 space-y-5">
           <div className="space-y-2">
             <Label>故事主题 *</Label>
@@ -885,7 +885,7 @@ export default function DramaScriptGenerator() {
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 min-w-0">
             <div className="space-y-2">
               <Label>题材类型</Label>
               <div className="flex flex-wrap gap-2">
@@ -951,7 +951,7 @@ export default function DramaScriptGenerator() {
           {/* Youjin-specific options */}
           {mode === "youjin" && (
             <>
-              <div className="space-y-2">
+              <div className="space-y-2 min-w-0">
                 <Label className="flex items-center gap-1.5">
                   <Target className="h-4 w-4" /> 目标人群
                 </Label>
@@ -973,7 +973,7 @@ export default function DramaScriptGenerator() {
                 </div>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-2 min-w-0">
                 <Label>转化方式（可多选）</Label>
                 <div className="flex flex-wrap gap-2">
                   {CONVERSION_STYLES.map((c) => (
