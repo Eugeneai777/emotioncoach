@@ -332,7 +332,7 @@ export function DynamicAssessmentResult({
                     strokeLinecap="round"
                     strokeDasharray={2 * Math.PI * 42}
                     initial={{ strokeDashoffset: 2 * Math.PI * 42 }}
-                    animate={{ strokeDashoffset: 2 * Math.PI * 42 * (1 - scorePercent / 100) }}
+                    animate={{ strokeDashoffset: 2 * Math.PI * 42 * (1 - (isMaleMidlifeVitality ? vitalityStatusPercent : scorePercent) / 100) }}
                     transition={{ duration: 1.2, delay: 0.5, ease: "easeOut" }}
                   />
                 </svg>
@@ -349,14 +349,18 @@ export function DynamicAssessmentResult({
                 <h2 className="text-xl font-bold text-foreground mb-1">
                   {result.primaryPattern?.label || "测评结果"}
                 </h2>
-                {result.primaryPattern?.description && (
+                  {isMaleMidlifeVitality ? (
+                    <p className="text-sm text-muted-foreground max-w-sm mx-auto mb-3 leading-relaxed">
+                      {vitalitySummary}
+                    </p>
+                  ) : result.primaryPattern?.description && (
                   <p className="text-sm text-muted-foreground max-w-xs mx-auto mb-3">
                     {result.primaryPattern.description}
                   </p>
                 )}
                 <div className="flex items-center justify-center gap-2">
                   <Badge className="text-base px-4 py-1.5 bg-primary/10 text-primary border-primary/20 hover:bg-primary/15">
-                    {result.totalScore} / {result.maxScore} 分
+                    {isMaleMidlifeVitality ? `有劲状态指数 ${vitalityStatusPercent}%` : `${result.totalScore} / ${result.maxScore} 分`}
                   </Badge>
                   <Button
                     variant="ghost"
