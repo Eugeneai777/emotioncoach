@@ -605,6 +605,7 @@ export default function DramaScriptGenerator() {
       const lastScene = script.script_data?.scenes?.[script.script_data.scenes.length - 1];
       const previousLastSceneSummary = summarizeSceneForSequel(lastScene);
       const previousCharacterSummary = (script.script_data?.characters || []).map((char) => `${char.name}：${char.description}`).join("；");
+      const sequelCreativeSeed = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
       const baseBody: any = {
         action: "generate_sequel",
         theme: "系列短剧续集：承接上一集结尾继续推进",
@@ -619,6 +620,7 @@ export default function DramaScriptGenerator() {
         previousLastSceneSummary,
         previousCharacterSummary,
         previousScript: buildPreviousScriptContext(script),
+        sequelCreativeSeed,
       };
       if (script.mode === "youjin") {
         baseBody.products = productsForSequel;
