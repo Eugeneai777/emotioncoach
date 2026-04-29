@@ -335,6 +335,7 @@ const DynamicCoach = () => {
         ) : undefined
       }
       videoRecommendation={videoRecommendation ? (
+        <Suspense fallback={null}>
         <VideoRecommendationCard
           topicSummary={videoRecommendation.topicSummary}
           category={videoRecommendation.category}
@@ -344,31 +345,39 @@ const DynamicCoach = () => {
           videoUrl={videoRecommendation.videoUrl}
           onDismiss={() => setVideoRecommendation(null)}
         />
+        </Suspense>
       ) : undefined}
       toolRecommendation={toolRecommendation ? (
+        <Suspense fallback={null}>
         <ToolRecommendationCard
           userNeed={toolRecommendation.userNeed}
           toolId={toolRecommendation.toolId}
           usageReason={toolRecommendation.usageReason}
           onDismiss={() => setToolRecommendation(null)}
         />
+        </Suspense>
       ) : undefined}
       emotionButtonRecommendation={emotionButtonRecommendation ? (
+        <Suspense fallback={null}>
         <EmotionButtonRecommendationCard
           recommendation={emotionButtonRecommendation}
           onDismiss={() => setEmotionButtonRecommendation(null)}
         />
+        </Suspense>
       ) : undefined}
       campRecommendation={campRecommendation ? (
+        <Suspense fallback={null}>
         <CampRecommendationCard
           recommendation={campRecommendation}
           onDismiss={() => setCampRecommendation(null)}
         />
+        </Suspense>
       ) : undefined}
-      community={template.enable_community ? <CoachCommunity /> : undefined}
+      community={template.enable_community ? <Suspense fallback={null}><CoachCommunity /></Suspense> : undefined}
       showNotificationCenter={template.enable_notifications || false}
       notifications={
         template.enable_notifications ? (
+          <Suspense fallback={null}>
           <CoachNotificationsModule
             notifications={notifications}
             loading={notificationsLoading}
@@ -379,14 +388,17 @@ const DynamicCoach = () => {
             colorTheme={template.primary_color === 'purple' ? 'purple' : template.primary_color === 'blue' ? 'blue' : template.primary_color === 'pink' ? 'pink' : template.primary_color === 'amber' ? 'amber' : 'green'}
             coachLabel={template.title}
           />
+          </Suspense>
         ) : undefined
       }
       trainingCamp={
         template.enable_training_camp ? (
+          <Suspense fallback={null}>
           <CoachTrainingCamp
             colorTheme={(template.primary_color as 'green' | 'purple' | 'blue' | 'orange' | 'pink' | 'amber') || 'green'}
             campType={template.training_camp_type ?? undefined}
           />
+          </Suspense>
         ) : undefined
       }
       enableVoiceChat={template.coach_key === 'vibrant_life_sage'}
@@ -404,6 +416,7 @@ const DynamicCoach = () => {
     
     {/* OpenAI Realtime 语音对话全屏界面 */}
     {showVoiceChat && (
+      <Suspense fallback={null}>
       <CoachVoiceChat
         onClose={() => setShowVoiceChat(false)}
         coachEmoji={template.emoji}
@@ -412,6 +425,7 @@ const DynamicCoach = () => {
         featureKey="realtime_voice_vibrant_life"
         scenario={new URLSearchParams(location.search).get('scenario') || undefined}
       />
+      </Suspense>
     )}
   </>
   );
