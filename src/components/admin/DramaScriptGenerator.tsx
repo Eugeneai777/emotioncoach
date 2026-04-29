@@ -573,13 +573,14 @@ export default function DramaScriptGenerator() {
     }
     setGeneratingSequel(true);
     setResult(null);
+    setSequelCandidates([]);
     clearGeneratedAssets();
     try {
       const productsForSequel = script.selected_products || [];
       const lastScene = script.script_data?.scenes?.[script.script_data.scenes.length - 1];
       const previousLastSceneSummary = summarizeSceneForSequel(lastScene);
       const previousCharacterSummary = (script.script_data?.characters || []).map((char) => `${char.name}：${char.description}`).join("；");
-      const body: any = {
+      const baseBody: any = {
         action: "generate_sequel",
         theme: "系列短剧续集：承接上一集结尾继续推进",
         genre: script.genre || genre,
@@ -596,35 +597,67 @@ export default function DramaScriptGenerator() {
       };
       if (script.mode === "youjin") {
         const sequelConversionStyles = getSequelConversionStyles(script);
-        body.products = productsForSequel;
-        body.targetAudience = script.target_audience || targetAudience;
-        body.conversionStyles = sequelConversionStyles;
-        body.conversionStyle = sequelConversionStyles[0] || "plot";
+        baseBody.products = productsForSequel;
+        baseBody.targetAudience = script.target_audience || targetAudience;
+        baseBody.conversionStyles = sequelConversionStyles;
+        baseBody.conversionStyle = sequelConversionStyles[0] || "plot";
       }
-      const { data, error } = await supabase.functions.invoke("drama-script-ai", { body });
-      if (data?.error || error) {
-        throw new Error(await extractEdgeFunctionError(data, error, "续集生成失败，请稍后重试"));
-      }
+
+      const variants = [
+        { key: "A" as const, label: "A版：强承接版", description: "更严格接上一集最后分镜，人物和关系稳定延续", variant: "strong_continuity" },
+        { key: "B" as const, label: "B版：爆点升级版", description: "承接不变，但冲突、误会和反转更夸张", variant: "viral_upgrade" },
+      ];
+      const responses = await Promise.all(
+        variants.map((variant) => supabase.functions.invoke("drama-script-ai", { body: { ...baseBody, sequelVariant: variant.variant } }))
+      );
+      const failed = responses.find(({ data, error }) => data?.error || error);
+      if (failed) throw new Error(await extractEdgeFunctionError(failed.data, failed.error, "续集生成失败，请稍后重试"));
+
+      const candidates = responses.map(({ data }, index) => ({
+        key: variants[index].key,
+        label: variants[index].label,
+        description: variants[index].description,
+        script: data as DramaScript,
+        sourceScript: script,
+        conversionStyles: script.mode === "youjin" ? getSequelConversionStyles(script) : [],
+        products: productsForSequel,
+      }));
       setMode(script.mode || "generic");
       setGenre(script.genre || genre);
       setStyle(script.style || style);
       setTargetAudience(script.target_audience || targetAudience);
       setConversionStyles(getSequelConversionStyles(script));
       setSelectedProducts(new Set(productsForSequel.map((p) => p.key)));
-      setTheme((data as DramaScript).title);
-      setResult(data as DramaScript);
+      setTheme(candidates[0].script.title);
+      setSequelCandidates(candidates);
       setSavedScriptId(null);
       setActiveSavedScript(script);
-      const check = (data as DramaScript).consistencyCheck;
-      if (check && check.overallScore < CONSISTENCY_THRESHOLD) {
-        toast.error(`一致性评分 ${check.overallScore}，低于${CONSISTENCY_THRESHOLD}，建议重新生成`);
+      const lowScore = candidates.find((candidate) => (candidate.script.consistencyCheck?.overallScore || 100) < CONSISTENCY_THRESHOLD);
+      if (lowScore?.script.consistencyCheck) {
+        toast.error(`${lowScore.label}一致性评分 ${lowScore.script.consistencyCheck.overallScore}，建议优先选择另一版或重生成`);
       }
-      toast.success(`已承接第${script.episode_number}集生成第${script.episode_number + 1}集，确认后可保存`);
+      toast.success(`已生成第${script.episode_number + 1}集 A/B 两个候选，请先选择采用版本`);
     } catch (e: any) {
       toast.error(e.message || "续集生成失败");
     } finally {
       setGeneratingSequel(false);
     }
+  };
+
+  const adoptSequelCandidate = (candidate: SequelCandidate) => {
+    setMode(candidate.sourceScript.mode || "generic");
+    setGenre(candidate.sourceScript.genre || genre);
+    setStyle(candidate.sourceScript.style || style);
+    setTargetAudience(candidate.sourceScript.target_audience || targetAudience);
+    setConversionStyles(candidate.conversionStyles.length > 0 ? candidate.conversionStyles : conversionStyles);
+    setSelectedProducts(new Set(candidate.products.map((p) => p.key)));
+    setTheme(candidate.script.title);
+    setResult(candidate.script);
+    setSavedScriptId(null);
+    setActiveSavedScript(candidate.sourceScript);
+    setSequelCandidates([]);
+    clearGeneratedAssets();
+    toast.success(`已采用${candidate.label}，确认后可保存`);
   };
 
   const copyToClipboard = (text: string, label = "提示词") => {
