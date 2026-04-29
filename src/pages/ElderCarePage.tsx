@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Mic, Share2, ChevronRight, Home } from "lucide-react";
 import { parseAndStoreChildRef } from "@/utils/elderMoodUpload";
-import { IntroShareDialog } from "@/components/common/IntroShareDialog";
+import { LazyIntroShareDialog } from "@/components/common/LazyIntroShareDialog";
 import { introShareConfigs } from "@/config/introShareConfig";
 import AwakeningBottomNav from "@/components/awakening/AwakeningBottomNav";
 import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
@@ -47,7 +47,7 @@ const ElderCarePage = () => {
             <span>主页</span>
           </motion.button>
 
-          <IntroShareDialog
+          <LazyIntroShareDialog
             config={introShareConfigs.dajin}
             trigger={
               <motion.button

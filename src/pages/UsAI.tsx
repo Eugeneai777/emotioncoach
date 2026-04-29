@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Helmet } from "react-helmet";
 import { Mic, ChevronRight, Home, Languages, Wrench, ClipboardCheck, Pause, Heart, Share2, MessageCircle } from "lucide-react";
-import { IntroShareDialog } from "@/components/common/IntroShareDialog";
+import { LazyIntroShareDialog } from "@/components/common/LazyIntroShareDialog";
 import { introShareConfigs } from "@/config/introShareConfig";
 import AwakeningBottomNav from "@/components/awakening/AwakeningBottomNav";
 import UsAICalmButton from "@/components/us-ai/UsAICalmButton";
@@ -45,7 +45,7 @@ const UsAI = () => {
             <span>主页</span>
           </motion.button>
 
-          <IntroShareDialog
+          <LazyIntroShareDialog
             config={introShareConfigs.usai}
             trigger={
               <motion.button

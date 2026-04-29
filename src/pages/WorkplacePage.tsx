@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Mic, ChevronRight, Home, Share2, MessageCircle } from "lucide-react";
-import { IntroShareDialog } from "@/components/common/IntroShareDialog";
+import { LazyIntroShareDialog } from "@/components/common/LazyIntroShareDialog";
 import { introShareConfigs } from "@/config/introShareConfig";
 import WorkplaceQuickScenarios from "@/components/workplace/WorkplaceQuickScenarios";
 import WorkplaceAIChat from "@/components/workplace/WorkplaceAIChat";
@@ -47,7 +47,7 @@ const WorkplacePage = () => {
             <span>主页</span>
           </motion.button>
 
-          <IntroShareDialog
+          <LazyIntroShareDialog
             config={introShareConfigs.workplace}
             trigger={
               <motion.button

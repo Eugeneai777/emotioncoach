@@ -3,7 +3,7 @@ import { usePackagesPurchased } from "@/hooks/usePackagePurchased";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ChevronRight, Home, Share2, ArrowRight, Mic } from "lucide-react";
-import { IntroShareDialog } from "@/components/common/IntroShareDialog";
+import { LazyIntroShareDialog } from "@/components/common/LazyIntroShareDialog";
 import { introShareConfigs } from "@/config/introShareConfig";
 
 import { MamaToolCard, type MamaRoundConfig } from "@/components/mama/MamaToolCard";
@@ -120,7 +120,7 @@ const MamaAssistant = () => {
             <span>主页</span>
           </motion.button>
 
-          <IntroShareDialog
+          <LazyIntroShareDialog
             config={introShareConfigs.mama}
             trigger={
               <motion.button
