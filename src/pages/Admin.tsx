@@ -12,20 +12,33 @@ export default function Admin() {
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
+
     const checkAdminStatus = async () => {
-      if (!user) {
-        navigate("/auth");
+      let resolvedUser = user;
+
+      if (!resolvedUser) {
+        const { data } = await supabase.auth.getSession();
+        resolvedUser = data.session?.user ?? null;
+      }
+
+      if (cancelled) return;
+
+      if (!resolvedUser) {
+        navigate("/auth", { replace: true });
         return;
       }
 
-      const { data: roles } = await supabase
+      const { data: roles, error } = await supabase
         .from('user_roles')
         .select('role')
-        .eq('user_id', user.id)
+        .eq('user_id', resolvedUser.id)
         .in('role', ['admin', 'content_admin', 'partner_admin']);
 
-      if (!roles || roles.length === 0) {
-        navigate("/");
+      if (cancelled) return;
+
+      if (error || !roles || roles.length === 0) {
+        navigate("/", { replace: true });
         return;
       }
 
@@ -39,6 +52,10 @@ export default function Admin() {
     if (!loading) {
       checkAdminStatus();
     }
+
+    return () => {
+      cancelled = true;
+    };
   }, [user, loading, navigate]);
 
   if (loading || checking) {
