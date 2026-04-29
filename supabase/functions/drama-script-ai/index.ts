@@ -486,10 +486,10 @@ ${productList}${avoidTitlePrompt}
     };
     const conflictStr = conflictIntensityMap[conflictIntensity] || conflictIntensityMap.strong;
 
-    const count = Math.min(12, Math.max(6, sceneCount || 8));
+    const isSequel = action === "generate_sequel" && previousScript?.script_data;
+    const count = isSequel ? Math.min(8, Math.max(6, sceneCount || 8)) : Math.min(12, Math.max(6, sceneCount || 8));
     const isYoujin = mode === "youjin";
 
-    const isSequel = action === "generate_sequel" && previousScript?.script_data;
     const previousData = isSequel ? previousScript.script_data : null;
     const previousLastScene = previousData?.scenes?.[previousData.scenes.length - 1];
     const seriesBible = isSequel ? buildSeriesBible(previousScript, previousData, previousLastScene, products || previousScript?.selected_products || []) : null;
