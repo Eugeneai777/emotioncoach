@@ -235,9 +235,12 @@ const Auth = () => {
       console.warn('Invalid redirect URL blocked:', redirectTo);
     }
 
-    // 检查用户是否已登录
+    // 检查用户是否已登录；退出登录过程中不做自动跳转，避免刚进登录页又被会话顶回首页
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
+      const isSigningOut =
+        new URLSearchParams(window.location.search).get('signing_out') === '1' ||
+        sessionStorage.getItem('signing_out') === '1';
+      if (session && !isSigningOut) {
         const savedRedirect = localStorage.getItem('auth_redirect');
         if (savedRedirect) {
           localStorage.removeItem('auth_redirect');
@@ -253,82 +256,16 @@ const Auth = () => {
     // All async work is deferred via setTimeout to avoid blocking the auth state machine
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session && event === 'SIGNED_IN') {
-        // Defer all async work to avoid deadlock with signInWithPassword
         setTimeout(async () => {
-          // 判断是否是新注册用户（通过 created_at 判断，5秒内创建的认为是新注册）
-          const isNewUser = session.user.created_at && 
+          const isNewUser = session.user.created_at &&
             (new Date().getTime() - new Date(session.user.created_at).getTime()) < 5000;
 
-          // 发送登录成功通知到微信公众号（非阻塞，后台执行）
-          supabase.functions.invoke('send-wechat-template-message', {
-            body: {
-              userId: session.user.id,
-              scenario: 'login_success',
-              notification: {
-                title: isNewUser ? '注册成功' : '登录成功',
-                message: isNewUser ? '欢迎加入' : '欢迎回来',
-                account: session.user.email?.replace(/(.{3}).*(@.*)/, '$1***$2') || '***',
-                email: session.user.email
-              }
-            }
-          }).catch((error) => {
-            console.log('发送登录通知失败（非关键错误）:', error);
-          });
-
-          // 如果有推荐码，处理推荐关系
-          const savedRefCode = localStorage.getItem('referral_code');
-          if (savedRefCode) {
-            try {
-              await supabase.functions.invoke('process-referral', {
-                body: {
-                  referred_user_id: session.user.id,
-                  partner_code: savedRefCode
-                }
-              });
-              localStorage.removeItem('referral_code');
-            } catch (error) {
-              console.error('Error processing referral:', error);
-            }
-          }
-          
-          // 扫码转化追踪：如果是新用户注册且有分享追踪信息
-          if (isNewUser) {
-            const shareRefCode = localStorage.getItem('share_ref_code');
-            if (shareRefCode) {
-              try {
-                const landingPage = localStorage.getItem('share_landing_page');
-                const landingTime = localStorage.getItem('share_landing_time');
-                const timeToConvert = landingTime ? Date.now() - parseInt(landingTime) : undefined;
-                
-                await supabase.from('conversion_events').insert({
-                  event_type: 'share_scan_converted',
-                  feature_key: 'wealth_camp',
-                  user_id: session.user.id,
-                  metadata: {
-                    ref_code: shareRefCode,
-                    landing_page: landingPage,
-                    conversion_type: 'registration',
-                    time_to_convert_ms: timeToConvert,
-                    timestamp: new Date().toISOString(),
-                  }
-                });
-                
-                // 清理 localStorage
-                localStorage.removeItem('share_ref_code');
-                localStorage.removeItem('share_landing_page');
-                localStorage.removeItem('share_landing_time');
-              } catch (error) {
-                console.error('Error tracking share conversion:', error);
-              }
-            }
-          }
-          
           // 计算目标跳转路径：优先 auth_redirect / URL redirect 参数，其次 post_auth_redirect（支付后跳转，带时效）
           const savedRedirect = localStorage.getItem('auth_redirect');
           const urlRedirect = new URLSearchParams(window.location.search).get('redirect');
           const postAuthRedirect = consumePostAuthRedirect();
-          let targetRedirect = '/';
-          
+          let targetRedirect = '/mini-app';
+
           if (savedRedirect) {
             localStorage.removeItem('auth_redirect');
             targetRedirect = savedRedirect;
@@ -337,14 +274,14 @@ const Auth = () => {
           } else if (postAuthRedirect) {
             targetRedirect = postAuthRedirect;
           } else {
-            // 查询用户偏好教练类型，智能跳转
+            // 查询用户偏好教练类型，智能跳转（仅无显式跳转时执行）
             try {
               const { data: profile } = await supabase
                 .from('profiles')
                 .select('preferred_coach')
                 .eq('id', session.user.id)
                 .single();
-              
+
               if (profile?.preferred_coach === 'wealth') {
                 targetRedirect = "/coach/wealth_coach_4_questions";
               } else if (profile?.preferred_coach === 'emotion') {
@@ -353,8 +290,6 @@ const Auth = () => {
                 targetRedirect = "/communication";
               } else if (profile?.preferred_coach === 'parent') {
                 targetRedirect = "/parent-coach";
-              } else {
-                targetRedirect = "/mini-app";
               }
             } catch (error) {
               console.log('获取用户偏好失败，跳转默认首页:', error);
@@ -362,13 +297,77 @@ const Auth = () => {
             }
           }
 
-          // 如果是新注册用户，显示关注公众号引导
+          // 先完成用户可见跳转，再后台处理通知/推荐/转化追踪
           if (isNewUser) {
             setPendingRedirect(targetRedirect);
             setShowFollowGuide(true);
           } else {
             navigate(targetRedirect);
           }
+
+          setTimeout(() => {
+            // 发送登录成功通知到微信公众号（非阻塞，后台执行）
+            supabase.functions.invoke('send-wechat-template-message', {
+              body: {
+                userId: session.user.id,
+                scenario: 'login_success',
+                notification: {
+                  title: isNewUser ? '注册成功' : '登录成功',
+                  message: isNewUser ? '欢迎加入' : '欢迎回来',
+                  account: session.user.email?.replace(/(.{3}).*(@.*)/, '$1***$2') || '***',
+                  email: session.user.email
+                }
+              }
+            }).catch((error) => {
+              console.log('发送登录通知失败（非关键错误）:', error);
+            });
+
+            // 如果有推荐码，处理推荐关系
+            const savedRefCode = localStorage.getItem('referral_code');
+            if (savedRefCode) {
+              supabase.functions.invoke('process-referral', {
+                body: {
+                  referred_user_id: session.user.id,
+                  partner_code: savedRefCode
+                }
+              }).then(() => {
+                localStorage.removeItem('referral_code');
+              }).catch((error) => {
+                console.error('Error processing referral:', error);
+              });
+            }
+
+            // 扫码转化追踪：如果是新用户注册且有分享追踪信息
+            if (isNewUser) {
+              const shareRefCode = localStorage.getItem('share_ref_code');
+              if (shareRefCode) {
+                const landingPage = localStorage.getItem('share_landing_page');
+                const landingTime = localStorage.getItem('share_landing_time');
+                const timeToConvert = landingTime ? Date.now() - parseInt(landingTime) : undefined;
+
+                (async () => {
+                  const { error } = await supabase.from('conversion_events').insert({
+                    event_type: 'share_scan_converted',
+                    feature_key: 'wealth_camp',
+                    user_id: session.user.id,
+                    metadata: {
+                      ref_code: shareRefCode,
+                      landing_page: landingPage,
+                      conversion_type: 'registration',
+                      time_to_convert_ms: timeToConvert,
+                      timestamp: new Date().toISOString(),
+                    }
+                  });
+                  if (error) throw error;
+                  localStorage.removeItem('share_ref_code');
+                  localStorage.removeItem('share_landing_page');
+                  localStorage.removeItem('share_landing_time');
+                })().catch((error) => {
+                  console.error('Error tracking share conversion:', error);
+                });
+              }
+            }
+          }, 0);
         }, 0);
       }
     });

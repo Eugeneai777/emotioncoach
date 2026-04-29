@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { Suspense, lazy, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Package, ChevronRight, ChevronDown,
@@ -15,9 +15,12 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { detectPlatform } from "@/lib/platformDetector";
-import { VoiceUsageSection } from "@/components/VoiceUsageSection";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import surveyQR from "@/assets/survey-miniprogram-qr.jpg";
+
+const VoiceUsageSection = lazy(() =>
+  import("@/components/VoiceUsageSection").then((m) => ({ default: m.VoiceUsageSection }))
+);
 
 interface ProfileData {
   display_name: string | null;
@@ -65,7 +68,7 @@ const MyPage: React.FC = () => {
   const [orders, setOrders] = useState<OrderData[]>([]);
   const [isMember, setIsMember] = useState(false);
   
-  const [loadingProfile, setLoadingProfile] = useState(true);
+  const [showVoiceUsage, setShowVoiceUsage] = useState(false);
   const [surveyQrOpen, setSurveyQrOpen] = useState(false);
   const isMiniProgram = detectPlatform() === 'mini_program';
   
@@ -73,43 +76,50 @@ const MyPage: React.FC = () => {
   // Load profile & orders
   useEffect(() => {
     if (!user) {
-      setLoadingProfile(false);
+      setProfile(null);
+      setOrders([]);
+      setIsMember(false);
+      setShowVoiceUsage(false);
       return;
     }
 
+    let cancelled = false;
     const loadData = async () => {
-      // Profile
-      const { data: profileData } = await supabase
-        .from("profiles")
-        .select("display_name, avatar_url, phone")
-        .eq("id", user.id)
-        .maybeSingle();
-      if (profileData) setProfile(profileData);
+      const [profileRes, ordersRes, memberRes] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("display_name, avatar_url, phone")
+          .eq("id", user.id)
+          .maybeSingle(),
+        supabase
+          .from("orders")
+          .select("id, order_no, package_name, amount, status, shipping_status, shipping_note, created_at")
+          .eq("user_id", user.id)
+          .in("status", ["paid", "shipped", "completed", "refunded"])
+          .order("created_at", { ascending: false })
+          .limit(20),
+        supabase
+          .from("orders")
+          .select("id")
+          .eq("user_id", user.id)
+          .in("package_key", ["member365", "365"])
+          .eq("status", "paid")
+          .limit(1)
+          .maybeSingle(),
+      ]);
 
-      // Orders
-      const { data: orderData } = await supabase
-        .from("orders")
-        .select("id, order_no, package_name, amount, status, shipping_status, shipping_note, created_at")
-        .eq("user_id", user.id)
-        .in("status", ["paid", "shipped", "completed", "refunded"])
-        .order("created_at", { ascending: false })
-        .limit(20);
-      if (orderData) setOrders(orderData as OrderData[]);
-
-      // Membership check
-      const { data: memberOrder } = await supabase
-        .from("orders")
-        .select("id")
-        .eq("user_id", user.id)
-        .in("package_key", ["member365", "365"])
-        .eq("status", "paid")
-        .limit(1)
-        .maybeSingle();
-      setIsMember(!!memberOrder);
-
-      setLoadingProfile(false);
+      if (cancelled) return;
+      if (profileRes.data) setProfile(profileRes.data);
+      if (ordersRes.data) setOrders(ordersRes.data as OrderData[]);
+      setIsMember(!!memberRes.data);
     };
     loadData();
+
+    const usageTimer = window.setTimeout(() => setShowVoiceUsage(true), 900);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(usageTimer);
+    };
   }, [user]);
 
   const visibleOrders = showAllOrders ? orders : orders.slice(0, 2);
@@ -129,9 +139,14 @@ const MyPage: React.FC = () => {
         navigate("/customer-support");
         break;
       case "退出登录":
-        await signOut();
-        toast({ title: "已退出登录" });
-        navigate("/auth");
+        sessionStorage.setItem('signing_out', '1');
+        navigate("/auth?signing_out=1");
+        setTimeout(() => {
+          signOut()
+            .then(() => toast({ title: "已退出登录" }))
+            .catch(() => toast({ title: "退出失败，请稍后重试", variant: "destructive" }))
+            .finally(() => sessionStorage.removeItem('signing_out'));
+        }, 0);
         break;
     }
   };
@@ -244,7 +259,11 @@ const MyPage: React.FC = () => {
         </section>
 
         {/* ======== 3. 语音通话记录 ======== */}
-        {user && <VoiceUsageSection userId={user.id} />}
+        {user && showVoiceUsage && (
+          <Suspense fallback={null}>
+            <VoiceUsageSection userId={user.id} />
+          </Suspense>
+        )}
 
         {/* ======== 4. 设置 ======== */}
         <section>

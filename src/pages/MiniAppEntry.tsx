@@ -21,6 +21,7 @@ import { supabase } from "@/integrations/supabase/client";
 import AssessmentPickerSheet, { type AssessmentOption } from "@/components/mini-app/AssessmentPickerSheet";
 import { usePackagesPurchased } from "@/hooks/usePackagePurchased";
 import { useQuery } from "@tanstack/react-query";
+import { scheduleRoutePreload } from "@/utils/preloadRoutes";
 
 interface AudienceBadge {
   text: string;
@@ -367,19 +368,15 @@ const MiniAppEntry = () => {
   const isMiniProgram = useMemo(() => detectPlatform() === 'mini_program', []);
   const reduceMotion = isMiniProgram;
 
-  const { data: illustrations = {} } = useQuery({
-    queryKey: ['audience-illustrations'],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from('audience_illustrations')
-        .select('audience_id, image_url');
-      if (!data) return {};
-      const map: Record<string, string> = {};
-      data.forEach((row: any) => { map[row.audience_id] = row.image_url; });
-      return map;
-    },
-    staleTime: Infinity,
-  });
+  const illustrations = useMemo<Record<string, string>>(() => ({}), []);
+
+  useEffect(() => {
+    return scheduleRoutePreload([
+      '/my-page',
+      '/auth',
+      ...audiences.map((audience) => audience.route),
+    ], 700);
+  }, []);
 
   // ── 购买/完成状态查询 ──
   const { data: purchasedMap = {} } = usePackagesPurchased([
