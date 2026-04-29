@@ -378,18 +378,21 @@ export function DynamicAssessmentResult({
         </div>
       </motion.div>
 
-      <div className="max-w-lg mx-auto px-4 space-y-4">
+      <div className={cn("mx-auto px-4 space-y-4", isMaleMidlifeVitality ? "max-w-lg lg:max-w-5xl" : "max-w-lg")}>
         {/* Radar Chart (non-SBTI only) */}
         {!isSBTI && result.dimensionScores.length >= 3 && (
           <motion.div custom={1} variants={fadeUp} initial="hidden" animate="visible">
             <Card className="border-border/40 bg-card/90 backdrop-blur-sm shadow-sm overflow-hidden">
-              <CardContent className="p-4 pt-3">
+              <CardContent className="p-4 pt-3 sm:p-5">
                 <div className="flex items-center gap-2 mb-1">
                   <Target className="w-4 h-4 text-primary" />
-                  <h3 className="font-semibold text-sm">能力雷达</h3>
+                  <h3 className="font-semibold text-sm">{isMaleMidlifeVitality ? '有劲状态雷达' : '能力雷达'}</h3>
                 </div>
-                <div className="h-[300px] sm:h-[320px]">
-                  <DimensionRadarChart dimensionScores={result.dimensionScores} />
+                {isMaleMidlifeVitality && (
+                  <p className="text-[11px] text-muted-foreground mb-2">越靠外代表状态越稳，越靠内代表越需要优先恢复。</p>
+                )}
+                <div className={cn(isMaleMidlifeVitality ? "h-[360px] sm:h-[390px] lg:h-[430px]" : "h-[300px] sm:h-[320px]") }>
+                  <DimensionRadarChart dimensionScores={isMaleMidlifeVitality ? vitalityStatusScores : result.dimensionScores} variant={isMaleMidlifeVitality ? "large" : "default"} />
                 </div>
               </CardContent>
             </Card>
