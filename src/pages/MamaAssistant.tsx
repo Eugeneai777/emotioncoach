@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Suspense, lazy, useState } from "react";
 import { usePackagesPurchased } from "@/hooks/usePackagePurchased";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -9,7 +9,6 @@ import { introShareConfigs } from "@/config/introShareConfig";
 import { MamaToolCard, type MamaRoundConfig } from "@/components/mama/MamaToolCard";
 import MamaAIChat from "@/components/mama/MamaAIChat";
 import AwakeningBottomNav from "@/components/awakening/AwakeningBottomNav";
-import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
 import { useAuth } from "@/hooks/useAuth";
 
 // 4 pain-point tools with 3-round configs
@@ -59,6 +58,8 @@ const mamaTools: { tool: string; title: string; description: string; icon: strin
     ],
   },
 ];
+
+const CoachVoiceChat = lazy(() => import("@/components/coach/CoachVoiceChat").then((m) => ({ default: m.CoachVoiceChat })));
 
 const toolEntries = [
   { emoji: "🎙", title: "语音教练", desc: "AI陪你聊", action: "voice" as const },
@@ -268,6 +269,7 @@ const MamaAssistant = () => {
       />
 
       {showVoice && user && (
+        <Suspense fallback={null}>
         <CoachVoiceChat
           onClose={() => setShowVoice(false)}
           coachEmoji="👩"
@@ -279,6 +281,7 @@ const MamaAssistant = () => {
           featureKey="realtime_voice"
           voiceType="EXAVITQu4vr4xnSDxMaL"
         />
+        </Suspense>
       )}
 
       <AwakeningBottomNav />
