@@ -1524,6 +1524,11 @@ export default function DramaScriptGenerator() {
                   <CardContent className="pt-4 space-y-2">
                     <div className="font-medium break-words">{char.name}</div>
                     <p className="text-sm text-muted-foreground break-words">{char.description}</p>
+                    {characterImages[i]?.imageUrl && (
+                      <div className="w-full max-w-full min-w-0 overflow-hidden rounded-lg border bg-muted/30">
+                        <img src={characterImages[i].imageUrl} alt={`${char.name}定妆图`} className="aspect-square w-full max-h-64 object-contain" loading="lazy" />
+                      </div>
+                    )}
                     <div className="bg-muted/50 rounded-lg p-3 min-w-0 overflow-hidden">
                       <div className="flex items-start justify-between gap-2 min-w-0">
                         <code className="text-xs break-all flex-1 min-w-0">{char.imagePrompt}</code>
@@ -1536,6 +1541,13 @@ export default function DramaScriptGenerator() {
                           <Copy className="h-3 w-3" />
                         </Button>
                       </div>
+                    </div>
+                    <div className="flex w-full min-w-0 flex-wrap items-center gap-2 overflow-hidden">
+                      <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => generateCharacterReference(char, i)} disabled={generatingCharacterRefs || characterImages[i]?.status === "generating"}>
+                        {characterImages[i]?.status === "generating" ? <Loader2 className="h-3 w-3 animate-spin" /> : <ImageIcon className="h-3 w-3" />}
+                        {characterImages[i]?.imageUrl ? "重生成定妆图" : "生成定妆图"}
+                      </Button>
+                      {characterImages[i]?.status === "failed" && <span className="text-xs text-destructive break-words">{characterImages[i].error}</span>}
                     </div>
                   </CardContent>
                 </Card>
