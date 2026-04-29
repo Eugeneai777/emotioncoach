@@ -235,9 +235,12 @@ const Auth = () => {
       console.warn('Invalid redirect URL blocked:', redirectTo);
     }
 
-    // 检查用户是否已登录
+    // 检查用户是否已登录；退出登录过程中不做自动跳转，避免刚进登录页又被会话顶回首页
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
+      const isSigningOut =
+        new URLSearchParams(window.location.search).get('signing_out') === '1' ||
+        sessionStorage.getItem('signing_out') === '1';
+      if (session && !isSigningOut) {
         const savedRedirect = localStorage.getItem('auth_redirect');
         if (savedRedirect) {
           localStorage.removeItem('auth_redirect');
