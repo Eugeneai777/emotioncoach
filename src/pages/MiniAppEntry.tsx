@@ -512,6 +512,8 @@ const MiniAppEntry = () => {
       <div className="px-4 pb-4">
         <div className="grid grid-cols-3 gap-2 overflow-visible">
           {audiences.map((a, i) => {
+            const illustrationSrc = localAudienceIllustrations[a.id] || illustrations[a.id];
+            const imagePriority = i < 3 ? "high" : "auto";
             const card = (
               <motion.button
                 key={a.id}
@@ -524,18 +526,31 @@ const MiniAppEntry = () => {
                 className={`relative overflow-hidden rounded-xl bg-gradient-to-br ${a.gradient} min-h-[96px] flex flex-col items-start justify-between p-3 shadow-md active:shadow-inner hover:-translate-y-0.5 transition-all duration-200 w-full`}
               >
                 {/* 右侧插画或 emoji 水印 fallback */}
-                {illustrations[a.id] ? (
+                {illustrationSrc ? (
                   <img
-                    src={illustrations[a.id]}
+                    src={illustrationSrc}
                     alt=""
+                    width={80}
+                    height={80}
                     className="absolute -right-2 -top-2 w-20 h-20 object-cover opacity-30 pointer-events-none select-none rounded-full"
-                    loading="lazy"
+                    loading="eager"
+                    decoding="async"
+                    fetchPriority={imagePriority as "high" | "auto"}
                   />
                 ) : null}
                 {/* 图标容器 */}
-                <div className={`relative z-10 w-10 h-10 rounded-full overflow-hidden flex items-center justify-center ${illustrations[a.id] ? 'border-2 border-white/40 shadow-md' : 'bg-white/20 backdrop-blur-sm shadow-[inset_0_1px_2px_rgba(255,255,255,0.3)]'}`}>
-                  {illustrations[a.id] ? (
-                    <img src={illustrations[a.id]} alt="" className="w-[120%] h-[120%] object-cover" loading="lazy" />
+                <div className={`relative z-10 w-10 h-10 rounded-full overflow-hidden flex items-center justify-center ${illustrationSrc ? 'border-2 border-white/40 shadow-md' : 'bg-white/20 backdrop-blur-sm shadow-[inset_0_1px_2px_rgba(255,255,255,0.3)]'}`}>
+                  {illustrationSrc ? (
+                    <img
+                      src={illustrationSrc}
+                      alt=""
+                      width={48}
+                      height={48}
+                      className="w-[120%] h-[120%] object-cover"
+                      loading="eager"
+                      decoding="async"
+                      fetchPriority={imagePriority as "high" | "auto"}
+                    />
                   ) : (
                     <span className="text-lg">{a.emoji}</span>
                   )}
