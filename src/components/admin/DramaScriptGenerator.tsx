@@ -416,6 +416,7 @@ export default function DramaScriptGenerator() {
     }
     setLoading(true);
     setResult(null);
+    setSequelCandidates([]);
     setSceneVideos({});
     setVideoPreviewFallbacks({});
     setSceneAudios({});
@@ -531,6 +532,7 @@ export default function DramaScriptGenerator() {
     setConversionStyles(normalizeConversionStyles(script.script_data?.conversionStyles || script.conversion_style));
     setSelectedProducts(new Set((script.selected_products || []).map((p) => p.key)));
     setResult(script.script_data);
+    setSequelCandidates([]);
     setSceneImages(Object.fromEntries((script.script_data?.scenes || []).filter((s) => s.generatedImageUrl).map((s) => [s.sceneNumber, { status: "done", imageUrl: s.generatedImageUrl! }])));
     setCharacterImages(Object.fromEntries((script.script_data?.characters || []).map((c, index) => c.referenceImageUrl ? [index, { status: "done", imageUrl: c.referenceImageUrl }] : null).filter(Boolean) as [number, SceneImageState][]));
     setSavedScriptId(script.id);
