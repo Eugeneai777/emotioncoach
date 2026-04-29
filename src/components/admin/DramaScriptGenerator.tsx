@@ -302,6 +302,8 @@ export default function DramaScriptGenerator() {
   const [sequelGenerationStep, setSequelGenerationStep] = useState("");
   const [sequelGenerationError, setSequelGenerationError] = useState<string | null>(null);
   const [pendingSequel, setPendingSequel] = useState<{ source: SavedDramaScript; script: DramaScript; products: ProductItem[]; conversionStyles: string[] } | null>(null);
+  const [sequelDirection, setSequelDirection] = useState("new_evidence");
+  const [sequelOpeningAngle, setSequelOpeningAngle] = useState("one_second_later");
   const [suggestedThemes, setSuggestedThemes] = useState<{ title: string; description: string }[]>([]);
   const [loadingThemes, setLoadingThemes] = useState(false);
   const [selectedThemeIdx, setSelectedThemeIdx] = useState<number | null>(null);
@@ -637,6 +639,8 @@ export default function DramaScriptGenerator() {
         previousCharacterSummary,
         previousScript: buildPreviousScriptContext(script),
         sequelCreativeSeed,
+        sequelDirection,
+        sequelOpeningAngle,
       };
       if (script.mode === "youjin") {
         baseBody.products = productsForSequel;
