@@ -224,6 +224,25 @@ export function DynamicAssessmentResult({
   const scorePercent = result.maxScore > 0 ? Math.round((result.totalScore / result.maxScore) * 100) : 0;
   const isSBTI = scoringType === 'sbti';
   const isMaleMidlifeVitality = template.assessment_key === 'male_midlife_vitality';
+  const vitalityStatusPercent = isMaleMidlifeVitality ? toVitalityStatusScore(result.totalScore, result.maxScore) : scorePercent;
+  const vitalityStatusScores = useMemo(() => {
+    if (!isMaleMidlifeVitality) return result.dimensionScores;
+    return result.dimensionScores.map((d) => ({
+      ...d,
+      score: toVitalityStatusScore(d.score, d.maxScore),
+      maxScore: 100,
+      label: d.label === '压力内耗' ? '压力调节' : d.label === '恢复阻力' ? '行动恢复力' : d.label,
+      rawScore: d.score,
+      rawMaxScore: d.maxScore,
+    }));
+  }, [isMaleMidlifeVitality, result.dimensionScores]);
+  const vitalitySummary = vitalityStatusPercent >= 80
+    ? "当前阻力较低，底盘还稳。适合趁状态还在，先建立一套轻量恢复节奏。"
+    : vitalityStatusPercent >= 60
+      ? "整体状态还撑得住，但睡眠、压力或体能已经在提醒你：该开始恢复了。"
+      : vitalityStatusPercent >= 40
+        ? "你不是不行，是长期消耗让身体和信心都变紧了。建议先把恢复放到优先级前面。"
+        : "当前已经接近低电量运行，不建议继续硬扛。先从睡眠、呼吸和每日小行动开始修复。";
   const sbtiGroups = isSBTI ? [
     { name: '自我模型', emoji: '🪞', keys: ['S1','S2','S3'] },
     { name: '情感模型', emoji: '💗', keys: ['E1','E2','E3'] },
