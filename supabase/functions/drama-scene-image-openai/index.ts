@@ -4,6 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
 const OPENAI_BASE_URL = Deno.env.get("OPENAI_PROXY_URL") || "https://api.openai.com";
 const OPENAI_IMAGE_MODEL = Deno.env.get("OPENAI_IMAGE_MODEL") || "gpt-image-2";
+const LOVABLE_IMAGE_MODEL = "google/gemini-3.1-flash-image-preview";
 
 const sizeMap: Record<string, string> = {
   "9:16": "1024x1536",
@@ -86,7 +87,7 @@ CHARACTER BIBLE:
 ${characterBible || "No named characters provided. Keep all visible people consistent with the scene prompt."}
 
 REFERENCE CONTINUITY:
-${referenceUrls.length > 0 ? referenceUrls.map((url, i) => `Reference ${i + 1}: ${url}`).join("\n") : "No previous reference image. Establish the canonical look for this series."}
+${referenceUrls.length > 0 ? referenceUrls.map((url: string, i: number) => `Reference ${i + 1}: ${url}`).join("\n") : "No previous reference image. Establish the canonical look for this series."}
 
 CURRENT SCENE:
 Scene number: ${scene.sceneNumber || input.sceneNumber || "unknown"}
@@ -172,12 +173,42 @@ async function callOpenAIImage(prompt: string, aspectRatio: string, referenceUrl
   return b64;
 }
 
+async function callLovableImage(prompt: string) {
+  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+  if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+
+  const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${LOVABLE_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: LOVABLE_IMAGE_MODEL,
+      messages: [{ role: "user", content: prompt }],
+      modalities: ["image", "text"],
+    }),
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    console.error("Lovable AI image generation error:", response.status, text);
+    if (response.status === 429) throw new OpenAIImageError("AI 请求频率超限，请稍后重试", 429);
+    if (response.status === 402) throw new OpenAIImageError("AI 额度不足，请充值后重试", 402);
+    throw new Error(`图片生成失败：${response.status}`);
+  }
+
+  const data = await response.json();
+  const imageData = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+  const base64 = typeof imageData === "string" ? imageData.split(",")[1] : "";
+  if (!base64) throw new Error("AI 未返回图片数据");
+  return base64;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    if (!OPENAI_API_KEY) throw new Error("OPENAI_API_KEY is not configured");
-
     const input = await req.json();
     if (!input.scene && input.action !== "character_reference") {
       return jsonResponse({ error: "缺少分镜 scene 参数" }, 400);
@@ -189,7 +220,22 @@ Deno.serve(async (req) => {
       ...(Array.isArray(input.referenceImageUrls) ? input.referenceImageUrls : []),
     ].filter((url: unknown) => typeof url === "string" && url.startsWith("http"));
 
-    const b64 = await callOpenAIImage(prompt, input.aspectRatio || "9:16", referenceImageUrls);
+    let b64: string;
+    let modelUsed = LOVABLE_IMAGE_MODEL;
+    try {
+      b64 = OPENAI_API_KEY
+        ? await callOpenAIImage(prompt, input.aspectRatio || "9:16", referenceImageUrls)
+        : await callLovableImage(prompt);
+      modelUsed = OPENAI_API_KEY ? OPENAI_IMAGE_MODEL : LOVABLE_IMAGE_MODEL;
+    } catch (error) {
+      if (error instanceof OpenAIImageError && [401, 402, 403, 429].includes(error.status)) {
+        console.warn("OpenAI image unavailable, falling back to Lovable AI:", error.message);
+        b64 = await callLovableImage(prompt);
+        modelUsed = LOVABLE_IMAGE_MODEL;
+      } else {
+        throw error;
+      }
+    }
     const binary = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -211,7 +257,7 @@ Deno.serve(async (req) => {
 
     const { data: urlData } = supabase.storage.from("public-share-images").getPublicUrl(filePath);
 
-    return jsonResponse({ imageUrl: urlData.publicUrl, prompt, model: OPENAI_IMAGE_MODEL });
+    return jsonResponse({ imageUrl: urlData.publicUrl, prompt, model: modelUsed });
   } catch (e) {
     console.error("drama-scene-image-openai error:", e);
     const status = e instanceof OpenAIImageError ? e.status : 500;
