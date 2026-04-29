@@ -1724,6 +1724,7 @@ export default function DramaScriptGenerator() {
             <div className="space-y-3 max-w-full min-w-0 overflow-hidden">
               {result.scenes.map((scene) => {
                 const videoState = sceneVideos[scene.sceneNumber] || { status: "idle" as VideoStatus };
+                const imageState = sceneImages[scene.sceneNumber] || { status: "idle" as ImageStatus };
 
                 return (
                   <Card key={scene.sceneNumber} className="max-w-full min-w-0 overflow-hidden">
@@ -1774,6 +1775,39 @@ export default function DramaScriptGenerator() {
                               </Button>
                             </div>
                           </div>
+
+                          {/* GPT Image 2.0 image generation per scene */}
+                          <div className="flex w-full min-w-0 flex-wrap items-center gap-2 overflow-hidden pt-1">
+                            {imageState.status === "idle" && (
+                              <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => generateSceneImage(scene)} disabled={anyImageGenerating}>
+                                <ImageIcon className="h-3 w-3" /> 生成图片
+                              </Button>
+                            )}
+                            {imageState.status === "generating" && (
+                              <span className="flex items-center gap-1.5 text-xs text-muted-foreground"><Loader2 className="h-3 w-3 animate-spin" /> GPT Image 2.0 生成中...</span>
+                            )}
+                            {imageState.status === "done" && imageState.imageUrl && (
+                              <div className="flex flex-wrap items-center gap-2 min-w-0">
+                                <span className="flex items-center gap-1 text-xs text-primary"><Check className="h-3 w-3" /> 图片已生成</span>
+                                <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => window.open(imageState.imageUrl!, "_blank", "noopener,noreferrer")}><Play className="h-3 w-3" /> 打开</Button>
+                                <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => copyToClipboard(imageState.imageUrl!, "图片链接")}><Copy className="h-3 w-3" /> 复制链接</Button>
+                                <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => downloadImage(imageState.imageUrl!, `scene-${scene.sceneNumber}`)}><Download className="h-3 w-3" /> 下载</Button>
+                                <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => generateSceneImage(scene)} disabled={anyImageGenerating}>重生成</Button>
+                              </div>
+                            )}
+                            {imageState.status === "failed" && (
+                              <div className="flex flex-wrap items-center gap-2 min-w-0">
+                                <span className="text-xs text-destructive break-words">{imageState.error || "图片生成失败"}</span>
+                                <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => generateSceneImage(scene)} disabled={anyImageGenerating}>重试</Button>
+                              </div>
+                            )}
+                          </div>
+
+                          {imageState.status === "done" && imageState.imageUrl && (
+                            <div className="mt-2 w-full max-w-full min-w-0 overflow-hidden rounded-lg border bg-muted/30">
+                              <img src={imageState.imageUrl} alt={`场景 ${scene.sceneNumber} GPT Image 2.0 分镜图`} className="max-h-[520px] w-full object-contain" loading="lazy" />
+                            </div>
+                          )}
 
                           {/* Video generation per scene */}
                           <div className="flex items-center gap-2 flex-wrap pt-1">
