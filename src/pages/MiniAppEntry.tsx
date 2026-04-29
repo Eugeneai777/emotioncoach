@@ -6,6 +6,12 @@ import { ChevronDown, ChevronUp, ChevronRight, Wrench, BarChart3, Target, Quote,
 import useEmblaCarousel from "embla-carousel-react";
 
 import logoImage from "@/assets/logo-youjin-ai.png";
+import audienceCouple from "@/assets/audience/couple.webp";
+import audienceMama from "@/assets/audience/mama.webp";
+import audienceMidlife from "@/assets/audience/midlife.webp";
+import audienceSenior from "@/assets/audience/senior.webp";
+import audienceWorkplace from "@/assets/audience/workplace.webp";
+import audienceYouth from "@/assets/audience/youth.webp";
 import AwakeningBottomNav from "@/components/awakening/AwakeningBottomNav";
 import { usePersonalizedGreeting } from "@/hooks/usePersonalizedGreeting";
 import { useAuth } from "@/hooks/useAuth";
@@ -43,6 +49,15 @@ const audiences: Array<{
   { id: "youth", emoji: "🎓", label: "青少年", subtitle: "长大不容易", route: "/xiaojin", gradient: "from-amber-500 to-orange-400", badge: null },
   { id: "workplace", emoji: "💼", label: "职场解压", subtitle: "累了就歇一歇", route: "/workplace", gradient: "from-blue-500 to-indigo-400", badge: null },
 ];
+
+const localAudienceIllustrations: Record<string, string> = {
+  mama: audienceMama,
+  senior: audienceSenior,
+  couple: audienceCouple,
+  midlife: audienceMidlife,
+  youth: audienceYouth,
+  workplace: audienceWorkplace,
+};
 
 const exploreBlocks = [
   {
