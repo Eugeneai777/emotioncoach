@@ -383,6 +383,7 @@ ${productList}${avoidTitlePrompt}
     const isSequel = action === "generate_sequel" && previousScript?.script_data;
     const previousData = isSequel ? previousScript.script_data : null;
     const previousLastScene = previousData?.scenes?.[previousData.scenes.length - 1];
+    const seriesBible = isSequel ? buildSeriesBible(previousScript, previousData, previousLastScene, products || previousScript?.selected_products || []) : null;
 
     let userPrompt = `请为以下主题创作一个${count}个分镜的短剧脚本：
 
@@ -396,11 +397,17 @@ ${productList}${avoidTitlePrompt}
       userPrompt += `
 
 【续集创作要求】
-这是一个系列短剧的第 ${(previousScript.episode_number || 1) + 1} 集，不是新故事。必须承接上一集继续写。
-上一集标题：${previousData.title || previousScript.title}
-上一集梗概：${previousData.synopsis || previousScript.synopsis || "无"}
-上一集角色设定：${JSON.stringify(previousData.characters || [])}
-上一集最后分镜：${previousLastScene ? JSON.stringify(previousLastScene) : "无"}
+这是一个系列短剧的第 ${(previousScript.episode_number || 1) + 1} 集，不是新故事。必须承接上一集继续写，严禁重新开一个相似题材的新故事。
+
+【系列圣经：必须逐条继承】
+${JSON.stringify(seriesBible, null, 2)}
+
+【承接合约】
+- 本集只能升级上一集未解决矛盾，不能替换主角、改名、换身份、换关系、换核心世界观。
+- 续集 characters 必须保留上一集核心角色的中文名、关系、年龄感、外貌关键词、服装/画风识别点。
+- 第1个分镜必须直接承接 seriesBible.plotState.lastSceneText 中的动作、台词或悬念，不能另起场景铺垫。
+- 每个 scene.imagePrompt 必须继续使用上一集角色 imagePrompt 的外貌识别关键词，避免同名不同脸。
+- 如果有产品线，必须延续同一产品使用语境，只能自然推进，不能换成无关硬广。
 
 【生成续集前必须先做一致性检查】
 在创作前先在内部完成检查，不要把检查过程输出给用户：
@@ -419,7 +426,8 @@ ${productList}${avoidTitlePrompt}
 5. 结尾必须留下下一集钩子，但本集也要有一个明确情绪落点。
 6. title 要体现“续集感”和新冲突，不要直接复用上一集标题。
 7. 输出前再次自查：角色设定、关键剧情点、人物关系、产品植入、画面提示词是否与上一集一致；如不一致，必须自行修正后再输出。
-8. 必须输出 consistencyCheck：overallScore 为0-100整数，低于85代表不建议使用；issues 写出具体跑偏风险；regenerationAdvice 给出下一次重生成应该修正的方向。`;
+8. 必须输出 continuityBridge，明确本集继承了什么、开头如何承接、延续哪个悬念、下一集钩子是什么。
+9. 必须输出 consistencyCheck：overallScore 为0-100整数，低于85代表不建议使用；issues 写出具体跑偏风险；regenerationAdvice 给出下一次重生成应该修正的方向。`;
     }
 
     if (isYoujin) {
