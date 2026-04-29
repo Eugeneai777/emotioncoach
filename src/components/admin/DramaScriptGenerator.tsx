@@ -9,6 +9,7 @@ import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { extractEdgeFunctionError } from "@/lib/edgeFunctionError";
 import { mergeVideosClientSide } from "@/utils/videoMerger";
@@ -49,6 +50,21 @@ const CONFLICT_LEVELS = [
   { value: "standard", label: "标准冲突", desc: "清晰矛盾 + 温和反转" },
   { value: "strong", label: "强冲突", desc: "高压开场 + 情绪升级" },
   { value: "viral", label: "爆款夸张", desc: "极限误会 + 强反转结尾" },
+];
+
+const SEQUEL_DIRECTIONS = [
+  { value: "new_evidence", label: "新证据推翻上一集" },
+  { value: "third_party_pressure", label: "第三方闯入加压" },
+  { value: "costly_counterattack", label: "主角反击但代价更大" },
+  { value: "hidden_truth", label: "沉默真相突然爆开" },
+  { value: "countdown_choice", label: "限时选择逼到绝境" },
+];
+
+const SEQUEL_OPENING_ANGLES = [
+  { value: "one_second_later", label: "上一句台词后1秒接上" },
+  { value: "prop_focus", label: "用关键道具开场" },
+  { value: "reaction_first", label: "先拍对方沉默反应" },
+  { value: "external_interrupt", label: "电话/敲门/弹窗打断" },
 ];
 
 const BASE_URL = "https://wechat.eugenewe.net";
@@ -286,6 +302,8 @@ export default function DramaScriptGenerator() {
   const [sequelGenerationStep, setSequelGenerationStep] = useState("");
   const [sequelGenerationError, setSequelGenerationError] = useState<string | null>(null);
   const [pendingSequel, setPendingSequel] = useState<{ source: SavedDramaScript; script: DramaScript; products: ProductItem[]; conversionStyles: string[] } | null>(null);
+  const [sequelDirection, setSequelDirection] = useState("new_evidence");
+  const [sequelOpeningAngle, setSequelOpeningAngle] = useState("one_second_later");
   const [suggestedThemes, setSuggestedThemes] = useState<{ title: string; description: string }[]>([]);
   const [loadingThemes, setLoadingThemes] = useState(false);
   const [selectedThemeIdx, setSelectedThemeIdx] = useState<number | null>(null);
@@ -621,6 +639,8 @@ export default function DramaScriptGenerator() {
         previousCharacterSummary,
         previousScript: buildPreviousScriptContext(script),
         sequelCreativeSeed,
+        sequelDirection,
+        sequelOpeningAngle,
       };
       if (script.mode === "youjin") {
         baseBody.products = productsForSequel;
@@ -1475,13 +1495,25 @@ export default function DramaScriptGenerator() {
               </p>
             </div>
             {pendingSequel ? (
-              <div className="flex shrink-0 flex-wrap gap-2">
+              <div className="flex shrink-0 flex-col gap-2 sm:items-end">
+                <div className="grid w-full gap-2 sm:w-[420px] sm:grid-cols-2">
+                  <Select value={sequelDirection} onValueChange={setSequelDirection} disabled={generatingSequel}>
+                    <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="冲突推进方向" /></SelectTrigger>
+                    <SelectContent>{SEQUEL_DIRECTIONS.map((item) => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}</SelectContent>
+                  </Select>
+                  <Select value={sequelOpeningAngle} onValueChange={setSequelOpeningAngle} disabled={generatingSequel}>
+                    <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="开场角度" /></SelectTrigger>
+                    <SelectContent>{SEQUEL_OPENING_ANGLES.map((item) => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div className="flex flex-wrap gap-2">
                 <Button type="button" size="sm" onClick={applyPendingSequel} className="gap-1.5">
                   <Check className="h-3.5 w-3.5" /> 替换当前脚本
                 </Button>
                 <Button type="button" variant="outline" size="sm" onClick={() => generateSequel(pendingSequel.source)} disabled={generatingSequel} className="gap-1.5">
                   <RefreshCw className="h-3.5 w-3.5" /> 重新生成
                 </Button>
+                </div>
               </div>
             ) : (
               <div className="shrink-0 text-xs text-muted-foreground">{generatingSequel ? "请勿重复点击" : "可重新点击生成"}</div>
@@ -2197,7 +2229,15 @@ export default function DramaScriptGenerator() {
               </div>
               <div className="truncate text-xs text-muted-foreground">点击替换后才会覆盖当前编辑区</div>
             </div>
-            <div className="flex gap-2">
+            <div className="grid gap-2 sm:grid-cols-[180px_180px_auto_auto] sm:items-center">
+              <Select value={sequelDirection} onValueChange={setSequelDirection} disabled={generatingSequel}>
+                <SelectTrigger className="h-11"><SelectValue placeholder="冲突推进方向" /></SelectTrigger>
+                <SelectContent>{SEQUEL_DIRECTIONS.map((item) => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}</SelectContent>
+              </Select>
+              <Select value={sequelOpeningAngle} onValueChange={setSequelOpeningAngle} disabled={generatingSequel}>
+                <SelectTrigger className="h-11"><SelectValue placeholder="开场角度" /></SelectTrigger>
+                <SelectContent>{SEQUEL_OPENING_ANGLES.map((item) => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}</SelectContent>
+              </Select>
               <Button type="button" className="flex-1 gap-1.5 sm:flex-none" onClick={applyPendingSequel}>
                 <Check className="h-4 w-4" /> 替换当前脚本
               </Button>

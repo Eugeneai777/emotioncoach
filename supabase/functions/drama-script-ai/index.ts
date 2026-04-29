@@ -67,6 +67,21 @@ const SEQUEL_OPENING_ANGLES = [
   "用外部打断开场：电话、敲门、消息弹窗或旁人闯入，直接把最后悬念推高",
 ];
 
+const SEQUEL_DIRECTION_MAP: Record<string, string> = {
+  new_evidence: SEQUEL_CREATIVE_DIRECTIONS[0],
+  third_party_pressure: SEQUEL_CREATIVE_DIRECTIONS[1],
+  costly_counterattack: SEQUEL_CREATIVE_DIRECTIONS[2],
+  hidden_truth: SEQUEL_CREATIVE_DIRECTIONS[3],
+  countdown_choice: SEQUEL_CREATIVE_DIRECTIONS[4],
+};
+
+const SEQUEL_OPENING_ANGLE_MAP: Record<string, string> = {
+  one_second_later: SEQUEL_OPENING_ANGLES[0],
+  prop_focus: SEQUEL_OPENING_ANGLES[1],
+  reaction_first: SEQUEL_OPENING_ANGLES[2],
+  external_interrupt: SEQUEL_OPENING_ANGLES[3],
+};
+
 const extractContinuityTokens = (value: unknown) => normalizeText(value)
   .split(/[，。！？、；：,.!?;:\s|"“”'（）()【】\[\]-]/)
   .map((token) => token.trim())
@@ -334,7 +349,7 @@ Deno.serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const { theme, genre, style, sceneCount, mode, products, targetAudience, conversionStyle, conversionStyles, conflictIntensity, action, avoidTitles, previousScript, sequelCreativeSeed } = await req.json();
+    const { theme, genre, style, sceneCount, mode, products, targetAudience, conversionStyle, conversionStyles, conflictIntensity, action, avoidTitles, previousScript, sequelCreativeSeed, sequelDirection, sequelOpeningAngle } = await req.json();
 
     // --- Suggest Themes Mode ---
     if (action === "suggest_themes") {
@@ -519,8 +534,8 @@ ${productList}${avoidTitlePrompt}
     const previousData = isSequel ? previousScript.script_data : null;
     const previousLastScene = previousData?.scenes?.[previousData.scenes.length - 1];
     const seriesBible = isSequel ? buildSeriesBible(previousScript, previousData, previousLastScene, products || previousScript?.selected_products || []) : null;
-    const sequelDirection = isSequel ? pickBySeed(SEQUEL_CREATIVE_DIRECTIONS, sequelCreativeSeed, 1) : undefined;
-    const sequelOpeningAngle = isSequel ? pickBySeed(SEQUEL_OPENING_ANGLES, sequelCreativeSeed, 2) : undefined;
+    const selectedSequelDirection = isSequel ? (SEQUEL_DIRECTION_MAP[sequelDirection] || pickBySeed(SEQUEL_CREATIVE_DIRECTIONS, sequelCreativeSeed, 1)) : undefined;
+    const selectedSequelOpeningAngle = isSequel ? (SEQUEL_OPENING_ANGLE_MAP[sequelOpeningAngle] || pickBySeed(SEQUEL_OPENING_ANGLES, sequelCreativeSeed, 2)) : undefined;
 
     let userPrompt = `请为以下主题创作一个${count}个分镜的短剧脚本：
 
@@ -538,8 +553,8 @@ ${productList}${avoidTitlePrompt}
 
 【本次重生成随机创作指令】
 - 创作种子：${sequelCreativeSeed || Date.now()}
-- 本次必须采用的剧情推进方向：${sequelDirection}
-- 本次必须采用的开场角度：${sequelOpeningAngle}
+- 本次必须采用的剧情推进方向：${selectedSequelDirection}
+- 本次必须采用的开场角度：${selectedSequelOpeningAngle}
 - 如果用户再次点击重生成，你必须换一套冲突推进、反转线索、关键道具和结尾钩子；不要复用上一次的标题、台词、证据、反转方式。
 
 【系列圣经 Series Bible：最高优先级，必须逐条继承】
