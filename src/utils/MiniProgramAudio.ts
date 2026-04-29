@@ -240,6 +240,16 @@ export class MiniProgramAudioClient {
     this.preAcquiredStream = config.preAcquiredStream ?? null;
   }
 
+  private shouldPreferNativeWxRecorder(wx: typeof window.wx): boolean {
+    const ua = navigator.userAgent || '';
+    const isAndroid = /Android/i.test(ua);
+    const isMiniProgram = window.__wxjs_environment === 'miniprogram' || /miniProgram/i.test(ua);
+
+    // 安卓微信小程序 WebView 的 Web Audio 录音链路更容易静默/挂起；
+    // 有原生录音能力时优先使用 wx.getRecorderManager，iOS/Web 保持现有 Web Audio 逻辑。
+    return Boolean(isAndroid && isMiniProgram && wx?.getRecorderManager && wx?.arrayBufferToBase64);
+  }
+
   /**
    * 连接到 WebSocket 中继服务器
    */
