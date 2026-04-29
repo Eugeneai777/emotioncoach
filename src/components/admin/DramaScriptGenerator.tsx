@@ -622,27 +622,37 @@ export default function DramaScriptGenerator() {
         { key: "A" as const, label: "A版：强承接版", description: "更严格接上一集最后分镜，人物和关系稳定延续", variant: "strong_continuity" },
         { key: "B" as const, label: "B版：爆点升级版", description: "承接不变，但冲突、误会和反转更夸张", variant: "viral_upgrade" },
       ];
+      const buildCandidate = (data: DramaScript, index: number): SequelCandidate => ({
+        key: variants[index].key,
+        label: variants[index].label,
+        description: variants[index].description,
+        script: data,
+        sourceScript: script,
+        conversionStyles: script.mode === "youjin" ? getSequelConversionStyles(script) : [],
+        products: productsForSequel,
+      });
       setSequelGenerationStep("正在生成A版：强承接版...");
       const first = await supabase.functions.invoke("drama-script-ai", { body: { ...baseBody, sequelVariant: variants[0].variant } });
       if (first.data?.error || first.error) {
         throw new Error(await extractEdgeFunctionError(first.data, first.error, "A版生成失败，请稍后重试"));
       }
+      const firstCandidate = buildCandidate(first.data as DramaScript, 0);
+      setMode(script.mode || "generic");
+      setGenre(script.genre || genre);
+      setStyle(script.style || style);
+      setTargetAudience(script.target_audience || targetAudience);
+      setConversionStyles(getSequelConversionStyles(script));
+      setSelectedProducts(new Set(productsForSequel.map((p) => p.key)));
+      setTheme(firstCandidate.script.title);
+      setSequelCandidates([firstCandidate]);
+      setSavedScriptId(null);
+      setActiveSavedScript(script);
       setSequelGenerationStep("A版已完成，正在生成B版：爆点升级版...");
       const second = await supabase.functions.invoke("drama-script-ai", { body: { ...baseBody, sequelVariant: variants[1].variant } });
       if (second.data?.error || second.error) {
         throw new Error(await extractEdgeFunctionError(second.data, second.error, "B版生成失败，请稍后重试"));
       }
-      const responses = [first, second];
-
-      const candidates = responses.map(({ data }, index) => ({
-        key: variants[index].key,
-        label: variants[index].label,
-        description: variants[index].description,
-        script: data as DramaScript,
-        sourceScript: script,
-        conversionStyles: script.mode === "youjin" ? getSequelConversionStyles(script) : [],
-        products: productsForSequel,
-      }));
+      const candidates = [firstCandidate, buildCandidate(second.data as DramaScript, 1)];
       setMode(script.mode || "generic");
       setGenre(script.genre || genre);
       setStyle(script.style || style);
