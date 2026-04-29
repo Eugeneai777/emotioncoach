@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { Suspense, lazy, useState, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import { useAssessmentTemplate, useSaveAssessmentResult } from "@/hooks/usePartnerAssessments";
 import { useAuth } from "@/hooks/useAuth";
@@ -11,13 +11,13 @@ import { Loader2, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import PageHeader from "@/components/PageHeader";
-import { AssessmentPromoShareDialog } from "@/components/dynamic-assessment/AssessmentPromoShareDialog";
 
 import { DynamicAssessmentIntro } from "@/components/dynamic-assessment/DynamicAssessmentIntro";
 import { DynamicAssessmentQuestions } from "@/components/dynamic-assessment/DynamicAssessmentQuestions";
 import { DynamicAssessmentResult } from "@/components/dynamic-assessment/DynamicAssessmentResult";
-import { DynamicAssessmentHistory } from "@/components/dynamic-assessment/DynamicAssessmentHistory";
-import { AssessmentPayDialog } from "@/components/wealth-block/AssessmentPayDialog";
+const AssessmentPromoShareDialog = lazy(() => import("@/components/dynamic-assessment/AssessmentPromoShareDialog").then((m) => ({ default: m.AssessmentPromoShareDialog })));
+const DynamicAssessmentHistory = lazy(() => import("@/components/dynamic-assessment/DynamicAssessmentHistory").then((m) => ({ default: m.DynamicAssessmentHistory })));
+const AssessmentPayDialog = lazy(() => import("@/components/wealth-block/AssessmentPayDialog").then((m) => ({ default: m.AssessmentPayDialog })));
 
 type Phase = "intro" | "questions" | "result" | "history";
 
@@ -236,7 +236,8 @@ export default function DynamicAssessmentPage() {
             onPayClick={() => setShowPayDialog(true)}
           />
         </main>
-        {requirePayment && packageKey && (
+        {requirePayment && packageKey && showPayDialog && (
+          <Suspense fallback={null}>
           <AssessmentPayDialog
             open={showPayDialog}
             onOpenChange={setShowPayDialog}
@@ -246,18 +247,23 @@ export default function DynamicAssessmentPage() {
             packageKey={packageKey}
             packageName={template.title}
           />
+          </Suspense>
         )}
-        <AssessmentPromoShareDialog
-          open={showShareDialog}
-          onOpenChange={setShowShareDialog}
-          assessmentKey={assessmentKey || ''}
-          config={{
-            emoji: template.emoji,
-            title: template.title,
-            subtitle: template.subtitle || '',
-            sharePath: `/assessment/${assessmentKey}`,
-          }}
-        />
+        {showShareDialog && (
+          <Suspense fallback={null}>
+          <AssessmentPromoShareDialog
+            open={showShareDialog}
+            onOpenChange={setShowShareDialog}
+            assessmentKey={assessmentKey || ''}
+            config={{
+              emoji: template.emoji,
+              title: template.title,
+              subtitle: template.subtitle || '',
+              sharePath: `/assessment/${assessmentKey}`,
+            }}
+          />
+          </Suspense>
+        )}
       </div>
     );
   }
@@ -277,6 +283,7 @@ export default function DynamicAssessmentPage() {
   // === HISTORY ===
   if (phase === "history") {
     return (
+      <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-background"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
       <DynamicAssessmentHistory
         records={historyRecords}
         isLoading={historyLoading}
@@ -286,6 +293,7 @@ export default function DynamicAssessmentPage() {
         onBack={() => setPhase(result ? "result" : "intro")}
         onViewRecord={handleViewHistoryRecord}
       />
+      </Suspense>
     );
   }
 
@@ -318,7 +326,8 @@ export default function DynamicAssessmentPage() {
           }}
         />
 
-        {requirePayment && packageKey && (
+        {requirePayment && packageKey && showPayDialog && (
+          <Suspense fallback={null}>
           <AssessmentPayDialog
             open={showPayDialog}
             onOpenChange={setShowPayDialog}
@@ -328,6 +337,7 @@ export default function DynamicAssessmentPage() {
             packageKey={packageKey}
             packageName={template.title}
           />
+          </Suspense>
         )}
       </>
     );

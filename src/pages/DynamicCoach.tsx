@@ -1,18 +1,10 @@
-import { useState, useEffect } from "react";
+import { Suspense, lazy, useState, useEffect } from "react";
 import { useParams, useLocation } from "react-router-dom";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { OG_BASE_URL } from "@/config/ogConfig";
 import { CoachLayout } from "@/components/coach/CoachLayout";
 import { CoachScenarioChips } from "@/components/coach/CoachScenarioChips";
 import { VibrantLifeScenarioCards } from "@/components/coach/VibrantLifeScenarioCards";
-import { CoachCommunity } from "@/components/coach/CoachCommunity";
-import { VideoRecommendationCard } from "@/components/coach/VideoRecommendationCard";
-import { ToolRecommendationCard } from "@/components/coach/ToolRecommendationCard";
-import { EmotionButtonRecommendationCard } from "@/components/coach/EmotionButtonRecommendationCard";
-import { CampRecommendationCard } from "@/components/coach/CampRecommendationCard";
-import { CoachNotificationsModule } from "@/components/coach/CoachNotificationsModule";
-import { CoachTrainingCamp } from "@/components/coach/CoachTrainingCamp";
-import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
 import { VoiceCallCTA } from "@/components/coach/VoiceCallCTA";
 import { useDynamicCoachChat, CoachChatMode } from "@/hooks/useDynamicCoachChat";
 import { useCoachTemplate } from "@/hooks/useCoachTemplates";
@@ -26,6 +18,15 @@ import { GratitudeQuickAdd } from "@/components/gratitude/GratitudeQuickAdd";
 import { Loader2 } from "lucide-react";
 import { MeditationAnalysisIntro } from "@/components/wealth-camp/MeditationAnalysisIntro";
 import { Badge } from "@/components/ui/badge";
+
+const CoachCommunity = lazy(() => import("@/components/coach/CoachCommunity").then((m) => ({ default: m.CoachCommunity })));
+const VideoRecommendationCard = lazy(() => import("@/components/coach/VideoRecommendationCard").then((m) => ({ default: m.VideoRecommendationCard })));
+const ToolRecommendationCard = lazy(() => import("@/components/coach/ToolRecommendationCard").then((m) => ({ default: m.ToolRecommendationCard })));
+const EmotionButtonRecommendationCard = lazy(() => import("@/components/coach/EmotionButtonRecommendationCard").then((m) => ({ default: m.EmotionButtonRecommendationCard })));
+const CampRecommendationCard = lazy(() => import("@/components/coach/CampRecommendationCard").then((m) => ({ default: m.CampRecommendationCard })));
+const CoachNotificationsModule = lazy(() => import("@/components/coach/CoachNotificationsModule").then((m) => ({ default: m.CoachNotificationsModule })));
+const CoachTrainingCamp = lazy(() => import("@/components/coach/CoachTrainingCamp").then((m) => ({ default: m.CoachTrainingCamp })));
+const CoachVoiceChat = lazy(() => import("@/components/coach/CoachVoiceChat").then((m) => ({ default: m.CoachVoiceChat })));
 
 interface LocationState {
   initialMessage?: string;
@@ -334,6 +335,7 @@ const DynamicCoach = () => {
         ) : undefined
       }
       videoRecommendation={videoRecommendation ? (
+        <Suspense fallback={null}>
         <VideoRecommendationCard
           topicSummary={videoRecommendation.topicSummary}
           category={videoRecommendation.category}
@@ -343,31 +345,39 @@ const DynamicCoach = () => {
           videoUrl={videoRecommendation.videoUrl}
           onDismiss={() => setVideoRecommendation(null)}
         />
+        </Suspense>
       ) : undefined}
       toolRecommendation={toolRecommendation ? (
+        <Suspense fallback={null}>
         <ToolRecommendationCard
           userNeed={toolRecommendation.userNeed}
           toolId={toolRecommendation.toolId}
           usageReason={toolRecommendation.usageReason}
           onDismiss={() => setToolRecommendation(null)}
         />
+        </Suspense>
       ) : undefined}
       emotionButtonRecommendation={emotionButtonRecommendation ? (
+        <Suspense fallback={null}>
         <EmotionButtonRecommendationCard
           recommendation={emotionButtonRecommendation}
           onDismiss={() => setEmotionButtonRecommendation(null)}
         />
+        </Suspense>
       ) : undefined}
       campRecommendation={campRecommendation ? (
+        <Suspense fallback={null}>
         <CampRecommendationCard
           recommendation={campRecommendation}
           onDismiss={() => setCampRecommendation(null)}
         />
+        </Suspense>
       ) : undefined}
-      community={template.enable_community ? <CoachCommunity /> : undefined}
+      community={template.enable_community ? <Suspense fallback={null}><CoachCommunity /></Suspense> : undefined}
       showNotificationCenter={template.enable_notifications || false}
       notifications={
         template.enable_notifications ? (
+          <Suspense fallback={null}>
           <CoachNotificationsModule
             notifications={notifications}
             loading={notificationsLoading}
@@ -378,14 +388,17 @@ const DynamicCoach = () => {
             colorTheme={template.primary_color === 'purple' ? 'purple' : template.primary_color === 'blue' ? 'blue' : template.primary_color === 'pink' ? 'pink' : template.primary_color === 'amber' ? 'amber' : 'green'}
             coachLabel={template.title}
           />
+          </Suspense>
         ) : undefined
       }
       trainingCamp={
         template.enable_training_camp ? (
+          <Suspense fallback={null}>
           <CoachTrainingCamp
             colorTheme={(template.primary_color as 'green' | 'purple' | 'blue' | 'orange' | 'pink' | 'amber') || 'green'}
             campType={template.training_camp_type ?? undefined}
           />
+          </Suspense>
         ) : undefined
       }
       enableVoiceChat={template.coach_key === 'vibrant_life_sage'}
@@ -403,6 +416,7 @@ const DynamicCoach = () => {
     
     {/* OpenAI Realtime 语音对话全屏界面 */}
     {showVoiceChat && (
+      <Suspense fallback={null}>
       <CoachVoiceChat
         onClose={() => setShowVoiceChat(false)}
         coachEmoji={template.emoji}
@@ -411,6 +425,7 @@ const DynamicCoach = () => {
         featureKey="realtime_voice_vibrant_life"
         scenario={new URLSearchParams(location.search).get('scenario') || undefined}
       />
+      </Suspense>
     )}
   </>
   );

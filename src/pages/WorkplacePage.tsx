@@ -1,15 +1,16 @@
-import { useState } from "react";
+import { Suspense, lazy, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Mic, ChevronRight, Home, Share2, MessageCircle } from "lucide-react";
-import { IntroShareDialog } from "@/components/common/IntroShareDialog";
+import { LazyIntroShareDialog } from "@/components/common/LazyIntroShareDialog";
 import { introShareConfigs } from "@/config/introShareConfig";
 import WorkplaceQuickScenarios from "@/components/workplace/WorkplaceQuickScenarios";
 import WorkplaceAIChat from "@/components/workplace/WorkplaceAIChat";
 import AwakeningBottomNav from "@/components/awakening/AwakeningBottomNav";
-import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
 import { useAuth } from "@/hooks/useAuth";
 import { getSavedVoiceType } from "@/config/voiceTypeConfig";
+
+const CoachVoiceChat = lazy(() => import("@/components/coach/CoachVoiceChat").then((m) => ({ default: m.CoachVoiceChat })));
 
 const quickEntries = [
   { emoji: "😮‍💨", title: "压力释放", desc: "说出来就好了", context: "我工作压力很大，感觉快撑不住了...", chatType: "stress" as const },
@@ -47,7 +48,7 @@ const WorkplacePage = () => {
             <span>主页</span>
           </motion.button>
 
-          <IntroShareDialog
+          <LazyIntroShareDialog
             config={introShareConfigs.workplace}
             trigger={
               <motion.button
@@ -232,6 +233,7 @@ const WorkplacePage = () => {
       />
 
       {showVoice && user && (
+        <Suspense fallback={null}>
         <CoachVoiceChat
           onClose={() => setShowVoice(false)}
           coachEmoji="💼"
@@ -243,6 +245,7 @@ const WorkplacePage = () => {
           featureKey="realtime_voice"
           voiceType={getSavedVoiceType()}
         />
+        </Suspense>
       )}
 
       <AwakeningBottomNav />

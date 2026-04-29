@@ -1,16 +1,17 @@
-import { useState, useEffect } from "react";
+import { Suspense, lazy, useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Mic, Share2, ChevronRight, Home } from "lucide-react";
 import { parseAndStoreChildRef } from "@/utils/elderMoodUpload";
-import { IntroShareDialog } from "@/components/common/IntroShareDialog";
+import { LazyIntroShareDialog } from "@/components/common/LazyIntroShareDialog";
 import { introShareConfigs } from "@/config/introShareConfig";
 import AwakeningBottomNav from "@/components/awakening/AwakeningBottomNav";
-import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
 import { useAuth } from "@/hooks/useAuth";
 import { getSavedVoiceType } from "@/config/voiceTypeConfig";
 import { FamilyPhotoUploader } from "@/components/elder-care/FamilyPhotoUploader";
 import { FamilyPhotoWaterfall } from "@/components/elder-care/FamilyPhotoWaterfall";
+
+const CoachVoiceChat = lazy(() => import("@/components/coach/CoachVoiceChat").then((m) => ({ default: m.CoachVoiceChat })));
 
 const ElderCarePage = () => {
   const navigate = useNavigate();
@@ -47,7 +48,7 @@ const ElderCarePage = () => {
             <span>主页</span>
           </motion.button>
 
-          <IntroShareDialog
+          <LazyIntroShareDialog
             config={introShareConfigs.dajin}
             trigger={
               <motion.button
@@ -196,6 +197,7 @@ const ElderCarePage = () => {
       </div>
 
       {showVoice && user && (
+        <Suspense fallback={null}>
         <CoachVoiceChat
           onClose={() => setShowVoice(false)}
           coachEmoji="🧓"
@@ -208,6 +210,7 @@ const ElderCarePage = () => {
           featureKey="realtime_voice"
           voiceType={getSavedVoiceType()}
         />
+        </Suspense>
       )}
 
       <AwakeningBottomNav />

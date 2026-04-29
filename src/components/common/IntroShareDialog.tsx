@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Share2, Download, Check, Loader2, Copy } from 'lucide-react';
@@ -21,10 +21,11 @@ interface IntroShareDialogProps {
   config: IntroShareConfig;
   trigger?: React.ReactNode;
   partnerCode?: string;
+  initialOpen?: boolean;
 }
 
-export const IntroShareDialog = ({ config, trigger, partnerCode }: IntroShareDialogProps) => {
-  const [open, setOpen] = useState(false);
+export const IntroShareDialog = ({ config, trigger, partnerCode, initialOpen = false }: IntroShareDialogProps) => {
+  const [open, setOpen] = useState(initialOpen);
   const [selectedTemplate, setSelectedTemplate] = useState<CardTemplate>('value');
   const [isGenerating, setIsGenerating] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -40,6 +41,10 @@ export const IntroShareDialog = ({ config, trigger, partnerCode }: IntroShareDia
   const { toast } = useToast();
   const { user } = useAuth();
   const { profile, loading: profileLoading } = useProfileCompletion();
+
+  useEffect(() => {
+    if (initialOpen) setOpen(true);
+  }, [initialOpen]);
 
   // 获取用户头像和昵称
   const avatarUrl = getProxiedAvatarUrl(profile?.avatar_url);

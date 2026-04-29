@@ -1,16 +1,17 @@
-import { useState } from "react";
+import { Suspense, lazy, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Helmet } from "react-helmet";
 import { Mic, ChevronRight, Home, Languages, Wrench, ClipboardCheck, Pause, Heart, Share2, MessageCircle } from "lucide-react";
-import { IntroShareDialog } from "@/components/common/IntroShareDialog";
+import { LazyIntroShareDialog } from "@/components/common/LazyIntroShareDialog";
 import { introShareConfigs } from "@/config/introShareConfig";
 import AwakeningBottomNav from "@/components/awakening/AwakeningBottomNav";
 import UsAICalmButton from "@/components/us-ai/UsAICalmButton";
 import UsAIDailyCard from "@/components/us-ai/UsAIDailyCard";
-import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
 import { useAuth } from "@/hooks/useAuth";
 import { getSavedVoiceType } from "@/config/voiceTypeConfig";
+
+const CoachVoiceChat = lazy(() => import("@/components/coach/CoachVoiceChat").then((m) => ({ default: m.CoachVoiceChat })));
 
 const quickEntries = [
   { emoji: "💬", title: "今日对话", desc: "聊聊彼此", route: "/us-ai/tool?type=chat" },
@@ -45,7 +46,7 @@ const UsAI = () => {
             <span>主页</span>
           </motion.button>
 
-          <IntroShareDialog
+          <LazyIntroShareDialog
             config={introShareConfigs.usai}
             trigger={
               <motion.button
@@ -245,6 +246,7 @@ const UsAI = () => {
       </div>
 
       {showVoice && user && (
+        <Suspense fallback={null}>
         <CoachVoiceChat
           onClose={() => setShowVoice(false)}
           coachEmoji="💑"
@@ -256,6 +258,7 @@ const UsAI = () => {
           featureKey="realtime_voice"
           voiceType={getSavedVoiceType()}
         />
+        </Suspense>
       )}
 
       <AwakeningBottomNav />

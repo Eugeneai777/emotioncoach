@@ -4,13 +4,18 @@ import { useNavigate } from "react-router-dom";
 import { User, BookOpen } from "lucide-react";
 import logoImage from "@/assets/youjin-ai-logo-small.webp";
 import { useAuth } from "@/hooks/useAuth";
+import { preloadRouteOnIntent } from "@/utils/preloadRoutes";
 
 const AwakeningBottomNav: React.FC = () => {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
 
   const handleVoiceCoachClick = () => {
-    if (loading) return;
+    preloadRouteOnIntent('/life-coach-voice');
+    if (loading) {
+      navigate('/life-coach-voice');
+      return;
+    }
     if (!user) {
       navigate('/auth?redirect=/life-coach-voice');
       return;
@@ -25,6 +30,7 @@ const AwakeningBottomNav: React.FC = () => {
           {/* 左侧 - 学习 */}
           <motion.button
             whileTap={{ scale: 0.9 }}
+            onPointerDown={() => preloadRouteOnIntent('/camps?filter=my')}
             onClick={() => navigate('/camps?filter=my')}
             className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors motion-fallback"
           >
@@ -38,6 +44,7 @@ const AwakeningBottomNav: React.FC = () => {
           {/* 右侧 - 我的 */}
           <motion.button
             whileTap={{ scale: 0.9 }}
+            onPointerDown={() => preloadRouteOnIntent('/my-page')}
             onClick={() => navigate('/my-page')}
             className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors motion-fallback"
           >
@@ -56,6 +63,7 @@ const AwakeningBottomNav: React.FC = () => {
         
         {/* 主按钮 */}
         <motion.button
+          onPointerDown={() => preloadRouteOnIntent('/life-coach-voice')}
           onClick={handleVoiceCoachClick}
           className="relative w-14 h-14 rounded-full flex items-center justify-center overflow-hidden
                      border-0 shadow-lg shadow-orange-500/30"

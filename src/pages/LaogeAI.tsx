@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { LaogeToolCard } from "@/components/laoge/LaogeToolCard";
 import { Home, Share2, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
-import { IntroShareDialog } from "@/components/common/IntroShareDialog";
+import { LazyIntroShareDialog } from "@/components/common/LazyIntroShareDialog";
 import { introShareConfigs } from "@/config/introShareConfig";
 import AwakeningBottomNav from "@/components/awakening/AwakeningBottomNav";
 import { useAuth } from "@/hooks/useAuth";
@@ -192,7 +192,7 @@ export default function LaogeAI() {
             <span>主页</span>
           </motion.button>
 
-          <IntroShareDialog
+          <LazyIntroShareDialog
             config={introShareConfigs.laoge}
             trigger={
               <motion.button

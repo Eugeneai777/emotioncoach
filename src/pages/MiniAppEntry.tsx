@@ -21,7 +21,7 @@ import { supabase } from "@/integrations/supabase/client";
 import AssessmentPickerSheet, { type AssessmentOption } from "@/components/mini-app/AssessmentPickerSheet";
 import { usePackagesPurchased } from "@/hooks/usePackagePurchased";
 import { useQuery } from "@tanstack/react-query";
-import { scheduleRoutePreload } from "@/utils/preloadRoutes";
+import { preloadRouteOnIntent, scheduleRoutePreload } from "@/utils/preloadRoutes";
 
 interface AudienceBadge {
   text: string;
@@ -374,7 +374,6 @@ const MiniAppEntry = () => {
     return scheduleRoutePreload([
       '/my-page',
       '/auth',
-      ...audiences.map((audience) => audience.route),
     ], 700);
   }, []);
 
@@ -518,6 +517,7 @@ const MiniAppEntry = () => {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={reduceMotion ? { duration: 0.1 } : { delay: i * 0.02, type: "spring", stiffness: 300, damping: 25 }}
                 whileTap={{ scale: 0.93 }}
+                onPointerDown={() => preloadRouteOnIntent(a.route)}
                 onClick={() => navigate(a.route)}
                 style={{ transform: "translateZ(0)" }}
                 className={`relative overflow-hidden rounded-xl bg-gradient-to-br ${a.gradient} min-h-[96px] flex flex-col items-start justify-between p-3 shadow-md active:shadow-inner hover:-translate-y-0.5 transition-all duration-200 w-full`}
@@ -570,6 +570,7 @@ const MiniAppEntry = () => {
                       setPickerOpen(true);
                     }
                   }}
+                  onPointerDown={() => a.badge!.assessments.forEach((item) => preloadRouteOnIntent(item.route))}
                   className="absolute -top-2 right-1 z-20 bg-gradient-to-r from-orange-500 to-amber-400 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm active:scale-95 transition-transform"
                 >
                   {a.badge.text}
@@ -687,6 +688,7 @@ const MiniAppEntry = () => {
               <motion.button
                 key={c.topic}
                 type="button"
+                onPointerDown={() => preloadRouteOnIntent(`/life-coach-voice?topic=${c.topic}`)}
                 onClick={() => navigate(`/life-coach-voice?topic=${c.topic}`)}
                 initial={reduceMotion ? false : { opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
