@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 interface DimensionScore {
+  key?: string;
   score: number;
   maxScore: number;
   label: string;
