@@ -257,6 +257,7 @@ export default function DramaScriptGenerator() {
   const [suggestedThemes, setSuggestedThemes] = useState<{ title: string; description: string }[]>([]);
   const [loadingThemes, setLoadingThemes] = useState(false);
   const [selectedThemeIdx, setSelectedThemeIdx] = useState<number | null>(null);
+  const [sequelConversionOverrides, setSequelConversionOverrides] = useState<Record<string, string[]>>({});
   const themeFetchRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Image/video generation state
@@ -295,6 +296,20 @@ export default function DramaScriptGenerator() {
         return next.length > 0 ? next : ["plot"];
       }
       return [...prev, value];
+    });
+  };
+
+  const getScriptConversionStyles = (script: SavedDramaScript) =>
+    normalizeConversionStyles(script.script_data?.conversionStyles || script.conversion_style || conversionStyles);
+
+  const getSequelConversionStyles = (script: SavedDramaScript) =>
+    sequelConversionOverrides[script.id] || getScriptConversionStyles(script);
+
+  const toggleSequelConversionStyle = (script: SavedDramaScript, value: string) => {
+    setSequelConversionOverrides((prev) => {
+      const current = prev[script.id] || getScriptConversionStyles(script);
+      const next = current.includes(value) ? current.filter((item) => item !== value) : [...current, value];
+      return { ...prev, [script.id]: next.length > 0 ? next : ["plot"] };
     });
   };
 
@@ -567,7 +582,7 @@ export default function DramaScriptGenerator() {
         previousScript: script,
       };
       if (script.mode === "youjin") {
-        const sequelConversionStyles = normalizeConversionStyles(script.script_data?.conversionStyles || script.conversion_style || conversionStyles);
+        const sequelConversionStyles = getSequelConversionStyles(script);
         body.products = productsForSequel;
         body.targetAudience = script.target_audience || targetAudience;
         body.conversionStyles = sequelConversionStyles;
@@ -581,7 +596,7 @@ export default function DramaScriptGenerator() {
       setGenre(script.genre || genre);
       setStyle(script.style || style);
       setTargetAudience(script.target_audience || targetAudience);
-      setConversionStyles(normalizeConversionStyles(script.script_data?.conversionStyles || script.conversion_style || conversionStyles));
+      setConversionStyles(getSequelConversionStyles(script));
       setSelectedProducts(new Set(productsForSequel.map((p) => p.key)));
       setTheme((data as DramaScript).title);
       setResult(data as DramaScript);
@@ -1337,7 +1352,8 @@ export default function DramaScriptGenerator() {
           ) : (
             <div className="max-h-72 w-full min-w-0 space-y-2 overflow-auto overflow-x-hidden pr-1">
               {savedScripts.map((script) => (
-                <div key={script.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-lg border p-3 min-w-0 overflow-hidden">
+                  <div key={script.id} className="flex flex-col gap-3 rounded-lg border p-3 min-w-0 overflow-hidden">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 min-w-0">
                   <button className="min-w-0 flex-1 text-left overflow-hidden" onClick={() => loadSavedScript(script)}>
                     <div className="flex items-center gap-2 flex-wrap min-w-0">
                       <span className="font-medium text-sm truncate min-w-0 max-w-full">{script.title}</span>
@@ -1359,6 +1375,32 @@ export default function DramaScriptGenerator() {
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
                   </div>
+                    </div>
+                    {script.mode === "youjin" && (
+                      <div className="rounded-md bg-muted/40 p-2 min-w-0">
+                        <div className="mb-2 text-xs text-muted-foreground">续集将继承的转化方式</div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {CONVERSION_STYLES.map((style) => {
+                            const selected = getSequelConversionStyles(script).includes(style.value);
+                            return (
+                              <button
+                                key={style.value}
+                                type="button"
+                                onClick={() => toggleSequelConversionStyle(script, style.value)}
+                                disabled={generatingSequel}
+                                className={`max-w-full rounded-full border px-2.5 py-1 text-left text-xs transition-colors ${
+                                  selected
+                                    ? "border-primary bg-primary text-primary-foreground"
+                                    : "border-border bg-background hover:bg-muted"
+                                }`}
+                              >
+                                {style.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                 </div>
               ))}
             </div>
