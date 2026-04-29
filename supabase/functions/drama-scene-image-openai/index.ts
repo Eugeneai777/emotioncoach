@@ -87,7 +87,7 @@ CHARACTER BIBLE:
 ${characterBible || "No named characters provided. Keep all visible people consistent with the scene prompt."}
 
 REFERENCE CONTINUITY:
-${referenceUrls.length > 0 ? referenceUrls.map((url, i) => `Reference ${i + 1}: ${url}`).join("\n") : "No previous reference image. Establish the canonical look for this series."}
+${referenceUrls.length > 0 ? referenceUrls.map((url: string, i: number) => `Reference ${i + 1}: ${url}`).join("\n") : "No previous reference image. Establish the canonical look for this series."}
 
 CURRENT SCENE:
 Scene number: ${scene.sceneNumber || input.sceneNumber || "unknown"}
