@@ -465,6 +465,22 @@ export default function DramaScriptGenerator() {
     }
   };
 
+  const buildScriptWithGeneratedImages = useCallback((): DramaScript | null => {
+    if (!result) return null;
+    return {
+      ...result,
+      conversionStyles: mode === "youjin" ? conversionStyles : undefined,
+      characters: result.characters.map((char, index) => ({
+        ...char,
+        referenceImageUrl: characterImages[index]?.imageUrl || char.referenceImageUrl,
+      })),
+      scenes: result.scenes.map((scene) => ({
+        ...scene,
+        generatedImageUrl: sceneImages[scene.sceneNumber]?.imageUrl || scene.generatedImageUrl,
+      })),
+    };
+  }, [characterImages, conversionStyles, mode, result, sceneImages]);
+
   const loadSavedScript = (script: SavedDramaScript) => {
     setMode(script.mode || "generic");
     setTheme(script.theme || script.title);
