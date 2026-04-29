@@ -44,6 +44,29 @@ const buildSeriesBible = (previousScript: any, previousData: any, previousLastSc
 
 const containsAny = (haystack: string, needles: string[]) => needles.some((needle) => needle && haystack.includes(needle));
 
+const pickBySeed = <T,>(items: T[], seed: string | number | undefined, offset = 0) => {
+  if (items.length === 0) return undefined;
+  const raw = String(seed || Date.now()) + `:${offset}`;
+  let hash = 0;
+  for (let i = 0; i < raw.length; i += 1) hash = (hash * 31 + raw.charCodeAt(i)) >>> 0;
+  return items[hash % items.length];
+};
+
+const SEQUEL_CREATIVE_DIRECTIONS = [
+  "新证据突然出现：用一张聊天记录、体检单、监控截图或旧物，把上一集判断全部推翻",
+  "第三方压力介入：老板、婆婆、前任、孩子、客户或医生闯入，让原矛盾升级成公开危机",
+  "主角反击但代价更大：主角不再解释，做出一个让对方慌张的决定",
+  "沉默真相爆开：上一集看似强势的人露出脆弱动机，观众开始重新站队",
+  "限时选择：本集必须围绕一个倒计时选择推进，逼角色在亲情、事业、尊严或健康之间取舍",
+];
+
+const SEQUEL_OPENING_ANGLES = [
+  "从上一集最后一句台词后的1秒钟开始，不换地点，先给角色脸部特写",
+  "从上一集最后动作留下的道具开始：手机、门、药盒、合同、照片或报告成为第一镜头焦点",
+  "用对方的反应开场：上一集被刺激的人先沉默3秒，再说出更狠的一句",
+  "用外部打断开场：电话、敲门、消息弹窗或旁人闯入，直接把最后悬念推高",
+];
+
 const extractContinuityTokens = (value: unknown) => normalizeText(value)
   .split(/[，。！？、；：,.!?;:\s|"“”'（）()【】\[\]-]/)
   .map((token) => token.trim())
