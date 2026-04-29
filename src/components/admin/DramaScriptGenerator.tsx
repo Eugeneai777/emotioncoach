@@ -2186,6 +2186,27 @@ export default function DramaScriptGenerator() {
       )}
     </AdminPageLayout>
 
+      {pendingSequel && sequelGenerationSource && (
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 p-3 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-background/80">
+          <div className="mx-auto flex max-w-5xl flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0 text-sm">
+              <div className="flex items-center gap-2 font-medium text-primary">
+                <Check className="h-4 w-4" /> 第{sequelGenerationSource.episodeNumber + 1}集续集已生成
+              </div>
+              <div className="truncate text-xs text-muted-foreground">点击替换后才会覆盖当前编辑区</div>
+            </div>
+            <div className="flex gap-2">
+              <Button type="button" className="flex-1 gap-1.5 sm:flex-none" onClick={applyPendingSequel}>
+                <Check className="h-4 w-4" /> 替换当前脚本
+              </Button>
+              <Button type="button" variant="outline" className="flex-1 gap-1.5 sm:flex-none" onClick={() => generateSequel(pendingSequel.source)} disabled={generatingSequel}>
+                <RefreshCw className="h-4 w-4" /> 重新生成
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Video preview modal */}
       {modalVideoUrl && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={() => setModalVideoUrl(null)}>
