@@ -15,13 +15,18 @@ export const LazyIntroShareDialog = ({ config, trigger, partnerCode }: LazyIntro
   const [loaded, setLoaded] = useState(false);
 
   if (!loaded) {
+    const triggerProps = trigger.props as {
+      onClick?: (event: React.MouseEvent) => void;
+      onPointerDown?: (event: React.PointerEvent) => void;
+    };
+
     return React.cloneElement(trigger, {
       onClick: (event: React.MouseEvent) => {
-        trigger.props.onClick?.(event);
+        triggerProps.onClick?.(event);
         setLoaded(true);
       },
       onPointerDown: (event: React.PointerEvent) => {
-        trigger.props.onPointerDown?.(event);
+        triggerProps.onPointerDown?.(event);
         void import('./IntroShareDialog');
       },
     });
