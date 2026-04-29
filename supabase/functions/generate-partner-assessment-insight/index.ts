@@ -11,6 +11,7 @@ serve(async (req) => {
     if (!LOVABLE_API_KEY) throw new Error('LOVABLE_API_KEY is not configured');
 
     const { dimensionScores, primaryPattern, totalScore, maxScore, aiInsightPrompt, title } = await req.json();
+    const isMaleMidlifeVitality = String(title || '').includes('有劲') || String(title || '').includes('男性');
 
     const systemPrompt = aiInsightPrompt || `你是劲老师，一位温暖专业的心理教练。请基于测评结果提供个性化建议。
 要求：
@@ -21,6 +22,7 @@ serve(async (req) => {
 输出格式为纯文本，用换行分隔。`;
 
     const userPrompt = `测评名称：${title || '综合测评'}
+${isMaleMidlifeVitality ? '重要评分说明：本测评原始分是“恢复阻力分”，低分代表当前状态更稳，高分代表恢复阻力更高。解读时请转译为“有劲状态”，不要把低原始分说成状态差。' : ''}
 测评结果：
 - 主要模式：${primaryPattern || '未知'}
 - 综合得分：${totalScore}/${maxScore}
