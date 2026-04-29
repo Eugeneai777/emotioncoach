@@ -8,7 +8,7 @@ import { setPostAuthRedirect } from "@/lib/postAuthRedirect";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { DimensionRadarChart } from "./DimensionRadarChart";
-import midlifeSceneImage from "@/assets/audience/midlife.webp";
+import midlifeVitalitySceneImage from "@/assets/audience/midlife-vitality-scene-clean.jpg";
 
 interface DynamicAssessmentIntroProps {
   template: {
@@ -97,7 +97,7 @@ const enrichmentData: Record<string, {
       ours: "用真实生活场景提问，帮你看清精力、睡眠、压力、关系和关键时刻信心之间的关系。",
     },
     scene: {
-      image: midlifeSceneImage,
+      image: midlifeVitalitySceneImage,
       title: "很多变化，不是突然发生的",
       subtitle: "先看清状态，再决定从哪里开始恢复。",
       tags: ["晚上睡不深", "白天靠硬撑", "有些话不好开口"],
@@ -207,8 +207,10 @@ export function DynamicAssessmentIntro({ template, onStart, onShowHistory, hasHi
               <img
                 src={enrichment.scene.image}
                 alt="中年男性独处思考状态场景"
-                className="absolute inset-0 h-full w-full object-cover"
+                className="absolute inset-0 h-full w-full object-cover object-center"
                 loading="lazy"
+                width={1344}
+                height={768}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-foreground/85 via-foreground/35 to-transparent" />
               <div className="relative z-10 flex min-h-[210px] flex-col justify-end p-5 text-background">
