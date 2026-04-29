@@ -16,7 +16,7 @@ const getCompatibleCampTypes = (campType: string): string[] => {
   return [campType];
 };
 
-export function useCampPurchase(campType: string) {
+export function useCampPurchase(campType: string, enabled = true) {
   const { user } = useAuth();
 
   return useQuery({
@@ -39,6 +39,6 @@ export function useCampPurchase(campType: string) {
       if (error) throw error;
       return data;
     },
-    enabled: !!user && !!campType
+    enabled: !!user && !!campType && enabled
   });
 }
