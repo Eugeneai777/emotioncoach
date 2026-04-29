@@ -379,10 +379,15 @@ export function DynamicAssessmentResult({
         </div>
       </motion.div>
 
-      <div className={cn("mx-auto px-4 space-y-4", isMaleMidlifeVitality ? "max-w-lg lg:max-w-5xl" : "max-w-lg")}>
+      <div className={cn(
+        "mx-auto px-4",
+        isMaleMidlifeVitality
+          ? "max-w-lg space-y-4 lg:max-w-5xl lg:grid lg:grid-cols-[minmax(0,1.15fr)_minmax(340px,0.85fr)] lg:items-start lg:gap-4 lg:space-y-0"
+          : "max-w-lg space-y-4"
+      )}>
         {/* Radar Chart (non-SBTI only) */}
         {!isSBTI && result.dimensionScores.length >= 3 && (
-          <motion.div custom={1} variants={fadeUp} initial="hidden" animate="visible">
+          <motion.div custom={1} variants={fadeUp} initial="hidden" animate="visible" className={cn(isMaleMidlifeVitality && "lg:row-span-2")}>
             <Card className="border-border/40 bg-card/90 backdrop-blur-sm shadow-sm overflow-hidden">
               <CardContent className="p-4 pt-3 sm:p-5">
                 <div className="flex items-center gap-2 mb-1">
