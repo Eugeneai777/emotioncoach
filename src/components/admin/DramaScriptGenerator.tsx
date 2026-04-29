@@ -106,6 +106,7 @@ interface Character {
   name: string;
   description: string;
   imagePrompt: string;
+  referenceImageUrl?: string;
 }
 
 interface Scene {
@@ -118,6 +119,7 @@ interface Scene {
   bgm: string;
   duration: string;
   relatedProduct?: string;
+  generatedImageUrl?: string;
 }
 
 interface DramaScript {
@@ -186,6 +188,14 @@ interface SceneAudioState {
   error?: string;
 }
 
+type ImageStatus = "idle" | "generating" | "done" | "failed";
+
+interface SceneImageState {
+  status: ImageStatus;
+  imageUrl?: string;
+  error?: string;
+}
+
 function base64ToBlob(base64: string, mimeType: string): Blob {
   const byteChars = atob(base64);
   const byteNums = new Uint8Array(byteChars.length);
@@ -234,6 +244,13 @@ export default function DramaScriptGenerator() {
   const [loadingThemes, setLoadingThemes] = useState(false);
   const [selectedThemeIdx, setSelectedThemeIdx] = useState<number | null>(null);
   const themeFetchRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Image/video generation state
+  const [imageAspectRatio, setImageAspectRatio] = useState("9:16");
+  const [sceneImages, setSceneImages] = useState<Record<number, SceneImageState>>({});
+  const [characterImages, setCharacterImages] = useState<Record<number, SceneImageState>>({});
+  const [batchGeneratingImages, setBatchGeneratingImages] = useState(false);
+  const [generatingCharacterRefs, setGeneratingCharacterRefs] = useState(false);
 
   // Video generation state
   const [videoAspectRatio, setVideoAspectRatio] = useState("9:16");
@@ -362,6 +379,8 @@ export default function DramaScriptGenerator() {
     setSceneVideos({});
     setVideoPreviewFallbacks({});
     setSceneAudios({});
+    setSceneImages({});
+    setCharacterImages({});
     // Clear all polling
     Object.values(pollingRefs.current).forEach(clearInterval);
     pollingRefs.current = {};
@@ -393,6 +412,8 @@ export default function DramaScriptGenerator() {
     setSceneVideos({});
     setVideoPreviewFallbacks({});
     setSceneAudios({});
+    setSceneImages({});
+    setCharacterImages({});
     Object.values(pollingRefs.current).forEach(clearInterval);
     pollingRefs.current = {};
   };
@@ -418,7 +439,7 @@ export default function DramaScriptGenerator() {
         target_audience: mode === "youjin" ? targetAudience : null,
         conversion_style: mode === "youjin" ? conversionStyles[0] || "plot" : null,
         selected_products: selectedProductDetails,
-        script_data: { ...result, conversionStyles: mode === "youjin" ? conversionStyles : undefined },
+        script_data: buildScriptWithGeneratedImages(),
         series_id: isUpdatingExisting ? activeSavedScript?.series_id : activeSavedScript?.series_id,
         parent_script_id: isUpdatingExisting ? activeSavedScript?.parent_script_id : activeSavedScript?.id || null,
         episode_number: isUpdatingExisting ? activeSavedScript?.episode_number || 1 : activeSavedScript ? activeSavedScript.episode_number + 1 : 1,
@@ -454,9 +475,15 @@ export default function DramaScriptGenerator() {
     setConversionStyles(normalizeConversionStyles(script.script_data?.conversionStyles || script.conversion_style));
     setSelectedProducts(new Set((script.selected_products || []).map((p) => p.key)));
     setResult(script.script_data);
+    setSceneImages(Object.fromEntries((script.script_data?.scenes || []).filter((s) => s.generatedImageUrl).map((s) => [s.sceneNumber, { status: "done", imageUrl: s.generatedImageUrl! }])));
+    setCharacterImages(Object.fromEntries((script.script_data?.characters || []).map((c, index) => c.referenceImageUrl ? [index, { status: "done", imageUrl: c.referenceImageUrl }] : null).filter(Boolean) as [number, SceneImageState][]));
     setSavedScriptId(script.id);
     setActiveSavedScript(script);
-    clearGeneratedAssets();
+    setSceneVideos({});
+    setVideoPreviewFallbacks({});
+    setSceneAudios({});
+    Object.values(pollingRefs.current).forEach(clearInterval);
+    pollingRefs.current = {};
     toast.success(`已载入《${script.title}》第${script.episode_number}集`);
   };
 
