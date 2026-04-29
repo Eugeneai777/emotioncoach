@@ -78,7 +78,7 @@ export function DimensionRadarChart({ dimensionScores, compareScores, variant = 
   }));
 
   return (
-    <div className="w-full h-full min-h-[320px] sm:min-h-[360px]">
+    <div className={isLarge ? "w-full h-full min-h-[320px] sm:min-h-[360px]" : "w-full h-full min-h-[280px] sm:min-h-[300px]"}>
       <ResponsiveContainer width="100%" height="100%">
         <RadarChart data={data} cx="50%" cy="49%" outerRadius={radius} margin={chartMargin}>
           <PolarGrid stroke="hsl(var(--border))" />
