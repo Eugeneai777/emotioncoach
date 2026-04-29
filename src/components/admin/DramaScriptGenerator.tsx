@@ -2229,7 +2229,15 @@ export default function DramaScriptGenerator() {
               </div>
               <div className="truncate text-xs text-muted-foreground">点击替换后才会覆盖当前编辑区</div>
             </div>
-            <div className="flex gap-2">
+            <div className="grid gap-2 sm:grid-cols-[180px_180px_auto_auto] sm:items-center">
+              <Select value={sequelDirection} onValueChange={setSequelDirection} disabled={generatingSequel}>
+                <SelectTrigger className="h-11"><SelectValue placeholder="冲突推进方向" /></SelectTrigger>
+                <SelectContent>{SEQUEL_DIRECTIONS.map((item) => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}</SelectContent>
+              </Select>
+              <Select value={sequelOpeningAngle} onValueChange={setSequelOpeningAngle} disabled={generatingSequel}>
+                <SelectTrigger className="h-11"><SelectValue placeholder="开场角度" /></SelectTrigger>
+                <SelectContent>{SEQUEL_OPENING_ANGLES.map((item) => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}</SelectContent>
+              </Select>
               <Button type="button" className="flex-1 gap-1.5 sm:flex-none" onClick={applyPendingSequel}>
                 <Check className="h-4 w-4" /> 替换当前脚本
               </Button>
