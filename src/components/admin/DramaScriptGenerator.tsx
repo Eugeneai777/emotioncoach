@@ -1438,8 +1438,19 @@ export default function DramaScriptGenerator() {
                 </div>
                 {result.consistencyCheck.overallScore < CONSISTENCY_THRESHOLD && (
                   <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 space-y-2">
-                    <p className="text-sm font-medium text-destructive">评分低于阈值，建议不要保存，直接重新生成续集。</p>
+                    <p className="text-sm font-medium text-destructive">续集连续性风险较高，建议不要保存当前版本。</p>
                     <p className="text-xs text-muted-foreground">{result.consistencyCheck.regenerationAdvice}</p>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      className="mt-1 gap-2"
+                      onClick={() => generateSequel(activeSavedScript || undefined)}
+                      disabled={generatingSequel || !activeSavedScript}
+                    >
+                      {generatingSequel ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                      一键重生成续集
+                    </Button>
                   </div>
                 )}
                 {result.consistencyCheck.issues.length > 0 && (
