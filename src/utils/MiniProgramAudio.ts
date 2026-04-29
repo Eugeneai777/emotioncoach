@@ -240,6 +240,16 @@ export class MiniProgramAudioClient {
     this.preAcquiredStream = config.preAcquiredStream ?? null;
   }
 
+  private shouldPreferNativeWxRecorder(wx: typeof window.wx): boolean {
+    const ua = navigator.userAgent || '';
+    const isAndroid = /Android/i.test(ua);
+    const isMiniProgram = window.__wxjs_environment === 'miniprogram' || /miniProgram/i.test(ua);
+
+    // 安卓微信小程序 WebView 的 Web Audio 录音链路更容易静默/挂起；
+    // 有原生录音能力时优先使用 wx.getRecorderManager，iOS/Web 保持现有 Web Audio 逻辑。
+    return Boolean(isAndroid && isMiniProgram && wx?.getRecorderManager && wx?.arrayBufferToBase64);
+  }
+
   /**
    * 连接到 WebSocket 中继服务器
    */
@@ -477,9 +487,10 @@ export class MiniProgramAudioClient {
 
   private async initRecorder(): Promise<void> {
     const wx = window.wx;
+    const preferNativeWxRecorder = this.shouldPreferNativeWxRecorder(wx);
 
     const canUseWebAudio = !!((window.AudioContext || (window as any).webkitAudioContext) && navigator.mediaDevices?.getUserMedia);
-    const shouldPreferWebAudio = !!this.preAcquiredStream?.active || canUseWebAudio;
+    const shouldPreferWebAudio = !preferNativeWxRecorder && (!!this.preAcquiredStream?.active || canUseWebAudio);
 
     if (shouldPreferWebAudio) {
       try {
@@ -491,8 +502,11 @@ export class MiniProgramAudioClient {
         this.useWebAudioFallback = false;
       }
     }
+    if (preferNativeWxRecorder) {
+      console.log('[MiniProgramAudio] Android MiniProgram detected, preferring wx.getRecorderManager');
+    }
     
-    // 仅在 H5 / Web Audio 不可用时才回退到 wx 原生录音器
+    // 安卓小程序优先使用 wx 原生录音器；其他环境仅在 Web Audio 不可用时回退
     if (wx?.getRecorderManager) {
       console.log('[MiniProgramAudio] Using wx.getRecorderManager');
       this.diag.recorderSource = 'wx_recorder';
@@ -538,6 +552,8 @@ export class MiniProgramAudioClient {
       // 监听录音错误
       this.recorder.onError((error: any) => {
         this.recorderRunning = false;
+        this.diag.lastError = `wx_recorder_error:${error?.errMsg || 'unknown'}`;
+        this.emitDiag();
         console.error('[MiniProgramAudio] Recorder error:', error);
       });
 
@@ -1152,6 +1168,20 @@ export class MiniProgramAudioClient {
     
     this.audioHealthInterval = setInterval(() => {
       if (this.status !== 'connected') return;
+
+      if (!this.useWebAudioFallback) {
+        if (this.recorder && this.pttPreset && !this.recorderRunning) {
+          console.warn('[MiniProgramAudio] wx recorder stopped unexpectedly, restarting...');
+          try {
+            this.startRecording();
+          } catch (error) {
+            this.diag.lastError = 'wx_recorder_restart_failed';
+            this.emitDiag();
+            console.error('[MiniProgramAudio] ❌ Failed to restart wx recorder:', error);
+          }
+        }
+        return;
+      }
       
       // 1. 检查 MediaStream track 是否还活着
       if (this.webMediaStream) {
@@ -1229,6 +1259,7 @@ export class MiniProgramAudioClient {
         this.webAudioContext.close().catch(() => {});
       }
       this.webAudioContext = null;
+      this.recorderRunning = false;
       
       // 重新初始化录音（复用 initRecorder 中的 Web Audio 逻辑）
       await this.initRecorder();
