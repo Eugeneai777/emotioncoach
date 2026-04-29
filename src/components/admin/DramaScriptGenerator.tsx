@@ -384,14 +384,6 @@ export default function DramaScriptGenerator() {
     fetchSavedScripts();
   }, [fetchSavedScripts]);
 
-  useEffect(() => {
-    if (generatingSequel) {
-      requestAnimationFrame(() => {
-        sequelStatusRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-      });
-    }
-  }, [generatingSequel]);
-
   // Auto-fetch suggested themes when products change in youjin mode
   const fetchSuggestedThemes = useCallback(async (avoidTitles: string[] = []) => {
     if (mode !== "youjin" || selectedProducts.size === 0) {
@@ -605,8 +597,6 @@ export default function DramaScriptGenerator() {
     setSequelGenerationSource({ title: script.title, episodeNumber: script.episode_number });
     setSequelGenerationStep("正在准备续集上下文...");
     setSequelGenerationError(null);
-    setResult(null);
-    clearGeneratedAssets();
     try {
       const productsForSequel = script.selected_products || [];
       const lastScene = script.script_data?.scenes?.[script.script_data.scenes.length - 1];
@@ -646,6 +636,7 @@ export default function DramaScriptGenerator() {
       setTargetAudience(script.target_audience || targetAudience);
       setConversionStyles(getSequelConversionStyles(script));
       setSelectedProducts(new Set(productsForSequel.map((p) => p.key)));
+      clearGeneratedAssets();
       setTheme((data as DramaScript).title);
       setResult(data as DramaScript);
       setSavedScriptId(null);
