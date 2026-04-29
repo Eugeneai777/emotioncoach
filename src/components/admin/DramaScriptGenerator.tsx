@@ -1478,19 +1478,19 @@ export default function DramaScriptGenerator() {
         </CardContent>
       </Card>
 
-      {generatingSequel && sequelGenerationSource && (
+      {(generatingSequel || sequelGenerationError) && sequelGenerationSource && (
         <Card ref={sequelStatusRef} className="mt-6 border-primary/30 bg-primary/5 max-w-full overflow-hidden">
           <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0 space-y-1">
-              <div className="flex items-center gap-2 text-sm font-medium text-primary">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                正在生成第{sequelGenerationSource.episodeNumber + 1}集 A/B 两个候选版本
+              <div className={`flex items-center gap-2 text-sm font-medium ${sequelGenerationError ? "text-destructive" : "text-primary"}`}>
+                {generatingSequel ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
+                {generatingSequel ? `正在生成第${sequelGenerationSource.episodeNumber + 1}集 A/B 候选版本` : "A/B续集生成中断"}
               </div>
               <p className="text-xs text-muted-foreground break-words">
-                承接《{sequelGenerationSource.title}》第{sequelGenerationSource.episodeNumber}集，通常需要等待 AI 完成两版脚本。
+                {sequelGenerationError || sequelGenerationStep || `承接《${sequelGenerationSource.title}》第${sequelGenerationSource.episodeNumber}集，通常需要等待 AI 完成两版脚本。`}
               </p>
             </div>
-            <div className="shrink-0 text-xs text-muted-foreground">请勿重复点击</div>
+            <div className="shrink-0 text-xs text-muted-foreground">{generatingSequel ? "请勿重复点击" : "可重新点击生成"}</div>
           </CardContent>
         </Card>
       )}
