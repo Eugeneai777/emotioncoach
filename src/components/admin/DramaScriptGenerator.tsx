@@ -582,7 +582,7 @@ export default function DramaScriptGenerator() {
         previousScript: script,
       };
       if (script.mode === "youjin") {
-        const sequelConversionStyles = normalizeConversionStyles(script.script_data?.conversionStyles || script.conversion_style || conversionStyles);
+        const sequelConversionStyles = getSequelConversionStyles(script);
         body.products = productsForSequel;
         body.targetAudience = script.target_audience || targetAudience;
         body.conversionStyles = sequelConversionStyles;
@@ -596,7 +596,7 @@ export default function DramaScriptGenerator() {
       setGenre(script.genre || genre);
       setStyle(script.style || style);
       setTargetAudience(script.target_audience || targetAudience);
-      setConversionStyles(normalizeConversionStyles(script.script_data?.conversionStyles || script.conversion_style || conversionStyles));
+      setConversionStyles(getSequelConversionStyles(script));
       setSelectedProducts(new Set(productsForSequel.map((p) => p.key)));
       setTheme((data as DramaScript).title);
       setResult(data as DramaScript);
