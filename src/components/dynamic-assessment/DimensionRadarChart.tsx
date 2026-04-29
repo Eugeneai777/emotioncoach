@@ -10,6 +10,7 @@ interface DimensionScore {
 interface DimensionRadarChartProps {
   dimensionScores: DimensionScore[];
   compareScores?: DimensionScore[];
+  variant?: "default" | "large";
 }
 
 interface AxisTickProps {
@@ -29,7 +30,7 @@ const splitDimensionLabel = (value: string) => {
   return [`${emoji} ${label.slice(0, 4)}`, label.slice(4)];
 };
 
-const renderAxisTick = (props: AxisTickProps) => {
+const renderAxisTick = (fontSize: number) => (props: AxisTickProps) => {
   const { x, y, cx, cy, payload } = props;
   const lines = splitDimensionLabel(String(payload?.value || ""));
   const isLeft = x < cx - 12;
@@ -43,11 +44,11 @@ const renderAxisTick = (props: AxisTickProps) => {
         textAnchor={isLeft ? "end" : isRight ? "start" : "middle"}
         dominantBaseline={isTop ? "auto" : isBottom ? "hanging" : "middle"}
         fill="hsl(var(--muted-foreground))"
-        fontSize={11}
-        fontWeight={500}
+        fontSize={fontSize}
+        fontWeight={600}
       >
         {lines.map((line, index) => (
-          <tspan key={line} x={0} dy={index === 0 ? 0 : 14}>
+          <tspan key={line} x={0} dy={index === 0 ? 0 : fontSize + 3}>
             {line}
           </tspan>
         ))}
@@ -56,8 +57,15 @@ const renderAxisTick = (props: AxisTickProps) => {
   );
 };
 
-export function DimensionRadarChart({ dimensionScores, compareScores }: DimensionRadarChartProps) {
+export function DimensionRadarChart({ dimensionScores, compareScores, variant = "default" }: DimensionRadarChartProps) {
   if (!dimensionScores?.length) return null;
+
+  const isLarge = variant === "large";
+  const labelFontSize = isLarge ? 12 : 11;
+  const radius = isLarge ? "68%" : "60%";
+  const chartMargin = isLarge
+    ? { top: 28, right: 42, bottom: 38, left: 42 }
+    : { top: 22, right: 48, bottom: 34, left: 48 };
 
   const data = dimensionScores.map((d, i) => ({
     subject: `${d.emoji} ${d.label}`,
@@ -70,13 +78,13 @@ export function DimensionRadarChart({ dimensionScores, compareScores }: Dimensio
   }));
 
   return (
-    <div className="w-full h-full min-h-[280px] sm:min-h-[300px]">
+    <div className="w-full h-full min-h-[320px] sm:min-h-[360px]">
       <ResponsiveContainer width="100%" height="100%">
-        <RadarChart data={data} cx="50%" cy="48%" outerRadius="60%" margin={{ top: 22, right: 48, bottom: 34, left: 48 }}>
+        <RadarChart data={data} cx="50%" cy="49%" outerRadius={radius} margin={chartMargin}>
           <PolarGrid stroke="hsl(var(--border))" />
           <PolarAngleAxis
             dataKey="subject"
-            tick={renderAxisTick}
+            tick={renderAxisTick(labelFontSize)}
             tickLine={false}
           />
           <PolarRadiusAxis
@@ -100,8 +108,8 @@ export function DimensionRadarChart({ dimensionScores, compareScores }: Dimensio
             dataKey="current"
             stroke="hsl(var(--primary))"
             fill="hsl(var(--primary))"
-            fillOpacity={0.25}
-            strokeWidth={2}
+            fillOpacity={isLarge ? 0.3 : 0.25}
+            strokeWidth={isLarge ? 3 : 2}
           />
         </RadarChart>
       </ResponsiveContainer>
