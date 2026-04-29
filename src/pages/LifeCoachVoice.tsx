@@ -1,14 +1,10 @@
-import { useEffect, useMemo } from "react";
+import { Suspense, lazy, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
 import { useAuth } from "@/hooks/useAuth";
 import { getSavedVoiceType } from "@/config/voiceTypeConfig";
 import { toast } from "@/hooks/use-toast";
-import {
-  preheatTokenEndpoint,
-  prefetchToken,
-  prewarmMicrophoneStream,
-} from "@/utils/RealtimeAudio";
+
+const CoachVoiceChat = lazy(() => import("@/components/coach/CoachVoiceChat").then((m) => ({ default: m.CoachVoiceChat })));
 
 // topic → edge function SCENARIO_CONFIGS 中已注册的中文 key
 // 必须与 supabase/functions/vibrant-life-realtime-token/index.ts 的 SCENARIO_CONFIGS 完全一致
@@ -70,9 +66,11 @@ const LifeCoachVoice = () => {
     if (loading || !user) return;
 
     const endpoint = "vibrant-life-realtime-token";
-    void preheatTokenEndpoint(endpoint);
-    void prefetchToken(endpoint, "general");
-    void prewarmMicrophoneStream();
+    void import("@/utils/RealtimeAudio").then(({ preheatTokenEndpoint, prefetchToken, prewarmMicrophoneStream }) => {
+      void preheatTokenEndpoint(endpoint);
+      void prefetchToken(endpoint, "general");
+      void prewarmMicrophoneStream();
+    });
   }, [loading, user]);
 
   if (loading) {
@@ -87,19 +85,26 @@ const LifeCoachVoice = () => {
   if (!user) return null;
 
   return (
-    <CoachVoiceChat
-      onClose={() => navigate(-1)}
-      coachEmoji="❤️"
-      coachTitle="有劲AI生活教练"
-      primaryColor="rose"
-      tokenEndpoint="vibrant-life-realtime-token"
-      userId={user.id}
-      mode="general"
-      featureKey="realtime_voice"
-      voiceType={getSavedVoiceType()}
-      pttMode
-      scenario={scenarioKey}
-    />
+    <Suspense fallback={
+      <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col items-center justify-center">
+        <div className="w-16 h-16 rounded-full bg-rose-500/20 animate-pulse" />
+        <p className="mt-4 text-white/60 text-sm">正在准备语音教练…</p>
+      </div>
+    }>
+      <CoachVoiceChat
+        onClose={() => navigate(-1)}
+        coachEmoji="❤️"
+        coachTitle="有劲AI生活教练"
+        primaryColor="rose"
+        tokenEndpoint="vibrant-life-realtime-token"
+        userId={user.id}
+        mode="general"
+        featureKey="realtime_voice"
+        voiceType={getSavedVoiceType()}
+        pttMode
+        scenario={scenarioKey}
+      />
+    </Suspense>
   );
 };
 
