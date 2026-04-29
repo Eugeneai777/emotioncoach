@@ -621,56 +621,26 @@ export default function DramaScriptGenerator() {
         baseBody.conversionStyle = sequelConversionStyles[0] || "plot";
       }
 
-      const variants = [
-        { key: "A" as const, label: "A版：强承接版", description: "更严格接上一集最后分镜，人物和关系稳定延续", variant: "strong_continuity" },
-        { key: "B" as const, label: "B版：爆点升级版", description: "承接不变，但冲突、误会和反转更夸张", variant: "viral_upgrade" },
-      ];
-      const buildCandidate = (data: DramaScript, index: number): SequelCandidate => ({
-        key: variants[index].key,
-        label: variants[index].label,
-        description: variants[index].description,
-        script: data,
-        sourceScript: script,
-        conversionStyles: script.mode === "youjin" ? getSequelConversionStyles(script) : [],
-        products: productsForSequel,
-      });
-      setSequelGenerationStep("正在生成A版：强承接版...");
-      const first = await supabase.functions.invoke("drama-script-ai", { body: { ...baseBody, sequelVariant: variants[0].variant } });
-      if (first.data?.error || first.error) {
-        throw new Error(await extractEdgeFunctionError(first.data, first.error, "A版生成失败，请稍后重试"));
+      setSequelGenerationStep("正在生成单版本续集...");
+      const { data, error } = await supabase.functions.invoke("drama-script-ai", { body: baseBody });
+      if (data?.error || error) {
+        throw new Error(await extractEdgeFunctionError(data, error, "续集生成失败，请稍后重试"));
       }
-      const firstCandidate = buildCandidate(first.data as DramaScript, 0);
       setMode(script.mode || "generic");
       setGenre(script.genre || genre);
       setStyle(script.style || style);
       setTargetAudience(script.target_audience || targetAudience);
       setConversionStyles(getSequelConversionStyles(script));
       setSelectedProducts(new Set(productsForSequel.map((p) => p.key)));
-      setTheme(firstCandidate.script.title);
-      setSequelCandidates([firstCandidate]);
+      setTheme((data as DramaScript).title);
+      setResult(data as DramaScript);
+      setSequelCandidates([]);
       setSavedScriptId(null);
       setActiveSavedScript(script);
-      setSequelGenerationStep("A版已完成，正在生成B版：爆点升级版...");
-      const second = await supabase.functions.invoke("drama-script-ai", { body: { ...baseBody, sequelVariant: variants[1].variant } });
-      if (second.data?.error || second.error) {
-        throw new Error(await extractEdgeFunctionError(second.data, second.error, "B版生成失败，请稍后重试"));
+      if ((data as DramaScript).consistencyCheck && ((data as DramaScript).consistencyCheck?.overallScore || 100) < CONSISTENCY_THRESHOLD) {
+        toast.error(`一致性评分 ${(data as DramaScript).consistencyCheck?.overallScore}，建议重新生成一次`);
       }
-      const candidates = [firstCandidate, buildCandidate(second.data as DramaScript, 1)];
-      setMode(script.mode || "generic");
-      setGenre(script.genre || genre);
-      setStyle(script.style || style);
-      setTargetAudience(script.target_audience || targetAudience);
-      setConversionStyles(getSequelConversionStyles(script));
-      setSelectedProducts(new Set(productsForSequel.map((p) => p.key)));
-      setTheme(candidates[0].script.title);
-      setSequelCandidates(candidates);
-      setSavedScriptId(null);
-      setActiveSavedScript(script);
-      const lowScore = candidates.find((candidate) => (candidate.script.consistencyCheck?.overallScore || 100) < CONSISTENCY_THRESHOLD);
-      if (lowScore?.script.consistencyCheck) {
-        toast.error(`${lowScore.label}一致性评分 ${lowScore.script.consistencyCheck.overallScore}，建议优先选择另一版或重生成`);
-      }
-      toast.success(`已生成第${script.episode_number + 1}集 A/B 两个候选，请先选择采用版本`);
+      toast.success(`已生成第${script.episode_number + 1}集续集，不满意可重新生成`);
     } catch (e: any) {
       const message = e.message || "续集生成失败";
       setSequelGenerationError(message);
