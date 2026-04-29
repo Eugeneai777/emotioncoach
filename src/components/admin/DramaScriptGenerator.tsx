@@ -1399,10 +1399,15 @@ export default function DramaScriptGenerator() {
                 </Button>
                 <Button variant="outline" onClick={() => generateSequel()} disabled={generatingSequel || (!activeSavedScript && !savedScriptId)} className="gap-2">
                   {generatingSequel ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
-                  生成续集
+                  {generatingSequel && activeSavedScript ? `承接第${activeSavedScript.episode_number}集生成中...` : "生成续集"}
                 </Button>
                 {!activeSavedScript && !savedScriptId && (
                   <span className="text-xs text-muted-foreground self-center">先保存当前脚本后，可继续生成第2集。</span>
+                )}
+                {activeSavedScript && !generatingSequel && (
+                  <span className="text-xs text-muted-foreground self-center break-words">
+                    将承接第{activeSavedScript.episode_number}集结尾：{summarizeSceneForSequel(activeSavedScript.script_data?.scenes?.[activeSavedScript.script_data.scenes.length - 1])}
+                  </span>
                 )}
               </div>
             </CardContent>
@@ -1438,6 +1443,34 @@ export default function DramaScriptGenerator() {
                     {result.consistencyCheck.issues.map((issue, idx) => <li key={idx}>{issue}</li>)}
                   </ul>
                 )}
+              </CardContent>
+            </Card>
+          )}
+
+          {result.continuityBridge && (
+            <Card className="border-primary/30 max-w-full min-w-0 overflow-hidden">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Film className="h-4 w-4" /> 续集承接点
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                <div className="rounded-lg bg-muted/50 p-3 min-w-0">
+                  <div className="text-xs text-muted-foreground mb-1">继承上一集</div>
+                  <p className="break-words">{result.continuityBridge.inheritedFromPrevious}</p>
+                </div>
+                <div className="rounded-lg bg-muted/50 p-3 min-w-0">
+                  <div className="text-xs text-muted-foreground mb-1">开头承接</div>
+                  <p className="break-words">{result.continuityBridge.openingConnection}</p>
+                </div>
+                <div className="rounded-lg bg-muted/50 p-3 min-w-0">
+                  <div className="text-xs text-muted-foreground mb-1">延续悬念</div>
+                  <p className="break-words">{result.continuityBridge.unresolvedHookCarried}</p>
+                </div>
+                <div className="rounded-lg bg-muted/50 p-3 min-w-0">
+                  <div className="text-xs text-muted-foreground mb-1">下一集钩子</div>
+                  <p className="break-words">{result.continuityBridge.nextEpisodeHook}</p>
+                </div>
               </CardContent>
             </Card>
           )}
