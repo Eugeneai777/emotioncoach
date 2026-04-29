@@ -39,8 +39,8 @@ const MaleMidlifeVitalityShareCard = forwardRef<HTMLDivElement, MaleMidlifeVital
         background="linear-gradient(145deg, #111827 0%, #134e4a 56%, #78350f 100%)"
         borderRadius={24}
         footerConfig={{
-          ctaTitle: '扫码测你的有劲状态',
-          ctaSubtitle: '3分钟 · 私密自测 · 免费出结果',
+          ctaTitle: '扫码看你的有劲状态',
+          ctaSubtitle: '3分钟 · 私密评估 · 免费出结果',
           primaryColor: '#134e4a',
           secondaryColor: '#64748b',
           showQR: true,
@@ -76,7 +76,7 @@ const MaleMidlifeVitalityShareCard = forwardRef<HTMLDivElement, MaleMidlifeVital
             )}
             <div>
               <div style={{ fontSize: 14, fontWeight: 700, color: '#f8fafc' }}>{displayName || '我'}的有劲状态报告</div>
-              <div style={{ fontSize: 11, color: '#cbd5e1' }}>男人有劲状态自测</div>
+              <div style={{ fontSize: 11, color: '#cbd5e1' }}>男人有劲状态评估</div>
             </div>
           </div>
 
