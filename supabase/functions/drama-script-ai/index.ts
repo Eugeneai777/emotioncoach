@@ -2,6 +2,109 @@ import { corsHeaders } from "../_shared/cors.ts";
 
 const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 
+const textOf = (value: unknown) => typeof value === "string" ? value.trim() : "";
+
+const normalizeText = (value: unknown) => textOf(value).replace(/\s+/g, " ").trim();
+
+const getSceneText = (scene: any) => [scene?.characterAction, scene?.dialogue, scene?.narration, scene?.imagePrompt]
+  .map(normalizeText)
+  .filter(Boolean)
+  .join(" | ");
+
+const buildSeriesBible = (previousScript: any, previousData: any, previousLastScene: any, products: any[]) => {
+  const characters = Array.isArray(previousData?.characters) ? previousData.characters : [];
+  const scenes = Array.isArray(previousData?.scenes) ? previousData.scenes : [];
+  const usedProducts = Array.isArray(products) && products.length > 0
+    ? products.map((p) => `${p.name || p.key}：${p.description || ""}`).join("\n")
+    : scenes.map((s: any) => s?.relatedProduct).filter(Boolean).join("、") || "无明确产品";
+
+  return {
+    episodeNumber: previousScript?.episode_number || 1,
+    title: previousData?.title || previousScript?.title || "上一集",
+    synopsis: previousData?.synopsis || previousScript?.synopsis || "无",
+    characters: characters.map((char: any) => ({
+      name: char?.name,
+      description: char?.description,
+      imagePrompt: char?.imagePrompt,
+      referenceImageUrl: char?.referenceImageUrl,
+    })),
+    plotState: {
+      coreConflict: previousData?.synopsis || previousScript?.synopsis || "沿用上一集核心冲突",
+      lastScene: previousLastScene || null,
+      lastSceneText: previousLastScene ? getSceneText(previousLastScene) : "无",
+      unresolvedHook: previousLastScene?.dialogue || previousLastScene?.characterAction || previousData?.synopsis || "延续上一集未解决悬念",
+    },
+    visualAnchors: {
+      style: previousScript?.style || "沿用上一集画风",
+      characterImagePrompts: characters.map((char: any) => `${char?.name || "角色"}: ${char?.imagePrompt || char?.description || ""}`),
+    },
+    productAnchors: usedProducts,
+  };
+};
+
+const containsAny = (haystack: string, needles: string[]) => needles.some((needle) => needle && haystack.includes(needle));
+
+const applyContinuityValidation = (parsed: any, previousData: any, previousLastScene: any, products: any[]) => {
+  if (!parsed || !previousData) return parsed;
+  const issues: string[] = Array.isArray(parsed.consistencyCheck?.issues) ? [...parsed.consistencyCheck.issues] : [];
+  const previousCharacters = Array.isArray(previousData.characters) ? previousData.characters : [];
+  const nextCharacters = Array.isArray(parsed.characters) ? parsed.characters : [];
+  const nextScenes = Array.isArray(parsed.scenes) ? parsed.scenes : [];
+  const fullNextText = JSON.stringify({ characters: nextCharacters, scenes: nextScenes, synopsis: parsed.synopsis, title: parsed.title });
+  const firstSceneText = getSceneText(nextScenes[0] || {});
+  const lastSceneText = getSceneText(previousLastScene || {});
+
+  const missingNames = previousCharacters
+    .map((char: any) => normalizeText(char?.name))
+    .filter(Boolean)
+    .filter((name: string) => !fullNextText.includes(name));
+  if (missingNames.length > 0) issues.push(`上一集核心角色未延续：${missingNames.join("、")}`);
+
+  if (previousCharacters.length > 0 && nextCharacters.length > previousCharacters.length + 2) {
+    issues.push("续集新增角色过多，可能稀释原人物关系");
+  }
+
+  const continuityTokens = [
+    ...previousCharacters.map((char: any) => normalizeText(char?.name)).filter(Boolean),
+    ...normalizeText(previousLastScene?.dialogue).split(/[，。！？、\s]/).filter((token) => token.length >= 2).slice(0, 6),
+    ...normalizeText(previousLastScene?.characterAction).split(/[，。！？、\s]/).filter((token) => token.length >= 2).slice(0, 6),
+  ];
+  if (lastSceneText && firstSceneText && !containsAny(firstSceneText, continuityTokens)) {
+    issues.push("第1个分镜没有明显承接上一集最后动作、台词或人物");
+  }
+
+  const productKeys = Array.isArray(products) ? products.map((p) => p?.key || p?.name).filter(Boolean) : [];
+  if (productKeys.length > 0 && !containsAny(fullNextText, productKeys)) {
+    issues.push("续集未延续已选择的产品线或转化线索");
+  }
+
+  const original = parsed.consistencyCheck || {};
+  const penalty = Math.min(35, issues.length * 8);
+  const originalScore = typeof original.overallScore === "number" ? original.overallScore : 92;
+  const adjustedScore = Math.max(55, originalScore - penalty);
+  parsed.consistencyCheck = {
+    overallScore: adjustedScore,
+    characterScore: Math.max(55, (typeof original.characterScore === "number" ? original.characterScore : 92) - missingNames.length * 12),
+    plotScore: Math.max(55, (typeof original.plotScore === "number" ? original.plotScore : 92) - (issues.some((i) => i.includes("第1个分镜")) ? 15 : 0)),
+    visualScore: typeof original.visualScore === "number" ? original.visualScore : 90,
+    productScore: Math.max(60, (typeof original.productScore === "number" ? original.productScore : 100) - (issues.some((i) => i.includes("产品线")) ? 20 : 0)),
+    verdict: adjustedScore >= 85 ? "通过" : "需重生成",
+    issues: Array.from(new Set(issues)),
+    regenerationAdvice: adjustedScore >= 85 ? (original.regenerationAdvice || "可继续使用") : "请重新生成，并要求第1幕直接复现上一集结尾人物、台词或动作，再升级原冲突。",
+  };
+
+  if (!parsed.continuityBridge) {
+    parsed.continuityBridge = {
+      inheritedFromPrevious: `延续《${previousData.title || "上一集"}》的人物关系和核心矛盾`,
+      openingConnection: firstSceneText || "第1幕承接上一集结尾",
+      unresolvedHookCarried: previousLastScene?.dialogue || previousLastScene?.characterAction || previousData.synopsis || "延续上一集悬念",
+      nextEpisodeHook: nextScenes[nextScenes.length - 1]?.dialogue || nextScenes[nextScenes.length - 1]?.characterAction || "留下下一集钩子",
+    };
+  }
+
+  return parsed;
+};
+
 const GENERIC_SYSTEM_PROMPT = `你是一位顶级短剧分镜脚本策划师，擅长将故事主题转化为适合AI生图工具（Midjourney/即梦/Stable Diffusion）使用的分镜脚本。
 
 你必须使用 suggest_drama_script 工具返回结构化的短剧分镜脚本。
@@ -280,6 +383,7 @@ ${productList}${avoidTitlePrompt}
     const isSequel = action === "generate_sequel" && previousScript?.script_data;
     const previousData = isSequel ? previousScript.script_data : null;
     const previousLastScene = previousData?.scenes?.[previousData.scenes.length - 1];
+    const seriesBible = isSequel ? buildSeriesBible(previousScript, previousData, previousLastScene, products || previousScript?.selected_products || []) : null;
 
     let userPrompt = `请为以下主题创作一个${count}个分镜的短剧脚本：
 
@@ -293,11 +397,17 @@ ${productList}${avoidTitlePrompt}
       userPrompt += `
 
 【续集创作要求】
-这是一个系列短剧的第 ${(previousScript.episode_number || 1) + 1} 集，不是新故事。必须承接上一集继续写。
-上一集标题：${previousData.title || previousScript.title}
-上一集梗概：${previousData.synopsis || previousScript.synopsis || "无"}
-上一集角色设定：${JSON.stringify(previousData.characters || [])}
-上一集最后分镜：${previousLastScene ? JSON.stringify(previousLastScene) : "无"}
+这是一个系列短剧的第 ${(previousScript.episode_number || 1) + 1} 集，不是新故事。必须承接上一集继续写，严禁重新开一个相似题材的新故事。
+
+【系列圣经：必须逐条继承】
+${JSON.stringify(seriesBible, null, 2)}
+
+【承接合约】
+- 本集只能升级上一集未解决矛盾，不能替换主角、改名、换身份、换关系、换核心世界观。
+- 续集 characters 必须保留上一集核心角色的中文名、关系、年龄感、外貌关键词、服装/画风识别点。
+- 第1个分镜必须直接承接 seriesBible.plotState.lastSceneText 中的动作、台词或悬念，不能另起场景铺垫。
+- 每个 scene.imagePrompt 必须继续使用上一集角色 imagePrompt 的外貌识别关键词，避免同名不同脸。
+- 如果有产品线，必须延续同一产品使用语境，只能自然推进，不能换成无关硬广。
 
 【生成续集前必须先做一致性检查】
 在创作前先在内部完成检查，不要把检查过程输出给用户：
@@ -316,7 +426,8 @@ ${productList}${avoidTitlePrompt}
 5. 结尾必须留下下一集钩子，但本集也要有一个明确情绪落点。
 6. title 要体现“续集感”和新冲突，不要直接复用上一集标题。
 7. 输出前再次自查：角色设定、关键剧情点、人物关系、产品植入、画面提示词是否与上一集一致；如不一致，必须自行修正后再输出。
-8. 必须输出 consistencyCheck：overallScore 为0-100整数，低于85代表不建议使用；issues 写出具体跑偏风险；regenerationAdvice 给出下一次重生成应该修正的方向。`;
+8. 必须输出 continuityBridge，明确本集继承了什么、开头如何承接、延续哪个悬念、下一集钩子是什么。
+9. 必须输出 consistencyCheck：overallScore 为0-100整数，低于85代表不建议使用；issues 写出具体跑偏风险；regenerationAdvice 给出下一次重生成应该修正的方向。`;
     }
 
     if (isYoujin) {
@@ -388,6 +499,17 @@ ${productInfo || "无指定产品"}
       required: ["overallScore", "characterScore", "plotScore", "visualScore", "productScore", "verdict", "issues", "regenerationAdvice"],
     };
 
+    const continuityBridgeSchema = {
+      type: "object",
+      properties: {
+        inheritedFromPrevious: { type: "string", description: "本集继承上一集的人物关系、矛盾和视觉锚点" },
+        openingConnection: { type: "string", description: "第1幕如何直接承接上一集最后分镜" },
+        unresolvedHookCarried: { type: "string", description: "本集延续的上一集未解决悬念" },
+        nextEpisodeHook: { type: "string", description: "本集结尾留下的下一集钩子" },
+      },
+      required: ["inheritedFromPrevious", "openingConnection", "unresolvedHookCarried", "nextEpisodeHook"],
+    };
+
     const toolProperties: Record<string, any> = {
       title: { type: "string", description: "短剧标题" },
       synopsis: { type: "string", description: "故事梗概50-100字" },
@@ -427,8 +549,9 @@ ${productInfo || "无指定产品"}
     const toolRequired = ["title", "synopsis", "coverPoster", "characters", "scenes", "totalScenes", "estimatedDuration"];
 
     if (isSequel) {
+      toolProperties.continuityBridge = continuityBridgeSchema;
       toolProperties.consistencyCheck = consistencyCheckSchema;
-      toolRequired.push("consistencyCheck");
+      toolRequired.push("continuityBridge", "consistencyCheck");
     }
 
     if (isYoujin) {
@@ -503,6 +626,10 @@ ${productInfo || "无指定产品"}
       return new Response(JSON.stringify({ error: "AI返回格式异常，请重试" }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    if (isSequel) {
+      parsed = applyContinuityValidation(parsed, previousData, previousLastScene, products || previousScript?.selected_products || []);
     }
 
     return new Response(JSON.stringify(parsed), {

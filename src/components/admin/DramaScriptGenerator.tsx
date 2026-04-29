@@ -142,6 +142,12 @@ interface DramaScript {
     issues: string[];
     regenerationAdvice: string;
   };
+  continuityBridge?: {
+    inheritedFromPrevious: string;
+    openingConnection: string;
+    unresolvedHookCarried: string;
+    nextEpisodeHook: string;
+  };
   characters: Character[];
   scenes: Scene[];
   totalScenes: number;
@@ -220,6 +226,14 @@ const normalizeConversionStyles = (styles?: string[] | string | null) => {
   const values = Array.isArray(styles) ? styles : styles ? [styles] : ["plot"];
   const validValues = values.filter((value) => CONVERSION_STYLES.some((style) => style.value === value));
   return validValues.length > 0 ? validValues : ["plot"];
+};
+
+const summarizeSceneForSequel = (scene?: Scene) => {
+  if (!scene) return "上一集结尾暂无摘要";
+  return [scene.characterAction, scene.dialogue || scene.narration]
+    .filter(Boolean)
+    .join("｜")
+    .slice(0, 120) || "上一集结尾暂无摘要";
 };
 
 export default function DramaScriptGenerator() {
@@ -534,14 +548,18 @@ export default function DramaScriptGenerator() {
     clearGeneratedAssets();
     try {
       const productsForSequel = script.selected_products || [];
+      const lastScene = script.script_data?.scenes?.[script.script_data.scenes.length - 1];
       const body: any = {
         action: "generate_sequel",
-        theme: `${script.title} 后续：冲突继续升级`,
+        theme: `严格承接《${script.title}》第${script.episode_number}集结尾：${summarizeSceneForSequel(lastScene)}`,
         genre: script.genre || genre,
         style: script.style || style,
         sceneCount,
         mode: script.mode,
         conflictIntensity,
+        sequelEpisodeNumber: script.episode_number + 1,
+        previousLastSceneSummary: summarizeSceneForSequel(lastScene),
+        previousCharacterSummary: (script.script_data?.characters || []).map((char) => `${char.name}：${char.description}`).join("；"),
         previousScript: script,
       };
       if (script.mode === "youjin") {
@@ -569,7 +587,7 @@ export default function DramaScriptGenerator() {
       if (check && check.overallScore < CONSISTENCY_THRESHOLD) {
         toast.error(`一致性评分 ${check.overallScore}，低于${CONSISTENCY_THRESHOLD}，建议重新生成`);
       }
-      toast.success(`第${script.episode_number + 1}集已生成，确认后可保存`);
+      toast.success(`已承接第${script.episode_number}集生成第${script.episode_number + 1}集，确认后可保存`);
     } catch (e: any) {
       toast.error(e.message || "续集生成失败");
     } finally {
@@ -1381,10 +1399,15 @@ export default function DramaScriptGenerator() {
                 </Button>
                 <Button variant="outline" onClick={() => generateSequel()} disabled={generatingSequel || (!activeSavedScript && !savedScriptId)} className="gap-2">
                   {generatingSequel ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
-                  生成续集
+                  {generatingSequel && activeSavedScript ? `承接第${activeSavedScript.episode_number}集生成中...` : "生成续集"}
                 </Button>
                 {!activeSavedScript && !savedScriptId && (
                   <span className="text-xs text-muted-foreground self-center">先保存当前脚本后，可继续生成第2集。</span>
+                )}
+                {activeSavedScript && !generatingSequel && (
+                  <span className="text-xs text-muted-foreground self-center break-words">
+                    将承接第{activeSavedScript.episode_number}集结尾：{summarizeSceneForSequel(activeSavedScript.script_data?.scenes?.[activeSavedScript.script_data.scenes.length - 1])}
+                  </span>
                 )}
               </div>
             </CardContent>
@@ -1420,6 +1443,34 @@ export default function DramaScriptGenerator() {
                     {result.consistencyCheck.issues.map((issue, idx) => <li key={idx}>{issue}</li>)}
                   </ul>
                 )}
+              </CardContent>
+            </Card>
+          )}
+
+          {result.continuityBridge && (
+            <Card className="border-primary/30 max-w-full min-w-0 overflow-hidden">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Film className="h-4 w-4" /> 续集承接点
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                <div className="rounded-lg bg-muted/50 p-3 min-w-0">
+                  <div className="text-xs text-muted-foreground mb-1">继承上一集</div>
+                  <p className="break-words">{result.continuityBridge.inheritedFromPrevious}</p>
+                </div>
+                <div className="rounded-lg bg-muted/50 p-3 min-w-0">
+                  <div className="text-xs text-muted-foreground mb-1">开头承接</div>
+                  <p className="break-words">{result.continuityBridge.openingConnection}</p>
+                </div>
+                <div className="rounded-lg bg-muted/50 p-3 min-w-0">
+                  <div className="text-xs text-muted-foreground mb-1">延续悬念</div>
+                  <p className="break-words">{result.continuityBridge.unresolvedHookCarried}</p>
+                </div>
+                <div className="rounded-lg bg-muted/50 p-3 min-w-0">
+                  <div className="text-xs text-muted-foreground mb-1">下一集钩子</div>
+                  <p className="break-words">{result.continuityBridge.nextEpisodeHook}</p>
+                </div>
               </CardContent>
             </Card>
           )}
