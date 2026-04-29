@@ -12,12 +12,20 @@ import { hasActiveSession } from "./hooks/useVoiceSessionLock";
 
 // Install global frontend error tracker
 installErrorTracker();
-// Install API error tracker
-installApiErrorTracker();
-// Install stability data collector
-installStabilityCollector();
-// Install monitor data reporter (batched DB persistence)
-installMonitorReporter();
+
+const runWhenIdle = (task: () => void, timeout = 2000) => {
+  if ('requestIdleCallback' in window) {
+    (window as any).requestIdleCallback(task, { timeout });
+  } else {
+    window.setTimeout(task, timeout);
+  }
+};
+
+runWhenIdle(() => {
+  installApiErrorTracker();
+  installStabilityCollector();
+  installMonitorReporter();
+});
 
 /**
  * Unified chunk-error auto-reload logic.
