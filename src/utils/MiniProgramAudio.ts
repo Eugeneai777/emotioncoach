@@ -1168,6 +1168,20 @@ export class MiniProgramAudioClient {
     
     this.audioHealthInterval = setInterval(() => {
       if (this.status !== 'connected') return;
+
+      if (!this.useWebAudioFallback) {
+        if (this.recorder && this.pttPreset && !this.recorderRunning) {
+          console.warn('[MiniProgramAudio] wx recorder stopped unexpectedly, restarting...');
+          try {
+            this.startRecording();
+          } catch (error) {
+            this.diag.lastError = 'wx_recorder_restart_failed';
+            this.emitDiag();
+            console.error('[MiniProgramAudio] ❌ Failed to restart wx recorder:', error);
+          }
+        }
+        return;
+      }
       
       // 1. 检查 MediaStream track 是否还活着
       if (this.webMediaStream) {
@@ -1245,6 +1259,7 @@ export class MiniProgramAudioClient {
         this.webAudioContext.close().catch(() => {});
       }
       this.webAudioContext = null;
+      this.recorderRunning = false;
       
       // 重新初始化录音（复用 initRecorder 中的 Web Audio 逻辑）
       await this.initRecorder();
