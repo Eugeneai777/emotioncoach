@@ -748,6 +748,18 @@ ${productInfo || "无指定产品"}
 
     if (isSequel) {
       parsed = applyContinuityValidation(parsed, previousData, previousLastScene, products || previousScript?.selected_products || []);
+      let rewriteAttempts = 0;
+      while (hasContinuityHardFailure(parsed) && rewriteAttempts < 3) {
+        rewriteAttempts += 1;
+        parsed = await rewriteOpeningSceneForContinuity(parsed, seriesBible, isYoujin);
+        parsed = applyContinuityValidation(parsed, previousData, previousLastScene, products || previousScript?.selected_products || []);
+      }
+      if (rewriteAttempts > 0) {
+        parsed.continuityBridge = {
+          ...(parsed.continuityBridge || {}),
+          openingConnection: `${parsed.continuityBridge?.openingConnection || getSceneText(parsed.scenes?.[0] || {})}\n（系统已自动重写第1分镜 ${rewriteAttempts} 次，以满足禁止重开与开场承接约束）`,
+        };
+      }
     }
 
     return new Response(JSON.stringify(parsed), {
