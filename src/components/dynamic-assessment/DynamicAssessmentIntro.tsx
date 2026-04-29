@@ -300,15 +300,15 @@ export function DynamicAssessmentIntro({ template, onStart, onShowHistory, hasHi
               <CardContent className="p-5">
                   <h2 className="font-semibold text-foreground mb-3 text-sm flex items-center gap-2">
                   <TrendingUp className="w-4 h-4 text-emerald-500" />
-                  {template.assessment_key === 'male_midlife_vitality' ? '为什么更适合公众号流量' : 'AI深度测评 vs 传统测试'}
+                  {isMaleMidlifeVitality ? '这不是给你贴标签，而是帮你看清状态' : 'AI深度测评 vs 传统测试'}
                 </h2>
                 <div className="space-y-2">
                   <div className="p-3 rounded-lg bg-muted/40 border border-border/30">
-                    <p className="text-xs font-medium text-muted-foreground mb-1">❌ 传统测试</p>
+                    <p className="text-xs font-medium text-muted-foreground mb-1">❌ {isMaleMidlifeVitality ? '让人紧张的测试' : '传统测试'}</p>
                     <p className="text-xs text-muted-foreground/70">{enrichment.comparison.traditional}</p>
                   </div>
                   <div className="p-3 rounded-lg bg-primary/5 border border-primary/15">
-                    <p className="text-xs font-medium text-primary mb-1">✅ {template.title}</p>
+                    <p className="text-xs font-medium text-primary mb-1">✅ {isMaleMidlifeVitality ? '更适合你的评估' : template.title}</p>
                     <p className="text-xs text-muted-foreground">{enrichment.comparison.ours}</p>
                   </div>
                 </div>
@@ -323,7 +323,7 @@ export function DynamicAssessmentIntro({ template, onStart, onShowHistory, hasHi
             <CardContent className="p-5">
               <h2 className="font-semibold text-foreground mb-3 text-sm">✨ 你将获得</h2>
               <div className="space-y-3">
-                {benefitItems.map(({ icon: Icon, text }, i) => (
+                {(isMaleMidlifeVitality ? maleMidlifeBenefitItems : benefitItems).map(({ icon: Icon, text }, i) => (
                   <motion.div
                     key={text}
                     initial={{ opacity: 0, x: -12 }}
