@@ -85,6 +85,7 @@ const applyContinuityValidation = (parsed: any, previousData: any, previousLastS
   const firstSceneText = getSceneText(nextScenes[0] || {});
   const lastSceneText = getSceneText(previousLastScene || {});
   const hardFailures: string[] = [];
+  const warnings: string[] = [];
 
   const missingNames = previousCharacters
     .map((char: any) => normalizeText(char?.name))
@@ -97,7 +98,7 @@ const applyContinuityValidation = (parsed: any, previousData: any, previousLastS
   }
 
   if (previousCharacters.length > 0 && nextCharacters.length > previousCharacters.length + 2) {
-    issues.push("续集新增角色过多，可能稀释原人物关系");
+    warnings.push("续集新增角色较多，注意不要稀释原人物关系");
   }
 
   const continuityTokens = Array.from(new Set([
@@ -115,22 +116,24 @@ const applyContinuityValidation = (parsed: any, previousData: any, previousLastS
     const issue = "强制校验失败：续集缺少第1个分镜，无法承接上一集结尾";
     issues.push(issue);
     hardFailures.push(issue);
-  } else if (lastSceneText && (!hasCharacterInOpening || !hasLastSceneTokenInOpening)) {
+  } else if (lastSceneText && !hasCharacterInOpening) {
     const issue = "强制校验失败：第1个分镜未同时保留上一集人物，并承接最后分镜的动作、台词或道具";
     issues.push(issue);
     hardFailures.push(issue);
+  } else if (lastSceneText && !hasLastSceneTokenInOpening) {
+    warnings.push("第1个分镜已保留上一集人物，但对最后动作/台词/道具的承接还可以更明显");
   }
 
   const productKeys = Array.isArray(products) ? products.map((p) => p?.key || p?.name).filter(Boolean) : [];
   if (productKeys.length > 0 && !containsAny(fullNextText, productKeys)) {
-    issues.push("续集未延续已选择的产品线或转化线索");
+    warnings.push("续集未明显写出已选择的产品 key，但可能保留了产品语境");
   }
 
   const original = parsed.consistencyCheck || {};
-  const penalty = Math.min(35, issues.length * 8);
+  const penalty = Math.min(30, hardFailures.length * 16 + warnings.length * 4);
   const originalScore = typeof original.overallScore === "number" ? original.overallScore : 92;
-  const softAdjustedScore = Math.max(55, originalScore - penalty);
-  const adjustedScore = hardFailures.length > 0 ? Math.min(78, softAdjustedScore) : softAdjustedScore;
+  const softAdjustedScore = Math.max(70, originalScore - penalty);
+  const adjustedScore = hardFailures.length > 0 ? Math.min(82, softAdjustedScore) : Math.max(86, softAdjustedScore);
   parsed.consistencyCheck = {
     overallScore: adjustedScore,
     characterScore: hardFailures.some((i) => i.includes("核心角色")) ? Math.min(78, Math.max(55, (typeof original.characterScore === "number" ? original.characterScore : 92) - missingNames.length * 18)) : Math.max(55, (typeof original.characterScore === "number" ? original.characterScore : 92) - missingNames.length * 12),
@@ -138,7 +141,7 @@ const applyContinuityValidation = (parsed: any, previousData: any, previousLastS
     visualScore: typeof original.visualScore === "number" ? original.visualScore : 90,
     productScore: Math.max(60, (typeof original.productScore === "number" ? original.productScore : 100) - (issues.some((i) => i.includes("产品线")) ? 20 : 0)),
     verdict: adjustedScore >= 85 ? "通过" : "需重生成",
-    issues: Array.from(new Set(issues)),
+    issues: Array.from(new Set([...issues, ...warnings])),
     regenerationAdvice: adjustedScore >= 85 ? (original.regenerationAdvice || "可继续使用") : "请一键重生成：必须保留上一集核心角色，并让第1个分镜直接接住上一集最后的人物、动作、台词或道具，再升级原冲突。",
   };
 
