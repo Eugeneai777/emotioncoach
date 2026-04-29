@@ -1,6 +1,9 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
-import { CoachVoiceChat } from '@/components/coach/CoachVoiceChat';
+import React, { createContext, useContext, useState, useCallback, ReactNode, Suspense, lazy } from 'react';
 import { FloatingVoiceCard } from './FloatingVoiceCard';
+
+const CoachVoiceChat = lazy(() =>
+  import('@/components/coach/CoachVoiceChat').then((m) => ({ default: m.CoachVoiceChat }))
+);
 
 interface VoiceConfig {
   coachEmoji: string;
@@ -93,17 +96,19 @@ export function GlobalVoiceProvider({ children }: { children: ReactNode }) {
             </button>
           )}
 
-          <CoachVoiceChat
-            onClose={endVoice}
-            coachEmoji={voiceConfig.coachEmoji}
-            coachTitle={voiceConfig.coachTitle}
-            primaryColor={voiceConfig.primaryColor}
-            tokenEndpoint={voiceConfig.tokenEndpoint}
-            userId={voiceConfig.userId}
-            mode={voiceConfig.mode}
-            featureKey={voiceConfig.featureKey}
-            voiceType={voiceConfig.voiceType}
-          />
+          <Suspense fallback={null}>
+            <CoachVoiceChat
+              onClose={endVoice}
+              coachEmoji={voiceConfig.coachEmoji}
+              coachTitle={voiceConfig.coachTitle}
+              primaryColor={voiceConfig.primaryColor}
+              tokenEndpoint={voiceConfig.tokenEndpoint}
+              userId={voiceConfig.userId}
+              mode={voiceConfig.mode}
+              featureKey={voiceConfig.featureKey}
+              voiceType={voiceConfig.voiceType}
+            />
+          </Suspense>
         </div>
       )}
 
