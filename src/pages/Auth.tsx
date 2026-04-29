@@ -345,22 +345,24 @@ const Auth = () => {
                 const landingTime = localStorage.getItem('share_landing_time');
                 const timeToConvert = landingTime ? Date.now() - parseInt(landingTime) : undefined;
 
-                supabase.from('conversion_events').insert({
-                  event_type: 'share_scan_converted',
-                  feature_key: 'wealth_camp',
-                  user_id: session.user.id,
-                  metadata: {
-                    ref_code: shareRefCode,
-                    landing_page: landingPage,
-                    conversion_type: 'registration',
-                    time_to_convert_ms: timeToConvert,
-                    timestamp: new Date().toISOString(),
-                  }
-                }).then(() => {
+                (async () => {
+                  const { error } = await supabase.from('conversion_events').insert({
+                    event_type: 'share_scan_converted',
+                    feature_key: 'wealth_camp',
+                    user_id: session.user.id,
+                    metadata: {
+                      ref_code: shareRefCode,
+                      landing_page: landingPage,
+                      conversion_type: 'registration',
+                      time_to_convert_ms: timeToConvert,
+                      timestamp: new Date().toISOString(),
+                    }
+                  });
+                  if (error) throw error;
                   localStorage.removeItem('share_ref_code');
                   localStorage.removeItem('share_landing_page');
                   localStorage.removeItem('share_landing_time');
-                }).catch((error) => {
+                })().catch((error) => {
                   console.error('Error tracking share conversion:', error);
                 });
               }
