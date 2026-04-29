@@ -200,6 +200,32 @@ export function DynamicAssessmentIntro({ template, onStart, onShowHistory, hasHi
           </motion.div>
         )}
 
+        {/* Scene visual (male midlife only) */}
+        {enrichment?.scene && (
+          <motion.div {...fadeUp(0.48)}>
+            <div className="relative overflow-hidden rounded-2xl shadow-lg border border-border/40 min-h-[210px]">
+              <img
+                src={enrichment.scene.image}
+                alt="中年男性独处思考状态场景"
+                className="absolute inset-0 h-full w-full object-cover"
+                loading="lazy"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-foreground/85 via-foreground/35 to-transparent" />
+              <div className="relative z-10 flex min-h-[210px] flex-col justify-end p-5 text-background">
+                <p className="text-lg font-bold leading-snug mb-1">{enrichment.scene.title}</p>
+                <p className="text-xs text-background/80 mb-4">{enrichment.scene.subtitle}</p>
+                <div className="flex flex-wrap gap-2">
+                  {enrichment.scene.tags.map((tag) => (
+                    <span key={tag} className="rounded-full bg-background/15 px-3 py-1 text-[11px] backdrop-blur-sm border border-background/20">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
         {/* Authority Data (enrichment) */}
         {enrichment && (
           <motion.div {...fadeUp(0.5)}>
@@ -207,7 +233,7 @@ export function DynamicAssessmentIntro({ template, onStart, onShowHistory, hasHi
               <CardContent className="p-5">
                 <h2 className="font-semibold text-foreground mb-3 text-sm flex items-center gap-2">
                   <BookOpen className="w-4 h-4 text-amber-500" />
-                  科学研究支撑
+                  {isMaleMidlifeVitality ? '放心测：私密、非诊断、有依据' : '科学研究支撑'}
                 </h2>
                 <div className="space-y-2">
                   {enrichment.authority.map((item, i) => (
