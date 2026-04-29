@@ -754,7 +754,7 @@ ${productInfo || "无指定产品"}
     if (isSequel) {
       parsed = applyContinuityValidation(parsed, previousData, previousLastScene, products || previousScript?.selected_products || []);
       let rewriteAttempts = 0;
-      while (hasContinuityHardFailure(parsed) && rewriteAttempts < 3) {
+      while (hasContinuityHardFailure(parsed) && rewriteAttempts < 1) {
         rewriteAttempts += 1;
         parsed = await rewriteOpeningSceneForContinuity(parsed, seriesBible, isYoujin);
         parsed = applyContinuityValidation(parsed, previousData, previousLastScene, products || previousScript?.selected_products || []);
