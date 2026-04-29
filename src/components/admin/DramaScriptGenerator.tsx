@@ -434,6 +434,7 @@ export default function DramaScriptGenerator() {
     setSceneAudios({});
     setSceneImages({});
     setCharacterImages({});
+    setSequelGenerationError(null);
     // Clear all polling
     Object.values(pollingRefs.current).forEach(clearInterval);
     pollingRefs.current = {};
@@ -545,6 +546,8 @@ export default function DramaScriptGenerator() {
     setSelectedProducts(new Set((script.selected_products || []).map((p) => p.key)));
     setResult(script.script_data);
     setSequelCandidates([]);
+    setSequelGenerationError(null);
+    setSequelGenerationSource(null);
     setSceneImages(Object.fromEntries((script.script_data?.scenes || []).filter((s) => s.generatedImageUrl).map((s) => [s.sceneNumber, { status: "done", imageUrl: s.generatedImageUrl! }])));
     setCharacterImages(Object.fromEntries((script.script_data?.characters || []).map((c, index) => c.referenceImageUrl ? [index, { status: "done", imageUrl: c.referenceImageUrl }] : null).filter(Boolean) as [number, SceneImageState][]));
     setSavedScriptId(script.id);
@@ -1542,7 +1545,7 @@ export default function DramaScriptGenerator() {
                         <p className="break-words">钩子：{candidate.script.continuityBridge.nextEpisodeHook}</p>
                       </div>
                     )}
-                    <Button className="w-full gap-2" onClick={() => adoptSequelCandidate(candidate)}>
+                    <Button className="w-full gap-2" onClick={() => adoptSequelCandidate(candidate)} disabled={generatingSequel}>
                       <Check className="h-4 w-4" /> 采用{candidate.key}版
                     </Button>
                   </CardContent>
