@@ -266,6 +266,8 @@ export default function DramaScriptGenerator() {
   const [generatingSequel, setGeneratingSequel] = useState(false);
   const [sequelCandidates, setSequelCandidates] = useState<SequelCandidate[]>([]);
   const [sequelGenerationSource, setSequelGenerationSource] = useState<{ title: string; episodeNumber: number } | null>(null);
+  const [sequelGenerationStep, setSequelGenerationStep] = useState("");
+  const [sequelGenerationError, setSequelGenerationError] = useState<string | null>(null);
   const [suggestedThemes, setSuggestedThemes] = useState<{ title: string; description: string }[]>([]);
   const [loadingThemes, setLoadingThemes] = useState(false);
   const [selectedThemeIdx, setSelectedThemeIdx] = useState<number | null>(null);
