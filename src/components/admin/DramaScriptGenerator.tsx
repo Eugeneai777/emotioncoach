@@ -9,6 +9,7 @@ import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { extractEdgeFunctionError } from "@/lib/edgeFunctionError";
 import { mergeVideosClientSide } from "@/utils/videoMerger";
@@ -49,6 +50,21 @@ const CONFLICT_LEVELS = [
   { value: "standard", label: "标准冲突", desc: "清晰矛盾 + 温和反转" },
   { value: "strong", label: "强冲突", desc: "高压开场 + 情绪升级" },
   { value: "viral", label: "爆款夸张", desc: "极限误会 + 强反转结尾" },
+];
+
+const SEQUEL_DIRECTIONS = [
+  { value: "new_evidence", label: "新证据推翻上一集" },
+  { value: "third_party_pressure", label: "第三方闯入加压" },
+  { value: "costly_counterattack", label: "主角反击但代价更大" },
+  { value: "hidden_truth", label: "沉默真相突然爆开" },
+  { value: "countdown_choice", label: "限时选择逼到绝境" },
+];
+
+const SEQUEL_OPENING_ANGLES = [
+  { value: "one_second_later", label: "上一句台词后1秒接上" },
+  { value: "prop_focus", label: "用关键道具开场" },
+  { value: "reaction_first", label: "先拍对方沉默反应" },
+  { value: "external_interrupt", label: "电话/敲门/弹窗打断" },
 ];
 
 const BASE_URL = "https://wechat.eugenewe.net";
