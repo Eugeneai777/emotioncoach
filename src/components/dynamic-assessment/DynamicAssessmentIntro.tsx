@@ -8,6 +8,7 @@ import { setPostAuthRedirect } from "@/lib/postAuthRedirect";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { DimensionRadarChart } from "./DimensionRadarChart";
+import midlifeSceneImage from "@/assets/audience/midlife.webp";
 
 interface DynamicAssessmentIntroProps {
   template: {
@@ -42,12 +43,19 @@ const benefitItems = [
   { icon: MessageSquare, text: "改善建议与行动方案" },
 ];
 
+const maleMidlifeBenefitItems = [
+  { icon: BarChart3, text: "一份只给你看的私密状态报告" },
+  { icon: Target, text: "看清最该先调整的是睡眠、压力还是关系" },
+  { icon: Sparkles, text: "AI 给出可执行的恢复建议" },
+];
+
 // Enrichment content keyed by assessment_key
 const enrichmentData: Record<string, {
   painPoints: { emoji: string; text: string }[];
   authority: { emoji: string; text: string }[];
   comparison: { traditional: string; ours: string };
   radarPreview?: { score: number; maxScore: number; label: string; emoji: string }[];
+  scene?: { image: string; title: string; subtitle: string; tags: string[] };
 }> = {
   women_competitiveness: {
     painPoints: [
@@ -74,19 +82,25 @@ const enrichmentData: Record<string, {
   },
   male_midlife_vitality: {
     painPoints: [
-      { emoji: "🔋", text: "白天像在硬撑，晚上却睡不踏实，身体总是充不上电" },
-      { emoji: "🧠", text: "一边担心指标、家庭和工作，一边又不想让别人看出来" },
-      { emoji: "🤐", text: "有些状态不好开口，只能自己在夜里反复琢磨" },
+      { emoji: "🔋", text: "白天靠硬撑，晚上却睡不深，像一直充不上电" },
+      { emoji: "🧠", text: "工作、家庭、身体指标都要扛，但不想让别人看出来" },
+      { emoji: "🤐", text: "有些变化不好开口，只能自己反复琢磨" },
       { emoji: "🏠", text: "不是不在乎家人，是最近连照顾自己的余力都变少了" },
     ],
     authority: [
-      { emoji: "📋", text: "参考 SHIM / IIEF-5 的短题快筛思路，聚焦信心、状态和关键时刻压力" },
-      { emoji: "🧭", text: "融合 AMS、睡眠质量和情绪压力筛查框架，覆盖精力、睡眠、关系与行动恢复" },
-      { emoji: "🛡️", text: "本测评是状态盘点，不做疾病诊断；如有明显身体不适，建议及时咨询专业医生" },
+      { emoji: "🔒", text: "私密完成：结果只给你自己看，不需要向任何人解释" },
+      { emoji: "🧭", text: "有依据：围绕精力、睡眠、压力、关系和信心做状态盘点" },
+      { emoji: "🛡️", text: "非诊断：不贴标签；如有明显身体不适，建议及时咨询专业医生" },
     ],
     comparison: {
-      traditional: "要么太医学化，让人一看就想退出；要么太娱乐化，看完没有行动方向",
-      ours: "用中年男性真实生活场景提问，既保留私密感，又能看见压力、睡眠和关键时刻信心的关系",
+      traditional: "题目太医学化，越看越紧张；或者太娱乐化，看完还是不知道该怎么办。",
+      ours: "用真实生活场景提问，帮你看清精力、睡眠、压力、关系和关键时刻信心之间的关系。",
+    },
+    scene: {
+      image: midlifeSceneImage,
+      title: "很多变化，不是突然发生的",
+      subtitle: "先看清状态，再决定从哪里开始恢复。",
+      tags: ["晚上睡不深", "白天靠硬撑", "有些话不好开口"],
     },
     radarPreview: [
       { score: 46, maxScore: 100, label: "精力续航", emoji: "🔋" },
