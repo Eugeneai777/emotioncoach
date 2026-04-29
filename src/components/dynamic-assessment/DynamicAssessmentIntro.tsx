@@ -8,6 +8,7 @@ import { setPostAuthRedirect } from "@/lib/postAuthRedirect";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { DimensionRadarChart } from "./DimensionRadarChart";
+import midlifeSceneImage from "@/assets/audience/midlife.webp";
 
 interface DynamicAssessmentIntroProps {
   template: {
@@ -42,12 +43,19 @@ const benefitItems = [
   { icon: MessageSquare, text: "改善建议与行动方案" },
 ];
 
+const maleMidlifeBenefitItems = [
+  { icon: BarChart3, text: "一份只给你看的私密状态报告" },
+  { icon: Target, text: "看清最该先调整的是睡眠、压力还是关系" },
+  { icon: Sparkles, text: "AI 给出可执行的恢复建议" },
+];
+
 // Enrichment content keyed by assessment_key
 const enrichmentData: Record<string, {
   painPoints: { emoji: string; text: string }[];
   authority: { emoji: string; text: string }[];
   comparison: { traditional: string; ours: string };
   radarPreview?: { score: number; maxScore: number; label: string; emoji: string }[];
+  scene?: { image: string; title: string; subtitle: string; tags: string[] };
 }> = {
   women_competitiveness: {
     painPoints: [
@@ -74,19 +82,25 @@ const enrichmentData: Record<string, {
   },
   male_midlife_vitality: {
     painPoints: [
-      { emoji: "🔋", text: "白天像在硬撑，晚上却睡不踏实，身体总是充不上电" },
-      { emoji: "🧠", text: "一边担心指标、家庭和工作，一边又不想让别人看出来" },
-      { emoji: "🤐", text: "有些状态不好开口，只能自己在夜里反复琢磨" },
+      { emoji: "🔋", text: "白天靠硬撑，晚上却睡不深，像一直充不上电" },
+      { emoji: "🧠", text: "工作、家庭、身体指标都要扛，但不想让别人看出来" },
+      { emoji: "🤐", text: "有些变化不好开口，只能自己反复琢磨" },
       { emoji: "🏠", text: "不是不在乎家人，是最近连照顾自己的余力都变少了" },
     ],
     authority: [
-      { emoji: "📋", text: "参考 SHIM / IIEF-5 的短题快筛思路，聚焦信心、状态和关键时刻压力" },
-      { emoji: "🧭", text: "融合 AMS、睡眠质量和情绪压力筛查框架，覆盖精力、睡眠、关系与行动恢复" },
-      { emoji: "🛡️", text: "本测评是状态盘点，不做疾病诊断；如有明显身体不适，建议及时咨询专业医生" },
+      { emoji: "🔒", text: "私密完成：结果只给你自己看，不需要向任何人解释" },
+      { emoji: "🧭", text: "有依据：围绕精力、睡眠、压力、关系和信心做状态盘点" },
+      { emoji: "🛡️", text: "非诊断：不贴标签；如有明显身体不适，建议及时咨询专业医生" },
     ],
     comparison: {
-      traditional: "要么太医学化，让人一看就想退出；要么太娱乐化，看完没有行动方向",
-      ours: "用中年男性真实生活场景提问，既保留私密感，又能看见压力、睡眠和关键时刻信心的关系",
+      traditional: "题目太医学化，越看越紧张；或者太娱乐化，看完还是不知道该怎么办。",
+      ours: "用真实生活场景提问，帮你看清精力、睡眠、压力、关系和关键时刻信心之间的关系。",
+    },
+    scene: {
+      image: midlifeSceneImage,
+      title: "很多变化，不是突然发生的",
+      subtitle: "先看清状态，再决定从哪里开始恢复。",
+      tags: ["晚上睡不深", "白天靠硬撑", "有些话不好开口"],
     },
     radarPreview: [
       { score: 46, maxScore: 100, label: "精力续航", emoji: "🔋" },
@@ -186,6 +200,32 @@ export function DynamicAssessmentIntro({ template, onStart, onShowHistory, hasHi
           </motion.div>
         )}
 
+        {/* Scene visual (male midlife only) */}
+        {enrichment?.scene && (
+          <motion.div {...fadeUp(0.48)}>
+            <div className="relative overflow-hidden rounded-2xl shadow-lg border border-border/40 min-h-[210px]">
+              <img
+                src={enrichment.scene.image}
+                alt="中年男性独处思考状态场景"
+                className="absolute inset-0 h-full w-full object-cover"
+                loading="lazy"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-foreground/85 via-foreground/35 to-transparent" />
+              <div className="relative z-10 flex min-h-[210px] flex-col justify-end p-5 text-background">
+                <p className="text-lg font-bold leading-snug mb-1">{enrichment.scene.title}</p>
+                <p className="text-xs text-background/80 mb-4">{enrichment.scene.subtitle}</p>
+                <div className="flex flex-wrap gap-2">
+                  {enrichment.scene.tags.map((tag) => (
+                    <span key={tag} className="rounded-full bg-background/15 px-3 py-1 text-[11px] backdrop-blur-sm border border-background/20">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
         {/* Authority Data (enrichment) */}
         {enrichment && (
           <motion.div {...fadeUp(0.5)}>
@@ -193,7 +233,7 @@ export function DynamicAssessmentIntro({ template, onStart, onShowHistory, hasHi
               <CardContent className="p-5">
                 <h2 className="font-semibold text-foreground mb-3 text-sm flex items-center gap-2">
                   <BookOpen className="w-4 h-4 text-amber-500" />
-                  科学研究支撑
+                  {isMaleMidlifeVitality ? '放心测：私密、非诊断、有依据' : '科学研究支撑'}
                 </h2>
                 <div className="space-y-2">
                   {enrichment.authority.map((item, i) => (
@@ -260,15 +300,15 @@ export function DynamicAssessmentIntro({ template, onStart, onShowHistory, hasHi
               <CardContent className="p-5">
                   <h2 className="font-semibold text-foreground mb-3 text-sm flex items-center gap-2">
                   <TrendingUp className="w-4 h-4 text-emerald-500" />
-                  {template.assessment_key === 'male_midlife_vitality' ? '为什么更适合公众号流量' : 'AI深度测评 vs 传统测试'}
+                  {isMaleMidlifeVitality ? '这不是给你贴标签，而是帮你看清状态' : 'AI深度测评 vs 传统测试'}
                 </h2>
                 <div className="space-y-2">
                   <div className="p-3 rounded-lg bg-muted/40 border border-border/30">
-                    <p className="text-xs font-medium text-muted-foreground mb-1">❌ 传统测试</p>
+                    <p className="text-xs font-medium text-muted-foreground mb-1">❌ {isMaleMidlifeVitality ? '让人紧张的测试' : '传统测试'}</p>
                     <p className="text-xs text-muted-foreground/70">{enrichment.comparison.traditional}</p>
                   </div>
                   <div className="p-3 rounded-lg bg-primary/5 border border-primary/15">
-                    <p className="text-xs font-medium text-primary mb-1">✅ {template.title}</p>
+                    <p className="text-xs font-medium text-primary mb-1">✅ {isMaleMidlifeVitality ? '更适合你的评估' : template.title}</p>
                     <p className="text-xs text-muted-foreground">{enrichment.comparison.ours}</p>
                   </div>
                 </div>
@@ -283,7 +323,7 @@ export function DynamicAssessmentIntro({ template, onStart, onShowHistory, hasHi
             <CardContent className="p-5">
               <h2 className="font-semibold text-foreground mb-3 text-sm">✨ 你将获得</h2>
               <div className="space-y-3">
-                {benefitItems.map(({ icon: Icon, text }, i) => (
+                {(isMaleMidlifeVitality ? maleMidlifeBenefitItems : benefitItems).map(({ icon: Icon, text }, i) => (
                   <motion.div
                     key={text}
                     initial={{ opacity: 0, x: -12 }}
