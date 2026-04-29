@@ -265,11 +265,13 @@ export default function DramaScriptGenerator() {
   const [loadingSavedScripts, setLoadingSavedScripts] = useState(false);
   const [generatingSequel, setGeneratingSequel] = useState(false);
   const [sequelCandidates, setSequelCandidates] = useState<SequelCandidate[]>([]);
+  const [sequelGenerationSource, setSequelGenerationSource] = useState<{ title: string; episodeNumber: number } | null>(null);
   const [suggestedThemes, setSuggestedThemes] = useState<{ title: string; description: string }[]>([]);
   const [loadingThemes, setLoadingThemes] = useState(false);
   const [selectedThemeIdx, setSelectedThemeIdx] = useState<number | null>(null);
   const [sequelConversionOverrides, setSequelConversionOverrides] = useState<Record<string, string[]>>({});
   const themeFetchRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sequelStatusRef = useRef<HTMLDivElement | null>(null);
 
   // Image/video generation state
   const [imageAspectRatio, setImageAspectRatio] = useState("9:16");
@@ -362,6 +364,14 @@ export default function DramaScriptGenerator() {
   useEffect(() => {
     fetchSavedScripts();
   }, [fetchSavedScripts]);
+
+  useEffect(() => {
+    if (generatingSequel) {
+      requestAnimationFrame(() => {
+        sequelStatusRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      });
+    }
+  }, [generatingSequel]);
 
   // Auto-fetch suggested themes when products change in youjin mode
   const fetchSuggestedThemes = useCallback(async (avoidTitles: string[] = []) => {
@@ -572,6 +582,7 @@ export default function DramaScriptGenerator() {
       return;
     }
     setGeneratingSequel(true);
+    setSequelGenerationSource({ title: script.title, episodeNumber: script.episode_number });
     setResult(null);
     setSequelCandidates([]);
     clearGeneratedAssets();
@@ -641,6 +652,7 @@ export default function DramaScriptGenerator() {
       toast.error(e.message || "续集生成失败");
     } finally {
       setGeneratingSequel(false);
+      setSequelGenerationSource(null);
     }
   };
 
@@ -1453,6 +1465,23 @@ export default function DramaScriptGenerator() {
           )}
         </CardContent>
       </Card>
+
+      {generatingSequel && sequelGenerationSource && (
+        <Card ref={sequelStatusRef} className="mt-6 border-primary/30 bg-primary/5 max-w-full overflow-hidden">
+          <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0 space-y-1">
+              <div className="flex items-center gap-2 text-sm font-medium text-primary">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                正在生成第{sequelGenerationSource.episodeNumber + 1}集 A/B 两个候选版本
+              </div>
+              <p className="text-xs text-muted-foreground break-words">
+                承接《{sequelGenerationSource.title}》第{sequelGenerationSource.episodeNumber}集，通常需要等待 AI 完成两版脚本。
+              </p>
+            </div>
+            <div className="shrink-0 text-xs text-muted-foreground">请勿重复点击</div>
+          </CardContent>
+        </Card>
+      )}
 
       {sequelCandidates.length > 0 && (
         <div className="space-y-3 mt-6 w-full max-w-full min-w-0 overflow-hidden">
