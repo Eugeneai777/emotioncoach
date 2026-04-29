@@ -1,18 +1,10 @@
-import { useState, useEffect } from "react";
+import { Suspense, lazy, useState, useEffect } from "react";
 import { useParams, useLocation } from "react-router-dom";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { OG_BASE_URL } from "@/config/ogConfig";
 import { CoachLayout } from "@/components/coach/CoachLayout";
 import { CoachScenarioChips } from "@/components/coach/CoachScenarioChips";
 import { VibrantLifeScenarioCards } from "@/components/coach/VibrantLifeScenarioCards";
-import { CoachCommunity } from "@/components/coach/CoachCommunity";
-import { VideoRecommendationCard } from "@/components/coach/VideoRecommendationCard";
-import { ToolRecommendationCard } from "@/components/coach/ToolRecommendationCard";
-import { EmotionButtonRecommendationCard } from "@/components/coach/EmotionButtonRecommendationCard";
-import { CampRecommendationCard } from "@/components/coach/CampRecommendationCard";
-import { CoachNotificationsModule } from "@/components/coach/CoachNotificationsModule";
-import { CoachTrainingCamp } from "@/components/coach/CoachTrainingCamp";
-import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
 import { VoiceCallCTA } from "@/components/coach/VoiceCallCTA";
 import { useDynamicCoachChat, CoachChatMode } from "@/hooks/useDynamicCoachChat";
 import { useCoachTemplate } from "@/hooks/useCoachTemplates";
@@ -26,6 +18,15 @@ import { GratitudeQuickAdd } from "@/components/gratitude/GratitudeQuickAdd";
 import { Loader2 } from "lucide-react";
 import { MeditationAnalysisIntro } from "@/components/wealth-camp/MeditationAnalysisIntro";
 import { Badge } from "@/components/ui/badge";
+
+const CoachCommunity = lazy(() => import("@/components/coach/CoachCommunity").then((m) => ({ default: m.CoachCommunity })));
+const VideoRecommendationCard = lazy(() => import("@/components/coach/VideoRecommendationCard").then((m) => ({ default: m.VideoRecommendationCard })));
+const ToolRecommendationCard = lazy(() => import("@/components/coach/ToolRecommendationCard").then((m) => ({ default: m.ToolRecommendationCard })));
+const EmotionButtonRecommendationCard = lazy(() => import("@/components/coach/EmotionButtonRecommendationCard").then((m) => ({ default: m.EmotionButtonRecommendationCard })));
+const CampRecommendationCard = lazy(() => import("@/components/coach/CampRecommendationCard").then((m) => ({ default: m.CampRecommendationCard })));
+const CoachNotificationsModule = lazy(() => import("@/components/coach/CoachNotificationsModule").then((m) => ({ default: m.CoachNotificationsModule })));
+const CoachTrainingCamp = lazy(() => import("@/components/coach/CoachTrainingCamp").then((m) => ({ default: m.CoachTrainingCamp })));
+const CoachVoiceChat = lazy(() => import("@/components/coach/CoachVoiceChat").then((m) => ({ default: m.CoachVoiceChat })));
 
 interface LocationState {
   initialMessage?: string;
