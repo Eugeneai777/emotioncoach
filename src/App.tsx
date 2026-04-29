@@ -275,6 +275,21 @@ const FollowWechatReminder = lazyRetry(() => import("./components/FollowWechatRe
 const BloomInvitePrompt = lazyRetry(() => import("./components/BloomInvitePrompt").then(m => ({ default: m.BloomInvitePrompt })));
 const PhoneBindOnboarding = lazyRetry(() => import("./components/onboarding/PhoneBindOnboarding").then(m => ({ default: m.PhoneBindOnboarding })));
 
+const GLOBAL_FLOATING_EXCLUDED_ROUTES = [
+  '/',
+  '/auth',
+  '/wechat-auth',
+  '/mini-app',
+  '/my-page',
+  '/coach/vibrant_life_sage',
+  '/parent-coach',
+];
+
+const isGlobalFloatingExcluded = (pathname: string) =>
+  GLOBAL_FLOATING_EXCLUDED_ROUTES.some((route) =>
+    route === '/' ? pathname === '/' : pathname.startsWith(route)
+  );
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -315,6 +330,24 @@ const ScrollToTopOnNavigate = lazyRetry(() =>
 
 const VersionChecker = () => { useVersionCheck(); return null; };
 
+const GlobalFloatingLayer = () => {
+  const { pathname } = useLocation();
+
+  if (isGlobalFloatingExcluded(pathname)) {
+    return null;
+  }
+
+  return (
+    <Suspense fallback={null}>
+      <FloatingVoiceButton />
+      <FloatingQuickMenu />
+      <FollowWechatReminder />
+      <BloomInvitePrompt />
+      <PhoneBindOnboarding />
+    </Suspense>
+  );
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -332,14 +365,7 @@ const App = () => (
             </Suspense>
             <UserPresenceTracker />
             <VersionChecker />
-          {/* 全局浮动组件延迟加载 */}
-          <Suspense fallback={null}>
-            <FloatingVoiceButton />
-            <FloatingQuickMenu />
-            <FollowWechatReminder />
-            <BloomInvitePrompt />
-            <PhoneBindOnboarding />
-          </Suspense>
+          <GlobalFloatingLayer />
           <ChunkErrorBoundary>
           <Suspense fallback={<PageLoader />}>
             <Routes>
