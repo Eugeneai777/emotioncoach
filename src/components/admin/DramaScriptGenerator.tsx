@@ -106,6 +106,7 @@ interface Character {
   name: string;
   description: string;
   imagePrompt: string;
+  referenceImageUrl?: string;
 }
 
 interface Scene {
@@ -118,6 +119,7 @@ interface Scene {
   bgm: string;
   duration: string;
   relatedProduct?: string;
+  generatedImageUrl?: string;
 }
 
 interface DramaScript {
@@ -186,6 +188,14 @@ interface SceneAudioState {
   error?: string;
 }
 
+type ImageStatus = "idle" | "generating" | "done" | "failed";
+
+interface SceneImageState {
+  status: ImageStatus;
+  imageUrl?: string;
+  error?: string;
+}
+
 function base64ToBlob(base64: string, mimeType: string): Blob {
   const byteChars = atob(base64);
   const byteNums = new Uint8Array(byteChars.length);
@@ -234,6 +244,13 @@ export default function DramaScriptGenerator() {
   const [loadingThemes, setLoadingThemes] = useState(false);
   const [selectedThemeIdx, setSelectedThemeIdx] = useState<number | null>(null);
   const themeFetchRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Image/video generation state
+  const [imageAspectRatio, setImageAspectRatio] = useState("9:16");
+  const [sceneImages, setSceneImages] = useState<Record<number, SceneImageState>>({});
+  const [characterImages, setCharacterImages] = useState<Record<number, SceneImageState>>({});
+  const [batchGeneratingImages, setBatchGeneratingImages] = useState(false);
+  const [generatingCharacterRefs, setGeneratingCharacterRefs] = useState(false);
 
   // Video generation state
   const [videoAspectRatio, setVideoAspectRatio] = useState("9:16");
@@ -362,6 +379,8 @@ export default function DramaScriptGenerator() {
     setSceneVideos({});
     setVideoPreviewFallbacks({});
     setSceneAudios({});
+    setSceneImages({});
+    setCharacterImages({});
     // Clear all polling
     Object.values(pollingRefs.current).forEach(clearInterval);
     pollingRefs.current = {};
@@ -393,6 +412,8 @@ export default function DramaScriptGenerator() {
     setSceneVideos({});
     setVideoPreviewFallbacks({});
     setSceneAudios({});
+    setSceneImages({});
+    setCharacterImages({});
     Object.values(pollingRefs.current).forEach(clearInterval);
     pollingRefs.current = {};
   };
@@ -418,7 +439,7 @@ export default function DramaScriptGenerator() {
         target_audience: mode === "youjin" ? targetAudience : null,
         conversion_style: mode === "youjin" ? conversionStyles[0] || "plot" : null,
         selected_products: selectedProductDetails,
-        script_data: { ...result, conversionStyles: mode === "youjin" ? conversionStyles : undefined },
+        script_data: buildScriptWithGeneratedImages(),
         series_id: isUpdatingExisting ? activeSavedScript?.series_id : activeSavedScript?.series_id,
         parent_script_id: isUpdatingExisting ? activeSavedScript?.parent_script_id : activeSavedScript?.id || null,
         episode_number: isUpdatingExisting ? activeSavedScript?.episode_number || 1 : activeSavedScript ? activeSavedScript.episode_number + 1 : 1,
@@ -444,6 +465,22 @@ export default function DramaScriptGenerator() {
     }
   };
 
+  const buildScriptWithGeneratedImages = useCallback((): DramaScript | null => {
+    if (!result) return null;
+    return {
+      ...result,
+      conversionStyles: mode === "youjin" ? conversionStyles : undefined,
+      characters: result.characters.map((char, index) => ({
+        ...char,
+        referenceImageUrl: characterImages[index]?.imageUrl || char.referenceImageUrl,
+      })),
+      scenes: result.scenes.map((scene) => ({
+        ...scene,
+        generatedImageUrl: sceneImages[scene.sceneNumber]?.imageUrl || scene.generatedImageUrl,
+      })),
+    };
+  }, [characterImages, conversionStyles, mode, result, sceneImages]);
+
   const loadSavedScript = (script: SavedDramaScript) => {
     setMode(script.mode || "generic");
     setTheme(script.theme || script.title);
@@ -454,9 +491,15 @@ export default function DramaScriptGenerator() {
     setConversionStyles(normalizeConversionStyles(script.script_data?.conversionStyles || script.conversion_style));
     setSelectedProducts(new Set((script.selected_products || []).map((p) => p.key)));
     setResult(script.script_data);
+    setSceneImages(Object.fromEntries((script.script_data?.scenes || []).filter((s) => s.generatedImageUrl).map((s) => [s.sceneNumber, { status: "done", imageUrl: s.generatedImageUrl! }])));
+    setCharacterImages(Object.fromEntries((script.script_data?.characters || []).map((c, index) => c.referenceImageUrl ? [index, { status: "done", imageUrl: c.referenceImageUrl }] : null).filter(Boolean) as [number, SceneImageState][]));
     setSavedScriptId(script.id);
     setActiveSavedScript(script);
-    clearGeneratedAssets();
+    setSceneVideos({});
+    setVideoPreviewFallbacks({});
+    setSceneAudios({});
+    Object.values(pollingRefs.current).forEach(clearInterval);
+    pollingRefs.current = {};
     toast.success(`已载入《${script.title}》第${script.episode_number}集`);
   };
 
@@ -551,7 +594,7 @@ export default function DramaScriptGenerator() {
 
   const exportJSON = () => {
     if (!result) return;
-    const blob = new Blob([JSON.stringify(result, null, 2)], { type: "application/json" });
+    const blob = new Blob([JSON.stringify(buildScriptWithGeneratedImages(), null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -567,6 +610,123 @@ export default function DramaScriptGenerator() {
       text = text.replace(new RegExp(`\\{\\{${p.name}\\}\\}`, "g"), `${p.name} 👉 ${p.url}`);
     });
     return text;
+  };
+
+  // --- GPT Image 2.0 Scene Image Generation ---
+  const characterReferenceUrls = useCallback(() => {
+    return Object.values(characterImages).map((state) => state.imageUrl).filter(Boolean) as string[];
+  }, [characterImages]);
+
+  const generateCharacterReference = useCallback(async (char: Character, index: number) => {
+    if (!result) return null;
+    setCharacterImages((prev) => ({ ...prev, [index]: { status: "generating" } }));
+    try {
+      const { data, error } = await supabase.functions.invoke("drama-scene-image-openai", {
+        body: {
+          action: "character_reference",
+          title: result.title,
+          style,
+          aspectRatio: "1:1",
+          characters: [char],
+          scene: {
+            sceneNumber: `char-${index + 1}`,
+            panel: "front-facing character reference portrait",
+            characterAction: `Create a clean canonical character reference portrait for ${char.name}`,
+            dialogue: "",
+            imagePrompt: `${char.imagePrompt}. Full character identity reference, consistent face, hairstyle, outfit, recognizable props, clean background, no text.`,
+          },
+        },
+      });
+      if (data?.error || error) throw new Error(await extractEdgeFunctionError(data, error, "角色定妆图生成失败"));
+      const imageUrl = data?.imageUrl as string | undefined;
+      if (!imageUrl) throw new Error("未返回图片地址");
+      setCharacterImages((prev) => ({ ...prev, [index]: { status: "done", imageUrl } }));
+      return imageUrl;
+    } catch (e: any) {
+      setCharacterImages((prev) => ({ ...prev, [index]: { status: "failed", error: e.message || "生成失败" } }));
+      toast.error(`${char.name} 定妆图生成失败：${e.message || "请重试"}`);
+      return null;
+    }
+  }, [result, style]);
+
+  const handleGenerateCharacterReferences = async () => {
+    if (!result) return;
+    setGeneratingCharacterRefs(true);
+    for (let i = 0; i < result.characters.length; i++) {
+      if (characterImages[i]?.status === "done") continue;
+      await generateCharacterReference(result.characters[i], i);
+      await new Promise((r) => setTimeout(r, 800));
+    }
+    setGeneratingCharacterRefs(false);
+    toast.success("角色定妆图已生成");
+  };
+
+  const generateSceneImage = useCallback(async (scene: Scene, extraReferences: string[] = []) => {
+    if (!result) return null;
+    const num = scene.sceneNumber;
+    setSceneImages((prev) => ({ ...prev, [num]: { status: "generating" } }));
+    try {
+      const { data, error } = await supabase.functions.invoke("drama-scene-image-openai", {
+        body: {
+          title: result.title,
+          style,
+          aspectRatio: imageAspectRatio,
+          characters: result.characters.map((char, index) => ({
+            ...char,
+            referenceImageUrl: characterImages[index]?.imageUrl || char.referenceImageUrl,
+          })),
+          characterReferenceUrls: characterReferenceUrls(),
+          referenceImageUrls: extraReferences,
+          scene,
+        },
+      });
+      if (data?.error || error) throw new Error(await extractEdgeFunctionError(data, error, "分镜图片生成失败"));
+      const imageUrl = data?.imageUrl as string | undefined;
+      if (!imageUrl) throw new Error("未返回图片地址");
+      setSceneImages((prev) => ({ ...prev, [num]: { status: "done", imageUrl } }));
+      toast.success(`场景 ${num} 图片已生成`);
+      return imageUrl;
+    } catch (e: any) {
+      setSceneImages((prev) => ({ ...prev, [num]: { status: "failed", error: e.message || "生成失败" } }));
+      toast.error(`场景 ${num} 图片生成失败：${e.message || "请重试"}`);
+      return null;
+    }
+  }, [characterImages, characterReferenceUrls, imageAspectRatio, result, style]);
+
+  const handleBatchGenerateImages = async () => {
+    if (!result) return;
+    setBatchGeneratingImages(true);
+    let previousImageUrl: string | undefined;
+    for (const scene of result.scenes) {
+      const state = sceneImages[scene.sceneNumber];
+      if (state?.status === "done") {
+        previousImageUrl = state.imageUrl;
+        continue;
+      }
+      const references = previousImageUrl ? [previousImageUrl] : [];
+      const imageUrl = await generateSceneImage(scene, references);
+      if (imageUrl) previousImageUrl = imageUrl;
+      await new Promise((r) => setTimeout(r, 1200));
+    }
+    setBatchGeneratingImages(false);
+    toast.info("分镜图片批量生成已完成");
+  };
+
+  const downloadImage = async (url: string, label: string) => {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error("下载失败");
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = `${label}.png`;
+      a.click();
+      URL.revokeObjectURL(blobUrl);
+    } catch {
+      copyToClipboard(url, "图片链接");
+      toast.info("已复制图片链接，请在新标签页打开保存");
+    }
   };
 
   // --- Video Generation Logic ---
@@ -635,6 +795,7 @@ export default function DramaScriptGenerator() {
           prompt: scene.imagePrompt,
           aspect_ratio: videoAspectRatio,
           duration: videoDuration,
+          image_urls: sceneImages[num]?.imageUrl ? [sceneImages[num].imageUrl] : undefined,
         },
       });
 
@@ -650,7 +811,7 @@ export default function DramaScriptGenerator() {
       updateSceneVideo(num, { status: "failed", error: e.message });
       return false;
     }
-  }, [videoAspectRatio, videoDuration, updateSceneVideo, pollVideoStatus]);
+  }, [sceneImages, videoAspectRatio, videoDuration, updateSceneVideo, pollVideoStatus]);
 
   const handleBatchGenerate = async () => {
     if (!result) return;
@@ -676,6 +837,8 @@ export default function DramaScriptGenerator() {
   const allAudiosDone = result?.scenes.every(s => sceneAudios[s.sceneNumber]?.status === "done") ?? false;
   const anyAudioGenerating = Object.values(sceneAudios).some(a => a.status === "generating");
   const completedAudioCount = Object.values(sceneAudios).filter(a => a.status === "done").length;
+  const completedImageCount = Object.values(sceneImages).filter((img) => img.status === "done").length;
+  const anyImageGenerating = Object.values(sceneImages).some((img) => img.status === "generating") || batchGeneratingImages || generatingCharacterRefs;
 
   // --- TTS Audio Generation ---
   const generateSceneAudio = useCallback(async (scene: Scene) => {
@@ -1361,6 +1524,11 @@ export default function DramaScriptGenerator() {
                   <CardContent className="pt-4 space-y-2">
                     <div className="font-medium break-words">{char.name}</div>
                     <p className="text-sm text-muted-foreground break-words">{char.description}</p>
+                    {characterImages[i]?.imageUrl && (
+                      <div className="w-full max-w-full min-w-0 overflow-hidden rounded-lg border bg-muted/30">
+                        <img src={characterImages[i].imageUrl} alt={`${char.name}定妆图`} className="aspect-square w-full max-h-64 object-contain" loading="lazy" />
+                      </div>
+                    )}
                     <div className="bg-muted/50 rounded-lg p-3 min-w-0 overflow-hidden">
                       <div className="flex items-start justify-between gap-2 min-w-0">
                         <code className="text-xs break-all flex-1 min-w-0">{char.imagePrompt}</code>
@@ -1374,6 +1542,13 @@ export default function DramaScriptGenerator() {
                         </Button>
                       </div>
                     </div>
+                    <div className="flex w-full min-w-0 flex-wrap items-center gap-2 overflow-hidden">
+                      <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => generateCharacterReference(char, i)} disabled={generatingCharacterRefs || characterImages[i]?.status === "generating"}>
+                        {characterImages[i]?.status === "generating" ? <Loader2 className="h-3 w-3 animate-spin" /> : <ImageIcon className="h-3 w-3" />}
+                        {characterImages[i]?.imageUrl ? "重生成定妆图" : "生成定妆图"}
+                      </Button>
+                      {characterImages[i]?.status === "failed" && <span className="text-xs text-destructive break-words">{characterImages[i].error}</span>}
+                    </div>
                   </CardContent>
                 </Card>
               ))}
@@ -1384,10 +1559,42 @@ export default function DramaScriptGenerator() {
           <Card className="w-full max-w-full min-w-0 shrink overflow-hidden border-dashed border-primary/40">
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
-                <Video className="h-4 w-4" /> 视频生成设置
+                <Video className="h-4 w-4" /> 图片 / 视频生成设置
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 w-full min-w-0 overflow-hidden">
+                <div className="grid w-full min-w-0 grid-cols-1 gap-4 overflow-hidden sm:grid-cols-2">
+                  <div className="w-full min-w-0 space-y-2 overflow-hidden">
+                    <Label className="text-xs">GPT Image 2.0 图片比例</Label>
+                    <div className="flex w-full min-w-0 flex-wrap gap-2 overflow-hidden">
+                      {ASPECT_RATIOS.map(ar => (
+                        <button key={ar.value} onClick={() => setImageAspectRatio(ar.value)} disabled={anyImageGenerating} className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${imageAspectRatio === ar.value ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border hover:bg-muted"}`}>
+                          {ar.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex w-full min-w-0 flex-wrap items-end gap-2 overflow-hidden">
+                    <Button variant="outline" onClick={handleGenerateCharacterReferences} disabled={generatingCharacterRefs || !result.characters.length} className="gap-2">
+                      {generatingCharacterRefs ? <Loader2 className="h-4 w-4 animate-spin" /> : <User className="h-4 w-4" />}
+                      生成角色定妆图
+                    </Button>
+                    <Button onClick={handleBatchGenerateImages} disabled={batchGeneratingImages || anyImageGenerating} className="gap-2">
+                      {batchGeneratingImages ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon className="h-4 w-4" />}
+                      全部生成分镜图片
+                    </Button>
+                    {completedImageCount > 0 && <span className="pb-2 text-xs text-muted-foreground">图片 {completedImageCount}/{result.scenes.length}</span>}
+                  </div>
+                </div>
+                {completedImageCount > 0 && completedImageCount < result.scenes.length && (
+                  <div className="mt-3 space-y-1">
+                    <span className="text-xs text-muted-foreground">分镜图片生成进度</span>
+                    <Progress value={(completedImageCount / result.scenes.length) * 100} className="h-2" />
+                  </div>
+                )}
+              </div>
+
               <div className="grid w-full min-w-0 grid-cols-1 gap-4 overflow-hidden sm:grid-cols-2">
                 <div className="w-full min-w-0 space-y-2 overflow-hidden">
                   <Label className="text-xs">画面比例</Label>
@@ -1517,6 +1724,7 @@ export default function DramaScriptGenerator() {
             <div className="space-y-3 max-w-full min-w-0 overflow-hidden">
               {result.scenes.map((scene) => {
                 const videoState = sceneVideos[scene.sceneNumber] || { status: "idle" as VideoStatus };
+                const imageState = sceneImages[scene.sceneNumber] || { status: "idle" as ImageStatus };
 
                 return (
                   <Card key={scene.sceneNumber} className="max-w-full min-w-0 overflow-hidden">
@@ -1567,6 +1775,39 @@ export default function DramaScriptGenerator() {
                               </Button>
                             </div>
                           </div>
+
+                          {/* GPT Image 2.0 image generation per scene */}
+                          <div className="flex w-full min-w-0 flex-wrap items-center gap-2 overflow-hidden pt-1">
+                            {imageState.status === "idle" && (
+                              <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => generateSceneImage(scene)} disabled={anyImageGenerating}>
+                                <ImageIcon className="h-3 w-3" /> 生成图片
+                              </Button>
+                            )}
+                            {imageState.status === "generating" && (
+                              <span className="flex items-center gap-1.5 text-xs text-muted-foreground"><Loader2 className="h-3 w-3 animate-spin" /> GPT Image 2.0 生成中...</span>
+                            )}
+                            {imageState.status === "done" && imageState.imageUrl && (
+                              <div className="flex flex-wrap items-center gap-2 min-w-0">
+                                <span className="flex items-center gap-1 text-xs text-primary"><Check className="h-3 w-3" /> 图片已生成</span>
+                                <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => window.open(imageState.imageUrl!, "_blank", "noopener,noreferrer")}><Play className="h-3 w-3" /> 打开</Button>
+                                <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => copyToClipboard(imageState.imageUrl!, "图片链接")}><Copy className="h-3 w-3" /> 复制链接</Button>
+                                <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => downloadImage(imageState.imageUrl!, `scene-${scene.sceneNumber}`)}><Download className="h-3 w-3" /> 下载</Button>
+                                <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => generateSceneImage(scene)} disabled={anyImageGenerating}>重生成</Button>
+                              </div>
+                            )}
+                            {imageState.status === "failed" && (
+                              <div className="flex flex-wrap items-center gap-2 min-w-0">
+                                <span className="text-xs text-destructive break-words">{imageState.error || "图片生成失败"}</span>
+                                <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => generateSceneImage(scene)} disabled={anyImageGenerating}>重试</Button>
+                              </div>
+                            )}
+                          </div>
+
+                          {imageState.status === "done" && imageState.imageUrl && (
+                            <div className="mt-2 w-full max-w-full min-w-0 overflow-hidden rounded-lg border bg-muted/30">
+                              <img src={imageState.imageUrl} alt={`场景 ${scene.sceneNumber} GPT Image 2.0 分镜图`} className="max-h-[520px] w-full object-contain" loading="lazy" />
+                            </div>
+                          )}
 
                           {/* Video generation per scene */}
                           <div className="flex items-center gap-2 flex-wrap pt-1">
