@@ -486,10 +486,10 @@ ${productList}${avoidTitlePrompt}
     };
     const conflictStr = conflictIntensityMap[conflictIntensity] || conflictIntensityMap.strong;
 
-    const count = Math.min(12, Math.max(6, sceneCount || 8));
+    const isSequel = action === "generate_sequel" && previousScript?.script_data;
+    const count = isSequel ? Math.min(8, Math.max(6, sceneCount || 8)) : Math.min(12, Math.max(6, sceneCount || 8));
     const isYoujin = mode === "youjin";
 
-    const isSequel = action === "generate_sequel" && previousScript?.script_data;
     const previousData = isSequel ? previousScript.script_data : null;
     const previousLastScene = previousData?.scenes?.[previousData.scenes.length - 1];
     const seriesBible = isSequel ? buildSeriesBible(previousScript, previousData, previousLastScene, products || previousScript?.selected_products || []) : null;
@@ -507,11 +507,6 @@ ${productList}${avoidTitlePrompt}
 
 【续集创作要求】
 这是一个系列短剧的第 ${(previousScript.episode_number || 1) + 1} 集，不是新故事。你的任务不是“再写一个类似主题”，而是“从上一集最后一秒继续往下拍”。严禁重新开一个相似题材的新故事。
-
-【本次候选版本】
-${sequelVariant === "viral_upgrade"
-  ? "B版：爆点升级版。必须保持上一集连续性，但新压力、误会、对抗和中后段反转要更夸张、更有短视频爆点；不得因此换主角或重启故事。"
-  : "A版：强承接版。必须最大程度复用上一集最后分镜的人物、动作、台词、道具和情绪状态，优先保证连续性与可信度。"}
 
 【系列圣经 Series Bible：最高优先级，必须逐条继承】
 ${JSON.stringify(seriesBible, null, 2)}
@@ -531,15 +526,6 @@ ${JSON.stringify(seriesBible, null, 2)}
 - “上一集最后发生了什么”在本镜头中如何被看见或听见；
 - “谁”延续了上一集的动作/台词/情绪；
 - “新的压力”如何在不换故事的前提下立刻出现。
-
-【生成续集前必须先做一致性检查】
-在创作前先在内部完成检查，不要把检查过程输出给用户：
-- 角色一致性：逐一核对上一集每个核心角色的姓名、年龄感、外貌特征、服装风格、性格、关系立场，续集中不得改名、换身份、换外貌或突然改变动机。
-- 关键剧情点一致性：核对上一集的核心矛盾、已揭示真相、未解决悬念、最后一个动作/台词，本集必须承接这些事实，不得推翻已发生剧情。
-- 关系状态一致性：上一集已经破裂、和解、误会加深、被揭穿或被压迫的关系状态，本集开头必须保持一致，再在此基础上升级。
-- 产品植入一致性：如果上一集已有产品或工具出现，本集只能延续其自然作用，不能突然换成硬广或与上一集用途矛盾。
-- 画面一致性：characters.imagePrompt 必须延续上一集角色识别特征；scene.imagePrompt 中同一角色也要保持相同外观关键词。
-- 跑偏拦截：如果新冲突会导致角色人设、关系、时间线或核心主题跑偏，必须换一个冲突设计。
 
 续集硬性要求：
 1. 延续同一批核心角色、外貌特征、人物关系和画风，不要重启世界观。

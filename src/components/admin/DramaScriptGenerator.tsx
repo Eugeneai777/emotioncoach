@@ -236,6 +236,34 @@ const summarizeSceneForSequel = (scene?: Scene) => {
     .slice(0, 120) || "上一集结尾暂无摘要";
 };
 
+const buildPreviousScriptContext = (script: SavedDramaScript) => {
+  const scriptData = script.script_data;
+  const scenes = scriptData?.scenes || [];
+  return {
+    id: script.id,
+    title: script.title,
+    synopsis: script.synopsis,
+    mode: script.mode,
+    genre: script.genre,
+    style: script.style,
+    conflict_intensity: script.conflict_intensity,
+    target_audience: script.target_audience,
+    conversion_style: script.conversion_style,
+    selected_products: script.selected_products || [],
+    series_id: script.series_id,
+    episode_number: script.episode_number,
+    script_data: {
+      title: scriptData?.title || script.title,
+      synopsis: scriptData?.synopsis || script.synopsis,
+      characters: scriptData?.characters || [],
+      scenes: scenes.slice(-2),
+      conversionStyles: scriptData?.conversionStyles,
+      continuityBridge: scriptData?.continuityBridge,
+      consistencyCheck: scriptData?.consistencyCheck,
+    },
+  };
+};
+
 export default function DramaScriptGenerator() {
   const [mode, setMode] = useState<"generic" | "youjin">("generic");
   const [theme, setTheme] = useState("");
@@ -597,7 +625,7 @@ export default function DramaScriptGenerator() {
         previousSynopsis: script.script_data?.synopsis || script.synopsis,
         previousLastSceneSummary,
         previousCharacterSummary,
-        previousScript: script,
+        previousScript: buildPreviousScriptContext(script),
       };
       if (script.mode === "youjin") {
         const sequelConversionStyles = getSequelConversionStyles(script);

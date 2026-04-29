@@ -140,6 +140,7 @@ function classifyError(status: number | undefined, url: string, isTimeout: boole
 
 function getTimeoutMs(url: string): number {
   if (url.includes('/functions/v1/mini-app-content-ai')) return LONG_RUNNING_TIMEOUT_MS;
+  if (url.includes('/functions/v1/drama-script-ai')) return LONG_RUNNING_TIMEOUT_MS;
   return DEFAULT_TIMEOUT_MS;
 }
 
