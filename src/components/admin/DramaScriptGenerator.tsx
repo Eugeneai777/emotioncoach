@@ -176,6 +176,16 @@ interface SavedDramaScript {
   created_at: string;
 }
 
+interface SequelCandidate {
+  key: "A" | "B";
+  label: string;
+  description: string;
+  script: DramaScript;
+  sourceScript: SavedDramaScript;
+  conversionStyles: string[];
+  products: ProductItem[];
+}
+
 type VideoStatus = "idle" | "submitting" | "in_queue" | "generating" | "done" | "failed";
 
 interface SceneVideoState {
@@ -254,6 +264,7 @@ export default function DramaScriptGenerator() {
   const [savingScript, setSavingScript] = useState(false);
   const [loadingSavedScripts, setLoadingSavedScripts] = useState(false);
   const [generatingSequel, setGeneratingSequel] = useState(false);
+  const [sequelCandidates, setSequelCandidates] = useState<SequelCandidate[]>([]);
   const [suggestedThemes, setSuggestedThemes] = useState<{ title: string; description: string }[]>([]);
   const [loadingThemes, setLoadingThemes] = useState(false);
   const [selectedThemeIdx, setSelectedThemeIdx] = useState<number | null>(null);
