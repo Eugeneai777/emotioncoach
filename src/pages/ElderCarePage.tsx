@@ -11,6 +11,8 @@ import { getSavedVoiceType } from "@/config/voiceTypeConfig";
 import { FamilyPhotoUploader } from "@/components/elder-care/FamilyPhotoUploader";
 import { FamilyPhotoWaterfall } from "@/components/elder-care/FamilyPhotoWaterfall";
 
+const CoachVoiceChat = lazy(() => import("@/components/coach/CoachVoiceChat").then((m) => ({ default: m.CoachVoiceChat })));
+
 const ElderCarePage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -24,9 +26,7 @@ const ElderCarePage = () => {
     }
   }, [searchParams]);
 
-  const CoachVoiceChat = lazy(() => import("@/components/coach/CoachVoiceChat").then((m) => ({ default: m.CoachVoiceChat })));
-
-const quickEntries = [
+  const quickEntries = [
     { emoji: "☀️", title: "问候", desc: "每日暖心", route: "/elder-care/greeting" },
     { emoji: "🔔", title: "提醒", desc: "吃药喝水", route: "/elder-care/reminders" },
     { emoji: "😊", title: "心情", desc: "记录今天", route: "/elder-care/mood" },
