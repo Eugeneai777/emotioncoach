@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -98,6 +98,27 @@ const fadeUp = {
     opacity: 1, y: 0,
     transition: { delay: i * 0.1, duration: 0.5, ease: [0.25, 0.1, 0.25, 1] as const },
   }),
+};
+
+const toVitalityStatusScore = (score: number, maxScore: number) => {
+  if (maxScore <= 0) return 0;
+  return Math.max(0, Math.min(100, Math.round(100 - (score / maxScore) * 100)));
+};
+
+const getVitalityStatusTone = (score: number) => {
+  if (score >= 80) return { label: "稳", text: "text-emerald-600", bar: "bg-emerald-500" };
+  if (score >= 60) return { label: "可调整", text: "text-primary", bar: "bg-primary" };
+  if (score >= 40) return { label: "需留意", text: "text-amber-600", bar: "bg-amber-500" };
+  return { label: "优先恢复", text: "text-orange-600", bar: "bg-orange-500" };
+};
+
+const vitalityDimensionTips: Record<string, string> = {
+  energy: "先把白天电量稳住，不急着证明自己还能扛。",
+  sleep: "睡眠是第一块电池，先从睡前少刷 15 分钟开始。",
+  stress: "不是你扛不住，是脑子一直没有真正下班。",
+  confidence: "关键时刻先恢复节奏，比急着证明更重要。",
+  relationship: "关系温度不用硬聊，先从一个轻松回应开始。",
+  recovery: "行动不用大，连续 7 天的小动作更容易把电量找回来。",
 };
 
 export function DynamicAssessmentResult({
