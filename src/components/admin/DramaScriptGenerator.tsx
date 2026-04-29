@@ -417,7 +417,6 @@ export default function DramaScriptGenerator() {
     }
     setLoading(true);
     setResult(null);
-    setSequelCandidates([]);
     setSceneVideos({});
     setVideoPreviewFallbacks({});
     setSceneAudios({});
@@ -534,7 +533,6 @@ export default function DramaScriptGenerator() {
     setConversionStyles(normalizeConversionStyles(script.script_data?.conversionStyles || script.conversion_style));
     setSelectedProducts(new Set((script.selected_products || []).map((p) => p.key)));
     setResult(script.script_data);
-    setSequelCandidates([]);
     setSequelGenerationError(null);
     setSequelGenerationSource(null);
     setSceneImages(Object.fromEntries((script.script_data?.scenes || []).filter((s) => s.generatedImageUrl).map((s) => [s.sceneNumber, { status: "done", imageUrl: s.generatedImageUrl! }])));
@@ -580,7 +578,6 @@ export default function DramaScriptGenerator() {
     setSequelGenerationStep("正在准备续集上下文...");
     setSequelGenerationError(null);
     setResult(null);
-    setSequelCandidates([]);
     clearGeneratedAssets();
     try {
       const productsForSequel = script.selected_products || [];
@@ -623,7 +620,6 @@ export default function DramaScriptGenerator() {
       setSelectedProducts(new Set(productsForSequel.map((p) => p.key)));
       setTheme((data as DramaScript).title);
       setResult(data as DramaScript);
-      setSequelCandidates([]);
       setSavedScriptId(null);
       setActiveSavedScript(script);
       if ((data as DramaScript).consistencyCheck && ((data as DramaScript).consistencyCheck?.overallScore || 100) < CONSISTENCY_THRESHOLD) {
@@ -638,24 +634,6 @@ export default function DramaScriptGenerator() {
       setGeneratingSequel(false);
       setSequelGenerationStep("");
     }
-  };
-
-  const adoptSequelCandidate = (candidate: SequelCandidate) => {
-    setMode(candidate.sourceScript.mode || "generic");
-    setGenre(candidate.sourceScript.genre || genre);
-    setStyle(candidate.sourceScript.style || style);
-    setTargetAudience(candidate.sourceScript.target_audience || targetAudience);
-    setConversionStyles(candidate.conversionStyles.length > 0 ? candidate.conversionStyles : conversionStyles);
-    setSelectedProducts(new Set(candidate.products.map((p) => p.key)));
-    setTheme(candidate.script.title);
-    setResult(candidate.script);
-    setSavedScriptId(null);
-    setActiveSavedScript(candidate.sourceScript);
-    setSequelCandidates([]);
-    setSequelGenerationError(null);
-    setSequelGenerationSource(null);
-    clearGeneratedAssets();
-    toast.success(`已采用${candidate.label}，确认后可保存`);
   };
 
   const copyToClipboard = (text: string, label = "提示词") => {
