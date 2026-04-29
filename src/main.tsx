@@ -17,7 +17,7 @@ const runWhenIdle = (task: () => void, timeout = 2000) => {
   if ('requestIdleCallback' in window) {
     (window as any).requestIdleCallback(task, { timeout });
   } else {
-    window.setTimeout(task, timeout);
+    globalThis.setTimeout(task, timeout);
   }
 };
 
