@@ -266,6 +266,8 @@ export default function DramaScriptGenerator() {
   const [generatingSequel, setGeneratingSequel] = useState(false);
   const [sequelCandidates, setSequelCandidates] = useState<SequelCandidate[]>([]);
   const [sequelGenerationSource, setSequelGenerationSource] = useState<{ title: string; episodeNumber: number } | null>(null);
+  const [sequelGenerationStep, setSequelGenerationStep] = useState("");
+  const [sequelGenerationError, setSequelGenerationError] = useState<string | null>(null);
   const [suggestedThemes, setSuggestedThemes] = useState<{ title: string; description: string }[]>([]);
   const [loadingThemes, setLoadingThemes] = useState(false);
   const [selectedThemeIdx, setSelectedThemeIdx] = useState<number | null>(null);
@@ -432,6 +434,7 @@ export default function DramaScriptGenerator() {
     setSceneAudios({});
     setSceneImages({});
     setCharacterImages({});
+    setSequelGenerationError(null);
     // Clear all polling
     Object.values(pollingRefs.current).forEach(clearInterval);
     pollingRefs.current = {};
@@ -543,6 +546,8 @@ export default function DramaScriptGenerator() {
     setSelectedProducts(new Set((script.selected_products || []).map((p) => p.key)));
     setResult(script.script_data);
     setSequelCandidates([]);
+    setSequelGenerationError(null);
+    setSequelGenerationSource(null);
     setSceneImages(Object.fromEntries((script.script_data?.scenes || []).filter((s) => s.generatedImageUrl).map((s) => [s.sceneNumber, { status: "done", imageUrl: s.generatedImageUrl! }])));
     setCharacterImages(Object.fromEntries((script.script_data?.characters || []).map((c, index) => c.referenceImageUrl ? [index, { status: "done", imageUrl: c.referenceImageUrl }] : null).filter(Boolean) as [number, SceneImageState][]));
     setSavedScriptId(script.id);
@@ -583,6 +588,8 @@ export default function DramaScriptGenerator() {
     }
     setGeneratingSequel(true);
     setSequelGenerationSource({ title: script.title, episodeNumber: script.episode_number });
+    setSequelGenerationStep("正在准备续集上下文...");
+    setSequelGenerationError(null);
     setResult(null);
     setSequelCandidates([]);
     clearGeneratedAssets();
@@ -618,21 +625,37 @@ export default function DramaScriptGenerator() {
         { key: "A" as const, label: "A版：强承接版", description: "更严格接上一集最后分镜，人物和关系稳定延续", variant: "strong_continuity" },
         { key: "B" as const, label: "B版：爆点升级版", description: "承接不变，但冲突、误会和反转更夸张", variant: "viral_upgrade" },
       ];
-      const responses = await Promise.all(
-        variants.map((variant) => supabase.functions.invoke("drama-script-ai", { body: { ...baseBody, sequelVariant: variant.variant } }))
-      );
-      const failed = responses.find(({ data, error }) => data?.error || error);
-      if (failed) throw new Error(await extractEdgeFunctionError(failed.data, failed.error, "续集生成失败，请稍后重试"));
-
-      const candidates = responses.map(({ data }, index) => ({
+      const buildCandidate = (data: DramaScript, index: number): SequelCandidate => ({
         key: variants[index].key,
         label: variants[index].label,
         description: variants[index].description,
-        script: data as DramaScript,
+        script: data,
         sourceScript: script,
         conversionStyles: script.mode === "youjin" ? getSequelConversionStyles(script) : [],
         products: productsForSequel,
-      }));
+      });
+      setSequelGenerationStep("正在生成A版：强承接版...");
+      const first = await supabase.functions.invoke("drama-script-ai", { body: { ...baseBody, sequelVariant: variants[0].variant } });
+      if (first.data?.error || first.error) {
+        throw new Error(await extractEdgeFunctionError(first.data, first.error, "A版生成失败，请稍后重试"));
+      }
+      const firstCandidate = buildCandidate(first.data as DramaScript, 0);
+      setMode(script.mode || "generic");
+      setGenre(script.genre || genre);
+      setStyle(script.style || style);
+      setTargetAudience(script.target_audience || targetAudience);
+      setConversionStyles(getSequelConversionStyles(script));
+      setSelectedProducts(new Set(productsForSequel.map((p) => p.key)));
+      setTheme(firstCandidate.script.title);
+      setSequelCandidates([firstCandidate]);
+      setSavedScriptId(null);
+      setActiveSavedScript(script);
+      setSequelGenerationStep("A版已完成，正在生成B版：爆点升级版...");
+      const second = await supabase.functions.invoke("drama-script-ai", { body: { ...baseBody, sequelVariant: variants[1].variant } });
+      if (second.data?.error || second.error) {
+        throw new Error(await extractEdgeFunctionError(second.data, second.error, "B版生成失败，请稍后重试"));
+      }
+      const candidates = [firstCandidate, buildCandidate(second.data as DramaScript, 1)];
       setMode(script.mode || "generic");
       setGenre(script.genre || genre);
       setStyle(script.style || style);
@@ -649,10 +672,12 @@ export default function DramaScriptGenerator() {
       }
       toast.success(`已生成第${script.episode_number + 1}集 A/B 两个候选，请先选择采用版本`);
     } catch (e: any) {
-      toast.error(e.message || "续集生成失败");
+      const message = e.message || "续集生成失败";
+      setSequelGenerationError(message);
+      toast.error(message);
     } finally {
       setGeneratingSequel(false);
-      setSequelGenerationSource(null);
+      setSequelGenerationStep("");
     }
   };
 
@@ -668,6 +693,8 @@ export default function DramaScriptGenerator() {
     setSavedScriptId(null);
     setActiveSavedScript(candidate.sourceScript);
     setSequelCandidates([]);
+    setSequelGenerationError(null);
+    setSequelGenerationSource(null);
     clearGeneratedAssets();
     toast.success(`已采用${candidate.label}，确认后可保存`);
   };
@@ -1466,19 +1493,19 @@ export default function DramaScriptGenerator() {
         </CardContent>
       </Card>
 
-      {generatingSequel && sequelGenerationSource && (
+      {(generatingSequel || sequelGenerationError) && sequelGenerationSource && (
         <Card ref={sequelStatusRef} className="mt-6 border-primary/30 bg-primary/5 max-w-full overflow-hidden">
           <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0 space-y-1">
-              <div className="flex items-center gap-2 text-sm font-medium text-primary">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                正在生成第{sequelGenerationSource.episodeNumber + 1}集 A/B 两个候选版本
+              <div className={`flex items-center gap-2 text-sm font-medium ${sequelGenerationError ? "text-destructive" : "text-primary"}`}>
+                {generatingSequel ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
+                {generatingSequel ? `正在生成第${sequelGenerationSource.episodeNumber + 1}集 A/B 候选版本` : "A/B续集生成中断"}
               </div>
               <p className="text-xs text-muted-foreground break-words">
-                承接《{sequelGenerationSource.title}》第{sequelGenerationSource.episodeNumber}集，通常需要等待 AI 完成两版脚本。
+                {sequelGenerationError || sequelGenerationStep || `承接《${sequelGenerationSource.title}》第${sequelGenerationSource.episodeNumber}集，通常需要等待 AI 完成两版脚本。`}
               </p>
             </div>
-            <div className="shrink-0 text-xs text-muted-foreground">请勿重复点击</div>
+            <div className="shrink-0 text-xs text-muted-foreground">{generatingSequel ? "请勿重复点击" : "可重新点击生成"}</div>
           </CardContent>
         </Card>
       )}
@@ -1520,7 +1547,7 @@ export default function DramaScriptGenerator() {
                         <p className="break-words">钩子：{candidate.script.continuityBridge.nextEpisodeHook}</p>
                       </div>
                     )}
-                    <Button className="w-full gap-2" onClick={() => adoptSequelCandidate(candidate)}>
+                    <Button className="w-full gap-2" onClick={() => adoptSequelCandidate(candidate)} disabled={generatingSequel}>
                       <Check className="h-4 w-4" /> 采用{candidate.key}版
                     </Button>
                   </CardContent>
