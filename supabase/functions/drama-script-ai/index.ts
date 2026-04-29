@@ -44,6 +44,12 @@ const buildSeriesBible = (previousScript: any, previousData: any, previousLastSc
 
 const containsAny = (haystack: string, needles: string[]) => needles.some((needle) => needle && haystack.includes(needle));
 
+const extractContinuityTokens = (value: unknown) => normalizeText(value)
+  .split(/[，。！？、；：,.!?;:\s|"“”'（）()【】\[\]-]/)
+  .map((token) => token.trim())
+  .filter((token) => token.length >= 2)
+  .slice(0, 10);
+
 const applyContinuityValidation = (parsed: any, previousData: any, previousLastScene: any, products: any[]) => {
   if (!parsed || !previousData) return parsed;
   const issues: string[] = Array.isArray(parsed.consistencyCheck?.issues) ? [...parsed.consistencyCheck.issues] : [];
@@ -53,24 +59,41 @@ const applyContinuityValidation = (parsed: any, previousData: any, previousLastS
   const fullNextText = JSON.stringify({ characters: nextCharacters, scenes: nextScenes, synopsis: parsed.synopsis, title: parsed.title });
   const firstSceneText = getSceneText(nextScenes[0] || {});
   const lastSceneText = getSceneText(previousLastScene || {});
+  const hardFailures: string[] = [];
 
   const missingNames = previousCharacters
     .map((char: any) => normalizeText(char?.name))
     .filter(Boolean)
     .filter((name: string) => !fullNextText.includes(name));
-  if (missingNames.length > 0) issues.push(`上一集核心角色未延续：${missingNames.join("、")}`);
+  if (missingNames.length > 0) {
+    const issue = `强制校验失败：上一集核心角色未延续：${missingNames.join("、")}`;
+    issues.push(issue);
+    hardFailures.push(issue);
+  }
 
   if (previousCharacters.length > 0 && nextCharacters.length > previousCharacters.length + 2) {
     issues.push("续集新增角色过多，可能稀释原人物关系");
   }
 
-  const continuityTokens = [
+  const continuityTokens = Array.from(new Set([
     ...previousCharacters.map((char: any) => normalizeText(char?.name)).filter(Boolean),
-    ...normalizeText(previousLastScene?.dialogue).split(/[，。！？、\s]/).filter((token) => token.length >= 2).slice(0, 6),
-    ...normalizeText(previousLastScene?.characterAction).split(/[，。！？、\s]/).filter((token) => token.length >= 2).slice(0, 6),
-  ];
-  if (lastSceneText && firstSceneText && !containsAny(firstSceneText, continuityTokens)) {
-    issues.push("第1个分镜没有明显承接上一集最后动作、台词或人物");
+    ...extractContinuityTokens(previousLastScene?.dialogue),
+    ...extractContinuityTokens(previousLastScene?.characterAction),
+    ...extractContinuityTokens(previousLastScene?.imagePrompt),
+  ]));
+  const hasCharacterInOpening = previousCharacters
+    .map((char: any) => normalizeText(char?.name))
+    .filter(Boolean)
+    .some((name: string) => firstSceneText.includes(name));
+  const hasLastSceneTokenInOpening = containsAny(firstSceneText, continuityTokens.filter((token) => !previousCharacters.some((char: any) => normalizeText(char?.name) === token)));
+  if (!firstSceneText) {
+    const issue = "强制校验失败：续集缺少第1个分镜，无法承接上一集结尾";
+    issues.push(issue);
+    hardFailures.push(issue);
+  } else if (lastSceneText && (!hasCharacterInOpening || !hasLastSceneTokenInOpening)) {
+    const issue = "强制校验失败：第1个分镜未同时保留上一集人物，并承接最后分镜的动作、台词或道具";
+    issues.push(issue);
+    hardFailures.push(issue);
   }
 
   const productKeys = Array.isArray(products) ? products.map((p) => p?.key || p?.name).filter(Boolean) : [];
@@ -81,16 +104,17 @@ const applyContinuityValidation = (parsed: any, previousData: any, previousLastS
   const original = parsed.consistencyCheck || {};
   const penalty = Math.min(35, issues.length * 8);
   const originalScore = typeof original.overallScore === "number" ? original.overallScore : 92;
-  const adjustedScore = Math.max(55, originalScore - penalty);
+  const softAdjustedScore = Math.max(55, originalScore - penalty);
+  const adjustedScore = hardFailures.length > 0 ? Math.min(78, softAdjustedScore) : softAdjustedScore;
   parsed.consistencyCheck = {
     overallScore: adjustedScore,
-    characterScore: Math.max(55, (typeof original.characterScore === "number" ? original.characterScore : 92) - missingNames.length * 12),
-    plotScore: Math.max(55, (typeof original.plotScore === "number" ? original.plotScore : 92) - (issues.some((i) => i.includes("第1个分镜")) ? 15 : 0)),
+    characterScore: hardFailures.some((i) => i.includes("核心角色")) ? Math.min(78, Math.max(55, (typeof original.characterScore === "number" ? original.characterScore : 92) - missingNames.length * 18)) : Math.max(55, (typeof original.characterScore === "number" ? original.characterScore : 92) - missingNames.length * 12),
+    plotScore: hardFailures.some((i) => i.includes("第1个分镜")) ? Math.min(78, Math.max(55, (typeof original.plotScore === "number" ? original.plotScore : 92) - 24)) : Math.max(55, (typeof original.plotScore === "number" ? original.plotScore : 92) - (issues.some((i) => i.includes("第1个分镜")) ? 15 : 0)),
     visualScore: typeof original.visualScore === "number" ? original.visualScore : 90,
     productScore: Math.max(60, (typeof original.productScore === "number" ? original.productScore : 100) - (issues.some((i) => i.includes("产品线")) ? 20 : 0)),
     verdict: adjustedScore >= 85 ? "通过" : "需重生成",
     issues: Array.from(new Set(issues)),
-    regenerationAdvice: adjustedScore >= 85 ? (original.regenerationAdvice || "可继续使用") : "请重新生成，并要求第1幕直接复现上一集结尾人物、台词或动作，再升级原冲突。",
+    regenerationAdvice: adjustedScore >= 85 ? (original.regenerationAdvice || "可继续使用") : "请一键重生成：必须保留上一集核心角色，并让第1个分镜直接接住上一集最后的人物、动作、台词或道具，再升级原冲突。",
   };
 
   if (!parsed.continuityBridge) {
