@@ -2,7 +2,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { User, BookOpen } from "lucide-react";
-import logoImage from "@/assets/youjin-ai-logo.png";
+import logoImage from "@/assets/youjin-ai-logo-small.webp";
 import { useAuth } from "@/hooks/useAuth";
 
 const AwakeningBottomNav: React.FC = () => {
