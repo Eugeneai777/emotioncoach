@@ -16,7 +16,7 @@ const buildSeriesBible = (previousScript: any, previousData: any, previousLastSc
   const scenes = Array.isArray(previousData?.scenes) ? previousData.scenes : [];
   const usedProducts = Array.isArray(products) && products.length > 0
     ? products.map((p) => `${p.name || p.key}：${p.description || ""}`).join("\n")
-    : scenes.map((s) => s?.relatedProduct).filter(Boolean).join("、") || "无明确产品";
+    : scenes.map((s: any) => s?.relatedProduct).filter(Boolean).join("、") || "无明确产品";
 
   return {
     episodeNumber: previousScript?.episode_number || 1,
