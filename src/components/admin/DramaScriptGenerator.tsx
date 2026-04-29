@@ -693,6 +693,8 @@ export default function DramaScriptGenerator() {
     setSavedScriptId(null);
     setActiveSavedScript(candidate.sourceScript);
     setSequelCandidates([]);
+    setSequelGenerationError(null);
+    setSequelGenerationSource(null);
     clearGeneratedAssets();
     toast.success(`已采用${candidate.label}，确认后可保存`);
   };
