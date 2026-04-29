@@ -103,12 +103,12 @@ const enrichmentData: Record<string, {
       tags: ["晚上睡不深", "白天靠硬撑", "有些话不好开口"],
     },
     radarPreview: [
-      { score: 46, maxScore: 100, label: "精力续航", emoji: "🔋" },
-      { score: 39, maxScore: 100, label: "睡眠修复", emoji: "🌙" },
-      { score: 72, maxScore: 100, label: "压力内耗", emoji: "🧠" },
-      { score: 58, maxScore: 100, label: "关键时刻信心", emoji: "🛡️" },
-      { score: 51, maxScore: 100, label: "关系温度", emoji: "🏠" },
-      { score: 64, maxScore: 100, label: "行动恢复力", emoji: "🏃" },
+      { score: 68, maxScore: 100, label: "精力续航", emoji: "🔋" },
+      { score: 52, maxScore: 100, label: "睡眠修复", emoji: "🌙" },
+      { score: 46, maxScore: 100, label: "压力调节", emoji: "🧠" },
+      { score: 61, maxScore: 100, label: "关键时刻信心", emoji: "🛡️" },
+      { score: 70, maxScore: 100, label: "关系温度", emoji: "🏠" },
+      { score: 58, maxScore: 100, label: "行动恢复力", emoji: "🏃" },
     ],
   },
 };
@@ -255,9 +255,14 @@ export function DynamicAssessmentIntro({ template, onStart, onShowHistory, hasHi
           <motion.div {...fadeUp(0.52)}>
             <Card className="border-border/40 bg-card/95 backdrop-blur-md shadow-lg">
               <CardContent className="p-5">
-                <p className="text-[10px] text-center text-muted-foreground mb-3">📊 报告预览 · 示例数据</p>
-                <div className="h-[300px] sm:h-[320px]">
-                  <DimensionRadarChart dimensionScores={enrichment.radarPreview} />
+                <p className="text-[11px] text-center text-muted-foreground mb-2">
+                  {isMaleMidlifeVitality ? '📊 报告预览 · 有劲状态雷达示例' : '📊 报告预览 · 示例数据'}
+                </p>
+                {isMaleMidlifeVitality && (
+                  <p className="text-[10px] text-center text-muted-foreground/70 mb-3">越靠外代表状态越稳，越靠内代表越需要恢复</p>
+                )}
+                <div className="h-[350px] sm:h-[380px] lg:h-[400px]">
+                  <DimensionRadarChart dimensionScores={enrichment.radarPreview} variant={isMaleMidlifeVitality ? "large" : "default"} />
                 </div>
                 <p className="text-[10px] text-center text-muted-foreground/60 mt-3">你的真实数据将在测评后生成</p>
               </CardContent>

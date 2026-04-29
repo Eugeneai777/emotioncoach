@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 interface DimensionScore {
+  key?: string;
   score: number;
   maxScore: number;
   label: string;
@@ -98,6 +99,27 @@ const fadeUp = {
     opacity: 1, y: 0,
     transition: { delay: i * 0.1, duration: 0.5, ease: [0.25, 0.1, 0.25, 1] as const },
   }),
+};
+
+const toVitalityStatusScore = (score: number, maxScore: number) => {
+  if (maxScore <= 0) return 0;
+  return Math.max(0, Math.min(100, Math.round(100 - (score / maxScore) * 100)));
+};
+
+const getVitalityStatusTone = (score: number) => {
+  if (score >= 80) return { label: "稳", text: "text-emerald-600", bar: "bg-emerald-500" };
+  if (score >= 60) return { label: "可调整", text: "text-primary", bar: "bg-primary" };
+  if (score >= 40) return { label: "需留意", text: "text-amber-600", bar: "bg-amber-500" };
+  return { label: "优先恢复", text: "text-orange-600", bar: "bg-orange-500" };
+};
+
+const vitalityDimensionTips: Record<string, string> = {
+  energy: "先把白天电量稳住，不急着证明自己还能扛。",
+  sleep: "睡眠是第一块电池，先从睡前少刷 15 分钟开始。",
+  stress: "不是你扛不住，是脑子一直没有真正下班。",
+  confidence: "关键时刻先恢复节奏，比急着证明更重要。",
+  relationship: "关系温度不用硬聊，先从一个轻松回应开始。",
+  recovery: "行动不用大，连续 7 天的小动作更容易把电量找回来。",
 };
 
 export function DynamicAssessmentResult({
@@ -203,6 +225,25 @@ export function DynamicAssessmentResult({
   const scorePercent = result.maxScore > 0 ? Math.round((result.totalScore / result.maxScore) * 100) : 0;
   const isSBTI = scoringType === 'sbti';
   const isMaleMidlifeVitality = template.assessment_key === 'male_midlife_vitality';
+  const vitalityStatusPercent = isMaleMidlifeVitality ? toVitalityStatusScore(result.totalScore, result.maxScore) : scorePercent;
+  const vitalityStatusScores = useMemo(() => {
+    if (!isMaleMidlifeVitality) return result.dimensionScores;
+    return result.dimensionScores.map((d) => ({
+      ...d,
+      score: toVitalityStatusScore(d.score, d.maxScore),
+      maxScore: 100,
+      label: d.label === '压力内耗' ? '压力调节' : d.label === '恢复阻力' ? '行动恢复力' : d.label,
+      rawScore: d.score,
+      rawMaxScore: d.maxScore,
+    }));
+  }, [isMaleMidlifeVitality, result.dimensionScores]);
+  const vitalitySummary = vitalityStatusPercent >= 80
+    ? "当前阻力较低，底盘还稳。适合趁状态还在，先建立一套轻量恢复节奏。"
+    : vitalityStatusPercent >= 60
+      ? "整体状态还撑得住，但睡眠、压力或体能已经在提醒你：该开始恢复了。"
+      : vitalityStatusPercent >= 40
+        ? "你不是不行，是长期消耗让身体和信心都变紧了。建议先把恢复放到优先级前面。"
+        : "当前已经接近低电量运行，不建议继续硬扛。先从睡眠、呼吸和每日小行动开始修复。";
   const sbtiGroups = isSBTI ? [
     { name: '自我模型', emoji: '🪞', keys: ['S1','S2','S3'] },
     { name: '情感模型', emoji: '💗', keys: ['E1','E2','E3'] },
@@ -292,7 +333,7 @@ export function DynamicAssessmentResult({
                     strokeLinecap="round"
                     strokeDasharray={2 * Math.PI * 42}
                     initial={{ strokeDashoffset: 2 * Math.PI * 42 }}
-                    animate={{ strokeDashoffset: 2 * Math.PI * 42 * (1 - scorePercent / 100) }}
+                    animate={{ strokeDashoffset: 2 * Math.PI * 42 * (1 - (isMaleMidlifeVitality ? vitalityStatusPercent : scorePercent) / 100) }}
                     transition={{ duration: 1.2, delay: 0.5, ease: "easeOut" }}
                   />
                 </svg>
@@ -309,14 +350,18 @@ export function DynamicAssessmentResult({
                 <h2 className="text-xl font-bold text-foreground mb-1">
                   {result.primaryPattern?.label || "测评结果"}
                 </h2>
-                {result.primaryPattern?.description && (
+                  {isMaleMidlifeVitality ? (
+                    <p className="text-sm text-muted-foreground max-w-sm mx-auto mb-3 leading-relaxed">
+                      {vitalitySummary}
+                    </p>
+                  ) : result.primaryPattern?.description && (
                   <p className="text-sm text-muted-foreground max-w-xs mx-auto mb-3">
                     {result.primaryPattern.description}
                   </p>
                 )}
                 <div className="flex items-center justify-center gap-2">
                   <Badge className="text-base px-4 py-1.5 bg-primary/10 text-primary border-primary/20 hover:bg-primary/15">
-                    {result.totalScore} / {result.maxScore} 分
+                    {isMaleMidlifeVitality ? `有劲状态指数 ${vitalityStatusPercent}%` : `${result.totalScore} / ${result.maxScore} 分`}
                   </Badge>
                   <Button
                     variant="ghost"
@@ -334,18 +379,26 @@ export function DynamicAssessmentResult({
         </div>
       </motion.div>
 
-      <div className="max-w-lg mx-auto px-4 space-y-4">
+      <div className={cn(
+        "mx-auto px-4",
+        isMaleMidlifeVitality
+          ? "max-w-lg space-y-4 lg:max-w-5xl lg:grid lg:grid-cols-[minmax(0,1.15fr)_minmax(340px,0.85fr)] lg:items-start lg:gap-4 lg:space-y-0"
+          : "max-w-lg space-y-4"
+      )}>
         {/* Radar Chart (non-SBTI only) */}
         {!isSBTI && result.dimensionScores.length >= 3 && (
-          <motion.div custom={1} variants={fadeUp} initial="hidden" animate="visible">
+          <motion.div custom={1} variants={fadeUp} initial="hidden" animate="visible" className={cn(isMaleMidlifeVitality && "lg:row-span-2")}>
             <Card className="border-border/40 bg-card/90 backdrop-blur-sm shadow-sm overflow-hidden">
-              <CardContent className="p-4 pt-3">
+              <CardContent className="p-4 pt-3 sm:p-5">
                 <div className="flex items-center gap-2 mb-1">
                   <Target className="w-4 h-4 text-primary" />
-                  <h3 className="font-semibold text-sm">能力雷达</h3>
+                  <h3 className="font-semibold text-sm">{isMaleMidlifeVitality ? '有劲状态雷达' : '能力雷达'}</h3>
                 </div>
-                <div className="h-[300px] sm:h-[320px]">
-                  <DimensionRadarChart dimensionScores={result.dimensionScores} />
+                {isMaleMidlifeVitality && (
+                  <p className="text-[11px] text-muted-foreground mb-2">越靠外代表状态越稳，越靠内代表越需要优先恢复。</p>
+                )}
+                <div className={cn(isMaleMidlifeVitality ? "h-[360px] sm:h-[390px] lg:h-[430px]" : "h-[300px] sm:h-[320px]") }>
+                  <DimensionRadarChart dimensionScores={isMaleMidlifeVitality ? vitalityStatusScores : result.dimensionScores} variant={isMaleMidlifeVitality ? "large" : "default"} />
                 </div>
               </CardContent>
             </Card>
@@ -400,10 +453,11 @@ export function DynamicAssessmentResult({
               <CardContent className="p-4 space-y-3">
                 <div className="flex items-center gap-2">
                   <TrendingUp className="w-4 h-4 text-primary" />
-                  <h3 className="font-semibold text-sm">维度得分</h3>
+                  <h3 className="font-semibold text-sm">{isMaleMidlifeVitality ? '六项状态' : '维度得分'}</h3>
                 </div>
-                {result.dimensionScores.map((d, i) => {
+                {(isMaleMidlifeVitality ? vitalityStatusScores : result.dimensionScores).map((d, i) => {
                   const pct = d.maxScore > 0 ? (d.score / d.maxScore) * 100 : 0;
+                  const vitalityTone = isMaleMidlifeVitality ? getVitalityStatusTone(pct) : null;
                   return (
                     <motion.div
                       key={d.label}
@@ -417,22 +471,31 @@ export function DynamicAssessmentResult({
                         </span>
                         <span className={cn(
                           "tabular-nums text-xs font-medium",
-                          pct >= 80 ? "text-green-600" : pct >= 50 ? "text-foreground" : "text-orange-500"
+                          isMaleMidlifeVitality
+                            ? vitalityTone?.text
+                            : pct >= 80 ? "text-emerald-600" : pct >= 50 ? "text-foreground" : "text-orange-500"
                         )}>
-                          {d.score}/{d.maxScore}
+                          {isMaleMidlifeVitality ? `状态 ${Math.round(pct)}% · ${vitalityTone?.label}` : `${d.score}/${d.maxScore}`}
                         </span>
                       </div>
                       <div className="relative h-2 rounded-full bg-muted overflow-hidden">
                         <motion.div
                           className={cn(
                             "h-full rounded-full",
-                            pct >= 80 ? "bg-green-500" : pct >= 50 ? "bg-primary" : "bg-orange-400"
+                            isMaleMidlifeVitality
+                              ? vitalityTone?.bar
+                              : pct >= 80 ? "bg-emerald-500" : pct >= 50 ? "bg-primary" : "bg-orange-400"
                           )}
                           initial={{ width: 0 }}
                           animate={{ width: `${pct}%` }}
                           transition={{ duration: 0.8, delay: 0.4 + i * 0.06, ease: "easeOut" }}
                         />
                       </div>
+                      {isMaleMidlifeVitality && (
+                        <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground">
+                          {vitalityDimensionTips[d.key || '']}
+                        </p>
+                      )}
                     </motion.div>
                   );
                 })}
@@ -571,7 +634,9 @@ export function DynamicAssessmentResult({
                 ) : aiInsight ? (
                   <p className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">{aiInsight}</p>
                 ) : (
-                  <p className="text-sm text-muted-foreground">暂无</p>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {isMaleMidlifeVitality ? 'AI 洞察正在生成中，你可以先查看上方状态雷达和恢复建议。' : 'AI 洞察正在生成中，请稍后查看。'}
+                  </p>
                 )}
               </CardContent>
             </Card>
