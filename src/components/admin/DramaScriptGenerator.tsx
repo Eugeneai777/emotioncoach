@@ -1460,19 +1460,30 @@ export default function DramaScriptGenerator() {
         </CardContent>
       </Card>
 
-      {(generatingSequel || sequelGenerationError) && sequelGenerationSource && (
+      {(generatingSequel || sequelGenerationError || pendingSequel) && sequelGenerationSource && (
         <Card ref={sequelStatusRef} className="mt-6 border-primary/30 bg-primary/5 max-w-full overflow-hidden">
           <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0 space-y-1">
               <div className={`flex items-center gap-2 text-sm font-medium ${sequelGenerationError ? "text-destructive" : "text-primary"}`}>
-                {generatingSequel ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
-                {generatingSequel ? `正在生成第${sequelGenerationSource.episodeNumber + 1}集续集` : "续集生成中断"}
+                {generatingSequel ? <Loader2 className="h-4 w-4 animate-spin" /> : sequelGenerationError ? <X className="h-4 w-4" /> : <Check className="h-4 w-4" />}
+                {generatingSequel ? `正在生成第${sequelGenerationSource.episodeNumber + 1}集续集` : sequelGenerationError ? "续集生成中断" : `第${sequelGenerationSource.episodeNumber + 1}集续集已生成`}
               </div>
               <p className="text-xs text-muted-foreground break-words">
-                {sequelGenerationError || sequelGenerationStep || `承接《${sequelGenerationSource.title}》第${sequelGenerationSource.episodeNumber}集，通常需要等待 AI 完成两版脚本。`}
+                {sequelGenerationError || sequelGenerationStep || (pendingSequel ? `已承接《${sequelGenerationSource.title}》第${sequelGenerationSource.episodeNumber}集生成新版本，确认后会替换当前编辑区。` : `承接《${sequelGenerationSource.title}》第${sequelGenerationSource.episodeNumber}集，通常需要等待 AI 完成单版本脚本。`)}
               </p>
             </div>
-            <div className="shrink-0 text-xs text-muted-foreground">{generatingSequel ? "请勿重复点击" : "可重新点击生成"}</div>
+            {pendingSequel ? (
+              <div className="flex shrink-0 flex-wrap gap-2">
+                <Button type="button" size="sm" onClick={applyPendingSequel} className="gap-1.5">
+                  <Check className="h-3.5 w-3.5" /> 替换当前脚本
+                </Button>
+                <Button type="button" variant="outline" size="sm" onClick={() => generateSequel(pendingSequel.source)} disabled={generatingSequel} className="gap-1.5">
+                  <RefreshCw className="h-3.5 w-3.5" /> 重新生成
+                </Button>
+              </div>
+            ) : (
+              <div className="shrink-0 text-xs text-muted-foreground">{generatingSequel ? "请勿重复点击" : "可重新点击生成"}</div>
+            )}
           </CardContent>
         </Card>
       )}
