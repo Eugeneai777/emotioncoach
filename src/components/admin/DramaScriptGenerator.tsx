@@ -549,17 +549,21 @@ export default function DramaScriptGenerator() {
     try {
       const productsForSequel = script.selected_products || [];
       const lastScene = script.script_data?.scenes?.[script.script_data.scenes.length - 1];
+      const previousLastSceneSummary = summarizeSceneForSequel(lastScene);
+      const previousCharacterSummary = (script.script_data?.characters || []).map((char) => `${char.name}：${char.description}`).join("；");
       const body: any = {
         action: "generate_sequel",
-        theme: `严格承接《${script.title}》第${script.episode_number}集结尾：${summarizeSceneForSequel(lastScene)}`,
+        theme: "系列短剧续集：承接上一集结尾继续推进",
         genre: script.genre || genre,
         style: script.style || style,
         sceneCount,
         mode: script.mode,
         conflictIntensity,
         sequelEpisodeNumber: script.episode_number + 1,
-        previousLastSceneSummary: summarizeSceneForSequel(lastScene),
-        previousCharacterSummary: (script.script_data?.characters || []).map((char) => `${char.name}：${char.description}`).join("；"),
+        previousTitle: script.script_data?.title || script.title,
+        previousSynopsis: script.script_data?.synopsis || script.synopsis,
+        previousLastSceneSummary,
+        previousCharacterSummary,
         previousScript: script,
       };
       if (script.mode === "youjin") {
