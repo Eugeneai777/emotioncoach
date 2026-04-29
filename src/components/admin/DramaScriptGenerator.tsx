@@ -265,11 +265,13 @@ export default function DramaScriptGenerator() {
   const [loadingSavedScripts, setLoadingSavedScripts] = useState(false);
   const [generatingSequel, setGeneratingSequel] = useState(false);
   const [sequelCandidates, setSequelCandidates] = useState<SequelCandidate[]>([]);
+  const [sequelGenerationSource, setSequelGenerationSource] = useState<{ title: string; episodeNumber: number } | null>(null);
   const [suggestedThemes, setSuggestedThemes] = useState<{ title: string; description: string }[]>([]);
   const [loadingThemes, setLoadingThemes] = useState(false);
   const [selectedThemeIdx, setSelectedThemeIdx] = useState<number | null>(null);
   const [sequelConversionOverrides, setSequelConversionOverrides] = useState<Record<string, string[]>>({});
   const themeFetchRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sequelStatusRef = useRef<HTMLDivElement | null>(null);
 
   // Image/video generation state
   const [imageAspectRatio, setImageAspectRatio] = useState("9:16");
@@ -362,6 +364,14 @@ export default function DramaScriptGenerator() {
   useEffect(() => {
     fetchSavedScripts();
   }, [fetchSavedScripts]);
+
+  useEffect(() => {
+    if (generatingSequel) {
+      requestAnimationFrame(() => {
+        sequelStatusRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      });
+    }
+  }, [generatingSequel]);
 
   // Auto-fetch suggested themes when products change in youjin mode
   const fetchSuggestedThemes = useCallback(async (avoidTitles: string[] = []) => {
@@ -572,6 +582,7 @@ export default function DramaScriptGenerator() {
       return;
     }
     setGeneratingSequel(true);
+    setSequelGenerationSource({ title: script.title, episodeNumber: script.episode_number });
     setResult(null);
     setSequelCandidates([]);
     clearGeneratedAssets();
@@ -641,6 +652,7 @@ export default function DramaScriptGenerator() {
       toast.error(e.message || "续集生成失败");
     } finally {
       setGeneratingSequel(false);
+      setSequelGenerationSource(null);
     }
   };
 
