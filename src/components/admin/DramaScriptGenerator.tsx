@@ -548,14 +548,18 @@ export default function DramaScriptGenerator() {
     clearGeneratedAssets();
     try {
       const productsForSequel = script.selected_products || [];
+      const lastScene = script.script_data?.scenes?.[script.script_data.scenes.length - 1];
       const body: any = {
         action: "generate_sequel",
-        theme: `${script.title} 后续：冲突继续升级`,
+        theme: `严格承接《${script.title}》第${script.episode_number}集结尾：${summarizeSceneForSequel(lastScene)}`,
         genre: script.genre || genre,
         style: script.style || style,
         sceneCount,
         mode: script.mode,
         conflictIntensity,
+        sequelEpisodeNumber: script.episode_number + 1,
+        previousLastSceneSummary: summarizeSceneForSequel(lastScene),
+        previousCharacterSummary: (script.script_data?.characters || []).map((char) => `${char.name}：${char.description}`).join("；"),
         previousScript: script,
       };
       if (script.mode === "youjin") {
@@ -583,7 +587,7 @@ export default function DramaScriptGenerator() {
       if (check && check.overallScore < CONSISTENCY_THRESHOLD) {
         toast.error(`一致性评分 ${check.overallScore}，低于${CONSISTENCY_THRESHOLD}，建议重新生成`);
       }
-      toast.success(`第${script.episode_number + 1}集已生成，确认后可保存`);
+      toast.success(`已承接第${script.episode_number}集生成第${script.episode_number + 1}集，确认后可保存`);
     } catch (e: any) {
       toast.error(e.message || "续集生成失败");
     } finally {
