@@ -1495,13 +1495,25 @@ export default function DramaScriptGenerator() {
               </p>
             </div>
             {pendingSequel ? (
-              <div className="flex shrink-0 flex-wrap gap-2">
+              <div className="flex shrink-0 flex-col gap-2 sm:items-end">
+                <div className="grid w-full gap-2 sm:w-[420px] sm:grid-cols-2">
+                  <Select value={sequelDirection} onValueChange={setSequelDirection} disabled={generatingSequel}>
+                    <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="冲突推进方向" /></SelectTrigger>
+                    <SelectContent>{SEQUEL_DIRECTIONS.map((item) => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}</SelectContent>
+                  </Select>
+                  <Select value={sequelOpeningAngle} onValueChange={setSequelOpeningAngle} disabled={generatingSequel}>
+                    <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="开场角度" /></SelectTrigger>
+                    <SelectContent>{SEQUEL_OPENING_ANGLES.map((item) => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div className="flex flex-wrap gap-2">
                 <Button type="button" size="sm" onClick={applyPendingSequel} className="gap-1.5">
                   <Check className="h-3.5 w-3.5" /> 替换当前脚本
                 </Button>
                 <Button type="button" variant="outline" size="sm" onClick={() => generateSequel(pendingSequel.source)} disabled={generatingSequel} className="gap-1.5">
                   <RefreshCw className="h-3.5 w-3.5" /> 重新生成
                 </Button>
+                </div>
               </div>
             ) : (
               <div className="shrink-0 text-xs text-muted-foreground">{generatingSequel ? "请勿重复点击" : "可重新点击生成"}</div>
