@@ -257,6 +257,7 @@ export default function DramaScriptGenerator() {
   const [suggestedThemes, setSuggestedThemes] = useState<{ title: string; description: string }[]>([]);
   const [loadingThemes, setLoadingThemes] = useState(false);
   const [selectedThemeIdx, setSelectedThemeIdx] = useState<number | null>(null);
+  const [sequelConversionOverrides, setSequelConversionOverrides] = useState<Record<string, string[]>>({});
   const themeFetchRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Image/video generation state
@@ -295,6 +296,20 @@ export default function DramaScriptGenerator() {
         return next.length > 0 ? next : ["plot"];
       }
       return [...prev, value];
+    });
+  };
+
+  const getScriptConversionStyles = (script: SavedDramaScript) =>
+    normalizeConversionStyles(script.script_data?.conversionStyles || script.conversion_style || conversionStyles);
+
+  const getSequelConversionStyles = (script: SavedDramaScript) =>
+    sequelConversionOverrides[script.id] || getScriptConversionStyles(script);
+
+  const toggleSequelConversionStyle = (script: SavedDramaScript, value: string) => {
+    setSequelConversionOverrides((prev) => {
+      const current = prev[script.id] || getScriptConversionStyles(script);
+      const next = current.includes(value) ? current.filter((item) => item !== value) : [...current, value];
+      return { ...prev, [script.id]: next.length > 0 ? next : ["plot"] };
     });
   };
 
