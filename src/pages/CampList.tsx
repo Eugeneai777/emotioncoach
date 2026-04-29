@@ -66,8 +66,9 @@ const CampList = () => {
   const [searchParams] = useSearchParams();
   const filterParam = searchParams.get('filter'); // 'active' | 'completed' | null
   const { user } = useAuth();
-  const { data: stressCampPurchase } = useCampPurchase('emotion_stress_7');
-  const { data: bloomCampPurchase } = useCampPurchase('emotion_bloom');
+  const isLearningFilter = !!filterParam;
+  const { data: stressCampPurchase } = useCampPurchase('emotion_stress_7', !isLearningFilter);
+  const { data: bloomCampPurchase } = useCampPurchase('emotion_bloom', !isLearningFilter);
   const queryClient = useQueryClient();
   const [activeCategory, setActiveCategory] = useState('youjin');
   const [payDialogOpen, setPayDialogOpen] = useState(false);
