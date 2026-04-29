@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { Suspense, lazy, useState, useMemo, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import PageHeader from "@/components/PageHeader";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { CampTemplateCard } from "@/components/camp/CampTemplateCard";
 import { CampCardSkeleton } from "@/components/camp/CampCardSkeleton";
 import { CampEmptyState } from "@/components/camp/CampEmptyState";
-import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
 import type { CampTemplate } from "@/types/trainingCamp";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -17,6 +16,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { usePaymentCallback } from "@/hooks/usePaymentCallback";
 import { useCampPurchase } from "@/hooks/useCampPurchase";
 import { BookOpen, HeartHandshake, Target, Sparkles, ChevronRight } from "lucide-react";
+
+const UnifiedPayDialog = lazy(() => import("@/components/UnifiedPayDialog").then((m) => ({ default: m.UnifiedPayDialog })));
 
 // Assessment mapping config
 const PAID_ASSESSMENT_MAP: Record<string, { title: string; emoji: string; route: string }> = {
@@ -301,7 +302,8 @@ const CampList = () => {
         .order('display_order');
       if (error) throw error;
       return data as unknown as CampTemplate[];
-    }
+    },
+    enabled: !filterParam,
   });
 
   const filteredCamps = useMemo(() => {
@@ -615,15 +617,17 @@ const CampList = () => {
         </main>
       </div>
 
-      <UnifiedPayDialog
-        open={payDialogOpen}
-        onOpenChange={setPayDialogOpen}
-        packageInfo={selectedCamp ? {
-          key: `camp-${selectedCamp.camp_type}`,
-          name: selectedCamp.camp_name,
-          price: selectedCamp.price || 0,
-        } : null}
-        onSuccess={async () => {
+      {payDialogOpen && (
+        <Suspense fallback={null}>
+        <UnifiedPayDialog
+          open={payDialogOpen}
+          onOpenChange={setPayDialogOpen}
+          packageInfo={selectedCamp ? {
+            key: `camp-${selectedCamp.camp_type}`,
+            name: selectedCamp.camp_name,
+            price: selectedCamp.price || 0,
+          } : null}
+          onSuccess={async () => {
           // 1. Insert purchase record
           if (user && selectedCamp) {
             try {
@@ -650,8 +654,10 @@ const CampList = () => {
             toast.success("购买成功！", { description: "请选择开始日期" });
             navigate(`/camp-intro/${selectedCamp.camp_type}`);
           }
-        }}
-      />
+          }}
+        />
+        </Suspense>
+      )}
     </>
   );
 };
