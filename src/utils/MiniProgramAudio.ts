@@ -487,9 +487,10 @@ export class MiniProgramAudioClient {
 
   private async initRecorder(): Promise<void> {
     const wx = window.wx;
+    const preferNativeWxRecorder = this.shouldPreferNativeWxRecorder(wx);
 
     const canUseWebAudio = !!((window.AudioContext || (window as any).webkitAudioContext) && navigator.mediaDevices?.getUserMedia);
-    const shouldPreferWebAudio = !!this.preAcquiredStream?.active || canUseWebAudio;
+    const shouldPreferWebAudio = !preferNativeWxRecorder && (!!this.preAcquiredStream?.active || canUseWebAudio);
 
     if (shouldPreferWebAudio) {
       try {
@@ -501,8 +502,11 @@ export class MiniProgramAudioClient {
         this.useWebAudioFallback = false;
       }
     }
+    if (preferNativeWxRecorder) {
+      console.log('[MiniProgramAudio] Android MiniProgram detected, preferring wx.getRecorderManager');
+    }
     
-    // 仅在 H5 / Web Audio 不可用时才回退到 wx 原生录音器
+    // 安卓小程序优先使用 wx 原生录音器；其他环境仅在 Web Audio 不可用时回退
     if (wx?.getRecorderManager) {
       console.log('[MiniProgramAudio] Using wx.getRecorderManager');
       this.diag.recorderSource = 'wx_recorder';
@@ -548,6 +552,8 @@ export class MiniProgramAudioClient {
       // 监听录音错误
       this.recorder.onError((error: any) => {
         this.recorderRunning = false;
+        this.diag.lastError = `wx_recorder_error:${error?.errMsg || 'unknown'}`;
+        this.emitDiag();
         console.error('[MiniProgramAudio] Recorder error:', error);
       });
 
