@@ -331,7 +331,7 @@ Deno.serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const { theme, genre, style, sceneCount, mode, products, targetAudience, conversionStyle, conversionStyles, conflictIntensity, action, avoidTitles, previousScript, sequelVariant } = await req.json();
+    const { theme, genre, style, sceneCount, mode, products, targetAudience, conversionStyle, conversionStyles, conflictIntensity, action, avoidTitles, previousScript, sequelCreativeSeed } = await req.json();
 
     // --- Suggest Themes Mode ---
     if (action === "suggest_themes") {
@@ -516,6 +516,8 @@ ${productList}${avoidTitlePrompt}
     const previousData = isSequel ? previousScript.script_data : null;
     const previousLastScene = previousData?.scenes?.[previousData.scenes.length - 1];
     const seriesBible = isSequel ? buildSeriesBible(previousScript, previousData, previousLastScene, products || previousScript?.selected_products || []) : null;
+    const sequelDirection = isSequel ? pickBySeed(SEQUEL_CREATIVE_DIRECTIONS, sequelCreativeSeed, 1) : undefined;
+    const sequelOpeningAngle = isSequel ? pickBySeed(SEQUEL_OPENING_ANGLES, sequelCreativeSeed, 2) : undefined;
 
     let userPrompt = `请为以下主题创作一个${count}个分镜的短剧脚本：
 
@@ -530,6 +532,12 @@ ${productList}${avoidTitlePrompt}
 
 【续集创作要求】
 这是一个系列短剧的第 ${(previousScript.episode_number || 1) + 1} 集，不是新故事。你的任务不是“再写一个类似主题”，而是“从上一集最后一秒继续往下拍”。严禁重新开一个相似题材的新故事。
+
+【本次重生成随机创作指令】
+- 创作种子：${sequelCreativeSeed || Date.now()}
+- 本次必须采用的剧情推进方向：${sequelDirection}
+- 本次必须采用的开场角度：${sequelOpeningAngle}
+- 如果用户再次点击重生成，你必须换一套冲突推进、反转线索、关键道具和结尾钩子；不要复用上一次的标题、台词、证据、反转方式。
 
 【系列圣经 Series Bible：最高优先级，必须逐条继承】
 ${JSON.stringify(seriesBible, null, 2)}
