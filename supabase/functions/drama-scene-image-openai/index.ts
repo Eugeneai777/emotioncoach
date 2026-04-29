@@ -19,6 +19,36 @@ const styleMap: Record<string, string> = {
   comic: "American graphic novel style, bold composition, dramatic contrast, crisp details",
 };
 
+class OpenAIImageError extends Error {
+  status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "OpenAIImageError";
+    this.status = status;
+  }
+}
+
+function parseOpenAIImageError(status: number, bodyText: string) {
+  let message = bodyText;
+  try {
+    const parsed = JSON.parse(bodyText);
+    message = parsed?.error?.message || parsed?.message || bodyText;
+  } catch {
+    // keep raw text
+  }
+
+  if (status === 403 && /organization must be verified|verify organization/i.test(message)) {
+    return "GPT Image 2.0 需要 OpenAI 组织完成验证后才能使用。请在 OpenAI 平台完成 Organization Verification，等待约 15 分钟后再重试。";
+  }
+  if (status === 403) return `当前 OpenAI API Key 无权使用 ${OPENAI_IMAGE_MODEL} 图片生成，请检查模型权限或组织验证状态。`;
+  if (status === 401) return "OpenAI API Key 无效或已过期，请更新 OPENAI_API_KEY。";
+  if (status === 429) return "AI 请求频率超限，请稍后重试";
+  if (status === 402) return "AI 额度不足，请充值后重试";
+
+  return `GPT Image 2.0 生成失败：${status}${message ? ` - ${message}` : ""}`;
+}
+
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -110,8 +140,9 @@ async function callOpenAIImage(prompt: string, aspectRatio: string, referenceUrl
     } else {
       const text = await editResponse.text();
       console.warn("OpenAI image edit failed, falling back to generation:", editResponse.status, text);
-      if (editResponse.status === 429) throw new Error("AI 请求频率超限，请稍后重试");
-      if (editResponse.status === 402) throw new Error("AI 额度不足，请充值后重试");
+      if ([401, 402, 403, 429].includes(editResponse.status)) {
+        throw new OpenAIImageError(parseOpenAIImageError(editResponse.status, text), editResponse.status);
+      }
     }
   }
 
@@ -132,9 +163,7 @@ async function callOpenAIImage(prompt: string, aspectRatio: string, referenceUrl
   if (!response.ok) {
     const text = await response.text();
     console.error("OpenAI image generation error:", response.status, text);
-    if (response.status === 429) throw new Error("AI 请求频率超限，请稍后重试");
-    if (response.status === 402) throw new Error("AI 额度不足，请充值后重试");
-    throw new Error(`GPT Image 2.0 生成失败：${response.status}`);
+    throw new OpenAIImageError(parseOpenAIImageError(response.status, text), response.status);
   }
 
   const data = await response.json();
@@ -185,6 +214,7 @@ Deno.serve(async (req) => {
     return jsonResponse({ imageUrl: urlData.publicUrl, prompt, model: OPENAI_IMAGE_MODEL });
   } catch (e) {
     console.error("drama-scene-image-openai error:", e);
-    return jsonResponse({ error: e instanceof Error ? e.message : "图片生成失败" }, 500);
+    const status = e instanceof OpenAIImageError ? e.status : 500;
+    return jsonResponse({ error: e instanceof Error ? e.message : "图片生成失败" }, status);
   }
 });
