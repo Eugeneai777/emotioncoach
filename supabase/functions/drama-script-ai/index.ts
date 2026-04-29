@@ -44,6 +44,29 @@ const buildSeriesBible = (previousScript: any, previousData: any, previousLastSc
 
 const containsAny = (haystack: string, needles: string[]) => needles.some((needle) => needle && haystack.includes(needle));
 
+const pickBySeed = <T,>(items: T[], seed: string | number | undefined, offset = 0) => {
+  if (items.length === 0) return undefined;
+  const raw = String(seed || Date.now()) + `:${offset}`;
+  let hash = 0;
+  for (let i = 0; i < raw.length; i += 1) hash = (hash * 31 + raw.charCodeAt(i)) >>> 0;
+  return items[hash % items.length];
+};
+
+const SEQUEL_CREATIVE_DIRECTIONS = [
+  "新证据突然出现：用一张聊天记录、体检单、监控截图或旧物，把上一集判断全部推翻",
+  "第三方压力介入：老板、婆婆、前任、孩子、客户或医生闯入，让原矛盾升级成公开危机",
+  "主角反击但代价更大：主角不再解释，做出一个让对方慌张的决定",
+  "沉默真相爆开：上一集看似强势的人露出脆弱动机，观众开始重新站队",
+  "限时选择：本集必须围绕一个倒计时选择推进，逼角色在亲情、事业、尊严或健康之间取舍",
+];
+
+const SEQUEL_OPENING_ANGLES = [
+  "从上一集最后一句台词后的1秒钟开始，不换地点，先给角色脸部特写",
+  "从上一集最后动作留下的道具开始：手机、门、药盒、合同、照片或报告成为第一镜头焦点",
+  "用对方的反应开场：上一集被刺激的人先沉默3秒，再说出更狠的一句",
+  "用外部打断开场：电话、敲门、消息弹窗或旁人闯入，直接把最后悬念推高",
+];
+
 const extractContinuityTokens = (value: unknown) => normalizeText(value)
   .split(/[，。！？、；：,.!?;:\s|"“”'（）()【】\[\]-]/)
   .map((token) => token.trim())
@@ -62,6 +85,7 @@ const applyContinuityValidation = (parsed: any, previousData: any, previousLastS
   const firstSceneText = getSceneText(nextScenes[0] || {});
   const lastSceneText = getSceneText(previousLastScene || {});
   const hardFailures: string[] = [];
+  const warnings: string[] = [];
 
   const missingNames = previousCharacters
     .map((char: any) => normalizeText(char?.name))
@@ -74,7 +98,7 @@ const applyContinuityValidation = (parsed: any, previousData: any, previousLastS
   }
 
   if (previousCharacters.length > 0 && nextCharacters.length > previousCharacters.length + 2) {
-    issues.push("续集新增角色过多，可能稀释原人物关系");
+    warnings.push("续集新增角色较多，注意不要稀释原人物关系");
   }
 
   const continuityTokens = Array.from(new Set([
@@ -92,22 +116,24 @@ const applyContinuityValidation = (parsed: any, previousData: any, previousLastS
     const issue = "强制校验失败：续集缺少第1个分镜，无法承接上一集结尾";
     issues.push(issue);
     hardFailures.push(issue);
-  } else if (lastSceneText && (!hasCharacterInOpening || !hasLastSceneTokenInOpening)) {
+  } else if (lastSceneText && !hasCharacterInOpening) {
     const issue = "强制校验失败：第1个分镜未同时保留上一集人物，并承接最后分镜的动作、台词或道具";
     issues.push(issue);
     hardFailures.push(issue);
+  } else if (lastSceneText && !hasLastSceneTokenInOpening) {
+    warnings.push("第1个分镜已保留上一集人物，但对最后动作/台词/道具的承接还可以更明显");
   }
 
   const productKeys = Array.isArray(products) ? products.map((p) => p?.key || p?.name).filter(Boolean) : [];
   if (productKeys.length > 0 && !containsAny(fullNextText, productKeys)) {
-    issues.push("续集未延续已选择的产品线或转化线索");
+    warnings.push("续集未明显写出已选择的产品 key，但可能保留了产品语境");
   }
 
   const original = parsed.consistencyCheck || {};
-  const penalty = Math.min(35, issues.length * 8);
+  const penalty = Math.min(30, hardFailures.length * 16 + warnings.length * 4);
   const originalScore = typeof original.overallScore === "number" ? original.overallScore : 92;
-  const softAdjustedScore = Math.max(55, originalScore - penalty);
-  const adjustedScore = hardFailures.length > 0 ? Math.min(78, softAdjustedScore) : softAdjustedScore;
+  const softAdjustedScore = Math.max(70, originalScore - penalty);
+  const adjustedScore = hardFailures.length > 0 ? Math.min(82, softAdjustedScore) : Math.max(86, softAdjustedScore);
   parsed.consistencyCheck = {
     overallScore: adjustedScore,
     characterScore: hardFailures.some((i) => i.includes("核心角色")) ? Math.min(78, Math.max(55, (typeof original.characterScore === "number" ? original.characterScore : 92) - missingNames.length * 18)) : Math.max(55, (typeof original.characterScore === "number" ? original.characterScore : 92) - missingNames.length * 12),
@@ -115,7 +141,7 @@ const applyContinuityValidation = (parsed: any, previousData: any, previousLastS
     visualScore: typeof original.visualScore === "number" ? original.visualScore : 90,
     productScore: Math.max(60, (typeof original.productScore === "number" ? original.productScore : 100) - (issues.some((i) => i.includes("产品线")) ? 20 : 0)),
     verdict: adjustedScore >= 85 ? "通过" : "需重生成",
-    issues: Array.from(new Set(issues)),
+    issues: Array.from(new Set([...issues, ...warnings])),
     regenerationAdvice: adjustedScore >= 85 ? (original.regenerationAdvice || "可继续使用") : "请一键重生成：必须保留上一集核心角色，并让第1个分镜直接接住上一集最后的人物、动作、台词或道具，再升级原冲突。",
   };
 
@@ -308,7 +334,7 @@ Deno.serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const { theme, genre, style, sceneCount, mode, products, targetAudience, conversionStyle, conversionStyles, conflictIntensity, action, avoidTitles, previousScript, sequelVariant } = await req.json();
+    const { theme, genre, style, sceneCount, mode, products, targetAudience, conversionStyle, conversionStyles, conflictIntensity, action, avoidTitles, previousScript, sequelCreativeSeed } = await req.json();
 
     // --- Suggest Themes Mode ---
     if (action === "suggest_themes") {
@@ -493,6 +519,8 @@ ${productList}${avoidTitlePrompt}
     const previousData = isSequel ? previousScript.script_data : null;
     const previousLastScene = previousData?.scenes?.[previousData.scenes.length - 1];
     const seriesBible = isSequel ? buildSeriesBible(previousScript, previousData, previousLastScene, products || previousScript?.selected_products || []) : null;
+    const sequelDirection = isSequel ? pickBySeed(SEQUEL_CREATIVE_DIRECTIONS, sequelCreativeSeed, 1) : undefined;
+    const sequelOpeningAngle = isSequel ? pickBySeed(SEQUEL_OPENING_ANGLES, sequelCreativeSeed, 2) : undefined;
 
     let userPrompt = `请为以下主题创作一个${count}个分镜的短剧脚本：
 
@@ -507,6 +535,12 @@ ${productList}${avoidTitlePrompt}
 
 【续集创作要求】
 这是一个系列短剧的第 ${(previousScript.episode_number || 1) + 1} 集，不是新故事。你的任务不是“再写一个类似主题”，而是“从上一集最后一秒继续往下拍”。严禁重新开一个相似题材的新故事。
+
+【本次重生成随机创作指令】
+- 创作种子：${sequelCreativeSeed || Date.now()}
+- 本次必须采用的剧情推进方向：${sequelDirection}
+- 本次必须采用的开场角度：${sequelOpeningAngle}
+- 如果用户再次点击重生成，你必须换一套冲突推进、反转线索、关键道具和结尾钩子；不要复用上一次的标题、台词、证据、反转方式。
 
 【系列圣经 Series Bible：最高优先级，必须逐条继承】
 ${JSON.stringify(seriesBible, null, 2)}
