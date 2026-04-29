@@ -73,8 +73,8 @@ export const ASSESSMENT_PROMO_CONFIGS: Record<string, AssessmentPromoConfig> = {
   },
   male_midlife_vitality: {
     emoji: '🔋',
-    title: '男人有劲状态自测',
-    subtitle: '3分钟看看你的精力、睡眠和关键时刻信心',
+    title: '男人有劲状态评估',
+    subtitle: '3分钟看清你的精力、睡眠和关键时刻信心',
     highlights: [
       { icon: '🧭', text: '6维扫描压力、睡眠、关系和行动恢复力' },
       { icon: '🤐', text: '轻松私密的问题方式，不尴尬也不说教' },
@@ -83,7 +83,7 @@ export const ASSESSMENT_PROMO_CONFIGS: Record<string, AssessmentPromoConfig> = {
     gradient: 'linear-gradient(135deg, #1f2937 0%, #0f766e 52%, #f59e0b 100%)',
     accentColor: '#0f766e',
     sharePath: '/assessment/male_midlife_vitality',
-    tagline: '有劲AI · 测测你的男人有劲状态',
+    tagline: '有劲AI · 看清你的男人有劲状态',
   },
 };
 
