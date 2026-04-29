@@ -837,6 +837,8 @@ export default function DramaScriptGenerator() {
   const allAudiosDone = result?.scenes.every(s => sceneAudios[s.sceneNumber]?.status === "done") ?? false;
   const anyAudioGenerating = Object.values(sceneAudios).some(a => a.status === "generating");
   const completedAudioCount = Object.values(sceneAudios).filter(a => a.status === "done").length;
+  const completedImageCount = Object.values(sceneImages).filter((img) => img.status === "done").length;
+  const anyImageGenerating = Object.values(sceneImages).some((img) => img.status === "generating") || batchGeneratingImages || generatingCharacterRefs;
 
   // --- TTS Audio Generation ---
   const generateSceneAudio = useCallback(async (scene: Scene) => {
