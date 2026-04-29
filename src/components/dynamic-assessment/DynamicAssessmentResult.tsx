@@ -447,10 +447,11 @@ export function DynamicAssessmentResult({
               <CardContent className="p-4 space-y-3">
                 <div className="flex items-center gap-2">
                   <TrendingUp className="w-4 h-4 text-primary" />
-                  <h3 className="font-semibold text-sm">维度得分</h3>
+                  <h3 className="font-semibold text-sm">{isMaleMidlifeVitality ? '六项状态' : '维度得分'}</h3>
                 </div>
-                {result.dimensionScores.map((d, i) => {
+                {(isMaleMidlifeVitality ? vitalityStatusScores : result.dimensionScores).map((d, i) => {
                   const pct = d.maxScore > 0 ? (d.score / d.maxScore) * 100 : 0;
+                  const vitalityTone = isMaleMidlifeVitality ? getVitalityStatusTone(pct) : null;
                   return (
                     <motion.div
                       key={d.label}
@@ -464,22 +465,31 @@ export function DynamicAssessmentResult({
                         </span>
                         <span className={cn(
                           "tabular-nums text-xs font-medium",
-                          pct >= 80 ? "text-green-600" : pct >= 50 ? "text-foreground" : "text-orange-500"
+                          isMaleMidlifeVitality
+                            ? vitalityTone?.text
+                            : pct >= 80 ? "text-emerald-600" : pct >= 50 ? "text-foreground" : "text-orange-500"
                         )}>
-                          {d.score}/{d.maxScore}
+                          {isMaleMidlifeVitality ? `状态 ${Math.round(pct)}% · ${vitalityTone?.label}` : `${d.score}/${d.maxScore}`}
                         </span>
                       </div>
                       <div className="relative h-2 rounded-full bg-muted overflow-hidden">
                         <motion.div
                           className={cn(
                             "h-full rounded-full",
-                            pct >= 80 ? "bg-green-500" : pct >= 50 ? "bg-primary" : "bg-orange-400"
+                            isMaleMidlifeVitality
+                              ? vitalityTone?.bar
+                              : pct >= 80 ? "bg-emerald-500" : pct >= 50 ? "bg-primary" : "bg-orange-400"
                           )}
                           initial={{ width: 0 }}
                           animate={{ width: `${pct}%` }}
                           transition={{ duration: 0.8, delay: 0.4 + i * 0.06, ease: "easeOut" }}
                         />
                       </div>
+                      {isMaleMidlifeVitality && (
+                        <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground">
+                          {vitalityDimensionTips[d.key || '']}
+                        </p>
+                      )}
                     </motion.div>
                   );
                 })}
