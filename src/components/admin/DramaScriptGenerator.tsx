@@ -1454,6 +1454,54 @@ export default function DramaScriptGenerator() {
         </CardContent>
       </Card>
 
+      {sequelCandidates.length > 0 && (
+        <div className="space-y-3 mt-6 w-full max-w-full min-w-0 overflow-hidden">
+          <div className="flex items-center justify-between gap-3 min-w-0">
+            <h2 className="text-lg font-semibold flex items-center gap-2 min-w-0">
+              <Wand2 className="h-5 w-5 text-primary" /> 续集 A/B 候选
+            </h2>
+            <span className="text-xs text-muted-foreground shrink-0">选择一个版本后再保存</span>
+          </div>
+          <div className="grid gap-3 md:grid-cols-2">
+            {sequelCandidates.map((candidate) => {
+              const check = candidate.script.consistencyCheck;
+              return (
+                <Card key={candidate.key} className="max-w-full min-w-0 overflow-hidden border-primary/20">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between gap-3 min-w-0">
+                      <div className="min-w-0">
+                        <CardTitle className="text-base break-words">{candidate.label}</CardTitle>
+                        <p className="mt-1 text-xs text-muted-foreground break-words">{candidate.description}</p>
+                      </div>
+                      {check && (
+                        <span className={`rounded px-2 py-1 text-xs font-medium shrink-0 ${check.overallScore < CONSISTENCY_THRESHOLD ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"}`}>
+                          {check.overallScore}/100
+                        </span>
+                      )}
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div>
+                      <p className="text-sm font-medium break-words">{candidate.script.title}</p>
+                      <p className="mt-1 text-xs text-muted-foreground leading-relaxed break-words line-clamp-4">{candidate.script.synopsis}</p>
+                    </div>
+                    {candidate.script.continuityBridge && (
+                      <div className="rounded-md bg-muted/40 p-2 text-xs text-muted-foreground space-y-1">
+                        <p className="break-words">承接：{candidate.script.continuityBridge.openingConnection}</p>
+                        <p className="break-words">钩子：{candidate.script.continuityBridge.nextEpisodeHook}</p>
+                      </div>
+                    )}
+                    <Button className="w-full gap-2" onClick={() => adoptSequelCandidate(candidate)}>
+                      <Check className="h-4 w-4" /> 采用{candidate.key}版
+                    </Button>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Results */}
       {result && (
         <div className="space-y-4 mt-6 w-full max-w-full min-w-0 overflow-hidden">
