@@ -52,7 +52,9 @@ const extractContinuityTokens = (value: unknown) => normalizeText(value)
 
 const applyContinuityValidation = (parsed: any, previousData: any, previousLastScene: any, products: any[]) => {
   if (!parsed || !previousData) return parsed;
-  const issues: string[] = Array.isArray(parsed.consistencyCheck?.issues) ? [...parsed.consistencyCheck.issues] : [];
+  const issues: string[] = Array.isArray(parsed.consistencyCheck?.issues)
+    ? parsed.consistencyCheck.issues.filter((issue: string) => !String(issue).startsWith("强制校验失败"))
+    : [];
   const previousCharacters = Array.isArray(previousData.characters) ? previousData.characters : [];
   const nextCharacters = Array.isArray(parsed.characters) ? parsed.characters : [];
   const nextScenes = Array.isArray(parsed.scenes) ? parsed.scenes : [];
@@ -126,6 +128,89 @@ const applyContinuityValidation = (parsed: any, previousData: any, previousLastS
     };
   }
 
+  return parsed;
+};
+
+const hasContinuityHardFailure = (parsed: any) => Array.isArray(parsed?.consistencyCheck?.issues)
+  && parsed.consistencyCheck.issues.some((issue: string) => String(issue).startsWith("强制校验失败"));
+
+const rewriteOpeningSceneForContinuity = async (parsed: any, seriesBible: any, isYoujin: boolean) => {
+  const firstScene = Array.isArray(parsed?.scenes) ? parsed.scenes[0] : null;
+  if (!firstScene) return parsed;
+
+  const sceneProperties: Record<string, any> = {
+    sceneNumber: { type: "number" },
+    panel: { type: "string" },
+    imagePrompt: { type: "string" },
+    characterAction: { type: "string" },
+    dialogue: { type: "string" },
+    bgm: { type: "string" },
+    duration: { type: "string" },
+  };
+  const sceneRequired = ["sceneNumber", "panel", "imagePrompt", "characterAction", "dialogue", "bgm", "duration"];
+  if (isYoujin) {
+    sceneProperties.relatedProduct = { type: "string" };
+  }
+
+  const rewritePrompt = `你只重写续集第1分镜，不改其他分镜。目标：修复“禁止重开故事/开场未承接上一集”的硬性失败。
+
+【系列圣经】
+${JSON.stringify(seriesBible, null, 2)}
+
+【当前不合格第1分镜】
+${JSON.stringify(firstScene, null, 2)}
+
+硬性要求：
+1. sceneNumber 必须为 1。
+2. 必须直接发生在 seriesBible.plotState.lastSceneText 之后的连续时刻。
+3. characterAction/dialogue/imagePrompt 中必须出现上一集核心角色中文名，并复用最后分镜的动作、台词、道具或悬念关键词。
+4. 不得新增主角、不得换世界观、不得跳到无关新场景。
+5. imagePrompt 必须保留旧角色的外貌/服装识别词，并保持英文。
+
+请使用 rewrite_opening_scene 工具只返回通过校验的第1分镜。`;
+
+  const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${LOVABLE_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "google/gemini-3-flash-preview",
+      messages: [{ role: "user", content: rewritePrompt }],
+      tools: [{
+        type: "function",
+        function: {
+          name: "rewrite_opening_scene",
+          description: "只返回重写后的续集第1分镜",
+          parameters: {
+            type: "object",
+            properties: { scene: { type: "object", properties: sceneProperties, required: sceneRequired } },
+            required: ["scene"],
+          },
+        },
+      }],
+      tool_choice: { type: "function", function: { name: "rewrite_opening_scene" } },
+    }),
+  });
+
+  if (!response.ok) return parsed;
+  const data = await response.json();
+  const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
+  if (!toolCall || toolCall.function.name !== "rewrite_opening_scene") return parsed;
+
+  try {
+    const rewritten = JSON.parse(toolCall.function.arguments)?.scene;
+    if (rewritten) {
+      parsed.scenes[0] = { ...firstScene, ...rewritten, sceneNumber: 1 };
+      parsed.continuityBridge = {
+        ...(parsed.continuityBridge || {}),
+        openingConnection: getSceneText(parsed.scenes[0]),
+      };
+    }
+  } catch (error) {
+    console.error("Failed to parse rewritten opening scene:", error);
+  }
   return parsed;
 };
 
@@ -663,6 +748,18 @@ ${productInfo || "无指定产品"}
 
     if (isSequel) {
       parsed = applyContinuityValidation(parsed, previousData, previousLastScene, products || previousScript?.selected_products || []);
+      let rewriteAttempts = 0;
+      while (hasContinuityHardFailure(parsed) && rewriteAttempts < 3) {
+        rewriteAttempts += 1;
+        parsed = await rewriteOpeningSceneForContinuity(parsed, seriesBible, isYoujin);
+        parsed = applyContinuityValidation(parsed, previousData, previousLastScene, products || previousScript?.selected_products || []);
+      }
+      if (rewriteAttempts > 0) {
+        parsed.continuityBridge = {
+          ...(parsed.continuityBridge || {}),
+          openingConnection: `${parsed.continuityBridge?.openingConnection || getSceneText(parsed.scenes?.[0] || {})}\n（系统已自动重写第1分镜 ${rewriteAttempts} 次，以满足禁止重开与开场承接约束）`,
+        };
+      }
     }
 
     return new Response(JSON.stringify(parsed), {
