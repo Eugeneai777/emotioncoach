@@ -1559,10 +1559,42 @@ export default function DramaScriptGenerator() {
           <Card className="w-full max-w-full min-w-0 shrink overflow-hidden border-dashed border-primary/40">
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
-                <Video className="h-4 w-4" /> 视频生成设置
+                <Video className="h-4 w-4" /> 图片 / 视频生成设置
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 w-full min-w-0 overflow-hidden">
+                <div className="grid w-full min-w-0 grid-cols-1 gap-4 overflow-hidden sm:grid-cols-2">
+                  <div className="w-full min-w-0 space-y-2 overflow-hidden">
+                    <Label className="text-xs">GPT Image 2.0 图片比例</Label>
+                    <div className="flex w-full min-w-0 flex-wrap gap-2 overflow-hidden">
+                      {ASPECT_RATIOS.map(ar => (
+                        <button key={ar.value} onClick={() => setImageAspectRatio(ar.value)} disabled={anyImageGenerating} className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${imageAspectRatio === ar.value ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border hover:bg-muted"}`}>
+                          {ar.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex w-full min-w-0 flex-wrap items-end gap-2 overflow-hidden">
+                    <Button variant="outline" onClick={handleGenerateCharacterReferences} disabled={generatingCharacterRefs || !result.characters.length} className="gap-2">
+                      {generatingCharacterRefs ? <Loader2 className="h-4 w-4 animate-spin" /> : <User className="h-4 w-4" />}
+                      生成角色定妆图
+                    </Button>
+                    <Button onClick={handleBatchGenerateImages} disabled={batchGeneratingImages || anyImageGenerating} className="gap-2">
+                      {batchGeneratingImages ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon className="h-4 w-4" />}
+                      全部生成分镜图片
+                    </Button>
+                    {completedImageCount > 0 && <span className="pb-2 text-xs text-muted-foreground">图片 {completedImageCount}/{result.scenes.length}</span>}
+                  </div>
+                </div>
+                {completedImageCount > 0 && completedImageCount < result.scenes.length && (
+                  <div className="mt-3 space-y-1">
+                    <span className="text-xs text-muted-foreground">分镜图片生成进度</span>
+                    <Progress value={(completedImageCount / result.scenes.length) * 100} className="h-2" />
+                  </div>
+                )}
+              </div>
+
               <div className="grid w-full min-w-0 grid-cols-1 gap-4 overflow-hidden sm:grid-cols-2">
                 <div className="w-full min-w-0 space-y-2 overflow-hidden">
                   <Label className="text-xs">画面比例</Label>
