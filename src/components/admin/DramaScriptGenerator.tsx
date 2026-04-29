@@ -285,6 +285,7 @@ export default function DramaScriptGenerator() {
   const [sequelGenerationSource, setSequelGenerationSource] = useState<{ title: string; episodeNumber: number } | null>(null);
   const [sequelGenerationStep, setSequelGenerationStep] = useState("");
   const [sequelGenerationError, setSequelGenerationError] = useState<string | null>(null);
+  const [pendingSequel, setPendingSequel] = useState<{ source: SavedDramaScript; script: DramaScript; products: ProductItem[]; conversionStyles: string[] } | null>(null);
   const [suggestedThemes, setSuggestedThemes] = useState<{ title: string; description: string }[]>([]);
   const [loadingThemes, setLoadingThemes] = useState(false);
   const [selectedThemeIdx, setSelectedThemeIdx] = useState<number | null>(null);
@@ -597,8 +598,10 @@ export default function DramaScriptGenerator() {
     setSequelGenerationSource({ title: script.title, episodeNumber: script.episode_number });
     setSequelGenerationStep("正在准备续集上下文...");
     setSequelGenerationError(null);
+    setPendingSequel(null);
     try {
       const productsForSequel = script.selected_products || [];
+      const sequelConversionStyles = getSequelConversionStyles(script);
       const lastScene = script.script_data?.scenes?.[script.script_data.scenes.length - 1];
       const previousLastSceneSummary = summarizeSceneForSequel(lastScene);
       const previousCharacterSummary = (script.script_data?.characters || []).map((char) => `${char.name}：${char.description}`).join("；");
@@ -618,7 +621,6 @@ export default function DramaScriptGenerator() {
         previousScript: buildPreviousScriptContext(script),
       };
       if (script.mode === "youjin") {
-        const sequelConversionStyles = getSequelConversionStyles(script);
         baseBody.products = productsForSequel;
         baseBody.targetAudience = script.target_audience || targetAudience;
         baseBody.conversionStyles = sequelConversionStyles;
@@ -630,21 +632,11 @@ export default function DramaScriptGenerator() {
       if (data?.error || error) {
         throw new Error(await extractEdgeFunctionError(data, error, "续集生成失败，请稍后重试"));
       }
-      setMode(script.mode || "generic");
-      setGenre(script.genre || genre);
-      setStyle(script.style || style);
-      setTargetAudience(script.target_audience || targetAudience);
-      setConversionStyles(getSequelConversionStyles(script));
-      setSelectedProducts(new Set(productsForSequel.map((p) => p.key)));
-      clearGeneratedAssets();
-      setTheme((data as DramaScript).title);
-      setResult(data as DramaScript);
-      setSavedScriptId(null);
-      setActiveSavedScript(script);
       if ((data as DramaScript).consistencyCheck && ((data as DramaScript).consistencyCheck?.overallScore || 100) < CONSISTENCY_THRESHOLD) {
         toast.error(`一致性评分 ${(data as DramaScript).consistencyCheck?.overallScore}，建议重新生成一次`);
       }
-      toast.success(`已生成第${script.episode_number + 1}集续集，不满意可重新生成`);
+      setPendingSequel({ source: script, script: data as DramaScript, products: productsForSequel, conversionStyles: sequelConversionStyles });
+      toast.success(`已生成第${script.episode_number + 1}集续集，点击替换后生效`);
     } catch (e: any) {
       const message = e.message || "续集生成失败";
       setSequelGenerationError(message);
@@ -653,6 +645,25 @@ export default function DramaScriptGenerator() {
       setGeneratingSequel(false);
       setSequelGenerationStep("");
     }
+  };
+
+  const applyPendingSequel = () => {
+    if (!pendingSequel) return;
+    const { source, script, products, conversionStyles: nextConversionStyles } = pendingSequel;
+    setMode(source.mode || "generic");
+    setGenre(source.genre || genre);
+    setStyle(source.style || style);
+    setTargetAudience(source.target_audience || targetAudience);
+    setConversionStyles(nextConversionStyles);
+    setSelectedProducts(new Set(products.map((p) => p.key)));
+    clearGeneratedAssets();
+    setTheme(script.title);
+    setResult(script);
+    setSavedScriptId(null);
+    setActiveSavedScript(source);
+    setPendingSequel(null);
+    setSequelGenerationError(null);
+    toast.success(`已替换为第${source.episode_number + 1}集续集`);
   };
 
   const copyToClipboard = (text: string, label = "提示词") => {
