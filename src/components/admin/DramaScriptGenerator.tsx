@@ -142,6 +142,12 @@ interface DramaScript {
     issues: string[];
     regenerationAdvice: string;
   };
+  continuityBridge?: {
+    inheritedFromPrevious: string;
+    openingConnection: string;
+    unresolvedHookCarried: string;
+    nextEpisodeHook: string;
+  };
   characters: Character[];
   scenes: Scene[];
   totalScenes: number;
@@ -220,6 +226,14 @@ const normalizeConversionStyles = (styles?: string[] | string | null) => {
   const values = Array.isArray(styles) ? styles : styles ? [styles] : ["plot"];
   const validValues = values.filter((value) => CONVERSION_STYLES.some((style) => style.value === value));
   return validValues.length > 0 ? validValues : ["plot"];
+};
+
+const summarizeSceneForSequel = (scene?: Scene) => {
+  if (!scene) return "上一集结尾暂无摘要";
+  return [scene.characterAction, scene.dialogue || scene.narration]
+    .filter(Boolean)
+    .join("｜")
+    .slice(0, 120) || "上一集结尾暂无摘要";
 };
 
 export default function DramaScriptGenerator() {
