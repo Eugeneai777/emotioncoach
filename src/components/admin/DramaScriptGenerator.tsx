@@ -594,7 +594,7 @@ export default function DramaScriptGenerator() {
 
   const exportJSON = () => {
     if (!result) return;
-    const blob = new Blob([JSON.stringify(result, null, 2)], { type: "application/json" });
+    const blob = new Blob([JSON.stringify(buildScriptWithGeneratedImages(), null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -678,6 +678,7 @@ export default function DramaScriptGenerator() {
           prompt: scene.imagePrompt,
           aspect_ratio: videoAspectRatio,
           duration: videoDuration,
+          image_urls: sceneImages[num]?.imageUrl ? [sceneImages[num].imageUrl] : undefined,
         },
       });
 
@@ -693,7 +694,7 @@ export default function DramaScriptGenerator() {
       updateSceneVideo(num, { status: "failed", error: e.message });
       return false;
     }
-  }, [videoAspectRatio, videoDuration, updateSceneVideo, pollVideoStatus]);
+  }, [sceneImages, videoAspectRatio, videoDuration, updateSceneVideo, pollVideoStatus]);
 
   const handleBatchGenerate = async () => {
     if (!result) return;
