@@ -94,7 +94,7 @@ async function callOpenAIImage(prompt: string, aspectRatio: string, referenceUrl
     form.append("prompt", prompt);
     form.append("size", size);
     for (const [index, blob] of refs.entries()) {
-      form.append("image[]", blob, `reference-${index + 1}.png`);
+      form.append("image", blob, `reference-${index + 1}.png`);
     }
 
     const editResponse = await fetch(`${OPENAI_BASE_URL}/v1/images/edits`, {
