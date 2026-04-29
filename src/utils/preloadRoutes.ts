@@ -33,9 +33,26 @@ export const preloadRoute = (route: string) => {
     case '/workplace':
       void import('@/pages/WorkplacePage');
       break;
+    case '/life-coach-voice':
+      void import('@/pages/LifeCoachVoice');
+      break;
+    case '/camps':
+      void import('@/pages/CampList');
+      break;
+    case '/assessment-tools':
+      void import('@/pages/AssessmentTools');
+      break;
     default:
+      if (path.startsWith('/assessment/')) {
+        void import('@/pages/DynamicAssessmentPage');
+      }
       break;
   }
+};
+
+export const preloadRouteOnIntent = (route: string) => {
+  if (typeof window === 'undefined') return;
+  window.setTimeout(() => preloadRoute(route), 0);
 };
 
 export const scheduleRoutePreload = (routes: string[], delay = 500) => {
