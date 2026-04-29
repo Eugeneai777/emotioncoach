@@ -629,7 +629,9 @@ export function DynamicAssessmentResult({
                 ) : aiInsight ? (
                   <p className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">{aiInsight}</p>
                 ) : (
-                  <p className="text-sm text-muted-foreground">暂无</p>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {isMaleMidlifeVitality ? 'AI 洞察正在生成中，你可以先查看上方状态雷达和恢复建议。' : 'AI 洞察正在生成中，请稍后查看。'}
+                  </p>
                 )}
               </CardContent>
             </Card>
