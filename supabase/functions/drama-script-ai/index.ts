@@ -499,6 +499,17 @@ ${productInfo || "无指定产品"}
       required: ["overallScore", "characterScore", "plotScore", "visualScore", "productScore", "verdict", "issues", "regenerationAdvice"],
     };
 
+    const continuityBridgeSchema = {
+      type: "object",
+      properties: {
+        inheritedFromPrevious: { type: "string", description: "本集继承上一集的人物关系、矛盾和视觉锚点" },
+        openingConnection: { type: "string", description: "第1幕如何直接承接上一集最后分镜" },
+        unresolvedHookCarried: { type: "string", description: "本集延续的上一集未解决悬念" },
+        nextEpisodeHook: { type: "string", description: "本集结尾留下的下一集钩子" },
+      },
+      required: ["inheritedFromPrevious", "openingConnection", "unresolvedHookCarried", "nextEpisodeHook"],
+    };
+
     const toolProperties: Record<string, any> = {
       title: { type: "string", description: "短剧标题" },
       synopsis: { type: "string", description: "故事梗概50-100字" },
@@ -538,8 +549,9 @@ ${productInfo || "无指定产品"}
     const toolRequired = ["title", "synopsis", "coverPoster", "characters", "scenes", "totalScenes", "estimatedDuration"];
 
     if (isSequel) {
+      toolProperties.continuityBridge = continuityBridgeSchema;
       toolProperties.consistencyCheck = consistencyCheckSchema;
-      toolRequired.push("consistencyCheck");
+      toolRequired.push("continuityBridge", "consistencyCheck");
     }
 
     if (isYoujin) {
@@ -614,6 +626,10 @@ ${productInfo || "无指定产品"}
       return new Response(JSON.stringify({ error: "AI返回格式异常，请重试" }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    if (isSequel) {
+      parsed = applyContinuityValidation(parsed, previousData, previousLastScene, products || previousScript?.selected_products || []);
     }
 
     return new Response(JSON.stringify(parsed), {
