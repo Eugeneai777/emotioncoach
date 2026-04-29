@@ -176,6 +176,16 @@ interface SavedDramaScript {
   created_at: string;
 }
 
+interface SequelCandidate {
+  key: "A" | "B";
+  label: string;
+  description: string;
+  script: DramaScript;
+  sourceScript: SavedDramaScript;
+  conversionStyles: string[];
+  products: ProductItem[];
+}
+
 type VideoStatus = "idle" | "submitting" | "in_queue" | "generating" | "done" | "failed";
 
 interface SceneVideoState {
@@ -254,6 +264,7 @@ export default function DramaScriptGenerator() {
   const [savingScript, setSavingScript] = useState(false);
   const [loadingSavedScripts, setLoadingSavedScripts] = useState(false);
   const [generatingSequel, setGeneratingSequel] = useState(false);
+  const [sequelCandidates, setSequelCandidates] = useState<SequelCandidate[]>([]);
   const [suggestedThemes, setSuggestedThemes] = useState<{ title: string; description: string }[]>([]);
   const [loadingThemes, setLoadingThemes] = useState(false);
   const [selectedThemeIdx, setSelectedThemeIdx] = useState<number | null>(null);
@@ -405,6 +416,7 @@ export default function DramaScriptGenerator() {
     }
     setLoading(true);
     setResult(null);
+    setSequelCandidates([]);
     setSceneVideos({});
     setVideoPreviewFallbacks({});
     setSceneAudios({});
@@ -520,6 +532,7 @@ export default function DramaScriptGenerator() {
     setConversionStyles(normalizeConversionStyles(script.script_data?.conversionStyles || script.conversion_style));
     setSelectedProducts(new Set((script.selected_products || []).map((p) => p.key)));
     setResult(script.script_data);
+    setSequelCandidates([]);
     setSceneImages(Object.fromEntries((script.script_data?.scenes || []).filter((s) => s.generatedImageUrl).map((s) => [s.sceneNumber, { status: "done", imageUrl: s.generatedImageUrl! }])));
     setCharacterImages(Object.fromEntries((script.script_data?.characters || []).map((c, index) => c.referenceImageUrl ? [index, { status: "done", imageUrl: c.referenceImageUrl }] : null).filter(Boolean) as [number, SceneImageState][]));
     setSavedScriptId(script.id);
@@ -560,13 +573,14 @@ export default function DramaScriptGenerator() {
     }
     setGeneratingSequel(true);
     setResult(null);
+    setSequelCandidates([]);
     clearGeneratedAssets();
     try {
       const productsForSequel = script.selected_products || [];
       const lastScene = script.script_data?.scenes?.[script.script_data.scenes.length - 1];
       const previousLastSceneSummary = summarizeSceneForSequel(lastScene);
       const previousCharacterSummary = (script.script_data?.characters || []).map((char) => `${char.name}：${char.description}`).join("；");
-      const body: any = {
+      const baseBody: any = {
         action: "generate_sequel",
         theme: "系列短剧续集：承接上一集结尾继续推进",
         genre: script.genre || genre,
@@ -583,35 +597,67 @@ export default function DramaScriptGenerator() {
       };
       if (script.mode === "youjin") {
         const sequelConversionStyles = getSequelConversionStyles(script);
-        body.products = productsForSequel;
-        body.targetAudience = script.target_audience || targetAudience;
-        body.conversionStyles = sequelConversionStyles;
-        body.conversionStyle = sequelConversionStyles[0] || "plot";
+        baseBody.products = productsForSequel;
+        baseBody.targetAudience = script.target_audience || targetAudience;
+        baseBody.conversionStyles = sequelConversionStyles;
+        baseBody.conversionStyle = sequelConversionStyles[0] || "plot";
       }
-      const { data, error } = await supabase.functions.invoke("drama-script-ai", { body });
-      if (data?.error || error) {
-        throw new Error(await extractEdgeFunctionError(data, error, "续集生成失败，请稍后重试"));
-      }
+
+      const variants = [
+        { key: "A" as const, label: "A版：强承接版", description: "更严格接上一集最后分镜，人物和关系稳定延续", variant: "strong_continuity" },
+        { key: "B" as const, label: "B版：爆点升级版", description: "承接不变，但冲突、误会和反转更夸张", variant: "viral_upgrade" },
+      ];
+      const responses = await Promise.all(
+        variants.map((variant) => supabase.functions.invoke("drama-script-ai", { body: { ...baseBody, sequelVariant: variant.variant } }))
+      );
+      const failed = responses.find(({ data, error }) => data?.error || error);
+      if (failed) throw new Error(await extractEdgeFunctionError(failed.data, failed.error, "续集生成失败，请稍后重试"));
+
+      const candidates = responses.map(({ data }, index) => ({
+        key: variants[index].key,
+        label: variants[index].label,
+        description: variants[index].description,
+        script: data as DramaScript,
+        sourceScript: script,
+        conversionStyles: script.mode === "youjin" ? getSequelConversionStyles(script) : [],
+        products: productsForSequel,
+      }));
       setMode(script.mode || "generic");
       setGenre(script.genre || genre);
       setStyle(script.style || style);
       setTargetAudience(script.target_audience || targetAudience);
       setConversionStyles(getSequelConversionStyles(script));
       setSelectedProducts(new Set(productsForSequel.map((p) => p.key)));
-      setTheme((data as DramaScript).title);
-      setResult(data as DramaScript);
+      setTheme(candidates[0].script.title);
+      setSequelCandidates(candidates);
       setSavedScriptId(null);
       setActiveSavedScript(script);
-      const check = (data as DramaScript).consistencyCheck;
-      if (check && check.overallScore < CONSISTENCY_THRESHOLD) {
-        toast.error(`一致性评分 ${check.overallScore}，低于${CONSISTENCY_THRESHOLD}，建议重新生成`);
+      const lowScore = candidates.find((candidate) => (candidate.script.consistencyCheck?.overallScore || 100) < CONSISTENCY_THRESHOLD);
+      if (lowScore?.script.consistencyCheck) {
+        toast.error(`${lowScore.label}一致性评分 ${lowScore.script.consistencyCheck.overallScore}，建议优先选择另一版或重生成`);
       }
-      toast.success(`已承接第${script.episode_number}集生成第${script.episode_number + 1}集，确认后可保存`);
+      toast.success(`已生成第${script.episode_number + 1}集 A/B 两个候选，请先选择采用版本`);
     } catch (e: any) {
       toast.error(e.message || "续集生成失败");
     } finally {
       setGeneratingSequel(false);
     }
+  };
+
+  const adoptSequelCandidate = (candidate: SequelCandidate) => {
+    setMode(candidate.sourceScript.mode || "generic");
+    setGenre(candidate.sourceScript.genre || genre);
+    setStyle(candidate.sourceScript.style || style);
+    setTargetAudience(candidate.sourceScript.target_audience || targetAudience);
+    setConversionStyles(candidate.conversionStyles.length > 0 ? candidate.conversionStyles : conversionStyles);
+    setSelectedProducts(new Set(candidate.products.map((p) => p.key)));
+    setTheme(candidate.script.title);
+    setResult(candidate.script);
+    setSavedScriptId(null);
+    setActiveSavedScript(candidate.sourceScript);
+    setSequelCandidates([]);
+    clearGeneratedAssets();
+    toast.success(`已采用${candidate.label}，确认后可保存`);
   };
 
   const copyToClipboard = (text: string, label = "提示词") => {
@@ -1407,6 +1453,54 @@ export default function DramaScriptGenerator() {
           )}
         </CardContent>
       </Card>
+
+      {sequelCandidates.length > 0 && (
+        <div className="space-y-3 mt-6 w-full max-w-full min-w-0 overflow-hidden">
+          <div className="flex items-center justify-between gap-3 min-w-0">
+            <h2 className="text-lg font-semibold flex items-center gap-2 min-w-0">
+              <Wand2 className="h-5 w-5 text-primary" /> 续集 A/B 候选
+            </h2>
+            <span className="text-xs text-muted-foreground shrink-0">选择一个版本后再保存</span>
+          </div>
+          <div className="grid gap-3 md:grid-cols-2">
+            {sequelCandidates.map((candidate) => {
+              const check = candidate.script.consistencyCheck;
+              return (
+                <Card key={candidate.key} className="max-w-full min-w-0 overflow-hidden border-primary/20">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between gap-3 min-w-0">
+                      <div className="min-w-0">
+                        <CardTitle className="text-base break-words">{candidate.label}</CardTitle>
+                        <p className="mt-1 text-xs text-muted-foreground break-words">{candidate.description}</p>
+                      </div>
+                      {check && (
+                        <span className={`rounded px-2 py-1 text-xs font-medium shrink-0 ${check.overallScore < CONSISTENCY_THRESHOLD ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"}`}>
+                          {check.overallScore}/100
+                        </span>
+                      )}
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div>
+                      <p className="text-sm font-medium break-words">{candidate.script.title}</p>
+                      <p className="mt-1 text-xs text-muted-foreground leading-relaxed break-words line-clamp-4">{candidate.script.synopsis}</p>
+                    </div>
+                    {candidate.script.continuityBridge && (
+                      <div className="rounded-md bg-muted/40 p-2 text-xs text-muted-foreground space-y-1">
+                        <p className="break-words">承接：{candidate.script.continuityBridge.openingConnection}</p>
+                        <p className="break-words">钩子：{candidate.script.continuityBridge.nextEpisodeHook}</p>
+                      </div>
+                    )}
+                    <Button className="w-full gap-2" onClick={() => adoptSequelCandidate(candidate)}>
+                      <Check className="h-4 w-4" /> 采用{candidate.key}版
+                    </Button>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Results */}
       {result && (

@@ -308,7 +308,7 @@ Deno.serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const { theme, genre, style, sceneCount, mode, products, targetAudience, conversionStyle, conversionStyles, conflictIntensity, action, avoidTitles, previousScript } = await req.json();
+    const { theme, genre, style, sceneCount, mode, products, targetAudience, conversionStyle, conversionStyles, conflictIntensity, action, avoidTitles, previousScript, sequelVariant } = await req.json();
 
     // --- Suggest Themes Mode ---
     if (action === "suggest_themes") {
@@ -507,6 +507,11 @@ ${productList}${avoidTitlePrompt}
 
 【续集创作要求】
 这是一个系列短剧的第 ${(previousScript.episode_number || 1) + 1} 集，不是新故事。你的任务不是“再写一个类似主题”，而是“从上一集最后一秒继续往下拍”。严禁重新开一个相似题材的新故事。
+
+【本次候选版本】
+${sequelVariant === "viral_upgrade"
+  ? "B版：爆点升级版。必须保持上一集连续性，但新压力、误会、对抗和中后段反转要更夸张、更有短视频爆点；不得因此换主角或重启故事。"
+  : "A版：强承接版。必须最大程度复用上一集最后分镜的人物、动作、台词、道具和情绪状态，优先保证连续性与可信度。"}
 
 【系列圣经 Series Bible：最高优先级，必须逐条继承】
 ${JSON.stringify(seriesBible, null, 2)}
