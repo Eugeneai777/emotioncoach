@@ -48,6 +48,7 @@ const Calendar = lazyRetry(() => import("./pages/Calendar"));
 
 // 管理后台
 const Admin = lazyRetry(() => import("./pages/Admin"));
+const DramaScriptGenerator = lazyRetry(() => import("./components/admin/DramaScriptGenerator"));
 
 // 套餐和支付
 const Packages = lazyRetry(() => import("./pages/Packages"));
@@ -380,6 +381,14 @@ const App = () => (
               <Route path="/tag-stats" element={<TagStats />} />
               <Route path="/goals" element={<Goals />} />
               <Route path="/calendar" element={<Calendar />} />
+              <Route
+                path="/admin/drama-script"
+                element={
+                  <div className="min-h-screen overflow-x-hidden bg-background p-4 md:p-6">
+                    <DramaScriptGenerator />
+                  </div>
+                }
+              />
               <Route path="/admin/*" element={<Admin />} />
               <Route path="/packages" element={<Packages />} />
               <Route path="/deployment-package" element={<DeploymentPackage />} />
