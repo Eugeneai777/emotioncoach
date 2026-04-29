@@ -67,6 +67,21 @@ const SEQUEL_OPENING_ANGLES = [
   "用外部打断开场：电话、敲门、消息弹窗或旁人闯入，直接把最后悬念推高",
 ];
 
+const SEQUEL_DIRECTION_MAP: Record<string, string> = {
+  new_evidence: SEQUEL_CREATIVE_DIRECTIONS[0],
+  third_party_pressure: SEQUEL_CREATIVE_DIRECTIONS[1],
+  costly_counterattack: SEQUEL_CREATIVE_DIRECTIONS[2],
+  hidden_truth: SEQUEL_CREATIVE_DIRECTIONS[3],
+  countdown_choice: SEQUEL_CREATIVE_DIRECTIONS[4],
+};
+
+const SEQUEL_OPENING_ANGLE_MAP: Record<string, string> = {
+  one_second_later: SEQUEL_OPENING_ANGLES[0],
+  prop_focus: SEQUEL_OPENING_ANGLES[1],
+  reaction_first: SEQUEL_OPENING_ANGLES[2],
+  external_interrupt: SEQUEL_OPENING_ANGLES[3],
+};
+
 const extractContinuityTokens = (value: unknown) => normalizeText(value)
   .split(/[，。！？、；：,.!?;:\s|"“”'（）()【】\[\]-]/)
   .map((token) => token.trim())
