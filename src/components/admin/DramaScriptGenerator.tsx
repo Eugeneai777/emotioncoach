@@ -612,6 +612,123 @@ export default function DramaScriptGenerator() {
     return text;
   };
 
+  // --- GPT Image 2.0 Scene Image Generation ---
+  const characterReferenceUrls = useCallback(() => {
+    return Object.values(characterImages).map((state) => state.imageUrl).filter(Boolean) as string[];
+  }, [characterImages]);
+
+  const generateCharacterReference = useCallback(async (char: Character, index: number) => {
+    if (!result) return null;
+    setCharacterImages((prev) => ({ ...prev, [index]: { status: "generating" } }));
+    try {
+      const { data, error } = await supabase.functions.invoke("drama-scene-image-openai", {
+        body: {
+          action: "character_reference",
+          title: result.title,
+          style,
+          aspectRatio: "1:1",
+          characters: [char],
+          scene: {
+            sceneNumber: `char-${index + 1}`,
+            panel: "front-facing character reference portrait",
+            characterAction: `Create a clean canonical character reference portrait for ${char.name}`,
+            dialogue: "",
+            imagePrompt: `${char.imagePrompt}. Full character identity reference, consistent face, hairstyle, outfit, recognizable props, clean background, no text.`,
+          },
+        },
+      });
+      if (data?.error || error) throw new Error(await extractEdgeFunctionError(data, error, "角色定妆图生成失败"));
+      const imageUrl = data?.imageUrl as string | undefined;
+      if (!imageUrl) throw new Error("未返回图片地址");
+      setCharacterImages((prev) => ({ ...prev, [index]: { status: "done", imageUrl } }));
+      return imageUrl;
+    } catch (e: any) {
+      setCharacterImages((prev) => ({ ...prev, [index]: { status: "failed", error: e.message || "生成失败" } }));
+      toast.error(`${char.name} 定妆图生成失败：${e.message || "请重试"}`);
+      return null;
+    }
+  }, [result, style]);
+
+  const handleGenerateCharacterReferences = async () => {
+    if (!result) return;
+    setGeneratingCharacterRefs(true);
+    for (let i = 0; i < result.characters.length; i++) {
+      if (characterImages[i]?.status === "done") continue;
+      await generateCharacterReference(result.characters[i], i);
+      await new Promise((r) => setTimeout(r, 800));
+    }
+    setGeneratingCharacterRefs(false);
+    toast.success("角色定妆图已生成");
+  };
+
+  const generateSceneImage = useCallback(async (scene: Scene, extraReferences: string[] = []) => {
+    if (!result) return null;
+    const num = scene.sceneNumber;
+    setSceneImages((prev) => ({ ...prev, [num]: { status: "generating" } }));
+    try {
+      const { data, error } = await supabase.functions.invoke("drama-scene-image-openai", {
+        body: {
+          title: result.title,
+          style,
+          aspectRatio: imageAspectRatio,
+          characters: result.characters.map((char, index) => ({
+            ...char,
+            referenceImageUrl: characterImages[index]?.imageUrl || char.referenceImageUrl,
+          })),
+          characterReferenceUrls: characterReferenceUrls(),
+          referenceImageUrls: extraReferences,
+          scene,
+        },
+      });
+      if (data?.error || error) throw new Error(await extractEdgeFunctionError(data, error, "分镜图片生成失败"));
+      const imageUrl = data?.imageUrl as string | undefined;
+      if (!imageUrl) throw new Error("未返回图片地址");
+      setSceneImages((prev) => ({ ...prev, [num]: { status: "done", imageUrl } }));
+      toast.success(`场景 ${num} 图片已生成`);
+      return imageUrl;
+    } catch (e: any) {
+      setSceneImages((prev) => ({ ...prev, [num]: { status: "failed", error: e.message || "生成失败" } }));
+      toast.error(`场景 ${num} 图片生成失败：${e.message || "请重试"}`);
+      return null;
+    }
+  }, [characterImages, characterReferenceUrls, imageAspectRatio, result, style]);
+
+  const handleBatchGenerateImages = async () => {
+    if (!result) return;
+    setBatchGeneratingImages(true);
+    let previousImageUrl: string | undefined;
+    for (const scene of result.scenes) {
+      const state = sceneImages[scene.sceneNumber];
+      if (state?.status === "done") {
+        previousImageUrl = state.imageUrl;
+        continue;
+      }
+      const references = previousImageUrl ? [previousImageUrl] : [];
+      const imageUrl = await generateSceneImage(scene, references);
+      if (imageUrl) previousImageUrl = imageUrl;
+      await new Promise((r) => setTimeout(r, 1200));
+    }
+    setBatchGeneratingImages(false);
+    toast.info("分镜图片批量生成已完成");
+  };
+
+  const downloadImage = async (url: string, label: string) => {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error("下载失败");
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = `${label}.png`;
+      a.click();
+      URL.revokeObjectURL(blobUrl);
+    } catch {
+      copyToClipboard(url, "图片链接");
+      toast.info("已复制图片链接，请在新标签页打开保存");
+    }
+  };
+
   // --- Video Generation Logic ---
 
   const updateSceneVideo = useCallback((sceneNum: number, update: Partial<SceneVideoState>) => {
