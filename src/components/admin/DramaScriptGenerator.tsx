@@ -1451,24 +1451,27 @@ export default function DramaScriptGenerator() {
             <Card className="border-primary/30 max-w-full min-w-0 overflow-hidden">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center gap-2">
-                  <Film className="h-4 w-4" /> 续集承接点
+                  <Film className="h-4 w-4" /> 承接说明
                 </CardTitle>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  用于判断本集是否真正延续上一集，而不是重新生成一个新故事。
+                </p>
               </CardHeader>
               <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                 <div className="rounded-lg bg-muted/50 p-3 min-w-0">
-                  <div className="text-xs text-muted-foreground mb-1">继承上一集</div>
+                  <div className="text-xs text-muted-foreground mb-1">本集继承了哪些点</div>
                   <p className="break-words">{result.continuityBridge.inheritedFromPrevious}</p>
                 </div>
                 <div className="rounded-lg bg-muted/50 p-3 min-w-0">
-                  <div className="text-xs text-muted-foreground mb-1">开头承接</div>
+                  <div className="text-xs text-muted-foreground mb-1">第1幕如何接上集结尾</div>
                   <p className="break-words">{result.continuityBridge.openingConnection}</p>
                 </div>
                 <div className="rounded-lg bg-muted/50 p-3 min-w-0">
-                  <div className="text-xs text-muted-foreground mb-1">延续悬念</div>
+                  <div className="text-xs text-muted-foreground mb-1">未解决悬念如何延续</div>
                   <p className="break-words">{result.continuityBridge.unresolvedHookCarried}</p>
                 </div>
                 <div className="rounded-lg bg-muted/50 p-3 min-w-0">
-                  <div className="text-xs text-muted-foreground mb-1">下一集钩子</div>
+                  <div className="text-xs text-muted-foreground mb-1">本集留下的新钩子</div>
                   <p className="break-words">{result.continuityBridge.nextEpisodeHook}</p>
                 </div>
               </CardContent>
