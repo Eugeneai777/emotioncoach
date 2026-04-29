@@ -242,7 +242,7 @@ export default function DramaScriptGenerator() {
   const [genre, setGenre] = useState("suspense");
   const [style, setStyle] = useState("anime");
   const [sceneCount, setSceneCount] = useState(8);
-  const [conflictIntensity, setConflictIntensity] = useState("strong");
+  const [conflictIntensity, setConflictIntensity] = useState("viral");
   const [targetAudience, setTargetAudience] = useState("women");
   const [conversionStyles, setConversionStyles] = useState<string[]>(["plot"]);
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
@@ -500,7 +500,7 @@ export default function DramaScriptGenerator() {
     setTheme(script.theme || script.title);
     setGenre(script.genre || "suspense");
     setStyle(script.style || "anime");
-    setConflictIntensity(script.conflict_intensity || "strong");
+    setConflictIntensity(script.conflict_intensity || "viral");
     setTargetAudience(script.target_audience || "women");
     setConversionStyles(normalizeConversionStyles(script.script_data?.conversionStyles || script.conversion_style));
     setSelectedProducts(new Set((script.selected_products || []).map((p) => p.key)));
