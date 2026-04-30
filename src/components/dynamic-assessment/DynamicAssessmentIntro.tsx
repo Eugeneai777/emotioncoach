@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowRight, Clock, Target, History, Sparkles, BarChart3, MessageSquare, BookOpen, TrendingUp } from "lucide-react";
+import { ArrowRight, Clock, Target, History, Sparkles, BarChart3, MessageSquare, BookOpen, TrendingUp, RotateCw } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { setPostAuthRedirect } from "@/lib/postAuthRedirect";
@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { DimensionRadarChart } from "./DimensionRadarChart";
 import midlifeVitalitySceneImage from "@/assets/audience/midlife-vitality-scene-clean.jpg";
+import { getStatusBand } from "@/config/maleMidlifeVitalityCopy";
 
 interface DynamicAssessmentIntroProps {
   template: {
