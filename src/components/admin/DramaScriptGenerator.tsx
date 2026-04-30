@@ -399,6 +399,7 @@ export default function DramaScriptGenerator() {
   const [videoDuration, setVideoDuration] = useState(5);
   const [sceneVideos, setSceneVideos] = useState<Record<number, SceneVideoState>>({});
   const [videoPreviewFallbacks, setVideoPreviewFallbacks] = useState<Record<number, boolean>>({});
+  const [sceneKeepReferences, setSceneKeepReferences] = useState<Record<number, boolean>>({});
   const [confirmedPrimaryLock, setConfirmedPrimaryLock] = useState("");
   const [confirmedStyleLock, setConfirmedStyleLock] = useState("");
   const [locksConfirmed, setLocksConfirmed] = useState(false);
