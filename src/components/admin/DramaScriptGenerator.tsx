@@ -631,14 +631,17 @@ export default function DramaScriptGenerator() {
 
   const buildScriptWithGeneratedImages = useCallback((): DramaScript | null => {
     if (!result) return null;
+    const primary = result.characters?.[0];
+    const primaryLockText = confirmedPrimaryLock || (primary ? `${primary.name}：${primary.description}\n固定视觉：${primary.imagePrompt}\n要求：保持同一位人物一，不要改变脸型、年龄感、发型、服装、身材、气质和身份，不要替换主角。` : "");
+    const styleLockText = confirmedStyleLock || STYLE_LOCKS[style] || STYLE_LOCKS.realistic;
     return {
       ...result,
       primaryCharacterLock: {
         ...(result.primaryCharacterLock || buildPrimaryCharacterLockCard(result)!),
-        confirmedPrompt: buildPrimaryCharacterLock(),
+        confirmedPrompt: primaryLockText,
         referenceImageUrl: characterImages[0]?.imageUrl || result.primaryCharacterLock?.referenceImageUrl || result.characters[0]?.referenceImageUrl,
       },
-      styleLockPrompt: buildStyleLock(),
+      styleLockPrompt: styleLockText,
       conversionStyles: mode === "youjin" ? conversionStyles : undefined,
       characters: result.characters.map((char, index) => ({
         ...char,
@@ -649,7 +652,7 @@ export default function DramaScriptGenerator() {
         generatedImageUrl: sceneImages[scene.sceneNumber]?.imageUrl || scene.generatedImageUrl,
       })),
     };
-  }, [buildPrimaryCharacterLock, buildStyleLock, characterImages, conversionStyles, mode, result, sceneImages]);
+  }, [characterImages, confirmedPrimaryLock, confirmedStyleLock, conversionStyles, mode, result, sceneImages, style]);
 
   const loadSavedScript = (script: SavedDramaScript) => {
     setMode(script.mode || "generic");
