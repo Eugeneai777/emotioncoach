@@ -942,10 +942,10 @@ export default function DramaScriptGenerator() {
       const { data, error } = await supabase.functions.invoke("jimeng-video-gen", {
         body: {
           action: "submit",
-          prompt: scene.imagePrompt,
+          prompt: buildJimengVideoPrompt(scene),
           aspect_ratio: videoAspectRatio,
           duration: videoDuration,
-          image_urls: sceneImages[num]?.imageUrl ? [sceneImages[num].imageUrl] : undefined,
+          image_urls: getVideoReferenceUrls(num),
         },
       });
 
@@ -961,10 +961,15 @@ export default function DramaScriptGenerator() {
       updateSceneVideo(num, { status: "failed", error: e.message });
       return false;
     }
-  }, [sceneImages, videoAspectRatio, videoDuration, updateSceneVideo, pollVideoStatus]);
+  }, [buildJimengVideoPrompt, getVideoReferenceUrls, videoAspectRatio, videoDuration, updateSceneVideo, pollVideoStatus]);
 
   const handleBatchGenerate = async () => {
     if (!result) return;
+    const hasPrimaryRef = Boolean(characterImages[0]?.imageUrl);
+    const imageCount = result.scenes.filter((scene) => sceneImages[scene.sceneNumber]?.imageUrl).length;
+    if (!hasPrimaryRef || imageCount < result.scenes.length) {
+      toast.info("建议先生成“人物一参考图”和“全部分镜图片”，这样 8 个镜头的人物与风格更一致。仍将继续提交视频。", { duration: 6000 });
+    }
     setBatchGenerating(true);
     for (const scene of result.scenes) {
       const state = sceneVideos[scene.sceneNumber];
