@@ -265,6 +265,41 @@ const normalizeConversionStyles = (styles?: string[] | string | null) => {
   return validValues.length > 0 ? validValues : ["plot"];
 };
 
+const inferFixedOutfit = (text: string) => {
+  const matches = text.match(/(?:wearing|dressed in|outfit|clothing|服装|穿着|身穿|外套|衬衫|西装|连衣裙|长裤|裙子|上衣)[^.,;，。；]*/gi);
+  return matches?.slice(0, 3).join("；") || "沿用人物一固定服装与配饰，不随镜头改变";
+};
+
+const inferFixedAppearance = (char: Character) => {
+  const text = [char.description, char.imagePrompt].filter(Boolean).join("；");
+  return text || "保持人物一固定脸型、年龄感、发型、身材和可识别外貌特征";
+};
+
+const buildPrimaryCharacterLockCard = (script?: DramaScript | null): PrimaryCharacterLockCard | undefined => {
+  const primary = script?.characters?.[0];
+  if (!primary) return undefined;
+  const fixedAppearance = inferFixedAppearance(primary);
+  const fixedOutfit = inferFixedOutfit([primary.description, primary.imagePrompt].filter(Boolean).join("；"));
+  const identityAndTemperament = primary.description || "保持人物一身份、性格、情绪状态和表演气质一致";
+  const negativePrompt = "不要改变人物一的脸型、年龄感、发型、服装、身材、身份和气质；不要替换主角；不要新增无关主角；不要字幕、水印、Logo、UI文字；不要卡通化或风格漂移。";
+  return {
+    name: primary.name || "人物一",
+    sourceCharacterIndex: 0,
+    fixedAppearance,
+    fixedOutfit,
+    identityAndTemperament,
+    visualPrompt: `${primary.name || "人物一"}：${primary.description || ""}。固定视觉：${primary.imagePrompt || ""}。固定服装：${fixedOutfit}。`,
+    negativePrompt,
+    referenceImageUrl: primary.referenceImageUrl,
+    createdAt: new Date().toISOString(),
+  };
+};
+
+const ensurePrimaryCharacterLock = (script: DramaScript): DramaScript => ({
+  ...script,
+  primaryCharacterLock: script.primaryCharacterLock || buildPrimaryCharacterLockCard(script),
+});
+
 const summarizeSceneForSequel = (scene?: Scene) => {
   if (!scene) return "上一集结尾暂无摘要";
   return [scene.characterAction, scene.dialogue || scene.narration]
