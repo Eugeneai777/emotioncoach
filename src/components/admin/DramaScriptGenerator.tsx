@@ -811,13 +811,13 @@ export default function DramaScriptGenerator() {
   const getVideoReferenceUrls = useCallback((sceneNum: number) => {
     const urls = [
       sceneImages[sceneNum]?.imageUrl,
-      characterImages[0]?.imageUrl,
+      characterImages[0]?.imageUrl || result?.primaryCharacterLock?.referenceImageUrl || result?.characters?.[0]?.referenceImageUrl,
       ...Object.entries(characterImages)
         .filter(([index]) => index !== "0")
         .map(([, state]) => state.imageUrl),
     ].filter(Boolean) as string[];
     return Array.from(new Set(urls)).slice(0, 3);
-  }, [characterImages, sceneImages]);
+  }, [characterImages, result, sceneImages]);
 
   const generateCharacterReference = useCallback(async (char: Character, index: number) => {
     if (!result) return null;
