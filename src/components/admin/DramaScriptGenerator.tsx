@@ -1140,11 +1140,13 @@ export default function DramaScriptGenerator() {
     if (!locksConfirmed) {
       toast.info("请先确认人物一锁定卡和统一风格锁定卡，系统仍将使用当前文案继续提交视频。", { duration: 5000 });
     }
-    const hasPrimaryRef = Boolean(characterImages[0]?.imageUrl || result.primaryCharacterLock?.referenceImageUrl || result.characters[0]?.referenceImageUrl);
-    const imageCount = result.scenes.filter((scene) => sceneImages[scene.sceneNumber]?.imageUrl).length;
-    if (!hasPrimaryRef || imageCount < result.scenes.length) {
-      toast.info("建议先生成“人物一参考图”和“全部分镜图片”，这样 8 个镜头的人物与风格更一致。仍将继续提交视频。", { duration: 6000 });
+    const gaps = getContinuityGaps();
+    if (gaps) {
+      setContinuityNotice(gaps);
+      toast.warning("连续性检查发现缺少参考图，请先确认是否补生成后再批量提交。", { duration: 6000 });
+      return;
     }
+    setContinuityNotice(null);
     setBatchGenerating(true);
     for (const scene of result.scenes) {
       const state = sceneVideos[scene.sceneNumber];
