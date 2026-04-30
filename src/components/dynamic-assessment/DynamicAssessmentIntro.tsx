@@ -30,6 +30,15 @@ interface DynamicAssessmentIntroProps {
   hasPurchased?: boolean;
   price?: number;
   onPayClick?: () => void;
+  /** 用户最近一次测评记录（用于顶部"老用户"快捷卡） */
+  lastRecord?: {
+    id: string;
+    created_at: string;
+    total_score: number;
+    dimension_scores: any;
+  } | null;
+  /** 历史记录总条数 */
+  historyCount?: number;
 }
 
 const fadeUp = (delay: number) => ({
