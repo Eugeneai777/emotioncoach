@@ -61,6 +61,8 @@ interface DynamicAssessmentResultProps {
   scoringType?: string;
   aiInsight: string | null;
   loadingInsight: boolean;
+  insightError?: boolean;
+  onRegenerateInsight?: () => void;
   onRetake: () => void;
   onShowHistory?: () => void;
   hasHistory?: boolean;
