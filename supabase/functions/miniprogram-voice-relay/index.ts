@@ -173,9 +173,9 @@ Deno.serve(async (req) => {
         // 决定 turn_detection：客户端显式传 null → PTT；否则默认 server_vad
         const defaultVad = {
           type: 'server_vad',
-          threshold: 0.6,
+          threshold: 0.62,
           prefix_padding_ms: 200,
-          silence_duration_ms: 1200,
+          silence_duration_ms: 1500,
         };
         const isPttMode = clientTurnDetectionReceived && clientTurnDetection === null;
         const effectiveTurnDetection = isPttMode
@@ -198,6 +198,7 @@ Deno.serve(async (req) => {
             max_response_output_tokens: "inf",
             input_audio_transcription: {
               model: 'whisper-1',
+              language: 'zh',
             },
             turn_detection: effectiveTurnDetection,
           },

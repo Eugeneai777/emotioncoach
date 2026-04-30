@@ -1326,6 +1326,10 @@ serve(async (req) => {
             input_audio_format: "pcm16",
             output_audio_format: "pcm16",
             max_response_output_tokens: "inf",
+            input_audio_transcription: {
+              model: "whisper-1",
+              language: "zh"
+            },
             turn_detection: {
               type: "server_vad",
               threshold: 0.6,
@@ -1566,6 +1570,10 @@ ${photoList}
             input_audio_format: "pcm16",
             output_audio_format: "pcm16",
             max_response_output_tokens: "inf",
+            input_audio_transcription: {
+              model: "whisper-1",
+              language: "zh"
+            },
             turn_detection: {
               type: "server_vad",
               threshold: 0.6,
