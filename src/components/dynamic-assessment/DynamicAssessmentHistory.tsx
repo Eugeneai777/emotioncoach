@@ -80,6 +80,7 @@ export function DynamicAssessmentHistory({
   isLoading,
   templateEmoji,
   scoringType,
+  assessmentKey,
   onDelete,
   onBack,
   onViewRecord,
@@ -91,6 +92,7 @@ export function DynamicAssessmentHistory({
   const isMobile = useIsMobile();
 
   const isSBTI = scoringType === 'sbti';
+  const isMaleMidlifeVitality = assessmentKey === 'male_midlife_vitality';
 
   // Auto-expand first record on mount
   if (expandedId === null && records.length > 0 && isSBTI) {
