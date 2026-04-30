@@ -31,6 +31,7 @@ export default function DynamicAssessmentPage() {
   const [result, setResult] = useState<ScoringResult | null>(null);
   const [aiInsight, setAiInsight] = useState<string | null>(null);
   const [loadingInsight, setLoadingInsight] = useState(false);
+  const [insightError, setInsightError] = useState<boolean>(false);
   const [showPayDialog, setShowPayDialog] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [isLiteMode] = useState(false);
@@ -98,9 +99,13 @@ export default function DynamicAssessmentPage() {
 
   const [savedResultId, setSavedResultId] = useState<string | null>(null);
 
-  const generateInsight = async (scoringResult: ScoringResult) => {
+  const generateInsight = async (
+    scoringResult: ScoringResult,
+    resultId?: string | null,
+  ) => {
     if (!template) return;
     setLoadingInsight(true);
+    setInsightError(false);
     try {
       const { data, error } = await supabase.functions.invoke("generate-partner-assessment-insight", {
         body: {
@@ -108,50 +113,57 @@ export default function DynamicAssessmentPage() {
           primaryPattern: scoringResult.primaryPattern?.label,
           totalScore: scoringResult.totalScore,
           maxScore: scoringResult.maxScore,
-          aiInsightPrompt: template.ai_insight_prompt,
+          aiInsightPrompt: (template as any).ai_insight_prompt,
           title: template.title,
           meta: scoringResult.meta,
+          userId: user?.id,
+          resultId: resultId || savedResultId || undefined,
+          assessmentKey: template.assessment_key,
         },
       });
       if (error) throw error;
+      if (!data?.insight) throw new Error("empty insight");
       setAiInsight(data.insight);
-
-      // Persist AI insight back to the saved record
-      if (data.insight && savedResultId) {
-        await supabase
-          .from('partner_assessment_results' as any)
-          .update({ ai_insight: data.insight } as any)
-          .eq('id', savedResultId);
-      }
     } catch (e) {
       console.error("Insight error:", e);
+      setInsightError(true);
     } finally {
       setLoadingInsight(false);
     }
   };
 
-  const calculateAndShowResult = (answers: Record<number, number>) => {
+  const regenerateInsight = () => {
+    if (result) generateInsight(result, savedResultId);
+  };
+
+  const calculateAndShowResult = async (answers: Record<number, number>) => {
     if (!template) return;
     const scoringResult = calculateScore(scoringType, answers, questions, dimensions, patterns);
     setResult(scoringResult);
     setPhase("result");
 
+    let newResultId: string | null = null;
     if (user) {
-      saveResult.mutate({
-        user_id: user.id,
-        template_id: template.id,
-        answers,
-        dimension_scores: scoringResult.dimensionScores,
-        total_score: scoringResult.totalScore,
-        primary_pattern: scoringResult.primaryPattern?.label || "",
-      }, {
-        onSuccess: (data: any) => {
-          if (data?.id) setSavedResultId(data.id);
-        },
-      });
+      try {
+        const saved: any = await saveResult.mutateAsync({
+          user_id: user.id,
+          template_id: template.id,
+          answers,
+          dimension_scores: scoringResult.dimensionScores,
+          total_score: scoringResult.totalScore,
+          primary_pattern: scoringResult.primaryPattern?.label || "",
+        });
+        if (saved?.id) {
+          newResultId = saved.id;
+          setSavedResultId(saved.id);
+        }
+      } catch (e) {
+        console.error("Save assessment result failed:", e);
+      }
     }
 
-    generateInsight(scoringResult);
+    // Now safe to generate — resultId is ready, edge function will persist
+    generateInsight(scoringResult, newResultId);
   };
 
   const handleQuestionsComplete = (answers: Record<number, number>) => {
