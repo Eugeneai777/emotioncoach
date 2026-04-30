@@ -538,7 +538,11 @@ export default function DramaScriptGenerator() {
       if (data?.error || error) {
         throw new Error(await extractEdgeFunctionError(data, error, "生成失败，请稍后重试"));
       }
-      setResult(ensurePrimaryCharacterLock(data as DramaScript));
+      const generatedScript = ensurePrimaryCharacterLock(data as DramaScript);
+      setResult(generatedScript);
+      setConfirmedPrimaryLock(formatPrimaryCharacterLock(generatedScript));
+      setConfirmedStyleLock(STYLE_LOCKS[style] || STYLE_LOCKS.realistic);
+      setLocksConfirmed(false);
       setSavedScriptId(null);
       setActiveSavedScript(null);
       toast.success("脚本生成成功！");
@@ -635,7 +639,11 @@ export default function DramaScriptGenerator() {
     setTargetAudience(script.target_audience || "women");
     setConversionStyles(normalizeConversionStyles(script.script_data?.conversionStyles || script.conversion_style));
     setSelectedProducts(new Set((script.selected_products || []).map((p) => p.key)));
-    setResult(ensurePrimaryCharacterLock(script.script_data));
+    const loadedScript = ensurePrimaryCharacterLock(script.script_data);
+    setResult(loadedScript);
+    setConfirmedPrimaryLock(formatPrimaryCharacterLock(loadedScript));
+    setConfirmedStyleLock(STYLE_LOCKS[script.style || style] || STYLE_LOCKS.realistic);
+    setLocksConfirmed(Boolean(loadedScript.primaryCharacterLock));
     setSequelGenerationError(null);
     setSequelGenerationSource(null);
     setSceneImages(Object.fromEntries((script.script_data?.scenes || []).filter((s) => s.generatedImageUrl).map((s) => [s.sceneNumber, { status: "done", imageUrl: s.generatedImageUrl! }])));
@@ -721,7 +729,11 @@ export default function DramaScriptGenerator() {
       if ((data as DramaScript).consistencyCheck && ((data as DramaScript).consistencyCheck?.overallScore || 100) < CONSISTENCY_THRESHOLD) {
         toast.error(`一致性评分 ${(data as DramaScript).consistencyCheck?.overallScore}，建议重新生成一次`);
       }
-      setPendingSequel({ source: script, script: ensurePrimaryCharacterLock(data as DramaScript), products: productsForSequel, conversionStyles: sequelConversionStyles });
+      const sequelScript = ensurePrimaryCharacterLock(data as DramaScript);
+      setPendingSequel({ source: script, script: sequelScript, products: productsForSequel, conversionStyles: sequelConversionStyles });
+      setConfirmedPrimaryLock(formatPrimaryCharacterLock(sequelScript));
+      setConfirmedStyleLock(STYLE_LOCKS[style] || STYLE_LOCKS.realistic);
+      setLocksConfirmed(false);
       toast.success(`已生成第${script.episode_number + 1}集续集预览，未替换前不会改当前脚本`);
     } catch (e: any) {
       const message = e.message || "续集生成失败";
