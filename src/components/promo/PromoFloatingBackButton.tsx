@@ -37,7 +37,7 @@ export function PromoFloatingBackButton() {
       type="button"
       aria-label="返回"
       onClick={handleBack}
-      className="fixed left-3 z-[90] flex h-11 w-11 items-center justify-center rounded-full bg-background/35 shadow-lg ring-1 ring-primary-foreground/25 backdrop-blur-md active:scale-95"
+      className="fixed left-3 z-[90] flex h-11 w-11 items-center justify-center rounded-full bg-foreground/45 shadow-lg ring-1 ring-primary-foreground/25 backdrop-blur-md active:scale-95"
       style={{ top: "calc(env(safe-area-inset-top, 0px) + 12px)", color: "hsl(var(--primary-foreground))" }}
     >
       <ArrowLeft className="h-6 w-6" strokeWidth={2.4} />
