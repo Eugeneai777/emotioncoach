@@ -1,8 +1,9 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { Helmet } from "react-helmet";
 import { usePageOG } from "@/hooks/usePageOG";
 import { OG_BASE_URL } from "@/config/ogConfig";
 import { useWechatShare } from "@/hooks/useWechatShare";
+import { useMiniProgramShareBridge } from "@/hooks/useMiniProgramShareBridge";
 import { getPromotionDomain } from "@/utils/partnerQRUtils";
 import { checkOGImageHealth, checkOGConfigCompleteness, reportOGHealth } from "@/lib/ogHealthReporter";
 
@@ -62,15 +63,29 @@ export function DynamicOGMeta({ pageKey, overrides }: DynamicOGMetaProps) {
   const baseDomain = getPromotionDomain() || OG_BASE_URL;
   const fallbackUrl = `${baseDomain}${window.location.pathname}`;
   const canonicalUrl = (finalConfig.url || fallbackUrl).split('?')[0].split('#')[0];
+  // 分享专用的稳定 URL：固定带 ref=share，便于归因，且对所有渠道（微信/小程序/外站）一致
+  const shareUrl = `${canonicalUrl}?ref=share`;
 
-  // 微信 JS-SDK 分享配置
+  // 微信 JS-SDK 分享配置（H5 / 微信浏览器内）
   useWechatShare({
     title: finalConfig.ogTitle,
     desc: finalConfig.description,
-    // 统一使用 canonicalUrl，避免带 ref 等参数导致微信“首次分享”命中默认/旧缓存
-    link: canonicalUrl,
+    link: shareUrl,
     imgUrl: finalConfig.image,
   });
+
+  // 小程序 web-view 分享桥接：把分享配置同步给小程序壳层
+  const bridgeConfig = useMemo(
+    () => ({
+      title: finalConfig.ogTitle,
+      desc: finalConfig.description,
+      imageUrl: finalConfig.image,
+      h5Url: shareUrl,
+      routeKey: pageKey,
+    }),
+    [finalConfig.ogTitle, finalConfig.description, finalConfig.image, shareUrl, pageKey]
+  );
+  useMiniProgramShareBridge(bridgeConfig);
 
   // OG 健康检查 - 仅在配置加载完成后执行一次
   const healthChecked = useRef(false);
