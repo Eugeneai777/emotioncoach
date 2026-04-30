@@ -10,6 +10,7 @@ import { usePackagePurchased } from "@/hooks/usePackagePurchased";
 import { useWechatOpenId } from "@/hooks/useWechatOpenId";
 import { useAuth } from "@/hooks/useAuth";
 import { setPostAuthRedirect } from "@/lib/postAuthRedirect";
+import { PromoFloatingBackButton } from "@/components/promo/PromoFloatingBackButton";
 import {
   Accordion,
   AccordionContent,
@@ -136,6 +137,7 @@ export default function PromoMidlife25to45Women399() {
 
   return (
     <div className="min-h-screen w-full" style={{ background: C.bg, color: C.text }}>
+      <PromoFloatingBackButton />
       <Helmet>
         <title>25–45 岁，请为自己留 7 天 ｜ ¥399 喘息计划</title>
         <meta
