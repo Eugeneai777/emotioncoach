@@ -66,6 +66,7 @@ export default function AssessmentsManagement() {
   const partnerIds = [...new Set(assessments.map(a => a.created_by_partner_id).filter(Boolean))];
   const { data: partnerNames = {} } = usePartnerNames(partnerIds);
   const toggleAssessment = useToggleAssessment();
+  const navigate = useNavigate();
   const [editing, setEditing] = useState<PartnerAssessmentTemplate | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
