@@ -604,6 +604,13 @@ export function DynamicAssessmentHistory({
                         compareMode || onViewRecord ? "cursor-pointer" : ""
                       } ${isSelected ? "ring-2 ring-primary border-primary/30 shadow-primary/10 shadow-lg" : ""}`}
                       onClick={compareMode ? () => toggleSelect(record.id) : onViewRecord ? () => onViewRecord(record) : undefined}
+                      role={!compareMode && onViewRecord ? "button" : undefined}
+                      tabIndex={!compareMode && onViewRecord ? 0 : undefined}
+                      aria-label={
+                        !compareMode && onViewRecord
+                          ? `查看 ${format(new Date(record.created_at), "yyyy年MM月dd日", { locale: zhCN })} 的完整测评报告`
+                          : undefined
+                      }
                     >
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between mb-2.5">
