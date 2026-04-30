@@ -688,6 +688,12 @@ export default function DramaScriptGenerator() {
     toast.success(`已替换为第${source.episode_number + 1}集续集`);
   };
 
+  const discardPendingSequel = () => {
+    setPendingSequel(null);
+    setSequelGenerationError(null);
+    toast.info("已保留当前脚本，续集预览已放弃");
+  };
+
   const copyToClipboard = (text: string, label = "提示词") => {
     navigator.clipboard.writeText(text);
     toast.success(`${label}已复制`);
@@ -1522,6 +1528,47 @@ export default function DramaScriptGenerator() {
         </Card>
       )}
 
+      {pendingSequel && (
+        <Card className="mt-6 max-w-full min-w-0 overflow-hidden border-primary/40 bg-primary/5">
+          <CardHeader className="pb-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0 space-y-1">
+                <CardTitle className="text-base leading-snug break-words">
+                  续集预览：{pendingSequel.script.title}
+                </CardTitle>
+                <p className="text-xs text-muted-foreground break-words">当前脚本还没有被覆盖；满意后点“替换当前脚本”，不满意可重新生成或保留当前脚本。</p>
+              </div>
+              <div className="flex shrink-0 flex-wrap gap-2">
+                <Button type="button" size="sm" onClick={applyPendingSequel} className="gap-1.5"><Check className="h-3.5 w-3.5" /> 替换当前脚本</Button>
+                <Button type="button" variant="outline" size="sm" onClick={discardPendingSequel} className="gap-1.5"><X className="h-3.5 w-3.5" /> 保留当前脚本</Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground leading-relaxed break-words whitespace-pre-wrap">{pendingSequel.script.synopsis}</p>
+            {pendingSequel.script.consistencyCheck && (
+              <div className="rounded-lg border bg-background/70 p-3 text-xs">
+                <div className="mb-2 flex items-center justify-between gap-2 font-medium">
+                  <span>一致性检查</span>
+                  <span className={pendingSequel.script.consistencyCheck.overallScore < CONSISTENCY_THRESHOLD ? "text-destructive" : "text-primary"}>{pendingSequel.script.consistencyCheck.overallScore}/100</span>
+                </div>
+                <Progress value={pendingSequel.script.consistencyCheck.overallScore} className="h-2" />
+                {pendingSequel.script.consistencyCheck.issues.length > 0 && <p className="mt-2 text-muted-foreground break-words">{pendingSequel.script.consistencyCheck.issues.join("；")}</p>}
+              </div>
+            )}
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              {pendingSequel.script.scenes.slice(0, 4).map((scene) => (
+                <div key={scene.sceneNumber} className="rounded-lg border bg-background/70 p-3 min-w-0">
+                  <div className="mb-1 flex items-center gap-2 text-xs font-medium text-primary"><span>第{scene.sceneNumber}幕</span><span>{scene.duration}</span></div>
+                  <p className="text-sm break-words">{scene.characterAction}</p>
+                  {scene.dialogue && <p className="mt-2 border-l-2 border-primary/30 pl-2 text-sm italic break-words">「{scene.dialogue}」</p>}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Results */}
       {result && (
         <div className="space-y-4 mt-6 w-full max-w-full min-w-0 overflow-hidden">
@@ -2227,7 +2274,7 @@ export default function DramaScriptGenerator() {
               <div className="flex items-center gap-2 font-medium text-primary">
                 <Check className="h-4 w-4" /> 第{sequelGenerationSource.episodeNumber + 1}集续集预览已生成（尚未替换）
               </div>
-              <div className="truncate text-xs text-muted-foreground">不点替换不会改当前脚本；可调方向后重新生成，满意后再替换。</div>
+              <div className="truncate text-xs text-muted-foreground">页面上方可预览新脚本；不满意点保留当前脚本，当前脚本不会被覆盖。</div>
             </div>
             <div className="grid gap-2 sm:grid-cols-[180px_180px_auto_auto] sm:items-center">
               <Select value={sequelDirection} onValueChange={setSequelDirection} disabled={generatingSequel}>
@@ -2240,6 +2287,9 @@ export default function DramaScriptGenerator() {
               </Select>
               <Button type="button" className="flex-1 gap-1.5 sm:flex-none" onClick={applyPendingSequel}>
                 <Check className="h-4 w-4" /> 替换当前脚本
+              </Button>
+              <Button type="button" variant="ghost" className="flex-1 gap-1.5 sm:flex-none" onClick={discardPendingSequel}>
+                <X className="h-4 w-4" /> 保留当前脚本
               </Button>
               <Button type="button" variant="outline" className="flex-1 gap-1.5 sm:flex-none" onClick={() => generateSequel(pendingSequel.source)} disabled={generatingSequel}>
                 <RefreshCw className="h-4 w-4" /> 重新生成
