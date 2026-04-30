@@ -2034,8 +2034,9 @@ export default function DramaScriptGenerator() {
 
               <div className="grid w-full min-w-0 grid-cols-1 gap-3 overflow-hidden lg:grid-cols-2">
                 <div className="rounded-lg border bg-muted/30 p-3 min-w-0 overflow-hidden">
-                  <div className="mb-2 flex items-center gap-2 text-sm font-medium">
-                    <User className="h-4 w-4" /> 人物一锁定
+                  <div className="mb-2 flex items-center justify-between gap-2 text-sm font-medium">
+                    <span className="flex items-center gap-2"><User className="h-4 w-4" /> 人物一锁定卡</span>
+                    {locksConfirmed && <span className="text-xs text-primary">已确认</span>}
                   </div>
                   {result.primaryCharacterLock && (
                     <div className="mb-2 grid grid-cols-1 gap-1 text-xs text-muted-foreground sm:grid-cols-2">
@@ -2043,7 +2044,12 @@ export default function DramaScriptGenerator() {
                       <div className="break-words"><span className="font-medium text-foreground">固定服装：</span>{result.primaryCharacterLock.fixedOutfit}</div>
                     </div>
                   )}
-                  <p className="text-xs text-muted-foreground break-words whitespace-pre-line">{buildPrimaryCharacterLock()}</p>
+                  <Textarea
+                    value={confirmedPrimaryLock}
+                    onChange={(event) => { setConfirmedPrimaryLock(event.target.value); setLocksConfirmed(false); }}
+                    className="min-h-36 text-xs leading-relaxed"
+                    placeholder="确认或手动调整人物一固定外貌、服装、身份气质、视觉提示和负面提示"
+                  />
                   <div className="mt-2 flex flex-wrap items-center gap-2">
                     {characterImages[0]?.imageUrl || result.primaryCharacterLock?.referenceImageUrl ? <span className="text-xs text-primary">已使用人物一参考图作为即梦图生视频参考</span> : <span className="text-xs text-muted-foreground">建议先生成并保存人物一参考图</span>}
                     <Button
@@ -2062,10 +2068,16 @@ export default function DramaScriptGenerator() {
                   </div>
                 </div>
                 <div className="rounded-lg border bg-muted/30 p-3 min-w-0 overflow-hidden">
-                  <div className="mb-2 flex items-center gap-2 text-sm font-medium">
-                    <Clapperboard className="h-4 w-4" /> 统一风格锁定
+                  <div className="mb-2 flex items-center justify-between gap-2 text-sm font-medium">
+                    <span className="flex items-center gap-2"><Clapperboard className="h-4 w-4" /> 统一风格锁定卡</span>
+                    {locksConfirmed && <span className="text-xs text-primary">已确认</span>}
                   </div>
-                  <p className="text-xs text-muted-foreground break-words">{buildStyleLock()}</p>
+                  <Textarea
+                    value={confirmedStyleLock}
+                    onChange={(event) => { setConfirmedStyleLock(event.target.value); setLocksConfirmed(false); }}
+                    className="min-h-36 text-xs leading-relaxed"
+                    placeholder="确认或手动调整统一画风、光影、色调、镜头语言和负面限制"
+                  />
                   <div className="mt-2 flex flex-wrap items-center gap-2">
                     <span className="text-xs text-muted-foreground">8镜头 × 10秒 ≈ 80秒；短视频可前后5秒、中段10秒。</span>
                     <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => copyToClipboard(buildStyleLock(), "统一风格锁定词")}>
