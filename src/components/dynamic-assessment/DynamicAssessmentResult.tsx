@@ -1002,9 +1002,18 @@ export function DynamicAssessmentResult({
             avatarUrl={profileData.avatarUrl}
           />
         )}
+        {isMaleMidlifeVitality && (
+          <MaleVitalityReportCard
+            ref={reportCardRef}
+            totalScorePct={vitalityStatusPercent}
+            dimensionScores={vitalityStatusScores as any}
+            primaryPattern={result.primaryPattern}
+            aiInsight={aiInsight}
+            displayName={profileData.displayName}
+            testedAt={new Date().toISOString()}
+          />
+        )}
       </div>
-
-      {/* Share image preview */}
       <ShareImagePreview
         open={!!sharePreviewUrl}
         onClose={() => setSharePreviewUrl(null)}
