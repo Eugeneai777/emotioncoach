@@ -2274,7 +2274,7 @@ export default function DramaScriptGenerator() {
               <div className="flex items-center gap-2 font-medium text-primary">
                 <Check className="h-4 w-4" /> 第{sequelGenerationSource.episodeNumber + 1}集续集预览已生成（尚未替换）
               </div>
-              <div className="truncate text-xs text-muted-foreground">不点替换不会改当前脚本；可调方向后重新生成，满意后再替换。</div>
+              <div className="truncate text-xs text-muted-foreground">页面上方可预览新脚本；不满意点保留当前脚本，当前脚本不会被覆盖。</div>
             </div>
             <div className="grid gap-2 sm:grid-cols-[180px_180px_auto_auto] sm:items-center">
               <Select value={sequelDirection} onValueChange={setSequelDirection} disabled={generatingSequel}>
@@ -2287,6 +2287,9 @@ export default function DramaScriptGenerator() {
               </Select>
               <Button type="button" className="flex-1 gap-1.5 sm:flex-none" onClick={applyPendingSequel}>
                 <Check className="h-4 w-4" /> 替换当前脚本
+              </Button>
+              <Button type="button" variant="ghost" className="flex-1 gap-1.5 sm:flex-none" onClick={discardPendingSequel}>
+                <X className="h-4 w-4" /> 保留当前脚本
               </Button>
               <Button type="button" variant="outline" className="flex-1 gap-1.5 sm:flex-none" onClick={() => generateSequel(pendingSequel.source)} disabled={generatingSequel}>
                 <RefreshCw className="h-4 w-4" /> 重新生成
