@@ -1963,6 +1963,12 @@ export default function DramaScriptGenerator() {
                   <div className="mb-2 flex items-center gap-2 text-sm font-medium">
                     <User className="h-4 w-4" /> 人物一锁定
                   </div>
+                  {result.primaryCharacterLock && (
+                    <div className="mb-2 grid grid-cols-1 gap-1 text-xs text-muted-foreground sm:grid-cols-2">
+                      <div className="break-words"><span className="font-medium text-foreground">固定外貌：</span>{result.primaryCharacterLock.fixedAppearance}</div>
+                      <div className="break-words"><span className="font-medium text-foreground">固定服装：</span>{result.primaryCharacterLock.fixedOutfit}</div>
+                    </div>
+                  )}
                   <p className="text-xs text-muted-foreground break-words whitespace-pre-line">{buildPrimaryCharacterLock()}</p>
                   <div className="mt-2 flex flex-wrap items-center gap-2">
                     {characterImages[0]?.imageUrl ? <span className="text-xs text-primary">已使用人物一定妆图作为视频参考</span> : <span className="text-xs text-muted-foreground">建议先生成角色定妆图</span>}
