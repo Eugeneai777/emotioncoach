@@ -61,6 +61,57 @@ export type Database = {
           },
         ]
       }
+      admin_impersonation_logs: {
+        Row: {
+          admin_ip: string | null
+          admin_user_agent: string | null
+          admin_user_id: string
+          ended_at: string | null
+          id: string
+          magic_link_token: string | null
+          opened_via: string | null
+          reason: string
+          started_at: string
+          target_display_name: string | null
+          target_ip: string | null
+          target_phone: string | null
+          target_user_agent: string | null
+          target_user_id: string
+        }
+        Insert: {
+          admin_ip?: string | null
+          admin_user_agent?: string | null
+          admin_user_id: string
+          ended_at?: string | null
+          id?: string
+          magic_link_token?: string | null
+          opened_via?: string | null
+          reason: string
+          started_at?: string
+          target_display_name?: string | null
+          target_ip?: string | null
+          target_phone?: string | null
+          target_user_agent?: string | null
+          target_user_id: string
+        }
+        Update: {
+          admin_ip?: string | null
+          admin_user_agent?: string | null
+          admin_user_id?: string
+          ended_at?: string | null
+          id?: string
+          magic_link_token?: string | null
+          opened_via?: string | null
+          reason?: string
+          started_at?: string
+          target_display_name?: string | null
+          target_ip?: string | null
+          target_phone?: string | null
+          target_user_agent?: string | null
+          target_user_id?: string
+        }
+        Relationships: []
+      }
       admin_quota_recharges: {
         Row: {
           admin_user_id: string

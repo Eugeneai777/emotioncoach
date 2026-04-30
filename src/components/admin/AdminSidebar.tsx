@@ -41,7 +41,8 @@ import {
   Newspaper,
   BookMarked,
   Clapperboard,
-  ListChecks
+  ListChecks,
+  Eye
 } from "lucide-react";
 import {
   Sidebar,
@@ -191,7 +192,8 @@ export const NAV_GROUPS = [
       { key: "og-preview", label: "OG预览", path: "/admin/og-preview", icon: Share2 },
       { key: "sync", label: "同步状态", path: "/admin/sync", icon: RefreshCw },
       { key: "service", label: "客服管理", path: "/admin/service", icon: Headphones },
-      { key: "experience-items", label: "体验包管理", path: "/admin/experience-items", icon: Gift }
+      { key: "experience-items", label: "体验包管理", path: "/admin/experience-items", icon: Gift },
+      { key: "impersonate", label: "模拟登录用户", path: "/admin/impersonate", icon: Eye }
     ]
   }
 ];

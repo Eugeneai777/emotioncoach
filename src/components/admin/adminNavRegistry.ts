@@ -89,6 +89,7 @@ const KEYWORDS_MAP: Record<string, string[]> = {
   sync: ["同步", "同步状态", "sync"],
   service: ["客服", "service", "工单"],
   "experience-items": ["体验包", "experience", "试用"],
+  impersonate: ["模拟", "impersonate", "登录用户", "排查", "扫码登录", "用户登录", "代登录", "假装登录"],
 };
 
 function makeKeywords(key: string, label: string, parentLabel?: string): string[] {

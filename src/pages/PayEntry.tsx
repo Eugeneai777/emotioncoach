@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, CheckCircle, Gift, AlertCircle, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
+import { getImpersonationSession } from "@/hooks/useImpersonation";
 
 export default function PayEntry() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -233,7 +234,12 @@ export default function PayEntry() {
       navigate(`/auth?redirect=${encodeURIComponent(`/pay-entry?partner=${partnerId}`)}`);
       return;
     }
-    
+
+    if (getImpersonationSession()) {
+      toast.error("模拟登录会话禁止支付操作,请退出模拟后再试");
+      return;
+    }
+
     setShowPayDialog(true);
   };
 
