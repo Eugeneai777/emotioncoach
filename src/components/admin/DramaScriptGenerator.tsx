@@ -15,7 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { extractEdgeFunctionError } from "@/lib/edgeFunctionError";
 import { mergeVideosClientSide } from "@/utils/videoMerger";
 import { toast } from "sonner";
-import { Copy, Loader2, Download, Clapperboard, User, Film, Sparkles, ShoppingCart, Target, MessageSquare, Video, Play, Square, Check, X, Mic, Volume2, RefreshCw, Save, Library, Trash2, Wand2, Image as ImageIcon } from "lucide-react";
+import { Copy, Loader2, Download, Clapperboard, User, Film, Sparkles, ShoppingCart, Target, MessageSquare, Video, Play, Square, Check, X, Mic, Volume2, RefreshCw, Save, Library, Trash2, Wand2, Image as ImageIcon, AlertTriangle } from "lucide-react";
 
 const GENRES = [
   { value: "suspense", label: "🔍 悬疑推理" },
@@ -232,6 +232,12 @@ interface SceneImageState {
   status: ImageStatus;
   imageUrl?: string;
   error?: string;
+}
+
+interface ContinuityCheckNotice {
+  missingPrimaryReference: boolean;
+  missingSceneNumbers: number[];
+  checkedAt: number;
 }
 
 function base64ToBlob(base64: string, mimeType: string): Blob {
