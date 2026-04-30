@@ -1180,9 +1180,14 @@ export const CoachVoiceChat = ({
       }
       aiLastActivityRef.current = Date.now();
     } else if (role === 'user' && isFinal && text.trim()) {
+      const normalizedUserText = normalizeTranscriptText(text);
+      if (shouldDropUserTranscript(normalizedUserText)) {
+        console.log('[VoiceChat] Dropped noisy user transcript:', text);
+        return;
+      }
       // 用户发言：每次收到 final 文本时累积，用换行分隔
-      setUserTranscript(prev => prev ? `${prev}\n${text}` : text);
-      setLatestUserLine(text); // 🔧 PTT 字幕：仅保留最近一句
+      setUserTranscript(prev => prev ? `${prev}\n${normalizedUserText}` : normalizedUserText);
+      setLatestUserLine(normalizedUserText); // 🔧 PTT 字幕：仅保留最近一句
       // 用户开口 = 新一轮，立即清空 AI 字幕（语义优先）
       if (aiFlushRafRef.current != null) {
         cancelAnimationFrame(aiFlushRafRef.current);
