@@ -236,6 +236,14 @@ const VIDEO_DURATIONS = [
   { value: 10, label: "10秒" },
 ];
 
+const STYLE_LOCKS: Record<string, string> = {
+  cyberpunk: "竖屏短剧，赛博朋克都市夜景，霓虹边缘光，高对比电影感，真实表演节奏，统一冷暖霓虹色调，不要字幕、水印、UI文字。",
+  anime: "竖屏短剧，高级日系动画剧集质感，干净线条，统一角色比例，电影感构图，情绪表演清晰，不要字幕、水印、UI文字。",
+  chinese: "竖屏短剧，现代中国审美，克制东方氛围，电影感光影，统一低饱和色调，真实情绪张力，不要字幕、水印、UI文字。",
+  realistic: "竖屏9:16，现实主义都市短剧风格，电影感光影，低饱和度，真实人物表演，浅景深，情绪张力强，不要卡通、二次元、字幕、水印、UI文字。",
+  comic: "竖屏短剧，美式漫画电影质感，强构图，戏剧化光影，统一人物造型和色彩层次，不要字幕、水印、UI文字。",
+};
+
 const CONSISTENCY_THRESHOLD = 85;
 
 const normalizeConversionStyles = (styles?: string[] | string | null) => {
