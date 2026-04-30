@@ -1984,7 +1984,7 @@ export default function DramaScriptGenerator() {
                   {batchGenerating ? (
                     <><Loader2 className="h-4 w-4 animate-spin" /> 批量提交中...</>
                   ) : (
-                    <><Play className="h-4 w-4" /> 全部生成视频</>
+                    <><Play className="h-4 w-4" /> 按统一人物/风格生成全部视频</>
                   )}
                 </Button>
 
@@ -2048,8 +2048,8 @@ export default function DramaScriptGenerator() {
                 </div>
               )}
 
-              <p className="text-xs text-muted-foreground">
-                ⚠️ 视频生成需 1-3 分钟/片段，生成后链接 1 小时内有效，请及时下载。旁白和视频需在剪辑软件中合并。
+              <p className="text-xs text-muted-foreground break-words">
+                ⚠️ 视频生成需 1-3 分钟/片段，生成后链接 1 小时内有效，请及时下载。最佳顺序：先生成角色定妆图，再生成全部分镜图片，最后生成视频并合并下载。
               </p>
             </CardContent>
           </Card>
