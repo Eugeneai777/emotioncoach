@@ -357,6 +357,22 @@ export function DynamicAssessmentHistory({
           </motion.div>
         ) : (
           <div className="overflow-y-auto">
+            {isMaleMidlifeVitality && !compareMode && (
+              <div
+                className="mb-3 rounded-xl border border-teal-600/25 bg-gradient-to-r from-teal-600/10 to-amber-500/10 px-4 py-3 flex items-start gap-2.5"
+                role="note"
+              >
+                <MousePointerClick className="w-4 h-4 mt-0.5 text-teal-700 dark:text-teal-400 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-foreground leading-snug">
+                    点击下方任一记录,查看完整状态报告
+                  </p>
+                  <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
+                    含 6 维评分 · AI 个性化建议 · 一键分享海报
+                  </p>
+                </div>
+              </div>
+            )}
             <motion.div
               className="space-y-3 pb-4"
               variants={containerVariants}
