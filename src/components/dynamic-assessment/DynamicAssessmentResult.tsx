@@ -245,6 +245,63 @@ export function DynamicAssessmentResult({
     setIsSharing(false);
   };
 
+  // ===== 保存私密报告 =====
+  const platform = useMemo(() => detectPlatform(), []);
+  const isWeChatLike = platform === 'wechat' || platform === 'mini_program';
+
+  const handleSaveAsImage = async () => {
+    if (savingReport || !reportCardRef.current) return;
+    setSavingReport(true);
+    setShowSaveSheet(false);
+    try {
+      const blob = await generateCardBlob(reportCardRef, { backgroundColor: '#ffffff' });
+      if (!blob) throw new Error('生成失败');
+      const url = URL.createObjectURL(blob);
+      setReportPreviewUrl(url);
+    } catch (e) {
+      console.error('[saveReport] image failed:', e);
+      toast.error('生成图片失败，请重试');
+    } finally {
+      setSavingReport(false);
+    }
+  };
+
+  const handleSaveAsPdf = async () => {
+    if (savingReport) return;
+    // 微信内不直接下载 PDF，弹引导卡
+    if (isWeChatLike) {
+      setShowSaveSheet(false);
+      setShowWeChatPdfGuide(true);
+      return;
+    }
+    if (!reportCardRef.current) return;
+    setSavingReport(true);
+    setShowSaveSheet(false);
+    try {
+      await exportNodeToPdf(reportCardRef.current, {
+        filename: `男人有劲状态报告_${new Date().toISOString().slice(0, 10)}`,
+      });
+      toast.success('PDF 已开始下载');
+    } catch (e) {
+      console.error('[saveReport] pdf failed:', e);
+      toast.error('PDF 生成失败，请改为保存图片');
+    } finally {
+      setSavingReport(false);
+    }
+  };
+
+  // 浏览器外跳落地：autoSavePdf=true 时,滚动到保存按钮 + 高亮脉冲 + 提示
+  useEffect(() => {
+    if (!autoSavePdf) return;
+    const t = setTimeout(() => {
+      saveButtonRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setPulseSaveBtn(true);
+      toast.info('点这里保存 PDF ↓', { duration: 4000 });
+      setTimeout(() => setPulseSaveBtn(false), 4000);
+    }, 800);
+    return () => clearTimeout(t);
+  }, [autoSavePdf]);
+
   // Score percentage for the ring
   const scorePercent = result.maxScore > 0 ? Math.round((result.totalScore / result.maxScore) * 100) : 0;
   const isSBTI = scoringType === 'sbti';
