@@ -1023,8 +1023,9 @@ export default function DramaScriptGenerator() {
     pollingRefs.current[sceneNum] = interval;
   }, [updateSceneVideo]);
 
-  const generateSceneVideo = useCallback(async (scene: Scene) => {
+  const generateSceneVideo = useCallback(async (scene: Scene, forcedDuration?: number) => {
     const num = scene.sceneNumber;
+    const durationToUse = forcedDuration || videoDuration;
     setVideoPreviewFallbacks((prev) => {
       if (!prev[num]) return prev;
       const next = { ...prev };
@@ -1039,7 +1040,7 @@ export default function DramaScriptGenerator() {
           action: "submit",
           prompt: buildJimengVideoPrompt(scene),
           aspect_ratio: videoAspectRatio,
-          duration: videoDuration,
+          duration: durationToUse,
           image_urls: getVideoReferenceUrls(num),
         },
       });
@@ -2269,15 +2270,25 @@ export default function DramaScriptGenerator() {
                           {/* Video generation per scene */}
                           <div className="flex items-center gap-2 flex-wrap pt-1">
                             {videoState.status === "idle" && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="gap-1.5 text-xs h-8"
-                                onClick={() => generateSceneVideo(scene)}
-                                disabled={anyVideoGenerating && videoState.status === "idle"}
-                              >
-                                <Video className="h-3 w-3" /> 生成本镜头视频
-                              </Button>
+                              <div className="flex flex-wrap items-center gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="gap-1.5 text-xs h-8"
+                                  onClick={() => generateSceneVideo(scene)}
+                                  disabled={anyVideoGenerating && videoState.status === "idle"}
+                                >
+                                  <Video className="h-3 w-3" /> 生成本镜头视频
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  className="gap-1.5 text-xs h-8"
+                                  onClick={() => generateSceneVideo(scene, 10)}
+                                  disabled={anyVideoGenerating && videoState.status === "idle"}
+                                >
+                                  <Video className="h-3 w-3" /> 生成10秒视频
+                                </Button>
+                              </div>
                             )}
 
                             {(videoState.status === "submitting" || videoState.status === "in_queue" || videoState.status === "generating") && (
@@ -2321,6 +2332,14 @@ export default function DramaScriptGenerator() {
                                   onClick={() => generateSceneVideo(scene)}
                                 >
                                   重试
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-xs h-7"
+                                  onClick={() => generateSceneVideo(scene, 10)}
+                                >
+                                  重试10秒
                                 </Button>
                               </div>
                             )}
