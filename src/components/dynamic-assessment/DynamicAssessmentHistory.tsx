@@ -25,10 +25,31 @@ interface DynamicAssessmentHistoryProps {
   isLoading: boolean;
   templateEmoji: string;
   scoringType?: string;
+  assessmentKey?: string;
   onDelete?: (id: string) => void;
   onBack: () => void;
   onViewRecord?: (record: DynamicAssessmentRecord) => void;
 }
+
+// Convert raw "recovery resistance" score to "vitality status %" (lower raw = better state)
+const toVitalityStatusScore = (score: number, maxScore: number) => {
+  if (maxScore <= 0) return 0;
+  return Math.max(0, Math.min(100, Math.round(100 - (score / maxScore) * 100)));
+};
+
+const VITALITY_LABEL_MAP: Record<string, string> = {
+  '压力内耗': '压力调节',
+  '恢复阻力': '行动恢复力',
+};
+
+const remapVitalityLabel = (label: string) => VITALITY_LABEL_MAP[label] || label;
+
+const getVitalityToneText = (pct: number) => {
+  if (pct >= 80) return '稳';
+  if (pct >= 60) return '可调整';
+  if (pct >= 40) return '需留意';
+  return '优先恢复';
+};
 
 
 
