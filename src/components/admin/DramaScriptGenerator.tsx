@@ -811,13 +811,13 @@ export default function DramaScriptGenerator() {
   const getVideoReferenceUrls = useCallback((sceneNum: number) => {
     const urls = [
       sceneImages[sceneNum]?.imageUrl,
-      characterImages[0]?.imageUrl,
+      characterImages[0]?.imageUrl || result?.primaryCharacterLock?.referenceImageUrl || result?.characters?.[0]?.referenceImageUrl,
       ...Object.entries(characterImages)
         .filter(([index]) => index !== "0")
         .map(([, state]) => state.imageUrl),
     ].filter(Boolean) as string[];
     return Array.from(new Set(urls)).slice(0, 3);
-  }, [characterImages, sceneImages]);
+  }, [characterImages, result, sceneImages]);
 
   const generateCharacterReference = useCallback(async (char: Character, index: number) => {
     if (!result) return null;
@@ -850,6 +850,49 @@ export default function DramaScriptGenerator() {
       return null;
     }
   }, [result, style]);
+
+  const handleGenerateAndSavePrimaryReference = async () => {
+    if (!result?.characters?.[0]) {
+      toast.error("当前脚本没有人物一，无法生成参考图");
+      return;
+    }
+
+    const imageUrl = await generateCharacterReference(result.characters[0], 0);
+    if (!imageUrl) return;
+
+    const baseLock = result.primaryCharacterLock || buildPrimaryCharacterLockCard(result);
+    const updatedScript: DramaScript = {
+      ...result,
+      primaryCharacterLock: baseLock ? { ...baseLock, referenceImageUrl: imageUrl } : undefined,
+      characters: result.characters.map((char, index) =>
+        index === 0 ? { ...char, referenceImageUrl: imageUrl } : char
+      ),
+    };
+
+    setResult(updatedScript);
+    if (activeSavedScript) {
+      setActiveSavedScript({ ...activeSavedScript, script_data: updatedScript });
+    }
+
+    if (savedScriptId) {
+      try {
+        const { data, error } = await (supabase as any)
+          .from("drama_scripts")
+          .update({ script_data: updatedScript })
+          .eq("id", savedScriptId)
+          .select()
+          .limit(1);
+        if (error) throw error;
+        if (!data || data.length === 0) throw new Error("保存失败：权限不足或记录未写入");
+        await fetchSavedScripts();
+        toast.success("人物一参考图已生成，并保存到脚本库");
+      } catch (e: any) {
+        toast.error(e.message || "人物一参考图已生成，但保存到脚本库失败");
+      }
+    } else {
+      toast.success("人物一参考图已生成，并保存到当前脚本数据；点击“保存脚本”后会写入脚本库");
+    }
+  };
 
   const handleGenerateCharacterReferences = async () => {
     if (!result) return;
@@ -1971,7 +2014,17 @@ export default function DramaScriptGenerator() {
                   )}
                   <p className="text-xs text-muted-foreground break-words whitespace-pre-line">{buildPrimaryCharacterLock()}</p>
                   <div className="mt-2 flex flex-wrap items-center gap-2">
-                    {characterImages[0]?.imageUrl ? <span className="text-xs text-primary">已使用人物一定妆图作为视频参考</span> : <span className="text-xs text-muted-foreground">建议先生成角色定妆图</span>}
+                    {characterImages[0]?.imageUrl || result.primaryCharacterLock?.referenceImageUrl ? <span className="text-xs text-primary">已使用人物一参考图作为即梦图生视频参考</span> : <span className="text-xs text-muted-foreground">建议先生成并保存人物一参考图</span>}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 gap-1 text-xs"
+                      onClick={handleGenerateAndSavePrimaryReference}
+                      disabled={characterImages[0]?.status === "generating" || generatingCharacterRefs}
+                    >
+                      {characterImages[0]?.status === "generating" ? <Loader2 className="h-3 w-3 animate-spin" /> : <ImageIcon className="h-3 w-3" />}
+                      {characterImages[0]?.imageUrl || result.primaryCharacterLock?.referenceImageUrl ? "重生成人物一参考图" : "一键生成并保存人物一参考图"}
+                    </Button>
                     <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => copyToClipboard(buildPrimaryCharacterLock(), "人物一锁定词")}>
                       <Copy className="h-3 w-3" /> 复制
                     </Button>
