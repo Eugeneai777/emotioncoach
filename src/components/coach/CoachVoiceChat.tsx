@@ -74,6 +74,23 @@ type SpeakingStatus = 'idle' | 'user-speaking' | 'assistant-speaking';
 
 const POINTS_PER_MINUTE = 8;
 const DEFAULT_MAX_DURATION_MINUTES = 5; // 默认5分钟（未配置时）
+const MAX_SILENT_RECONNECT_ATTEMPTS = 3;
+
+const normalizeTranscriptText = (text: string): string => text.replace(/\s+/g, ' ').trim();
+
+const shouldDropUserTranscript = (text: string): boolean => {
+  const normalized = normalizeTranscriptText(text);
+  if (!normalized) return true;
+  const compact = normalized.replace(/[\s，。！？,.!?、~～…\-—_]/g, '');
+  if (compact.length <= 1) return true;
+  if (/^[嗯啊呃额哦喂诶哎哈]+$/.test(compact) && compact.length <= 3) return true;
+  const hangulCount = (compact.match(/[\uac00-\ud7af]/g) || []).length;
+  const latinCount = (compact.match(/[A-Za-z]/g) || []).length;
+  const cjkCount = (compact.match(/[\u4e00-\u9fff]/g) || []).length;
+  if (hangulCount > 0 && cjkCount === 0) return true;
+  if (latinCount >= Math.max(4, compact.length * 0.7) && cjkCount === 0) return true;
+  return false;
+};
 
 export const CoachVoiceChat = ({
   onClose,
