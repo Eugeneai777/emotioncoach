@@ -695,6 +695,14 @@ export function DynamicAssessmentHistory({
                             })}
                           </div>
                         )}
+                        {isMaleMidlifeVitality && !compareMode && onViewRecord && (
+                          <div
+                            className="flex items-center justify-end gap-1 mt-3 pt-2.5 border-t border-border/40 text-xs font-semibold text-teal-700 dark:text-teal-400 group-hover:text-teal-800 dark:group-hover:text-teal-300 transition-colors"
+                          >
+                            查看完整报告 & 分享海报
+                            <ChevronRight className="w-3.5 h-3.5" />
+                          </div>
+                        )}
                       </CardContent>
                     </Card>
                   </motion.div>
