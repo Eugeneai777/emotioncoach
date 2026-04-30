@@ -742,6 +742,31 @@ export default function DramaScriptGenerator() {
     return Object.values(characterImages).map((state) => state.imageUrl).filter(Boolean) as string[];
   }, [characterImages]);
 
+  const buildPrimaryCharacterLock = useCallback(() => {
+    const primary = result?.characters?.[0];
+    if (!primary) return "当前脚本暂无人物一，请严格保持画面中已有主角的年龄、脸型、服装和气质一致。";
+    return `${primary.name}：${primary.description}\n固定视觉：${primary.imagePrompt}\n要求：保持同一位人物一，不要改变脸型、年龄感、发型、服装、身材、气质和身份，不要替换主角。`;
+  }, [result]);
+
+  const buildStyleLock = useCallback(() => {
+    return STYLE_LOCKS[style] || STYLE_LOCKS.realistic;
+  }, [style]);
+
+  const buildJimengVideoPrompt = useCallback((scene: Scene) => {
+    return `【人物一锁定】\n${buildPrimaryCharacterLock()}\n\n【统一风格锁定】\n${buildStyleLock()}\n\n【当前镜头】\n镜头${scene.sceneNumber}：${scene.panel}\n动作：${scene.characterAction}\n台词/情绪：${scene.dialogue || scene.narration || "无台词，靠表演传达情绪"}\n原始画面提示词：${scene.imagePrompt}\n\n【连续性要求】\n这是同一部短剧《${result?.title || "短剧"}》的第${scene.sceneNumber}个镜头，必须延续前后镜头的人物状态、服装、场景气质、情绪张力和视觉风格。不要新增无关主角，不要出现字幕、水印、Logo或UI文字。`;
+  }, [buildPrimaryCharacterLock, buildStyleLock, result]);
+
+  const getVideoReferenceUrls = useCallback((sceneNum: number) => {
+    const urls = [
+      sceneImages[sceneNum]?.imageUrl,
+      characterImages[0]?.imageUrl,
+      ...Object.entries(characterImages)
+        .filter(([index]) => index !== "0")
+        .map(([, state]) => state.imageUrl),
+    ].filter(Boolean) as string[];
+    return Array.from(new Set(urls)).slice(0, 3);
+  }, [characterImages, sceneImages]);
+
   const generateCharacterReference = useCallback(async (char: Character, index: number) => {
     if (!result) return null;
     setCharacterImages((prev) => ({ ...prev, [index]: { status: "generating" } }));
