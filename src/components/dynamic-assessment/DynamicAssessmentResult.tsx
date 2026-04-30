@@ -75,6 +75,10 @@ interface DynamicAssessmentResultProps {
   recommendedCampTypes?: string[];
   isLiteMode?: boolean;
   onLoginToUnlock?: () => void;
+  /** 当前结果在数据库中的 ID（用于跨端复制专属链接） */
+  recordId?: string | null;
+  /** 落地页自动定位/高亮"保存 PDF"按钮（来自浏览器外跳链接 ?autoSave=pdf） */
+  autoSavePdf?: boolean;
 }
 
 // SBTI → paid assessment recommendations
