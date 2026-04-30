@@ -1122,15 +1122,16 @@ export default function DramaScriptGenerator() {
 
   return (
     <>
-    <AdminPageLayout
-      title={
-        <span className="flex items-center gap-2">
-          <Clapperboard className="h-5 w-5" />
-          AI短剧分镜脚本
-        </span>
-      }
-      description="输入故事主题，AI自动生成多场景分镜脚本，画面提示词可直接用于即梦/MJ生图"
-    >
+    <div className={pendingSequel ? "pb-52 sm:pb-36" : undefined}>
+      <AdminPageLayout
+        title={
+          <span className="flex items-center gap-2">
+            <Clapperboard className="h-5 w-5" />
+            AI短剧分镜脚本
+          </span>
+        }
+        description="输入故事主题，AI自动生成多场景分镜脚本，画面提示词可直接用于即梦/MJ生图"
+      >
       {/* Mode Toggle */}
       <div className="mb-4 flex w-full min-w-0 flex-wrap gap-2 overflow-hidden">
         <Button
@@ -1568,8 +1569,6 @@ export default function DramaScriptGenerator() {
           </CardContent>
         </Card>
       )}
-
-      {pendingSequel && <div aria-hidden="true" className="h-40 sm:h-28" />}
 
       {/* Results */}
       {result && (
@@ -2267,7 +2266,8 @@ export default function DramaScriptGenerator() {
           </div>
         </div>
       )}
-    </AdminPageLayout>
+      </AdminPageLayout>
+    </div>
 
       {pendingSequel && sequelGenerationSource && (
         <div className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 p-3 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-background/80">
