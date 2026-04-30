@@ -4,6 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -379,6 +380,9 @@ export default function DramaScriptGenerator() {
   const [videoDuration, setVideoDuration] = useState(5);
   const [sceneVideos, setSceneVideos] = useState<Record<number, SceneVideoState>>({});
   const [videoPreviewFallbacks, setVideoPreviewFallbacks] = useState<Record<number, boolean>>({});
+  const [confirmedPrimaryLock, setConfirmedPrimaryLock] = useState("");
+  const [confirmedStyleLock, setConfirmedStyleLock] = useState("");
+  const [locksConfirmed, setLocksConfirmed] = useState(false);
   const [batchGenerating, setBatchGenerating] = useState(false);
   const [merging, setMerging] = useState(false);
   const pollingRefs = useRef<Record<number, ReturnType<typeof setInterval>>>({});
