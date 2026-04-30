@@ -1139,6 +1139,16 @@ export default function DramaScriptGenerator() {
     }
   }, [buildJimengVideoPrompt, getVideoReferenceUrls, videoAspectRatio, videoDuration, updateSceneVideo, pollVideoStatus]);
 
+  const retrySceneVideoOnly = useCallback((scene: Scene, forcedDuration?: number) => {
+    const references = getVideoReferenceUrls(scene.sceneNumber);
+    if (sceneKeepReferences[scene.sceneNumber] && references.length === 0) {
+      toast.warning("当前镜头没有可保留的分镜图或人物参考图，将按纯文本提示词重试视频。", { duration: 5000 });
+    } else if (sceneKeepReferences[scene.sceneNumber]) {
+      toast.info("已保留当前分镜图与人物参考图，仅重新提交视频生成。", { duration: 4000 });
+    }
+    return generateSceneVideo(scene, forcedDuration);
+  }, [generateSceneVideo, getVideoReferenceUrls, sceneKeepReferences]);
+
   const handleBatchGenerate = async () => {
     if (!result) return;
     if (!locksConfirmed) {
