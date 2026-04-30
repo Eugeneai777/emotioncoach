@@ -309,6 +309,7 @@ export default function DynamicAssessmentPage() {
         isLoading={historyLoading}
         templateEmoji={template.emoji}
         scoringType={scoringType}
+        assessmentKey={template.assessment_key}
         onDelete={handleDeleteRecord}
         onBack={() => setPhase(result ? "result" : "intro")}
         onViewRecord={handleViewHistoryRecord}
