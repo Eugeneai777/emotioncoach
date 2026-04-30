@@ -1051,7 +1051,6 @@ export const CoachVoiceChat = ({
           reconnectTimerRef.current = null;
           try { chatRef.current?.disconnect(); } catch (err) { console.warn('[VoiceChat] cleanup before reconnect failed:', err); }
           chatRef.current = null;
-          releaseLock();
           isInitializingRef.current = false;
           startCall({ preserveTranscript: true, silentReconnect: true });
         }, delay);
@@ -1313,7 +1312,8 @@ export const CoachVoiceChat = ({
     console.log('[VoiceChat] Platform info (early):', platformInfo);
 
     // ✅ 关键：用稳定 sessionId 作为锁 id，避免短时间内多次初始化拿到不同锁 id
-    const lockId = acquireLock(sessionIdRef.current);
+    const lockId = options?.silentReconnect ? sessionIdRef.current : acquireLock(sessionIdRef.current);
+    const acquiredLockThisAttempt = !options?.silentReconnect;
     if (!lockId) {
       isInitializingRef.current = false;
       toast({ title: "语音通话冲突", description: `已有语音会话在进行中 (${activeComponent})，请先结束当前通话`, variant: "destructive" });
@@ -1324,7 +1324,7 @@ export const CoachVoiceChat = ({
     // 如果组件已卸载/本次初始化已过期，直接终止（避免产生第二路连接）
     if (isStale()) {
       isInitializingRef.current = false;
-      releaseLock();
+      if (acquiredLockThisAttempt) releaseLock();
       return;
     }
     
