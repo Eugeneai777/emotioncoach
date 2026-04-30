@@ -12,6 +12,8 @@ interface ShareImagePreviewProps {
   isRegenerating?: boolean;
   /** Whether the image URL is a remote HTTPS URL ready for long-press saving */
   isRemoteReady?: boolean;
+  /** 顶部标题文案，默认 "预览海报"。完整报告场景请传 "预览报告" */
+  title?: string;
 }
 
 const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
@@ -21,6 +23,7 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
   onRegenerate,
   isRegenerating = false,
   isRemoteReady = false,
+  title = '预览海报',
 }) => {
   const [imageSaved, setImageSaved] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -149,7 +152,7 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
         >
           <X className="h-5 w-5" />
         </Button>
-        <span className="text-sm text-muted-foreground">预览海报</span>
+        <span className="text-sm text-muted-foreground">{title}</span>
         {onRegenerate ? (
           <Button
             variant="ghost"

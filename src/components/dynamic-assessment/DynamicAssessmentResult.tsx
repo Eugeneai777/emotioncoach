@@ -164,7 +164,7 @@ export function DynamicAssessmentResult({
   const [showSaveSheet, setShowSaveSheet] = useState(false);
   const [showMoreFormats, setShowMoreFormats] = useState(false);
   const [showWeChatPdfGuide, setShowWeChatPdfGuide] = useState(false);
-  const [reportPreviewUrl, setReportPreviewUrl] = useState<string | null>(null);
+  const [reportPreview, setReportPreview] = useState<{ url: string; isRemoteReady: boolean; isBlob: boolean } | null>(null);
   const [savingReport, setSavingReport] = useState(false);
   const [pulseSaveBtn, setPulseSaveBtn] = useState(false);
 
@@ -256,8 +256,31 @@ export function DynamicAssessmentResult({
     try {
       const blob = await generateCardBlob(reportCardRef, { backgroundColor: '#ffffff' });
       if (!blob) throw new Error('生成失败');
-      const url = URL.createObjectURL(blob);
-      setReportPreviewUrl(url);
+      // 1) 立即用 blob URL 显示预览（PC 端可直接下载；移动端先看到图）
+      const blobUrl = URL.createObjectURL(blob);
+      setReportPreview({ url: blobUrl, isRemoteReady: false, isBlob: true });
+
+      // 2) 后台异步上传到 storage 拿 https URL（小程序/微信内长按保存到相册必需）
+      // 加 8s 超时，超时则保留 blob URL 并提示
+      (async () => {
+        try {
+          const { uploadShareImage } = await import('@/utils/shareImageUploader');
+          const uploadPromise = uploadShareImage(blob);
+          const timeoutPromise = new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error('upload timeout')), 8000)
+          );
+          const httpsUrl = await Promise.race([uploadPromise, timeoutPromise]);
+          // 切换为 https URL，触发底部"高清图已准备好"文案
+          setReportPreview({ url: httpsUrl, isRemoteReady: true, isBlob: false });
+          // 释放占位 blob
+          URL.revokeObjectURL(blobUrl);
+        } catch (err) {
+          console.warn('[saveReport] upload failed, keeping blob url:', err);
+          if (isWeChatLike) {
+            toast.message('网络较慢，可截屏保存或改存 PDF', { duration: 4000 });
+          }
+        }
+      })();
     } catch (e) {
       console.error('[saveReport] image failed:', e);
       toast.error('生成图片失败，请重试');
@@ -957,12 +980,14 @@ export function DynamicAssessmentResult({
 
       {/* 私密报告预览（图片路径） */}
       <ShareImagePreview
-        open={!!reportPreviewUrl}
+        open={!!reportPreview}
         onClose={() => {
-          if (reportPreviewUrl) URL.revokeObjectURL(reportPreviewUrl);
-          setReportPreviewUrl(null);
+          if (reportPreview?.isBlob) URL.revokeObjectURL(reportPreview.url);
+          setReportPreview(null);
         }}
-        imageUrl={reportPreviewUrl}
+        imageUrl={reportPreview?.url ?? null}
+        isRemoteReady={reportPreview?.isRemoteReady}
+        title="预览报告"
       />
 
       {/* Hidden share card */}
