@@ -125,6 +125,18 @@ interface Character {
   referenceImageUrl?: string;
 }
 
+interface PrimaryCharacterLockCard {
+  name: string;
+  sourceCharacterIndex: number;
+  fixedAppearance: string;
+  fixedOutfit: string;
+  identityAndTemperament: string;
+  visualPrompt: string;
+  negativePrompt: string;
+  referenceImageUrl?: string;
+  createdAt: string;
+}
+
 interface Scene {
   sceneNumber: number;
   panel: string;
@@ -164,6 +176,7 @@ interface DramaScript {
     unresolvedHookCarried: string;
     nextEpisodeHook: string;
   };
+  primaryCharacterLock?: PrimaryCharacterLockCard;
   characters: Character[];
   scenes: Scene[];
   totalScenes: number;
@@ -251,6 +264,41 @@ const normalizeConversionStyles = (styles?: string[] | string | null) => {
   const validValues = values.filter((value) => CONVERSION_STYLES.some((style) => style.value === value));
   return validValues.length > 0 ? validValues : ["plot"];
 };
+
+const inferFixedOutfit = (text: string) => {
+  const matches = text.match(/(?:wearing|dressed in|outfit|clothing|服装|穿着|身穿|外套|衬衫|西装|连衣裙|长裤|裙子|上衣)[^.,;，。；]*/gi);
+  return matches?.slice(0, 3).join("；") || "沿用人物一固定服装与配饰，不随镜头改变";
+};
+
+const inferFixedAppearance = (char: Character) => {
+  const text = [char.description, char.imagePrompt].filter(Boolean).join("；");
+  return text || "保持人物一固定脸型、年龄感、发型、身材和可识别外貌特征";
+};
+
+const buildPrimaryCharacterLockCard = (script?: DramaScript | null): PrimaryCharacterLockCard | undefined => {
+  const primary = script?.characters?.[0];
+  if (!primary) return undefined;
+  const fixedAppearance = inferFixedAppearance(primary);
+  const fixedOutfit = inferFixedOutfit([primary.description, primary.imagePrompt].filter(Boolean).join("；"));
+  const identityAndTemperament = primary.description || "保持人物一身份、性格、情绪状态和表演气质一致";
+  const negativePrompt = "不要改变人物一的脸型、年龄感、发型、服装、身材、身份和气质；不要替换主角；不要新增无关主角；不要字幕、水印、Logo、UI文字；不要卡通化或风格漂移。";
+  return {
+    name: primary.name || "人物一",
+    sourceCharacterIndex: 0,
+    fixedAppearance,
+    fixedOutfit,
+    identityAndTemperament,
+    visualPrompt: `${primary.name || "人物一"}：${primary.description || ""}。固定视觉：${primary.imagePrompt || ""}。固定服装：${fixedOutfit}。`,
+    negativePrompt,
+    referenceImageUrl: primary.referenceImageUrl,
+    createdAt: new Date().toISOString(),
+  };
+};
+
+const ensurePrimaryCharacterLock = (script: DramaScript): DramaScript => ({
+  ...script,
+  primaryCharacterLock: script.primaryCharacterLock || buildPrimaryCharacterLockCard(script),
+});
 
 const summarizeSceneForSequel = (scene?: Scene) => {
   if (!scene) return "上一集结尾暂无摘要";
@@ -486,7 +534,7 @@ export default function DramaScriptGenerator() {
       if (data?.error || error) {
         throw new Error(await extractEdgeFunctionError(data, error, "生成失败，请稍后重试"));
       }
-      setResult(data as DramaScript);
+      setResult(ensurePrimaryCharacterLock(data as DramaScript));
       setSavedScriptId(null);
       setActiveSavedScript(null);
       toast.success("脚本生成成功！");
@@ -558,6 +606,10 @@ export default function DramaScriptGenerator() {
     if (!result) return null;
     return {
       ...result,
+      primaryCharacterLock: {
+        ...(result.primaryCharacterLock || buildPrimaryCharacterLockCard(result)!),
+        referenceImageUrl: characterImages[0]?.imageUrl || result.primaryCharacterLock?.referenceImageUrl || result.characters[0]?.referenceImageUrl,
+      },
       conversionStyles: mode === "youjin" ? conversionStyles : undefined,
       characters: result.characters.map((char, index) => ({
         ...char,
@@ -579,7 +631,7 @@ export default function DramaScriptGenerator() {
     setTargetAudience(script.target_audience || "women");
     setConversionStyles(normalizeConversionStyles(script.script_data?.conversionStyles || script.conversion_style));
     setSelectedProducts(new Set((script.selected_products || []).map((p) => p.key)));
-    setResult(script.script_data);
+    setResult(ensurePrimaryCharacterLock(script.script_data));
     setSequelGenerationError(null);
     setSequelGenerationSource(null);
     setSceneImages(Object.fromEntries((script.script_data?.scenes || []).filter((s) => s.generatedImageUrl).map((s) => [s.sceneNumber, { status: "done", imageUrl: s.generatedImageUrl! }])));
@@ -665,7 +717,7 @@ export default function DramaScriptGenerator() {
       if ((data as DramaScript).consistencyCheck && ((data as DramaScript).consistencyCheck?.overallScore || 100) < CONSISTENCY_THRESHOLD) {
         toast.error(`一致性评分 ${(data as DramaScript).consistencyCheck?.overallScore}，建议重新生成一次`);
       }
-      setPendingSequel({ source: script, script: data as DramaScript, products: productsForSequel, conversionStyles: sequelConversionStyles });
+      setPendingSequel({ source: script, script: ensurePrimaryCharacterLock(data as DramaScript), products: productsForSequel, conversionStyles: sequelConversionStyles });
       toast.success(`已生成第${script.episode_number + 1}集续集预览，未替换前不会改当前脚本`);
     } catch (e: any) {
       const message = e.message || "续集生成失败";
@@ -1911,6 +1963,12 @@ export default function DramaScriptGenerator() {
                   <div className="mb-2 flex items-center gap-2 text-sm font-medium">
                     <User className="h-4 w-4" /> 人物一锁定
                   </div>
+                  {result.primaryCharacterLock && (
+                    <div className="mb-2 grid grid-cols-1 gap-1 text-xs text-muted-foreground sm:grid-cols-2">
+                      <div className="break-words"><span className="font-medium text-foreground">固定外貌：</span>{result.primaryCharacterLock.fixedAppearance}</div>
+                      <div className="break-words"><span className="font-medium text-foreground">固定服装：</span>{result.primaryCharacterLock.fixedOutfit}</div>
+                    </div>
+                  )}
                   <p className="text-xs text-muted-foreground break-words whitespace-pre-line">{buildPrimaryCharacterLock()}</p>
                   <div className="mt-2 flex flex-wrap items-center gap-2">
                     {characterImages[0]?.imageUrl ? <span className="text-xs text-primary">已使用人物一定妆图作为视频参考</span> : <span className="text-xs text-muted-foreground">建议先生成角色定妆图</span>}
