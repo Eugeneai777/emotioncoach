@@ -2,7 +2,7 @@
 import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, ChevronUp, ChevronRight, Wrench, BarChart3, Target, Quote, ShoppingBag, Clapperboard } from "lucide-react";
+import { ChevronDown, ChevronUp, ChevronRight, Wrench, BarChart3, Target, Quote, ShoppingBag } from "lucide-react";
 import useEmblaCarousel from "embla-carousel-react";
 
 import logoImage from "@/assets/logo-youjin-ai.png";
@@ -605,29 +605,6 @@ const MiniAppEntry = () => {
         slides={filteredSlides}
       />
 
-      <div className="px-4 pb-4">
-        <motion.button
-          type="button"
-          initial={reduceMotion ? false : { opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.22, duration: 0.25 }}
-          whileTap={{ scale: 0.97 }}
-          onPointerDown={() => preloadRouteOnIntent('/drama-script')}
-          onClick={() => navigate('/drama-script')}
-          className="w-full rounded-xl border border-primary/20 bg-card p-4 text-left shadow-sm transition-all hover:bg-primary/5 active:scale-[0.99]"
-        >
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-              <Clapperboard className="h-5 w-5" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="text-sm font-bold text-foreground">短剧脚本</div>
-              <div className="mt-0.5 text-xs text-muted-foreground">AI生成分镜、续集和剧情检查</div>
-            </div>
-            <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
-          </div>
-        </motion.button>
-      </div>
 
 
       <motion.div
