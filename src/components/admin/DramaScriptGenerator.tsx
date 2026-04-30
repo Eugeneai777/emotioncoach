@@ -236,6 +236,14 @@ const VIDEO_DURATIONS = [
   { value: 10, label: "10秒" },
 ];
 
+const STYLE_LOCKS: Record<string, string> = {
+  cyberpunk: "竖屏短剧，赛博朋克都市夜景，霓虹边缘光，高对比电影感，真实表演节奏，统一冷暖霓虹色调，不要字幕、水印、UI文字。",
+  anime: "竖屏短剧，高级日系动画剧集质感，干净线条，统一角色比例，电影感构图，情绪表演清晰，不要字幕、水印、UI文字。",
+  chinese: "竖屏短剧，现代中国审美，克制东方氛围，电影感光影，统一低饱和色调，真实情绪张力，不要字幕、水印、UI文字。",
+  realistic: "竖屏9:16，现实主义都市短剧风格，电影感光影，低饱和度，真实人物表演，浅景深，情绪张力强，不要卡通、二次元、字幕、水印、UI文字。",
+  comic: "竖屏短剧，美式漫画电影质感，强构图，戏剧化光影，统一人物造型和色彩层次，不要字幕、水印、UI文字。",
+};
+
 const CONSISTENCY_THRESHOLD = 85;
 
 const normalizeConversionStyles = (styles?: string[] | string | null) => {
@@ -734,6 +742,31 @@ export default function DramaScriptGenerator() {
     return Object.values(characterImages).map((state) => state.imageUrl).filter(Boolean) as string[];
   }, [characterImages]);
 
+  const buildPrimaryCharacterLock = useCallback(() => {
+    const primary = result?.characters?.[0];
+    if (!primary) return "当前脚本暂无人物一，请严格保持画面中已有主角的年龄、脸型、服装和气质一致。";
+    return `${primary.name}：${primary.description}\n固定视觉：${primary.imagePrompt}\n要求：保持同一位人物一，不要改变脸型、年龄感、发型、服装、身材、气质和身份，不要替换主角。`;
+  }, [result]);
+
+  const buildStyleLock = useCallback(() => {
+    return STYLE_LOCKS[style] || STYLE_LOCKS.realistic;
+  }, [style]);
+
+  const buildJimengVideoPrompt = useCallback((scene: Scene) => {
+    return `【人物一锁定】\n${buildPrimaryCharacterLock()}\n\n【统一风格锁定】\n${buildStyleLock()}\n\n【当前镜头】\n镜头${scene.sceneNumber}：${scene.panel}\n动作：${scene.characterAction}\n台词/情绪：${scene.dialogue || scene.narration || "无台词，靠表演传达情绪"}\n原始画面提示词：${scene.imagePrompt}\n\n【连续性要求】\n这是同一部短剧《${result?.title || "短剧"}》的第${scene.sceneNumber}个镜头，必须延续前后镜头的人物状态、服装、场景气质、情绪张力和视觉风格。不要新增无关主角，不要出现字幕、水印、Logo或UI文字。`;
+  }, [buildPrimaryCharacterLock, buildStyleLock, result]);
+
+  const getVideoReferenceUrls = useCallback((sceneNum: number) => {
+    const urls = [
+      sceneImages[sceneNum]?.imageUrl,
+      characterImages[0]?.imageUrl,
+      ...Object.entries(characterImages)
+        .filter(([index]) => index !== "0")
+        .map(([, state]) => state.imageUrl),
+    ].filter(Boolean) as string[];
+    return Array.from(new Set(urls)).slice(0, 3);
+  }, [characterImages, sceneImages]);
+
   const generateCharacterReference = useCallback(async (char: Character, index: number) => {
     if (!result) return null;
     setCharacterImages((prev) => ({ ...prev, [index]: { status: "generating" } }));
@@ -909,10 +942,10 @@ export default function DramaScriptGenerator() {
       const { data, error } = await supabase.functions.invoke("jimeng-video-gen", {
         body: {
           action: "submit",
-          prompt: scene.imagePrompt,
+          prompt: buildJimengVideoPrompt(scene),
           aspect_ratio: videoAspectRatio,
           duration: videoDuration,
-          image_urls: sceneImages[num]?.imageUrl ? [sceneImages[num].imageUrl] : undefined,
+          image_urls: getVideoReferenceUrls(num),
         },
       });
 
@@ -928,10 +961,15 @@ export default function DramaScriptGenerator() {
       updateSceneVideo(num, { status: "failed", error: e.message });
       return false;
     }
-  }, [sceneImages, videoAspectRatio, videoDuration, updateSceneVideo, pollVideoStatus]);
+  }, [buildJimengVideoPrompt, getVideoReferenceUrls, videoAspectRatio, videoDuration, updateSceneVideo, pollVideoStatus]);
 
   const handleBatchGenerate = async () => {
     if (!result) return;
+    const hasPrimaryRef = Boolean(characterImages[0]?.imageUrl);
+    const imageCount = result.scenes.filter((scene) => sceneImages[scene.sceneNumber]?.imageUrl).length;
+    if (!hasPrimaryRef || imageCount < result.scenes.length) {
+      toast.info("建议先生成“人物一参考图”和“全部分镜图片”，这样 8 个镜头的人物与风格更一致。仍将继续提交视频。", { duration: 6000 });
+    }
     setBatchGenerating(true);
     for (const scene of result.scenes) {
       const state = sceneVideos[scene.sceneNumber];
@@ -1868,6 +1906,33 @@ export default function DramaScriptGenerator() {
                 )}
               </div>
 
+              <div className="grid w-full min-w-0 grid-cols-1 gap-3 overflow-hidden lg:grid-cols-2">
+                <div className="rounded-lg border bg-muted/30 p-3 min-w-0 overflow-hidden">
+                  <div className="mb-2 flex items-center gap-2 text-sm font-medium">
+                    <User className="h-4 w-4" /> 人物一锁定
+                  </div>
+                  <p className="text-xs text-muted-foreground break-words whitespace-pre-line">{buildPrimaryCharacterLock()}</p>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    {characterImages[0]?.imageUrl ? <span className="text-xs text-primary">已使用人物一定妆图作为视频参考</span> : <span className="text-xs text-muted-foreground">建议先生成角色定妆图</span>}
+                    <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => copyToClipboard(buildPrimaryCharacterLock(), "人物一锁定词")}>
+                      <Copy className="h-3 w-3" /> 复制
+                    </Button>
+                  </div>
+                </div>
+                <div className="rounded-lg border bg-muted/30 p-3 min-w-0 overflow-hidden">
+                  <div className="mb-2 flex items-center gap-2 text-sm font-medium">
+                    <Clapperboard className="h-4 w-4" /> 统一风格锁定
+                  </div>
+                  <p className="text-xs text-muted-foreground break-words">{buildStyleLock()}</p>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <span className="text-xs text-muted-foreground">8镜头 × 10秒 ≈ 80秒；短视频可前后5秒、中段10秒。</span>
+                    <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => copyToClipboard(buildStyleLock(), "统一风格锁定词")}>
+                      <Copy className="h-3 w-3" /> 复制
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
               <div className="grid w-full min-w-0 grid-cols-1 gap-4 overflow-hidden sm:grid-cols-2">
                 <div className="w-full min-w-0 space-y-2 overflow-hidden">
                   <Label className="text-xs">画面比例</Label>
@@ -1919,7 +1984,7 @@ export default function DramaScriptGenerator() {
                   {batchGenerating ? (
                     <><Loader2 className="h-4 w-4 animate-spin" /> 批量提交中...</>
                   ) : (
-                    <><Play className="h-4 w-4" /> 全部生成视频</>
+                    <><Play className="h-4 w-4" /> 按统一人物/风格生成全部视频</>
                   )}
                 </Button>
 
@@ -1983,8 +2048,8 @@ export default function DramaScriptGenerator() {
                 </div>
               )}
 
-              <p className="text-xs text-muted-foreground">
-                ⚠️ 视频生成需 1-3 分钟/片段，生成后链接 1 小时内有效，请及时下载。旁白和视频需在剪辑软件中合并。
+              <p className="text-xs text-muted-foreground break-words">
+                ⚠️ 视频生成需 1-3 分钟/片段，生成后链接 1 小时内有效，请及时下载。最佳顺序：先生成角色定妆图，再生成全部分镜图片，最后生成视频并合并下载。
               </p>
             </CardContent>
           </Card>
@@ -2046,6 +2111,14 @@ export default function DramaScriptGenerator() {
                               >
                                 <Copy className="h-3 w-3" />
                               </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="shrink-0 h-7 gap-1 text-xs"
+                                onClick={() => copyToClipboard(buildJimengVideoPrompt(scene), `场景${scene.sceneNumber}即梦提示词`)}
+                              >
+                                <Video className="h-3 w-3" /> 即梦词
+                              </Button>
                             </div>
                           </div>
 
@@ -2092,7 +2165,7 @@ export default function DramaScriptGenerator() {
                                 onClick={() => generateSceneVideo(scene)}
                                 disabled={anyVideoGenerating && videoState.status === "idle"}
                               >
-                                <Video className="h-3 w-3" /> 生成视频
+                                <Video className="h-3 w-3" /> 生成本镜头视频
                               </Button>
                             )}
 
