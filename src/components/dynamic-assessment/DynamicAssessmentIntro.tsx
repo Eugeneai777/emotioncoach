@@ -123,13 +123,28 @@ const enrichmentData: Record<string, {
   },
 };
 
-export function DynamicAssessmentIntro({ template, onStart, onShowHistory, hasHistory, requireAuth = true, requirePayment, hasPurchased, price, onPayClick }: DynamicAssessmentIntroProps) {
+export function DynamicAssessmentIntro({ template, onStart, onShowHistory, hasHistory, requireAuth = true, requirePayment, hasPurchased, price, onPayClick, lastRecord, historyCount }: DynamicAssessmentIntroProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const needPay = requirePayment && !hasPurchased;
   const isMaleMidlifeVitality = template.assessment_key === 'male_midlife_vitality';
   const dimensions = template.dimensions || [];
   const enrichment = template.assessment_key ? enrichmentData[template.assessment_key] : undefined;
+
+  // 老用户快捷卡（仅 vitality 测评 + 已有历史）
+  const showVitalityQuickCard = isMaleMidlifeVitality && hasHistory && !!lastRecord;
+  const lastSummary = (() => {
+    if (!showVitalityQuickCard || !lastRecord) return null;
+    // 计算上次"状态电量"（翻转后百分比）
+    const dims: any[] = Array.isArray(lastRecord.dimension_scores) ? lastRecord.dimension_scores : [];
+    const totalRaw = dims.reduce((sum, d) => sum + (d.score ?? 0), 0);
+    const totalMax = dims.reduce((sum, d) => sum + (d.maxScore ?? 0), 0);
+    const pct = totalMax > 0 ? Math.max(0, Math.min(100, Math.round(100 - (totalRaw / totalMax) * 100))) : 0;
+    const band = getStatusBand(pct);
+    const d = new Date(lastRecord.created_at);
+    const dateStr = `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
+    return { pct, band, dateStr };
+  })();
 
   return (
     <div className="min-h-screen bg-background">
