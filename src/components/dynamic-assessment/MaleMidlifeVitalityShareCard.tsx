@@ -22,11 +22,26 @@ interface MaleMidlifeVitalityShareCardProps {
   avatarUrl?: string;
 }
 
+// 与结果页保持一致：恢复阻力分越低 = 状态越好，需翻转为"状态指数 %"
+const toVitalityStatusScore = (score: number, max: number) =>
+  max > 0 ? Math.max(0, Math.min(100, Math.round(100 - (score / max) * 100))) : 0;
+
+const labelMap: Record<string, string> = {
+  '压力内耗': '压力调节',
+  '恢复阻力': '行动恢复力',
+};
+
 const MaleMidlifeVitalityShareCard = forwardRef<HTMLDivElement, MaleMidlifeVitalityShareCardProps>(
   ({ totalScore, maxScore, dimensionScores, primaryPattern, displayName, avatarUrl }, ref) => {
-    const percentage = maxScore > 0 ? Math.round((totalScore / maxScore) * 100) : 0;
-    const topDimensions = [...dimensionScores]
-      .sort((a, b) => (b.maxScore ? b.score / b.maxScore : 0) - (a.maxScore ? a.score / a.maxScore : 0))
+    const percentage = toVitalityStatusScore(totalScore, maxScore);
+    const statusDimensions = dimensionScores.map((d) => ({
+      ...d,
+      label: labelMap[d.label] ?? d.label,
+      score: toVitalityStatusScore(d.score, d.maxScore),
+      maxScore: 100,
+    }));
+    const topDimensions = [...statusDimensions]
+      .sort((a, b) => b.score - a.score)
       .slice(0, 4);
     const actionTip = primaryPattern?.tips?.[0] || '先从睡眠、呼吸和每天一个小行动开始，把电量慢慢充回来。';
 
@@ -34,7 +49,7 @@ const MaleMidlifeVitalityShareCard = forwardRef<HTMLDivElement, MaleMidlifeVital
       <ShareCardBase
         ref={ref}
         sharePath="/assessment/male_midlife_vitality"
-        width={340}
+        width={360}
         padding={0}
         background="linear-gradient(145deg, #111827 0%, #134e4a 56%, #78350f 100%)"
         borderRadius={24}
