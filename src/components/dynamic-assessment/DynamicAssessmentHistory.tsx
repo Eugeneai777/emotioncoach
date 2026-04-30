@@ -8,6 +8,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { zhCN } from "date-fns/locale";
 import { DynamicAssessmentRecord } from "@/hooks/useDynamicAssessmentHistory";
 import { DimensionRadarChart } from "./DimensionRadarChart";
+import { MaleVitalityCompareView } from "./MaleVitalityCompareView";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   AlertDialog,
@@ -208,7 +209,10 @@ export function DynamicAssessmentHistory({
 
         {/* Comparison View */}
         <AnimatePresence>
-          {sorted && compareMode && (
+          {sorted && compareMode && isMaleMidlifeVitality && (
+            <MaleVitalityCompareView current={sorted[0]} previous={sorted[1]} />
+          )}
+          {sorted && compareMode && !isMaleMidlifeVitality && (
             <motion.div
               initial={{ opacity: 0, y: 16, scale: 0.96 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}

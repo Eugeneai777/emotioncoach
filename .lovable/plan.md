@@ -1,141 +1,131 @@
-## 结论
+## 现状诊断
 
-可以实现，但要分清两个平台的机制：
+`/assessment/male_midlife_vitality` 历史对比视图（`DynamicAssessmentHistory.tsx` 中 `compareMode` 分支）当前问题：
 
-1. 手机 H5 / 微信内网页：卡片式分享主要依赖微信 JS-SDK 的 `title / desc / link / imgUrl`，不能只靠页面内动态 OG 标签。
-2. 手机小程序端：卡片由小程序壳层的 `onShareAppMessage` 生成，H5 页面需要通过 `wx.miniProgram.postMessage` 把分享配置传给小程序；否则小程序可能用默认卡片或默认跳转路径，所以会出现“能生成卡片，但点进去不是原页面”。
+1. **视觉空洞**：04/29 → 04/30 中部大块留白，原始分 `0 → 34` 没有翻转成"状态指数"，雷达图在稀疏数据下几乎看不到形状。
+2. **数值语言冰冷**：`+5 / +7` 是技术口径，男人看到 `恢复阻力 +7` 不知好坏（原始分越高越差，翻转后才更好）。
+3. **价值点缺失**：没有回答中年男性最关心的——我现在啥状态？哪一项先动手？比上次好/坏在哪？接下来怎么办？
+4. **商业承接为零**：对比卡底部无 CTA，错过用户"刚看见自己变化"的最高转化时刻。
 
-当前问题的核心不是封面和文案本身，而是“分享配置没有同时稳定同步给 H5 微信 JS-SDK 和小程序外壳，并且分享落地链接/路径没有做统一规范”。
+---
 
-## 修复目标
+## 商业架构思路
 
-- 在手机 H5 微信内分享 `/assessment/male_midlife_vitality` 时，显示类似你截图中“小鹅通/小程序卡片”的标题、简介、封面图。
-- 在小程序 web-view 内分享时，也生成同款卡片。
-- 用户点击分享卡片后，必须回到原始页面：`/assessment/male_midlife_vitality`，而不是小程序首页或其它默认页面。
-- 兼容手机 H5、小程序 web-view、PC，不破坏现有测评、历史记录、结果页流程。
+把"历史对比"从**数据展示**重构为**男性向状态叙事 + 行动闭环**：看见 → 理解 → 行动 → 复测。
 
-## 实施方案
-
-### 1. 统一分享链接生成规则
-
-为“男人有劲状态测评”固定生成标准分享 URL：
+### 内容架构（5 个 Block）
 
 ```text
-https://wechat.eugenewe.net/assessment/male_midlife_vitality?ref=share
+┌────────────────────────────────────────┐
+│ 1. 状态电量对比卡                      │
+│    上次 XX% · ↑+N% · 本次 XX%          │
+│    一句话定调："电量回到了 XX%"        │
+├────────────────────────────────────────┤
+│ 2. 6 维雷达 + 上下叠层                 │
+│    翻转后的状态指数（越大越好）        │
+├────────────────────────────────────────┤
+│ 3. 关键变化 Top3 进步 + Top1 退步      │
+│    ✅ 睡眠修复 +18% "夜里更扛得住了"    │
+│    ⚠️ 顶事力 -12% "关键时刻还在硬撑"    │
+├────────────────────────────────────────┤
+│ 4. 本周一个动作（基于最弱维度）        │
+│    "本周只做一件事：睡前 10 分钟离机"  │
+├────────────────────────────────────────┤
+│ 5. 三选一 CTA（按状态档分级排序）      │
+│    [找教练 1v1] [进 7 天有劲营] [复测] │
+└────────────────────────────────────────┘
 ```
 
-处理原则：
+### 男性向语言映射
 
-- 分享出去的链接保留业务必要参数 `ref=share`。
-- 去掉不稳定参数，例如 `_cb`、临时缓存参数、结果页内部状态参数。
-- 对微信 JS-SDK 使用这个稳定链接，避免微信缓存多个不同 URL 导致卡片不稳定。
-- 对小程序端也使用同一个 H5 落地地址。
+| 维度 | 状态语言 | 加分文案 | 减分文案 |
+|---|---|---|---|
+| 精力续航 | 电量 | 白天更扛造了 | 下午就开始没电 |
+| 睡眠修复 | 修复力 | 夜里能真正关机 | 睡了像没睡 |
+| 压力内耗 | 抗压阀门 | 压得住事了 | 心里那根弦还在崩 |
+| 关键时刻信心 | 顶事力 | 关键场合更稳 | 关键时还在硬撑 |
+| 关系温度 | 家里温度 | 和家人能松下来 | 回家还是装着 |
+| 恢复阻力 | 恢复速度 | 跌倒后爬起更快 | 状态掉了拉不回 |
 
-### 2. 强化 H5 微信分享配置
+### 三档状态分级
 
-调整 `DynamicOGMeta` / `useWechatShare` 的调用逻辑：
+- **80-100 满电**：绿 / 主推「7 天后复测」
+- **50-79 半电**：琥珀 / 主推「7 天有劲营」
+- **0-49 低电**：橙红 / 主推「找教练 1v1」
 
-- 微信内使用专属标题：`男人有劲状态测评｜6维评估，3分钟看见自己`
-- 描述使用商业转化文案：`精力、睡眠、压力、关键时刻信心、关系温度、行动恢复力，一次看清你的能量底盘。`
-- 封面图使用已配置的横版 OG 图。
-- `link` 改为稳定分享 URL，而不是当前带 `_cb` 的浏览 URL。
+---
 
-这样 H5 微信分享给好友/群时，会尽量走微信 JS-SDK 卡片，而不是裸链接。
+## 三端兼容与稳定性（核心约束）
 
-### 3. 新增小程序分享桥接
+### 排版策略
+- **断点统一**：用 Tailwind `sm: md: lg:`，与项目现有断点一致；不引入新媒体查询。
+- **容器宽度**：沿用历史页 `max-w-lg md:max-w-2xl mx-auto`，PC 端不撑满，避免雷达图被拉伸。
+- **5 个 Block 全部 `w-full` + `min-w-0`**：避免子内容（长文案、emoji）撑破父容器导致横向滚动。
+- **数字与中文混排**：用 `tabular-nums` + `whitespace-nowrap` 锁定百分比列宽，防止换行抖动。
+- **雷达图高度**：移动 `h-[260px]`，平板 `sm:h-[300px]`，PC `md:h-[360px]`，全部用 `ResponsiveContainer`，沿用现有 `DimensionRadarChart` 不改动其内部。
+- **CTA 按钮**：移动单列 `flex-col gap-2`，≥sm 三列 `sm:grid sm:grid-cols-3 sm:gap-3`，每个按钮 `min-h-[44px]` 满足触控规范。
 
-新增一个前端 hook，例如 `useMiniProgramShareBridge`，在小程序 web-view 环境中执行：
+### 小程序 web-view 约束
+- **不使用** `position: fixed`、`window.open`、`document.referrer`（小程序内不可靠）。
+- **CTA 路由**：统一走 `useNavigate`；外链场景复用现有 `openExternalUrl` + `wechat.eugenewe.net` 标准。
+- **分享对比海报**：复用 `MaleMidlifeVitalityShareCard` 渲染路径与 `useMiniProgramShareBridge`，不新建桥接。
+- **路由稳定**：先 `navigate(...)` 再 `setCompareMode(false)`（遵循 Component Reentrancy 规范）。
 
-```text
-wx.miniProgram.postMessage({
-  data: {
-    type: 'SET_SHARE_CONFIG',
-    title,
-    desc,
-    imageUrl,
-    h5Url,
-    path
-  }
-})
-```
+### 流畅度
+- **动画降级**：所有 `framer-motion` 动效用 `prefers-reduced-motion` 自动降级（项目已有 `useReducedMotion`），低端 Android 不卡顿。
+- **首屏不阻塞**：Block 1-3 同步渲染；雷达图（Block 2）和文案表（Block 3-4）通过 `useMemo` 缓存计算，避免每次 re-render 重算翻转分。
+- **图片零依赖**：5 个 Block 全部 SVG/emoji，无远程图，避免小程序内白屏。
+- **零网络新请求**：本次改造不调用任何 edge function，对比文案完全本地规则映射。
 
-其中：
+### 兼容性回归测试矩阵（实施时 QA）
 
-- `h5Url`：`https://wechat.eugenewe.net/assessment/male_midlife_vitality?ref=share`
-- `path`：给小程序壳层使用的落地路径，建议是 web-view 页面路径并携带 encoded H5 URL，例如：
+| 端 | 视口 | 关注点 |
+|---|---|---|
+| H5 iOS Safari | 375×812 / 414×896 | 雷达图 SVG 渲染、`100vh` 抖动 |
+| H5 Android Chrome | 360×800 | emoji 字体回退、长文案换行 |
+| 微信小程序 web-view | 375×667 / 414×736 | 路由跳转、分享桥接、不出现横向滚动 |
+| iPad | 768×1024 | `sm:` 断点切换 |
+| PC | 1280 / 1440 / 1920 | 容器居中不拉伸、CTA 三列均分 |
 
-```text
-/pages/webview/webview?url=encodeURIComponent(h5Url)
-```
+---
 
-如果你的小程序壳层已有固定 web-view 页面路径，需要与实际路径保持一致；如果壳层目前只支持默认首页，需要同步改小程序端的 `onShareAppMessage` 读取该消息。
+## 实施步骤
 
-### 4. 在测评页全流程挂载分享配置
+### 1. 新建男性向语言配置
+`src/config/maleMidlifeVitalityCopy.ts`
+- `STATUS_LABEL_MAP`：维度 → 生活化标签
+- `getStatusBand(pct)`：返回 `{ level, color, headline, ctaPrimary }`
+- `getDeltaCopy(label, deltaPct)`：返回加/减分中文短句
+- `getActionForWeakestDimension(label)`：返回"本周一句话动作"
 
-在 `/assessment/:assessmentKey` 页面中，对 `male_midlife_vitality` 的这些阶段都同步分享配置：
+### 2. 新建对比叙事组件
+`src/components/dynamic-assessment/MaleVitalityCompareView.tsx`
+- 接收 `currentRecord`, `previousRecord`，输出 5 个 Block
+- 内部翻转原始分（复用现有 `toVitalityStatusScore`）
+- 三端响应式 class 严格按上文断点策略
+- CTA 路由：教练 → `/coaches`，7 天营 → 现有 vitality 营路径，复测 → `localStorage` + Toast
 
-- intro 首页
-- history 历史记录页
-- result 结果页
+### 3. 接入 `DynamicAssessmentHistory.tsx`
+- 在 `sorted && compareMode` 分支内，**仅当 `isMaleMidlifeVitality === true`** 时用 `<MaleVitalityCompareView />` 替换原通用 Card；其它测评保持不变。
+- 折叠详情区（行 510 起）追加一行"与上次相比"摘要带（电量变化 / 进步最大 / 退步最大），共用同一文案库。
 
-这样用户不管停留在哪个阶段点击右上角分享，都不会回退到默认卡片或默认跳转页。
+### 4. 三端 QA（按上方矩阵）
 
-### 5. 修复“小程序点击进去不是原页面”
+---
 
-这部分需要同时覆盖 H5 与小程序壳层协议：
+## 不做的事（控制范围）
 
-- H5 端：postMessage 明确传 `h5Url` 和 `path`。
-- 小程序端：`onShareAppMessage` 必须优先使用最近一次 H5 传来的分享配置。
-- 小程序端 path 不能写死成首页，必须把 H5 URL encode 后带回 web-view 页面。
+- 不改数据库、不动 `og_configurations`、不动评分引擎
+- 不替换通用 `DynamicAssessmentHistory`，其它测评零影响
+- 不引入 AI 生成对比文案（首版规则映射，零延迟、零额度）
+- 不调整海报组件结构，仅复用
 
-小程序端伪代码应类似：
+---
 
-```js
-onMessage(e) {
-  const msg = e.detail.data?.[e.detail.data.length - 1]
-  if (msg?.type === 'SET_SHARE_CONFIG') {
-    this.setData({ shareConfig: msg })
-  }
-},
+## 交付物
 
-onShareAppMessage() {
-  const share = this.data.shareConfig
-  return {
-    title: share.title,
-    imageUrl: share.imageUrl,
-    path: share.path
-  }
-}
-```
+- 新增：`src/config/maleMidlifeVitalityCopy.ts`
+- 新增：`src/components/dynamic-assessment/MaleVitalityCompareView.tsx`
+- 修改：`src/components/dynamic-assessment/DynamicAssessmentHistory.tsx`（仅在 vitality 分支注入新组件 + 折叠详情加摘要带）
 
-如果当前仓库不包含小程序壳层源码，我会先完成 H5 端桥接，并给你一段小程序端需要同步粘贴的代码；如果仓库内能找到小程序壳层源码，则一起修。
-
-## 技术细节
-
-- 不会修改自动生成的 `src/integrations/supabase/client.ts` 和类型文件。
-- 继续使用现有 `og_configurations` 中的 `maleMidlifeVitalityAssessment` 配置。
-- 优先使用现有 `wechat.eugenewe.net` 域名，避免微信安全域名与缓存问题。
-- `useWechatShare` 当前会排除小程序环境，这是合理的；小程序端会走新增 bridge，而不是强行调用 H5 JS-SDK 分享接口。
-- PC 端只保留 meta 标签，无额外弹窗或交互影响。
-
-## 验收方式
-
-1. 手机微信 H5 打开：
-   `https://wechat.eugenewe.net/assessment/male_midlife_vitality?ref=share`
-   分享给好友，检查是否出现标题、简介、封面图卡片。
-
-2. 小程序内打开同一测评页，点右上角分享：
-   - 分享卡片显示定制标题与封面。
-   - 接收者点击卡片后回到 `/assessment/male_midlife_vitality`，不是首页。
-
-3. 在历史记录页和结果页重复测试分享：
-   - 卡片内容一致。
-   - 点击落地稳定。
-
-4. PC 浏览器打开测评页：
-   - 页面正常加载。
-   - 无 JS 报错。
-
-## 需要你确认的一点
-
-如果小程序壳层源码不在当前项目里，我只能先完成 H5 页面向小程序发送分享配置的部分；小程序端还需要你或小程序开发者把 `onMessage + onShareAppMessage` 读取逻辑补上。批准后我会先在当前项目中查找是否有小程序壳层源码，并按可控范围完成修复。
+预计代码量 ≈ 380 行（含文案表）。
