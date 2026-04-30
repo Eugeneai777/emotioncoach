@@ -62,7 +62,7 @@ import { useState } from "react";
 
 import type { AdminRole } from "./AdminLayout";
 
-const NAV_GROUPS = [
+export const NAV_GROUPS = [
   {
     title: "概览",
     icon: LayoutDashboard,
