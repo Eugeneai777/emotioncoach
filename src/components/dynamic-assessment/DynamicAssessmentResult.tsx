@@ -867,6 +867,24 @@ export function DynamicAssessmentResult({
 
         {/* Action Buttons */}
         <motion.div custom={8} variants={fadeUp} initial="hidden" animate="visible" className="space-y-3 mt-4">
+          {isMaleMidlifeVitality && aiInsight && (
+            <div ref={saveButtonRef}>
+              <Button
+                className={cn(
+                  "w-full gap-2 rounded-xl h-12 text-base font-semibold",
+                  pulseSaveBtn && "ring-4 ring-primary/40 animate-pulse"
+                )}
+                onClick={() => setShowSaveSheet(true)}
+                disabled={savingReport}
+              >
+                {savingReport ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                保存完整报告
+              </Button>
+              <p className="text-center text-[11px] text-muted-foreground mt-1.5">
+                私密报告 · 仅本人查看 · 无二维码无推广
+              </p>
+            </div>
+          )}
           {hasHistory && onShowHistory && (
             <Button variant="outline" className="w-full gap-2 rounded-xl h-11" onClick={onShowHistory}>
               <History className="w-4 h-4" /> 查看历史记录
@@ -877,6 +895,75 @@ export function DynamicAssessmentResult({
           </Button>
         </motion.div>
       </div>
+
+      {/* 保存格式 Sheet */}
+      <Sheet open={showSaveSheet} onOpenChange={setShowSaveSheet}>
+        <SheetContent side="bottom" className="rounded-t-2xl">
+          <SheetHeader>
+            <SheetTitle className="text-left">保存完整报告</SheetTitle>
+          </SheetHeader>
+          <div className="mt-2 space-y-2">
+            <button
+              type="button"
+              onClick={handleSaveAsImage}
+              className="w-full flex items-center gap-3 p-4 rounded-xl border border-border hover:bg-muted/50 transition-colors text-left min-h-[60px]"
+            >
+              <ImageIcon className="w-5 h-5 text-primary shrink-0" />
+              <div className="flex-1 min-w-0">
+                <div className="font-semibold text-sm">📷 保存为长图（推荐）</div>
+                <div className="text-xs text-muted-foreground mt-0.5">
+                  {isWeChatLike ? '生成后长按图片保存到相册' : '一键保存到本地'}
+                </div>
+              </div>
+            </button>
+
+            {!showMoreFormats ? (
+              <button
+                type="button"
+                onClick={() => setShowMoreFormats(true)}
+                className="w-full flex items-center justify-center gap-1.5 py-3 text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <ChevronDown className="w-3.5 h-3.5" /> 更多格式
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleSaveAsPdf}
+                className="w-full flex items-center gap-3 p-4 rounded-xl border border-border hover:bg-muted/50 transition-colors text-left min-h-[60px]"
+              >
+                <FileText className="w-5 h-5 text-primary shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-sm">📄 保存为 PDF</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">
+                    {isWeChatLike ? '微信内需跳浏览器，将引导您操作' : '适合存档 / 打印'}
+                  </div>
+                </div>
+              </button>
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* 微信内 PDF 引导 */}
+      {isMaleMidlifeVitality && (
+        <WeChatPdfGuideSheet
+          open={showWeChatPdfGuide}
+          onOpenChange={setShowWeChatPdfGuide}
+          recordId={recordId}
+          assessmentKey={template.assessment_key}
+          onSwitchToImage={handleSaveAsImage}
+        />
+      )}
+
+      {/* 私密报告预览（图片路径） */}
+      <ShareImagePreview
+        open={!!reportPreviewUrl}
+        onClose={() => {
+          if (reportPreviewUrl) URL.revokeObjectURL(reportPreviewUrl);
+          setReportPreviewUrl(null);
+        }}
+        imageUrl={reportPreviewUrl}
+      />
 
       {/* Hidden share card */}
       <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
