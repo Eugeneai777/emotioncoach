@@ -6,9 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ClipboardList, ExternalLink, Pencil, Users, Link, Check } from "lucide-react";
+import { ClipboardList, ExternalLink, Pencil, Users, Link, Check, BarChart3 } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { AssessmentEditor } from "../partner/AssessmentEditor";
 import type { PartnerAssessmentTemplate } from "@/hooks/usePartnerAssessments";
 
@@ -151,13 +152,13 @@ export default function AssessmentsManagement() {
                       <ExternalLink className="w-4 h-4" />
                     </Button>
                     <Button
-                      variant="outline"
+                      variant="default"
                       size="sm"
                       className="gap-1.5 text-xs"
-                      onClick={() => setEditing(assessment)}
+                      onClick={() => navigate(`/admin/assessments/${assessment.id}/insights`)}
                     >
-                      <Pencil className="w-3.5 h-3.5" />
-                      编辑
+                      <BarChart3 className="w-3.5 h-3.5" />
+                      数据洞察
                     </Button>
                     <Button
                       variant="outline"
