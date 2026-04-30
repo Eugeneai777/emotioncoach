@@ -69,8 +69,11 @@ export function AdminLayout({ userRole }: AdminLayoutProps) {
       <div className="h-screen overflow-hidden flex w-full">
         <AdminSidebar userRole={userRole} />
         <SidebarInset className="flex-1 flex flex-col min-h-0 min-w-0 overflow-hidden">
-          <header className="flex h-14 items-center gap-4 border-b border-border bg-background px-6 shrink-0">
-            <SidebarTrigger className="-ml-2" />
+          <header className="flex h-14 items-center gap-3 border-b border-border bg-background px-4 sm:px-6 shrink-0">
+            <SidebarTrigger className="-ml-2 shrink-0" />
+            <div className="flex-1 flex justify-center min-w-0">
+              <AdminCommandPalette userRole={userRole} />
+            </div>
             <AdminLayoutDebugToggle routeKey={location.pathname} />
           </header>
           <main 
