@@ -605,7 +605,9 @@ export function DynamicAssessmentHistory({
                                   variant="outline"
                                   className="bg-primary/10 border-primary/25 text-primary font-semibold"
                                 >
-                                  {record.total_score} 分
+                                  {isMaleMidlifeVitality
+                                    ? `有劲状态指数 ${toVitalityStatusScore(record.total_score, (dimScores.reduce((s: number, d: any) => s + (d.maxScore || 0), 0)) || record.total_score)}%`
+                                    : `${record.total_score} 分`}
                                 </Badge>
                                 <span className="text-xs text-muted-foreground truncate">{record.primary_pattern}</span>
                               </div>
@@ -645,15 +647,29 @@ export function DynamicAssessmentHistory({
                         </div>
                         {dimScores.length > 0 && (
                           <div className="flex flex-wrap gap-1.5 mt-1">
-                            {dimScores.map((d: any) => (
-                              <Badge
-                                key={d.label}
-                                variant="secondary"
-                                className="text-xs bg-muted/50 backdrop-blur-sm border border-border/30 hover:bg-muted/70 transition-colors"
-                              >
-                                {d.emoji} {d.label} {d.score}/{d.maxScore}
-                              </Badge>
-                            ))}
+                            {dimScores.map((d: any) => {
+                              if (isMaleMidlifeVitality) {
+                                const pct = toVitalityStatusScore(d.score || 0, d.maxScore || 0);
+                                return (
+                                  <Badge
+                                    key={d.label}
+                                    variant="secondary"
+                                    className="text-xs bg-muted/50 backdrop-blur-sm border border-border/30 hover:bg-muted/70 transition-colors"
+                                  >
+                                    {d.emoji} {remapVitalityLabel(d.label)} {pct}% · {getVitalityToneText(pct)}
+                                  </Badge>
+                                );
+                              }
+                              return (
+                                <Badge
+                                  key={d.label}
+                                  variant="secondary"
+                                  className="text-xs bg-muted/50 backdrop-blur-sm border border-border/30 hover:bg-muted/70 transition-colors"
+                                >
+                                  {d.emoji} {d.label} {d.score}/{d.maxScore}
+                                </Badge>
+                              );
+                            })}
                           </div>
                         )}
                       </CardContent>
