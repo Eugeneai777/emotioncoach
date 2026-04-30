@@ -403,6 +403,7 @@ export default function DramaScriptGenerator() {
   const [confirmedStyleLock, setConfirmedStyleLock] = useState("");
   const [locksConfirmed, setLocksConfirmed] = useState(false);
   const [batchGenerating, setBatchGenerating] = useState(false);
+  const [continuityNotice, setContinuityNotice] = useState<ContinuityCheckNotice | null>(null);
   const [merging, setMerging] = useState(false);
   const pollingRefs = useRef<Record<number, ReturnType<typeof setInterval>>>({});
 
