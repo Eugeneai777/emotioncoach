@@ -15,7 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { extractEdgeFunctionError } from "@/lib/edgeFunctionError";
 import { mergeVideosClientSide } from "@/utils/videoMerger";
 import { toast } from "sonner";
-import { Copy, Loader2, Download, Clapperboard, User, Film, Sparkles, ShoppingCart, Target, MessageSquare, Video, Play, Square, Check, X, Mic, Volume2, RefreshCw, Save, Library, Trash2, Wand2, Image as ImageIcon } from "lucide-react";
+import { Copy, Loader2, Download, Clapperboard, User, Film, Sparkles, ShoppingCart, Target, MessageSquare, Video, Play, Square, Check, X, Mic, Volume2, RefreshCw, Save, Library, Trash2, Wand2, Image as ImageIcon, AlertTriangle } from "lucide-react";
 
 const GENRES = [
   { value: "suspense", label: "🔍 悬疑推理" },
@@ -234,6 +234,12 @@ interface SceneImageState {
   error?: string;
 }
 
+interface ContinuityCheckNotice {
+  missingPrimaryReference: boolean;
+  missingSceneNumbers: number[];
+  checkedAt: number;
+}
+
 function base64ToBlob(base64: string, mimeType: string): Blob {
   const byteChars = atob(base64);
   const byteNums = new Uint8Array(byteChars.length);
@@ -397,6 +403,7 @@ export default function DramaScriptGenerator() {
   const [confirmedStyleLock, setConfirmedStyleLock] = useState("");
   const [locksConfirmed, setLocksConfirmed] = useState(false);
   const [batchGenerating, setBatchGenerating] = useState(false);
+  const [continuityNotice, setContinuityNotice] = useState<ContinuityCheckNotice | null>(null);
   const [merging, setMerging] = useState(false);
   const pollingRefs = useRef<Record<number, ReturnType<typeof setInterval>>>({});
 
@@ -535,6 +542,7 @@ export default function DramaScriptGenerator() {
     setSceneImages({});
     setCharacterImages({});
     setSequelGenerationError(null);
+    setContinuityNotice(null);
     // Clear all polling
     Object.values(pollingRefs.current).forEach(clearInterval);
     pollingRefs.current = {};
@@ -572,6 +580,7 @@ export default function DramaScriptGenerator() {
     setSceneAudios({});
     setSceneImages({});
     setCharacterImages({});
+    setContinuityNotice(null);
     Object.values(pollingRefs.current).forEach(clearInterval);
     pollingRefs.current = {};
   };
@@ -625,14 +634,17 @@ export default function DramaScriptGenerator() {
 
   const buildScriptWithGeneratedImages = useCallback((): DramaScript | null => {
     if (!result) return null;
+    const primary = result.characters?.[0];
+    const primaryLockText = confirmedPrimaryLock || (primary ? `${primary.name}：${primary.description}\n固定视觉：${primary.imagePrompt}\n要求：保持同一位人物一，不要改变脸型、年龄感、发型、服装、身材、气质和身份，不要替换主角。` : "");
+    const styleLockText = confirmedStyleLock || STYLE_LOCKS[style] || STYLE_LOCKS.realistic;
     return {
       ...result,
       primaryCharacterLock: {
         ...(result.primaryCharacterLock || buildPrimaryCharacterLockCard(result)!),
-        confirmedPrompt: buildPrimaryCharacterLock(),
+        confirmedPrompt: primaryLockText,
         referenceImageUrl: characterImages[0]?.imageUrl || result.primaryCharacterLock?.referenceImageUrl || result.characters[0]?.referenceImageUrl,
       },
-      styleLockPrompt: buildStyleLock(),
+      styleLockPrompt: styleLockText,
       conversionStyles: mode === "youjin" ? conversionStyles : undefined,
       characters: result.characters.map((char, index) => ({
         ...char,
@@ -643,7 +655,7 @@ export default function DramaScriptGenerator() {
         generatedImageUrl: sceneImages[scene.sceneNumber]?.imageUrl || scene.generatedImageUrl,
       })),
     };
-  }, [buildPrimaryCharacterLock, buildStyleLock, characterImages, conversionStyles, mode, result, sceneImages]);
+  }, [characterImages, confirmedPrimaryLock, confirmedStyleLock, conversionStyles, mode, result, sceneImages, style]);
 
   const loadSavedScript = (script: SavedDramaScript) => {
     setMode(script.mode || "generic");
@@ -668,6 +680,7 @@ export default function DramaScriptGenerator() {
     setSceneVideos({});
     setVideoPreviewFallbacks({});
     setSceneAudios({});
+    setContinuityNotice(null);
     Object.values(pollingRefs.current).forEach(clearInterval);
     pollingRefs.current = {};
     toast.success(`已载入《${script.title}》第${script.episode_number}集`);
@@ -988,6 +1001,41 @@ export default function DramaScriptGenerator() {
     toast.info("分镜图片批量生成已完成");
   };
 
+  const getContinuityGaps = useCallback((): ContinuityCheckNotice | null => {
+    if (!result) return null;
+    const missingPrimaryReference = !Boolean(characterImages[0]?.imageUrl || result.primaryCharacterLock?.referenceImageUrl || result.characters[0]?.referenceImageUrl);
+    const missingSceneNumbers = result.scenes
+      .filter((scene) => !Boolean(sceneImages[scene.sceneNumber]?.imageUrl || scene.generatedImageUrl))
+      .map((scene) => scene.sceneNumber);
+    if (!missingPrimaryReference && missingSceneNumbers.length === 0) return null;
+    return { missingPrimaryReference, missingSceneNumbers, checkedAt: Date.now() };
+  }, [characterImages, result, sceneImages]);
+
+  const handleGenerateMissingSceneImages = async () => {
+    if (!result) return;
+    const notice = getContinuityGaps();
+    const missingSceneNumbers = notice?.missingSceneNumbers || [];
+    if (missingSceneNumbers.length === 0) {
+      toast.success("分镜图已完整");
+      return;
+    }
+    setBatchGeneratingImages(true);
+    let previousImageUrl: string | undefined;
+    for (const scene of result.scenes) {
+      const existingImageUrl = sceneImages[scene.sceneNumber]?.imageUrl || scene.generatedImageUrl;
+      if (existingImageUrl) {
+        previousImageUrl = existingImageUrl;
+        continue;
+      }
+      if (!missingSceneNumbers.includes(scene.sceneNumber)) continue;
+      const imageUrl = await generateSceneImage(scene, previousImageUrl ? [previousImageUrl] : []);
+      if (imageUrl) previousImageUrl = imageUrl;
+      await new Promise((r) => setTimeout(r, 1200));
+    }
+    setBatchGeneratingImages(false);
+    toast.success("缺失分镜图已补生成");
+  };
+
   const downloadImage = async (url: string, label: string) => {
     try {
       const response = await fetch(url);
@@ -1095,11 +1143,13 @@ export default function DramaScriptGenerator() {
     if (!locksConfirmed) {
       toast.info("请先确认人物一锁定卡和统一风格锁定卡，系统仍将使用当前文案继续提交视频。", { duration: 5000 });
     }
-    const hasPrimaryRef = Boolean(characterImages[0]?.imageUrl || result.primaryCharacterLock?.referenceImageUrl || result.characters[0]?.referenceImageUrl);
-    const imageCount = result.scenes.filter((scene) => sceneImages[scene.sceneNumber]?.imageUrl).length;
-    if (!hasPrimaryRef || imageCount < result.scenes.length) {
-      toast.info("建议先生成“人物一参考图”和“全部分镜图片”，这样 8 个镜头的人物与风格更一致。仍将继续提交视频。", { duration: 6000 });
+    const gaps = getContinuityGaps();
+    if (gaps) {
+      setContinuityNotice(gaps);
+      toast.warning("连续性检查发现缺少参考图，请先确认是否补生成后再批量提交。", { duration: 6000 });
+      return;
     }
+    setContinuityNotice(null);
     setBatchGenerating(true);
     for (const scene of result.scenes) {
       const state = sceneVideos[scene.sceneNumber];
@@ -1110,6 +1160,20 @@ export default function DramaScriptGenerator() {
     }
     setBatchGenerating(false);
     toast.info("所有分镜已提交，请等待生成完成");
+  };
+
+  const handleContinueBatchGenerateAnyway = async () => {
+    if (!result) return;
+    setContinuityNotice(null);
+    setBatchGenerating(true);
+    for (const scene of result.scenes) {
+      const state = sceneVideos[scene.sceneNumber];
+      if (state?.status === "done") continue;
+      await generateSceneVideo(scene);
+      await new Promise(r => setTimeout(r, 1000));
+    }
+    setBatchGenerating(false);
+    toast.info("已按当前参考图提交全部分镜");
   };
 
   const allVideosDone = result?.scenes.every(s => sceneVideos[s.sceneNumber]?.status === "done") ?? false;
@@ -2137,6 +2201,36 @@ export default function DramaScriptGenerator() {
                   </div>
                 </div>
               </div>
+
+              {continuityNotice && (
+                <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm">
+                  <div className="mb-2 flex items-center gap-2 font-medium text-destructive">
+                    <AlertTriangle className="h-4 w-4" /> 连续性检查：参考素材不完整
+                  </div>
+                  <div className="space-y-1 text-xs text-muted-foreground">
+                    {continuityNotice.missingPrimaryReference && <p>缺少人物一参考图：建议先补生成，作为后续全部镜头图生视频的人物锚点。</p>}
+                    {continuityNotice.missingSceneNumbers.length > 0 && <p>缺少分镜图：镜头 {continuityNotice.missingSceneNumbers.join("、")}。建议补齐后再批量生成视频。</p>}
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {continuityNotice.missingPrimaryReference && (
+                      <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={handleGenerateAndSavePrimaryReference} disabled={characterImages[0]?.status === "generating" || generatingCharacterRefs}>
+                        {characterImages[0]?.status === "generating" ? <Loader2 className="h-3 w-3 animate-spin" /> : <User className="h-3 w-3" />} 补生成人物一参考图
+                      </Button>
+                    )}
+                    {continuityNotice.missingSceneNumbers.length > 0 && (
+                      <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={handleGenerateMissingSceneImages} disabled={batchGeneratingImages || anyImageGenerating}>
+                        {batchGeneratingImages ? <Loader2 className="h-3 w-3 animate-spin" /> : <ImageIcon className="h-3 w-3" />} 补生成缺失分镜图
+                      </Button>
+                    )}
+                    <Button size="sm" className="h-8 gap-1.5 text-xs" onClick={handleBatchGenerate} disabled={batchGenerating || anyVideoGenerating || batchGeneratingImages || anyImageGenerating}>
+                      <RefreshCw className="h-3 w-3" /> 重新检查并生成
+                    </Button>
+                    <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={handleContinueBatchGenerateAnyway} disabled={batchGenerating || anyVideoGenerating}>
+                      仍然按当前素材生成
+                    </Button>
+                  </div>
+                </div>
+              )}
 
               {/* Batch controls */}
               <div className="flex w-full min-w-0 flex-wrap items-center gap-3 overflow-hidden">
