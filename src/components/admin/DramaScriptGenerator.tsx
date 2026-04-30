@@ -2065,6 +2065,9 @@ export default function DramaScriptGenerator() {
                     <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => copyToClipboard(buildPrimaryCharacterLock(), "人物一锁定词")}>
                       <Copy className="h-3 w-3" /> 复制
                     </Button>
+                    <Button size="sm" className="h-7 gap-1 text-xs" onClick={() => { setLocksConfirmed(true); toast.success("人物一与统一风格锁定卡已确认"); }}>
+                      <Check className="h-3 w-3" /> 确认锁定卡
+                    </Button>
                   </div>
                 </div>
                 <div className="rounded-lg border bg-muted/30 p-3 min-w-0 overflow-hidden">
@@ -2082,6 +2085,9 @@ export default function DramaScriptGenerator() {
                     <span className="text-xs text-muted-foreground">8镜头 × 10秒 ≈ 80秒；短视频可前后5秒、中段10秒。</span>
                     <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => copyToClipboard(buildStyleLock(), "统一风格锁定词")}>
                       <Copy className="h-3 w-3" /> 复制
+                    </Button>
+                    <Button variant="outline" size="sm" className="h-7 gap-1 text-xs" onClick={() => { setConfirmedPrimaryLock(formatPrimaryCharacterLock(result)); setConfirmedStyleLock(STYLE_LOCKS[style] || STYLE_LOCKS.realistic); setLocksConfirmed(false); }}>
+                      <RefreshCw className="h-3 w-3" /> 恢复默认
                     </Button>
                   </div>
                 </div>
