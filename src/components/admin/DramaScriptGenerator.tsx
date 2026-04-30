@@ -539,6 +539,7 @@ export default function DramaScriptGenerator() {
     setResult(null);
     setSceneVideos({});
     setVideoPreviewFallbacks({});
+    setSceneKeepReferences({});
     setSceneAudios({});
     setSceneImages({});
     setCharacterImages({});
@@ -581,6 +582,7 @@ export default function DramaScriptGenerator() {
     setSceneAudios({});
     setSceneImages({});
     setCharacterImages({});
+    setSceneKeepReferences({});
     setContinuityNotice(null);
     Object.values(pollingRefs.current).forEach(clearInterval);
     pollingRefs.current = {};
@@ -680,6 +682,7 @@ export default function DramaScriptGenerator() {
     setActiveSavedScript(script);
     setSceneVideos({});
     setVideoPreviewFallbacks({});
+    setSceneKeepReferences({});
     setSceneAudios({});
     setContinuityNotice(null);
     Object.values(pollingRefs.current).forEach(clearInterval);
