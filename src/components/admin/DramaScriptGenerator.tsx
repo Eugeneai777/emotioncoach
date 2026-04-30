@@ -2270,15 +2270,25 @@ export default function DramaScriptGenerator() {
                           {/* Video generation per scene */}
                           <div className="flex items-center gap-2 flex-wrap pt-1">
                             {videoState.status === "idle" && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="gap-1.5 text-xs h-8"
-                                onClick={() => generateSceneVideo(scene)}
-                                disabled={anyVideoGenerating && videoState.status === "idle"}
-                              >
-                                <Video className="h-3 w-3" /> 生成本镜头视频
-                              </Button>
+                              <div className="flex flex-wrap items-center gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="gap-1.5 text-xs h-8"
+                                  onClick={() => generateSceneVideo(scene)}
+                                  disabled={anyVideoGenerating && videoState.status === "idle"}
+                                >
+                                  <Video className="h-3 w-3" /> 生成本镜头视频
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  className="gap-1.5 text-xs h-8"
+                                  onClick={() => generateSceneVideo(scene, 10)}
+                                  disabled={anyVideoGenerating && videoState.status === "idle"}
+                                >
+                                  <Video className="h-3 w-3" /> 生成10秒视频
+                                </Button>
+                              </div>
                             )}
 
                             {(videoState.status === "submitting" || videoState.status === "in_queue" || videoState.status === "generating") && (
