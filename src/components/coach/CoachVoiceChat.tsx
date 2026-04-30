@@ -2359,6 +2359,11 @@ export const CoachVoiceChat = ({
           </Button>
         </div>
       )}
+      {isRecoveringConnection && (
+        <div className="mx-4 mt-3 rounded-full bg-white/[0.08] px-4 py-2 text-center text-xs font-medium text-white/75 backdrop-blur-md animate-in fade-in slide-in-from-top-1 duration-300">
+          网络波动，正在恢复…
+        </div>
+      )}
       {/* 顶部状态栏 - 小程序环境预留胶囊按钮空间 */}
       <div className={`flex items-center justify-between p-4 ${useMiniProgramMode ? 'pt-2' : 'pt-safe'}`}>
         {/* 左侧：返回按钮 */}
