@@ -40,6 +40,7 @@ import { ExperiencePackageManagement } from "./ExperiencePackageManagement";
 import CommunityPostsManagement from "./CommunityPostsManagement";
 import ContentAdminDashboard from "./ContentAdminDashboard";
 import AssessmentsManagement from "./AssessmentsManagement";
+import AssessmentInsightsDetail from "./AssessmentInsightsDetail";
 import FlywheelDashboard from "./flywheel/FlywheelDashboard";
 import FlywheelCampaigns from "./flywheel/FlywheelCampaigns";
 import FlywheelFunnel from "./flywheel/FlywheelFunnel";
