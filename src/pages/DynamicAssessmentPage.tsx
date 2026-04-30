@@ -231,10 +231,17 @@ export default function DynamicAssessmentPage() {
     );
   }
 
+  // 链接分享卡片（OG meta + 微信 JSSDK）映射：测评 key -> og_configurations.page_key
+  const OG_PAGE_KEY_MAP: Record<string, string> = {
+    male_midlife_vitality: 'maleMidlifeVitalityAssessment',
+  };
+  const ogPageKey = template?.assessment_key ? OG_PAGE_KEY_MAP[template.assessment_key] : undefined;
+
   // === INTRO ===
   if (phase === "intro") {
     return (
       <div className="h-screen overflow-y-auto overscroll-contain bg-background" style={{ WebkitOverflowScrolling: 'touch' }}>
+        {ogPageKey && <DynamicOGMeta pageKey={ogPageKey} />}
         <PageHeader
           title={template.title}
           showBack={true}
