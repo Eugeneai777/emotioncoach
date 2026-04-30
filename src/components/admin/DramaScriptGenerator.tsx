@@ -1906,6 +1906,33 @@ export default function DramaScriptGenerator() {
                 )}
               </div>
 
+              <div className="grid w-full min-w-0 grid-cols-1 gap-3 overflow-hidden lg:grid-cols-2">
+                <div className="rounded-lg border bg-muted/30 p-3 min-w-0 overflow-hidden">
+                  <div className="mb-2 flex items-center gap-2 text-sm font-medium">
+                    <User className="h-4 w-4" /> 人物一锁定
+                  </div>
+                  <p className="text-xs text-muted-foreground break-words whitespace-pre-line">{buildPrimaryCharacterLock()}</p>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    {characterImages[0]?.imageUrl ? <span className="text-xs text-primary">已使用人物一定妆图作为视频参考</span> : <span className="text-xs text-muted-foreground">建议先生成角色定妆图</span>}
+                    <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => copyToClipboard(buildPrimaryCharacterLock(), "人物一锁定词")}>
+                      <Copy className="h-3 w-3" /> 复制
+                    </Button>
+                  </div>
+                </div>
+                <div className="rounded-lg border bg-muted/30 p-3 min-w-0 overflow-hidden">
+                  <div className="mb-2 flex items-center gap-2 text-sm font-medium">
+                    <Clapperboard className="h-4 w-4" /> 统一风格锁定
+                  </div>
+                  <p className="text-xs text-muted-foreground break-words">{buildStyleLock()}</p>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <span className="text-xs text-muted-foreground">8镜头 × 10秒 ≈ 80秒；短视频可前后5秒、中段10秒。</span>
+                    <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => copyToClipboard(buildStyleLock(), "统一风格锁定词")}>
+                      <Copy className="h-3 w-3" /> 复制
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
               <div className="grid w-full min-w-0 grid-cols-1 gap-4 overflow-hidden sm:grid-cols-2">
                 <div className="w-full min-w-0 space-y-2 overflow-hidden">
                   <Label className="text-xs">画面比例</Label>
