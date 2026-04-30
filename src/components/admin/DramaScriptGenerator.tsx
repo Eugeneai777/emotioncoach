@@ -4,6 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -133,6 +134,7 @@ interface PrimaryCharacterLockCard {
   identityAndTemperament: string;
   visualPrompt: string;
   negativePrompt: string;
+  confirmedPrompt?: string;
   referenceImageUrl?: string;
   createdAt: string;
 }
@@ -177,6 +179,7 @@ interface DramaScript {
     nextEpisodeHook: string;
   };
   primaryCharacterLock?: PrimaryCharacterLockCard;
+  styleLockPrompt?: string;
   characters: Character[];
   scenes: Scene[];
   totalScenes: number;
@@ -300,6 +303,17 @@ const ensurePrimaryCharacterLock = (script: DramaScript): DramaScript => ({
   primaryCharacterLock: script.primaryCharacterLock || buildPrimaryCharacterLockCard(script),
 });
 
+const formatPrimaryCharacterLock = (script?: DramaScript | null) => {
+  const lock = script?.primaryCharacterLock || buildPrimaryCharacterLockCard(script);
+  if (!lock) return "";
+  return `${lock.name}
+固定外貌：${lock.fixedAppearance}
+固定服装：${lock.fixedOutfit}
+身份气质：${lock.identityAndTemperament}
+视觉提示：${lock.visualPrompt}
+负面提示：${lock.negativePrompt}`;
+};
+
 const summarizeSceneForSequel = (scene?: Scene) => {
   if (!scene) return "上一集结尾暂无摘要";
   return [scene.characterAction, scene.dialogue || scene.narration]
@@ -379,6 +393,9 @@ export default function DramaScriptGenerator() {
   const [videoDuration, setVideoDuration] = useState(5);
   const [sceneVideos, setSceneVideos] = useState<Record<number, SceneVideoState>>({});
   const [videoPreviewFallbacks, setVideoPreviewFallbacks] = useState<Record<number, boolean>>({});
+  const [confirmedPrimaryLock, setConfirmedPrimaryLock] = useState("");
+  const [confirmedStyleLock, setConfirmedStyleLock] = useState("");
+  const [locksConfirmed, setLocksConfirmed] = useState(false);
   const [batchGenerating, setBatchGenerating] = useState(false);
   const [merging, setMerging] = useState(false);
   const pollingRefs = useRef<Record<number, ReturnType<typeof setInterval>>>({});
@@ -534,7 +551,11 @@ export default function DramaScriptGenerator() {
       if (data?.error || error) {
         throw new Error(await extractEdgeFunctionError(data, error, "生成失败，请稍后重试"));
       }
-      setResult(ensurePrimaryCharacterLock(data as DramaScript));
+      const generatedScript = ensurePrimaryCharacterLock(data as DramaScript);
+      setResult(generatedScript);
+      setConfirmedPrimaryLock(generatedScript.primaryCharacterLock?.confirmedPrompt || formatPrimaryCharacterLock(generatedScript));
+      setConfirmedStyleLock(generatedScript.styleLockPrompt || STYLE_LOCKS[style] || STYLE_LOCKS.realistic);
+      setLocksConfirmed(false);
       setSavedScriptId(null);
       setActiveSavedScript(null);
       toast.success("脚本生成成功！");
@@ -608,8 +629,10 @@ export default function DramaScriptGenerator() {
       ...result,
       primaryCharacterLock: {
         ...(result.primaryCharacterLock || buildPrimaryCharacterLockCard(result)!),
+        confirmedPrompt: buildPrimaryCharacterLock(),
         referenceImageUrl: characterImages[0]?.imageUrl || result.primaryCharacterLock?.referenceImageUrl || result.characters[0]?.referenceImageUrl,
       },
+      styleLockPrompt: buildStyleLock(),
       conversionStyles: mode === "youjin" ? conversionStyles : undefined,
       characters: result.characters.map((char, index) => ({
         ...char,
@@ -620,7 +643,7 @@ export default function DramaScriptGenerator() {
         generatedImageUrl: sceneImages[scene.sceneNumber]?.imageUrl || scene.generatedImageUrl,
       })),
     };
-  }, [characterImages, conversionStyles, mode, result, sceneImages]);
+  }, [buildPrimaryCharacterLock, buildStyleLock, characterImages, conversionStyles, mode, result, sceneImages]);
 
   const loadSavedScript = (script: SavedDramaScript) => {
     setMode(script.mode || "generic");
@@ -631,7 +654,11 @@ export default function DramaScriptGenerator() {
     setTargetAudience(script.target_audience || "women");
     setConversionStyles(normalizeConversionStyles(script.script_data?.conversionStyles || script.conversion_style));
     setSelectedProducts(new Set((script.selected_products || []).map((p) => p.key)));
-    setResult(ensurePrimaryCharacterLock(script.script_data));
+    const loadedScript = ensurePrimaryCharacterLock(script.script_data);
+    setResult(loadedScript);
+    setConfirmedPrimaryLock(loadedScript.primaryCharacterLock?.confirmedPrompt || formatPrimaryCharacterLock(loadedScript));
+    setConfirmedStyleLock(loadedScript.styleLockPrompt || STYLE_LOCKS[script.style || style] || STYLE_LOCKS.realistic);
+    setLocksConfirmed(Boolean(loadedScript.primaryCharacterLock));
     setSequelGenerationError(null);
     setSequelGenerationSource(null);
     setSceneImages(Object.fromEntries((script.script_data?.scenes || []).filter((s) => s.generatedImageUrl).map((s) => [s.sceneNumber, { status: "done", imageUrl: s.generatedImageUrl! }])));
@@ -717,7 +744,11 @@ export default function DramaScriptGenerator() {
       if ((data as DramaScript).consistencyCheck && ((data as DramaScript).consistencyCheck?.overallScore || 100) < CONSISTENCY_THRESHOLD) {
         toast.error(`一致性评分 ${(data as DramaScript).consistencyCheck?.overallScore}，建议重新生成一次`);
       }
-      setPendingSequel({ source: script, script: ensurePrimaryCharacterLock(data as DramaScript), products: productsForSequel, conversionStyles: sequelConversionStyles });
+      const sequelScript = ensurePrimaryCharacterLock(data as DramaScript);
+      setPendingSequel({ source: script, script: sequelScript, products: productsForSequel, conversionStyles: sequelConversionStyles });
+      setConfirmedPrimaryLock(sequelScript.primaryCharacterLock?.confirmedPrompt || formatPrimaryCharacterLock(sequelScript));
+      setConfirmedStyleLock(sequelScript.styleLockPrompt || STYLE_LOCKS[style] || STYLE_LOCKS.realistic);
+      setLocksConfirmed(false);
       toast.success(`已生成第${script.episode_number + 1}集续集预览，未替换前不会改当前脚本`);
     } catch (e: any) {
       const message = e.message || "续集生成失败";
@@ -1061,7 +1092,10 @@ export default function DramaScriptGenerator() {
 
   const handleBatchGenerate = async () => {
     if (!result) return;
-    const hasPrimaryRef = Boolean(characterImages[0]?.imageUrl);
+    if (!locksConfirmed) {
+      toast.info("请先确认人物一锁定卡和统一风格锁定卡，系统仍将使用当前文案继续提交视频。", { duration: 5000 });
+    }
+    const hasPrimaryRef = Boolean(characterImages[0]?.imageUrl || result.primaryCharacterLock?.referenceImageUrl || result.characters[0]?.referenceImageUrl);
     const imageCount = result.scenes.filter((scene) => sceneImages[scene.sceneNumber]?.imageUrl).length;
     if (!hasPrimaryRef || imageCount < result.scenes.length) {
       toast.info("建议先生成“人物一参考图”和“全部分镜图片”，这样 8 个镜头的人物与风格更一致。仍将继续提交视频。", { duration: 6000 });
@@ -2004,8 +2038,9 @@ export default function DramaScriptGenerator() {
 
               <div className="grid w-full min-w-0 grid-cols-1 gap-3 overflow-hidden lg:grid-cols-2">
                 <div className="rounded-lg border bg-muted/30 p-3 min-w-0 overflow-hidden">
-                  <div className="mb-2 flex items-center gap-2 text-sm font-medium">
-                    <User className="h-4 w-4" /> 人物一锁定
+                  <div className="mb-2 flex items-center justify-between gap-2 text-sm font-medium">
+                    <span className="flex items-center gap-2"><User className="h-4 w-4" /> 人物一锁定卡</span>
+                    {locksConfirmed && <span className="text-xs text-primary">已确认</span>}
                   </div>
                   {result.primaryCharacterLock && (
                     <div className="mb-2 grid grid-cols-1 gap-1 text-xs text-muted-foreground sm:grid-cols-2">
@@ -2013,7 +2048,12 @@ export default function DramaScriptGenerator() {
                       <div className="break-words"><span className="font-medium text-foreground">固定服装：</span>{result.primaryCharacterLock.fixedOutfit}</div>
                     </div>
                   )}
-                  <p className="text-xs text-muted-foreground break-words whitespace-pre-line">{buildPrimaryCharacterLock()}</p>
+                  <Textarea
+                    value={confirmedPrimaryLock}
+                    onChange={(event) => { setConfirmedPrimaryLock(event.target.value); setLocksConfirmed(false); }}
+                    className="min-h-36 text-xs leading-relaxed"
+                    placeholder="确认或手动调整人物一固定外貌、服装、身份气质、视觉提示和负面提示"
+                  />
                   <div className="mt-2 flex flex-wrap items-center gap-2">
                     {characterImages[0]?.imageUrl || result.primaryCharacterLock?.referenceImageUrl ? <span className="text-xs text-primary">已使用人物一参考图作为即梦图生视频参考</span> : <span className="text-xs text-muted-foreground">建议先生成并保存人物一参考图</span>}
                     <Button
@@ -2029,17 +2069,29 @@ export default function DramaScriptGenerator() {
                     <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => copyToClipboard(buildPrimaryCharacterLock(), "人物一锁定词")}>
                       <Copy className="h-3 w-3" /> 复制
                     </Button>
+                    <Button size="sm" className="h-7 gap-1 text-xs" onClick={() => { setLocksConfirmed(true); toast.success("人物一与统一风格锁定卡已确认"); }}>
+                      <Check className="h-3 w-3" /> 确认锁定卡
+                    </Button>
                   </div>
                 </div>
                 <div className="rounded-lg border bg-muted/30 p-3 min-w-0 overflow-hidden">
-                  <div className="mb-2 flex items-center gap-2 text-sm font-medium">
-                    <Clapperboard className="h-4 w-4" /> 统一风格锁定
+                  <div className="mb-2 flex items-center justify-between gap-2 text-sm font-medium">
+                    <span className="flex items-center gap-2"><Clapperboard className="h-4 w-4" /> 统一风格锁定卡</span>
+                    {locksConfirmed && <span className="text-xs text-primary">已确认</span>}
                   </div>
-                  <p className="text-xs text-muted-foreground break-words">{buildStyleLock()}</p>
+                  <Textarea
+                    value={confirmedStyleLock}
+                    onChange={(event) => { setConfirmedStyleLock(event.target.value); setLocksConfirmed(false); }}
+                    className="min-h-36 text-xs leading-relaxed"
+                    placeholder="确认或手动调整统一画风、光影、色调、镜头语言和负面限制"
+                  />
                   <div className="mt-2 flex flex-wrap items-center gap-2">
                     <span className="text-xs text-muted-foreground">8镜头 × 10秒 ≈ 80秒；短视频可前后5秒、中段10秒。</span>
                     <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => copyToClipboard(buildStyleLock(), "统一风格锁定词")}>
                       <Copy className="h-3 w-3" /> 复制
+                    </Button>
+                    <Button variant="outline" size="sm" className="h-7 gap-1 text-xs" onClick={() => { setConfirmedPrimaryLock(formatPrimaryCharacterLock(result)); setConfirmedStyleLock(STYLE_LOCKS[style] || STYLE_LOCKS.realistic); setLocksConfirmed(false); }}>
+                      <RefreshCw className="h-3 w-3" /> 恢复默认
                     </Button>
                   </div>
                 </div>
