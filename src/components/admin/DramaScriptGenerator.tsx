@@ -998,6 +998,41 @@ export default function DramaScriptGenerator() {
     toast.info("分镜图片批量生成已完成");
   };
 
+  const getContinuityGaps = useCallback((): ContinuityCheckNotice | null => {
+    if (!result) return null;
+    const missingPrimaryReference = !Boolean(characterImages[0]?.imageUrl || result.primaryCharacterLock?.referenceImageUrl || result.characters[0]?.referenceImageUrl);
+    const missingSceneNumbers = result.scenes
+      .filter((scene) => !Boolean(sceneImages[scene.sceneNumber]?.imageUrl || scene.generatedImageUrl))
+      .map((scene) => scene.sceneNumber);
+    if (!missingPrimaryReference && missingSceneNumbers.length === 0) return null;
+    return { missingPrimaryReference, missingSceneNumbers, checkedAt: Date.now() };
+  }, [characterImages, result, sceneImages]);
+
+  const handleGenerateMissingSceneImages = async () => {
+    if (!result) return;
+    const notice = getContinuityGaps();
+    const missingSceneNumbers = notice?.missingSceneNumbers || [];
+    if (missingSceneNumbers.length === 0) {
+      toast.success("分镜图已完整");
+      return;
+    }
+    setBatchGeneratingImages(true);
+    let previousImageUrl: string | undefined;
+    for (const scene of result.scenes) {
+      const existingImageUrl = sceneImages[scene.sceneNumber]?.imageUrl || scene.generatedImageUrl;
+      if (existingImageUrl) {
+        previousImageUrl = existingImageUrl;
+        continue;
+      }
+      if (!missingSceneNumbers.includes(scene.sceneNumber)) continue;
+      const imageUrl = await generateSceneImage(scene, previousImageUrl ? [previousImageUrl] : []);
+      if (imageUrl) previousImageUrl = imageUrl;
+      await new Promise((r) => setTimeout(r, 1200));
+    }
+    setBatchGeneratingImages(false);
+    toast.success("缺失分镜图已补生成");
+  };
+
   const downloadImage = async (url: string, label: string) => {
     try {
       const response = await fetch(url);
