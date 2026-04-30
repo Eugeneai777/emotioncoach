@@ -389,6 +389,14 @@ const App = () => (
                   </div>
                 }
               />
+              <Route
+                path="/drama-script"
+                element={
+                  <div className="min-h-screen overflow-x-hidden bg-background p-4 md:p-6">
+                    <DramaScriptGenerator />
+                  </div>
+                }
+              />
               <Route path="/admin/*" element={<Admin />} />
               <Route path="/packages" element={<Packages />} />
               <Route path="/deployment-package" element={<DeploymentPackage />} />
