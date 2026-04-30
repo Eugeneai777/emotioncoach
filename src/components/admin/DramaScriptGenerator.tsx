@@ -2333,6 +2333,14 @@ export default function DramaScriptGenerator() {
                                 >
                                   重试
                                 </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-xs h-7"
+                                  onClick={() => generateSceneVideo(scene, 10)}
+                                >
+                                  重试10秒
+                                </Button>
                               </div>
                             )}
                           </div>
