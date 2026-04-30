@@ -1,86 +1,70 @@
-## 背景与商业价值
+## 后台全局功能搜索（Command Palette）
 
-**目标用户**：35-55 岁高压中年男性，他们做完测评后有强烈的"被理解、被跟进"需求。运营如果能在 24-48h 内基于测评结果定向触达（电话/微信），转化率显著高于群发。
+### 目标
+后台菜单层级深、功能多（用户/订单/合伙人/绽放/内容/飞轮/运营/安全/配置 9+ 大类，60+ 子项），用户找不到「测评管理」「数据洞察」等具体功能。增加一个**全局搜索**，输入关键词即刻定位并跳转到任意后台功能。
 
-**现状**：测评数据 (`partner_assessment_results`) 已落库（截至现在 6 个用户、11 次测评），但后台没有"按测评维度查看人员"的入口，运营拿不到名单。
+### 核心设计
 
-**已有基础**（无需重建）：
-- `partner_assessment_templates` + `partner_assessment_results` 表已完整记录（含 user_id、维度分、主导类型、AI 洞察、时间）
-- `usePartnerAssessmentAnalytics` hook 已实现单测评的统计聚合（人数/分布/趋势）
-- RLS 已允许 `admin` 全量读取
-- 后台侧边栏「内容管理 → 测评管理」入口已存在
+**入口**：在后台顶部 header 居中放一个搜索按钮 `🔍 搜索功能...  ⌘K`（替代/补充现有 header 空白区），点击或按 `⌘K / Ctrl+K` 唤起命令面板。
 
-## 方案：聚焦"测评数据洞察"，分两层
+**面板交互（基于现有 `cmdk` / `CommandDialog` 组件）**：
+- 模糊匹配：标题、中英文关键词、路径
+- 键盘 ↑↓ 选择，Enter 跳转，Esc 关闭
+- 命中后自动 `navigate(path)` 并关闭面板
+- 按一级分组展示（概览 / 用户与订单 / 合伙人 / 内容管理 / 转化飞轮 / 运营数据 / 系统安全 / 系统配置）
 
-```text
-┌─────────────────────────────────────────────────┐
-│ /admin/assessments  现有「测评管理」列表        │
-│  [男人有劲状态评估]   …  [📊 数据洞察] ← 新增  │
-└─────────────────────────────────────────────────┘
-                        ↓ 点击
-┌─────────────────────────────────────────────────┐
-│ /admin/assessments/:id/insights  新增详情页     │
-│                                                 │
-│ ① 顶部 KPI 卡片                                │
-│    总测评人数 / 总测评次数 / 今日新增 / 7日新增│
-│    复测率 (次数 ÷ 人数)                         │
-│                                                 │
-│ ② 用户画像板块                                  │
-│    ├ 主导类型分布 (饼图)                        │
-│    ├ 分数分布 (柱状图)                          │
-│    ├ 各维度均分 (横向条)                        │
-│    └ 30日趋势 (折线)                            │
-│                                                 │
-│ ③ 测评者名单 (核心运营工具)                    │
-│    表格列：头像｜昵称｜手机号｜主导类型         │
-│            ｜总分｜测评时间｜操作               │
-│    操作：[查看明细] [复制手机号] [拨打]         │
-│    筛选：主导类型 / 分数区间 / 时间区间         │
-│    搜索：按昵称/手机号                          │
-│    导出：CSV (含手机号、类型、分数、时间)       │
-│                                                 │
-│ ④ 单条明细抽屉                                  │
-│    完整答题、维度雷达、AI 洞察、历史复测列表    │
-└─────────────────────────────────────────────────┘
+### 数据来源
+
+新建 `src/components/admin/adminNavRegistry.ts`，从现有 `AdminSidebar.tsx` 的 `NAV_GROUPS` 抽取为单一注册表，**两边共用**避免漂移。每条记录扩展 `keywords` 字段补齐别名：
+
+```ts
+{ key: "assessments", label: "测评管理", path: "/admin/assessments", 
+  group: "内容管理", icon: ClipboardList,
+  keywords: ["测评","评估","男人有劲","男士活力","vitality","SCL90","亲子沟通","女性竞争力","家长应对","assessment"] },
+{ key: "assessment-insights", label: "测评数据洞察", path: "/admin/assessments", 
+  group: "内容管理", icon: BarChart3,
+  keywords: ["数据洞察","测评数据","用户画像","参与人数","respondents","insights"] },
 ```
 
-**为什么这样切分**：中年男性用户对"被打标签 + 被针对性沟通"接受度高于推送。给运营的是"姓名+电话+类型+分数"的可执行清单，而不是只看图表。
+为所有 60+ 项补 keywords（覆盖：中文同义词、英文、典型业务词如"绽放/bloom"、"飞轮/flywheel"、"小红书/xhs"、"公众号"、"激活码"等）。
 
-## 文件改动清单
+### 新增组件
 
-**新增**
-1. `src/components/admin/AssessmentInsightsDetail.tsx` — 详情页主组件（KPI + 图表 + 名单 + 抽屉）
-2. `src/hooks/useAdminAssessmentInsights.ts` — 拉取单个 template 的全量结果 + join profiles（display_name, avatar_url, phone, phone_country_code, created_at）
-3. `src/components/admin/AssessmentRespondentDrawer.tsx` — 单个用户明细抽屉（答题/维度/AI 洞察）
+`src/components/admin/AdminCommandPalette.tsx`
+- 使用 shadcn `CommandDialog` + `CommandInput` + `CommandGroup` + `CommandItem`
+- 监听全局 `keydown` (`Cmd/Ctrl+K`) 切换 open
+- 选中后 `navigate(item.path)` + `setOpen(false)`
+- 当输入命中具体测评名（如"男人有劲"）时，额外提供「→ 测评管理」「→ 男人有劲数据洞察」两条精确建议（基于 `useAllAssessments` 动态加载，可选二期）
 
-**修改**
-1. `src/components/admin/AssessmentsManagement.tsx` — 每行卡片新增「📊 数据洞察」按钮，链接到详情页
-2. `src/components/admin/AdminLayout.tsx` — 新增路由 `assessments/:templateId/insights`
+### 集成点
 
-**复用**（无需修改）
-- `usePartnerAssessmentAnalytics`（聚合逻辑直接复用，传 templateId 而非 partnerId 时小改一下，或新写 hook 只查单个）
-- `recharts`（项目已用）
-- `AdminPageLayout` / `AdminStatCard` 现有共享组件
+修改 `src/components/admin/AdminLayout.tsx` header：
+```tsx
+<header>
+  <SidebarTrigger />
+  <button className="flex-1 max-w-md mx-auto h-9 rounded-md border bg-muted/40 
+                     text-sm text-muted-foreground flex items-center gap-2 px-3 hover:bg-muted">
+    <Search className="w-4 h-4" />
+    搜索功能… 
+    <kbd className="ml-auto text-xs">⌘K</kbd>
+  </button>
+  <AdminLayoutDebugToggle />
+</header>
+<AdminCommandPalette />
+```
 
-## 关键技术点
+修改 `AdminSidebar.tsx` 改为 `import { NAV_GROUPS } from "./adminNavRegistry"`（保持现有 UI 不变，仅去重数据源）。
 
-- **RLS**：admin 已可读 `partner_assessment_results` 与 `profiles`（admin 角色 has_role 校验）。无需改库。
-- **隐私**：手机号在表格里默认中间 4 位脱敏 `188****3978`，「复制」按钮取完整号；操作日志在第二期再加。
-- **性能**：单测评目前 11 条，预期半年内 < 5000 条，前端一次性拉取 + 客户端筛选即可，无需分页。超过 1000 条时给 hook 加 `.limit(1000)` 警告。
-- **导出**：纯前端 CSV 生成（Blob + a.download），含表头中文。
-- **可扩展**：详情页用通用组件，后续其他测评（绽放、SCL90、SBTI）都能复用同一入口和详情页，只换 templateId。
+### 移动端
+- 搜索按钮在移动端以图标按钮形式显示（隐藏占位文字与快捷键提示）
+- `CommandDialog` 在小屏自动全屏，保持原生体验
 
-## 不做的事
+### 不改动
+- 路由、权限、RLS、其他业务逻辑
+- 角色过滤复用现有 `roles` 字段：partner_admin / content_admin 仅看到自己有权限的命令
 
-- 不做权限分级（partner_admin 不进入此页，避免跨合伙人数据泄漏）—— 入口仅 admin 可见。
-- 不做"自动外呼/微信群发"集成（涉及合规与第三方资质，二期评估）。
-- 不重写测评数据采集逻辑（已稳定）。
-
-## 上线后运营 SOP（建议）
-
-1. 每日 10:00 / 20:00 进入 `/admin/assessments` → 男人有劲 → 数据洞察
-2. 按"今日新增 + 主导类型 = 压力绷弦型/失衡警示型"筛选
-3. 复制手机号，按话术（不同类型不同话术）联系
-4. 7 日后复看复测率，验证触达效果
-
-是否按此方案实施？批准后切换默认模式开始编码。
+### 涉及文件
+- 新增：`src/components/admin/adminNavRegistry.ts`
+- 新增：`src/components/admin/AdminCommandPalette.tsx`
+- 修改：`src/components/admin/AdminLayout.tsx`（header + 挂载面板）
+- 修改：`src/components/admin/AdminSidebar.tsx`（改用共享注册表）
