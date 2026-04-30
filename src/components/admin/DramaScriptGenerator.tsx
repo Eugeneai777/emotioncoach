@@ -851,6 +851,49 @@ export default function DramaScriptGenerator() {
     }
   }, [result, style]);
 
+  const handleGenerateAndSavePrimaryReference = async () => {
+    if (!result?.characters?.[0]) {
+      toast.error("当前脚本没有人物一，无法生成参考图");
+      return;
+    }
+
+    const imageUrl = await generateCharacterReference(result.characters[0], 0);
+    if (!imageUrl) return;
+
+    const baseLock = result.primaryCharacterLock || buildPrimaryCharacterLockCard(result);
+    const updatedScript: DramaScript = {
+      ...result,
+      primaryCharacterLock: baseLock ? { ...baseLock, referenceImageUrl: imageUrl } : undefined,
+      characters: result.characters.map((char, index) =>
+        index === 0 ? { ...char, referenceImageUrl: imageUrl } : char
+      ),
+    };
+
+    setResult(updatedScript);
+    if (activeSavedScript) {
+      setActiveSavedScript({ ...activeSavedScript, script_data: updatedScript });
+    }
+
+    if (savedScriptId) {
+      try {
+        const { data, error } = await (supabase as any)
+          .from("drama_scripts")
+          .update({ script_data: updatedScript })
+          .eq("id", savedScriptId)
+          .select()
+          .limit(1);
+        if (error) throw error;
+        if (!data || data.length === 0) throw new Error("保存失败：权限不足或记录未写入");
+        await fetchSavedScripts();
+        toast.success("人物一参考图已生成，并保存到脚本库");
+      } catch (e: any) {
+        toast.error(e.message || "人物一参考图已生成，但保存到脚本库失败");
+      }
+    } else {
+      toast.success("人物一参考图已生成，并保存到当前脚本数据；点击“保存脚本”后会写入脚本库");
+    }
+  };
+
   const handleGenerateCharacterReferences = async () => {
     if (!result) return;
     setGeneratingCharacterRefs(true);
