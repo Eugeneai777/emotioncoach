@@ -52,6 +52,7 @@ import WechatArticlesManagement from "./WechatArticlesManagement";
 import XhsAnalysis from "./xhs/XhsAnalysis";
 import DramaScriptGenerator from "./DramaScriptGenerator";
 import { AdminLayoutDebugToggle } from "./AdminLayoutDebugToggle";
+import { AdminCommandPalette } from "./AdminCommandPalette";
 export type AdminRole = 'admin' | 'content_admin' | 'partner_admin';
 
 interface AdminLayoutProps {
