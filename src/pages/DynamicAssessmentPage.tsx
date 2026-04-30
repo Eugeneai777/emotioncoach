@@ -365,6 +365,8 @@ export default function DynamicAssessmentPage() {
           onRetake={handleRetake}
           onShowHistory={() => setPhase("history")}
           hasHistory={historyRecords.length > 0}
+          recordId={savedResultId}
+          autoSavePdf={autoSavePdf}
           isLiteMode={isLiteMode}
           onLoginToUnlock={() => {
             const returnUrl = window.location.pathname;
