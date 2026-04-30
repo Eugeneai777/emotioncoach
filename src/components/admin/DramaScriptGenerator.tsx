@@ -2471,6 +2471,15 @@ export default function DramaScriptGenerator() {
                                   <Check className="h-3 w-3" /> 已完成
                                 </span>
                                 <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-xs h-7 gap-1"
+                                  onClick={() => retrySceneVideoOnly(scene)}
+                                  disabled={anyVideoGenerating}
+                                >
+                                  <RefreshCw className="h-3 w-3" /> 一键重试
+                                </Button>
+                                <Button
                                   variant="ghost"
                                   size="sm"
                                   className="text-xs h-7 gap-1"
@@ -2496,15 +2505,15 @@ export default function DramaScriptGenerator() {
                                   variant="ghost"
                                   size="sm"
                                   className="text-xs h-7"
-                                  onClick={() => generateSceneVideo(scene)}
+                                  onClick={() => retrySceneVideoOnly(scene)}
                                 >
-                                  重试
+                                  一键重试
                                 </Button>
                                 <Button
                                   variant="outline"
                                   size="sm"
                                   className="text-xs h-7"
-                                  onClick={() => generateSceneVideo(scene, 10)}
+                                  onClick={() => retrySceneVideoOnly(scene, 10)}
                                 >
                                   重试10秒
                                 </Button>
