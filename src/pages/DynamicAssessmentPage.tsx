@@ -1,5 +1,5 @@
-import { Suspense, lazy, useState, useMemo } from "react";
-import { useParams } from "react-router-dom";
+import { Suspense, lazy, useState, useMemo, useEffect } from "react";
+import { useParams, useSearchParams } from "react-router-dom";
 import { useAssessmentTemplate, useSaveAssessmentResult } from "@/hooks/usePartnerAssessments";
 import { useAuth } from "@/hooks/useAuth";
 import { useDynamicAssessmentPurchase } from "@/hooks/useDynamicAssessmentPurchase";
@@ -24,6 +24,9 @@ type Phase = "intro" | "questions" | "result" | "history";
 
 export default function DynamicAssessmentPage() {
   const { assessmentKey } = useParams<{ assessmentKey: string }>();
+  const [searchParams] = useSearchParams();
+  const urlRecordId = searchParams.get('recordId');
+  const autoSavePdf = searchParams.get('autoSave') === 'pdf';
   const { data: template, isLoading } = useAssessmentTemplate(assessmentKey || "");
   const { user } = useAuth();
   const saveResult = useSaveAssessmentResult();
@@ -215,6 +218,14 @@ export default function DynamicAssessmentPage() {
     }
   };
 
+  // 浏览器外跳落地：?recordId=xxx → 直接打开该条历史记录的结果页
+  useEffect(() => {
+    if (!urlRecordId || !template || phase !== 'intro' || historyLoading) return;
+    const rec = historyRecords.find((r: any) => r.id === urlRecordId);
+    if (rec) handleViewHistoryRecord(rec);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlRecordId, template?.id, historyLoading, historyRecords.length]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -262,6 +273,8 @@ export default function DynamicAssessmentPage() {
             hasPurchased={hasPurchased}
             price={price}
             onPayClick={() => setShowPayDialog(true)}
+            lastRecord={historyRecords[0] as any}
+            historyCount={historyRecords.length}
           />
         </main>
         {requirePayment && packageKey && showPayDialog && (
@@ -352,6 +365,8 @@ export default function DynamicAssessmentPage() {
           onRetake={handleRetake}
           onShowHistory={() => setPhase("history")}
           hasHistory={historyRecords.length > 0}
+          recordId={savedResultId}
+          autoSavePdf={autoSavePdf}
           isLiteMode={isLiteMode}
           onLoginToUnlock={() => {
             const returnUrl = window.location.pathname;

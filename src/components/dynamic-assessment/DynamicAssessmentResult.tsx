@@ -2,7 +2,8 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, RotateCcw, History, Mic, ArrowRight, Share2, Sparkles, TrendingUp, Lightbulb, Target, Lock } from "lucide-react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Loader2, RotateCcw, History, Mic, ArrowRight, Share2, Sparkles, TrendingUp, Lightbulb, Target, Lock, Download, Image as ImageIcon, FileText, ChevronDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
@@ -12,8 +13,13 @@ import { DimensionRadarChart } from "./DimensionRadarChart";
 import DynamicAssessmentShareCard from "./DynamicAssessmentShareCard";
 import SBTIShareCard from "./SBTIShareCard";
 import MaleMidlifeVitalityShareCard from "./MaleMidlifeVitalityShareCard";
+import MaleVitalityReportCard from "./MaleVitalityReportCard";
+import { WeChatPdfGuideSheet } from "./WeChatPdfGuideSheet";
 import ShareImagePreview from "@/components/ui/share-image-preview";
 import { executeOneClickShare } from "@/utils/oneClickShare";
+import { generateCardBlob } from "@/utils/shareCardConfig";
+import { exportNodeToPdf } from "@/utils/exportReportToPdf";
+import { detectPlatform } from "@/lib/platformDetector";
 import { useAuth } from "@/hooks/useAuth";
 import { getProxiedAvatarUrl } from "@/utils/avatarUtils";
 import { toast } from "sonner";
@@ -69,6 +75,10 @@ interface DynamicAssessmentResultProps {
   recommendedCampTypes?: string[];
   isLiteMode?: boolean;
   onLoginToUnlock?: () => void;
+  /** 当前结果在数据库中的 ID（用于跨端复制专属链接） */
+  recordId?: string | null;
+  /** 落地页自动定位/高亮"保存 PDF"按钮（来自浏览器外跳链接 ?autoSave=pdf） */
+  autoSavePdf?: boolean;
 }
 
 // SBTI → paid assessment recommendations
@@ -138,6 +148,8 @@ export function DynamicAssessmentResult({
   recommendedCampTypes,
   isLiteMode = false,
   onLoginToUnlock,
+  recordId,
+  autoSavePdf,
 }: DynamicAssessmentResultProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -146,7 +158,15 @@ export function DynamicAssessmentResult({
   const [isSharing, setIsSharing] = useState(false);
   const [sharePreviewUrl, setSharePreviewUrl] = useState<string | null>(null);
   const shareCardRef = useRef<HTMLDivElement>(null);
+  const reportCardRef = useRef<HTMLDivElement>(null);
+  const saveButtonRef = useRef<HTMLDivElement>(null);
   const [profileData, setProfileData] = useState<{ displayName?: string; avatarUrl?: string }>({});
+  const [showSaveSheet, setShowSaveSheet] = useState(false);
+  const [showMoreFormats, setShowMoreFormats] = useState(false);
+  const [showWeChatPdfGuide, setShowWeChatPdfGuide] = useState(false);
+  const [reportPreviewUrl, setReportPreviewUrl] = useState<string | null>(null);
+  const [savingReport, setSavingReport] = useState(false);
+  const [pulseSaveBtn, setPulseSaveBtn] = useState(false);
 
   // Fetch coach route
   useEffect(() => {
@@ -224,6 +244,63 @@ export function DynamicAssessmentResult({
     });
     setIsSharing(false);
   };
+
+  // ===== 保存私密报告 =====
+  const platform = useMemo(() => detectPlatform(), []);
+  const isWeChatLike = platform === 'wechat' || platform === 'mini_program';
+
+  const handleSaveAsImage = async () => {
+    if (savingReport || !reportCardRef.current) return;
+    setSavingReport(true);
+    setShowSaveSheet(false);
+    try {
+      const blob = await generateCardBlob(reportCardRef, { backgroundColor: '#ffffff' });
+      if (!blob) throw new Error('生成失败');
+      const url = URL.createObjectURL(blob);
+      setReportPreviewUrl(url);
+    } catch (e) {
+      console.error('[saveReport] image failed:', e);
+      toast.error('生成图片失败，请重试');
+    } finally {
+      setSavingReport(false);
+    }
+  };
+
+  const handleSaveAsPdf = async () => {
+    if (savingReport) return;
+    // 微信内不直接下载 PDF，弹引导卡
+    if (isWeChatLike) {
+      setShowSaveSheet(false);
+      setShowWeChatPdfGuide(true);
+      return;
+    }
+    if (!reportCardRef.current) return;
+    setSavingReport(true);
+    setShowSaveSheet(false);
+    try {
+      await exportNodeToPdf(reportCardRef.current, {
+        filename: `男人有劲状态报告_${new Date().toISOString().slice(0, 10)}`,
+      });
+      toast.success('PDF 已开始下载');
+    } catch (e) {
+      console.error('[saveReport] pdf failed:', e);
+      toast.error('PDF 生成失败，请改为保存图片');
+    } finally {
+      setSavingReport(false);
+    }
+  };
+
+  // 浏览器外跳落地：autoSavePdf=true 时,滚动到保存按钮 + 高亮脉冲 + 提示
+  useEffect(() => {
+    if (!autoSavePdf) return;
+    const t = setTimeout(() => {
+      saveButtonRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setPulseSaveBtn(true);
+      toast.info('点这里保存 PDF ↓', { duration: 4000 });
+      setTimeout(() => setPulseSaveBtn(false), 4000);
+    }, 800);
+    return () => clearTimeout(t);
+  }, [autoSavePdf]);
 
   // Score percentage for the ring
   const scorePercent = result.maxScore > 0 ? Math.round((result.totalScore / result.maxScore) * 100) : 0;
@@ -790,6 +867,24 @@ export function DynamicAssessmentResult({
 
         {/* Action Buttons */}
         <motion.div custom={8} variants={fadeUp} initial="hidden" animate="visible" className="space-y-3 mt-4">
+          {isMaleMidlifeVitality && aiInsight && (
+            <div ref={saveButtonRef}>
+              <Button
+                className={cn(
+                  "w-full gap-2 rounded-xl h-12 text-base font-semibold",
+                  pulseSaveBtn && "ring-4 ring-primary/40 animate-pulse"
+                )}
+                onClick={() => setShowSaveSheet(true)}
+                disabled={savingReport}
+              >
+                {savingReport ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                保存完整报告
+              </Button>
+              <p className="text-center text-[11px] text-muted-foreground mt-1.5">
+                私密报告 · 仅本人查看 · 无二维码无推广
+              </p>
+            </div>
+          )}
           {hasHistory && onShowHistory && (
             <Button variant="outline" className="w-full gap-2 rounded-xl h-11" onClick={onShowHistory}>
               <History className="w-4 h-4" /> 查看历史记录
@@ -800,6 +895,75 @@ export function DynamicAssessmentResult({
           </Button>
         </motion.div>
       </div>
+
+      {/* 保存格式 Sheet */}
+      <Sheet open={showSaveSheet} onOpenChange={setShowSaveSheet}>
+        <SheetContent side="bottom" className="rounded-t-2xl">
+          <SheetHeader>
+            <SheetTitle className="text-left">保存完整报告</SheetTitle>
+          </SheetHeader>
+          <div className="mt-2 space-y-2">
+            <button
+              type="button"
+              onClick={handleSaveAsImage}
+              className="w-full flex items-center gap-3 p-4 rounded-xl border border-border hover:bg-muted/50 transition-colors text-left min-h-[60px]"
+            >
+              <ImageIcon className="w-5 h-5 text-primary shrink-0" />
+              <div className="flex-1 min-w-0">
+                <div className="font-semibold text-sm">📷 保存为长图（推荐）</div>
+                <div className="text-xs text-muted-foreground mt-0.5">
+                  {isWeChatLike ? '生成后长按图片保存到相册' : '一键保存到本地'}
+                </div>
+              </div>
+            </button>
+
+            {!showMoreFormats ? (
+              <button
+                type="button"
+                onClick={() => setShowMoreFormats(true)}
+                className="w-full flex items-center justify-center gap-1.5 py-3 text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <ChevronDown className="w-3.5 h-3.5" /> 更多格式
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleSaveAsPdf}
+                className="w-full flex items-center gap-3 p-4 rounded-xl border border-border hover:bg-muted/50 transition-colors text-left min-h-[60px]"
+              >
+                <FileText className="w-5 h-5 text-primary shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-sm">📄 保存为 PDF</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">
+                    {isWeChatLike ? '微信内需跳浏览器，将引导您操作' : '适合存档 / 打印'}
+                  </div>
+                </div>
+              </button>
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* 微信内 PDF 引导 */}
+      {isMaleMidlifeVitality && (
+        <WeChatPdfGuideSheet
+          open={showWeChatPdfGuide}
+          onOpenChange={setShowWeChatPdfGuide}
+          recordId={recordId}
+          assessmentKey={template.assessment_key}
+          onSwitchToImage={handleSaveAsImage}
+        />
+      )}
+
+      {/* 私密报告预览（图片路径） */}
+      <ShareImagePreview
+        open={!!reportPreviewUrl}
+        onClose={() => {
+          if (reportPreviewUrl) URL.revokeObjectURL(reportPreviewUrl);
+          setReportPreviewUrl(null);
+        }}
+        imageUrl={reportPreviewUrl}
+      />
 
       {/* Hidden share card */}
       <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
@@ -838,9 +1002,18 @@ export function DynamicAssessmentResult({
             avatarUrl={profileData.avatarUrl}
           />
         )}
+        {isMaleMidlifeVitality && (
+          <MaleVitalityReportCard
+            ref={reportCardRef}
+            totalScorePct={vitalityStatusPercent}
+            dimensionScores={vitalityStatusScores as any}
+            primaryPattern={result.primaryPattern}
+            aiInsight={aiInsight}
+            displayName={profileData.displayName}
+            testedAt={new Date().toISOString()}
+          />
+        )}
       </div>
-
-      {/* Share image preview */}
       <ShareImagePreview
         open={!!sharePreviewUrl}
         onClose={() => setSharePreviewUrl(null)}

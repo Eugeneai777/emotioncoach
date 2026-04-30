@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowRight, Clock, Target, History, Sparkles, BarChart3, MessageSquare, BookOpen, TrendingUp } from "lucide-react";
+import { ArrowRight, Clock, Target, History, Sparkles, BarChart3, MessageSquare, BookOpen, TrendingUp, RotateCw } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { setPostAuthRedirect } from "@/lib/postAuthRedirect";
@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { DimensionRadarChart } from "./DimensionRadarChart";
 import midlifeVitalitySceneImage from "@/assets/audience/midlife-vitality-scene-clean.jpg";
+import { getStatusBand } from "@/config/maleMidlifeVitalityCopy";
 
 interface DynamicAssessmentIntroProps {
   template: {
@@ -29,6 +30,15 @@ interface DynamicAssessmentIntroProps {
   hasPurchased?: boolean;
   price?: number;
   onPayClick?: () => void;
+  /** 用户最近一次测评记录（用于顶部"老用户"快捷卡） */
+  lastRecord?: {
+    id: string;
+    created_at: string;
+    total_score: number;
+    dimension_scores: any;
+  } | null;
+  /** 历史记录总条数 */
+  historyCount?: number;
 }
 
 const fadeUp = (delay: number) => ({
@@ -113,13 +123,28 @@ const enrichmentData: Record<string, {
   },
 };
 
-export function DynamicAssessmentIntro({ template, onStart, onShowHistory, hasHistory, requireAuth = true, requirePayment, hasPurchased, price, onPayClick }: DynamicAssessmentIntroProps) {
+export function DynamicAssessmentIntro({ template, onStart, onShowHistory, hasHistory, requireAuth = true, requirePayment, hasPurchased, price, onPayClick, lastRecord, historyCount }: DynamicAssessmentIntroProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const needPay = requirePayment && !hasPurchased;
   const isMaleMidlifeVitality = template.assessment_key === 'male_midlife_vitality';
   const dimensions = template.dimensions || [];
   const enrichment = template.assessment_key ? enrichmentData[template.assessment_key] : undefined;
+
+  // 老用户快捷卡（仅 vitality 测评 + 已有历史）
+  const showVitalityQuickCard = isMaleMidlifeVitality && hasHistory && !!lastRecord;
+  const lastSummary = (() => {
+    if (!showVitalityQuickCard || !lastRecord) return null;
+    // 计算上次"状态电量"（翻转后百分比）
+    const dims: any[] = Array.isArray(lastRecord.dimension_scores) ? lastRecord.dimension_scores : [];
+    const totalRaw = dims.reduce((sum, d) => sum + (d.score ?? 0), 0);
+    const totalMax = dims.reduce((sum, d) => sum + (d.maxScore ?? 0), 0);
+    const pct = totalMax > 0 ? Math.max(0, Math.min(100, Math.round(100 - (totalRaw / totalMax) * 100))) : 0;
+    const band = getStatusBand(pct);
+    const d = new Date(lastRecord.created_at);
+    const dateStr = `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
+    return { pct, band, dateStr };
+  })();
 
   return (
     <div className="min-h-screen bg-background">
@@ -170,6 +195,56 @@ export function DynamicAssessmentIntro({ template, onStart, onShowHistory, hasHi
       </div>
 
       <div className="max-w-lg mx-auto px-4 -mt-6 space-y-4 pb-8 relative z-20">
+        {/* 老用户快捷卡（仅 vitality + 已有历史） */}
+        {showVitalityQuickCard && lastSummary && onShowHistory && (
+          <motion.div {...fadeUp(0.32)}>
+            <Card className="border-primary/20 bg-card/95 backdrop-blur-md shadow-lg overflow-hidden">
+              <CardContent className="p-4 sm:p-5">
+                <div className="mb-3">
+                  <p className="text-sm font-semibold text-foreground">
+                    👋 欢迎回来{historyCount && historyCount > 1 ? `，已有 ${historyCount} 次记录` : ''}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1 tabular-nums">
+                    上次：{lastSummary.dateStr} · 状态电量{' '}
+                    <span className={cn(
+                      "font-semibold",
+                      lastSummary.band.color === 'emerald' && 'text-emerald-600',
+                      lastSummary.band.color === 'amber' && 'text-amber-600',
+                      lastSummary.band.color === 'rose' && 'text-rose-600',
+                    )}>
+                      {lastSummary.pct}%
+                    </span>
+                    <span className="ml-1.5">（{lastSummary.band.headline}）</span>
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    variant="outline"
+                    className="min-h-[44px] gap-1.5 text-xs sm:text-sm"
+                    onClick={onShowHistory}
+                  >
+                    <History className="w-4 h-4" /> 查看历史
+                  </Button>
+                  <Button
+                    className="min-h-[44px] gap-1.5 text-xs sm:text-sm"
+                    onClick={() => {
+                      if (requireAuth && !user) {
+                        toast.info("请先登录后开始测评");
+                        setPostAuthRedirect(window.location.pathname + window.location.search);
+                        navigate(`/auth?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`);
+                        return;
+                      }
+                      needPay ? (onPayClick ?? onStart)() : onStart();
+                    }}
+                  >
+                    <RotateCw className="w-4 h-4" /> 再测一次
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
         {/* Description */}
         {template.description && (
           <motion.div {...fadeUp(0.4)}>
