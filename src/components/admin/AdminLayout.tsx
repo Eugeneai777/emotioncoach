@@ -53,6 +53,7 @@ import XhsAnalysis from "./xhs/XhsAnalysis";
 import DramaScriptGenerator from "./DramaScriptGenerator";
 import { AdminLayoutDebugToggle } from "./AdminLayoutDebugToggle";
 import { AdminCommandPalette } from "./AdminCommandPalette";
+import AdminImpersonation from "./AdminImpersonation";
 export type AdminRole = 'admin' | 'content_admin' | 'partner_admin';
 
 interface AdminLayoutProps {
@@ -130,6 +131,7 @@ export function AdminLayout({ userRole }: AdminLayoutProps) {
                   <Route path="flywheel-revenue" element={<FlywheelRevenue />} />
                   <Route path="flywheel-referral" element={<FlywheelReferral />} />
                   <Route path="flywheel-ai" element={<FlywheelAIStrategy />} />
+                  <Route path="impersonate" element={<AdminImpersonation />} />
                 </>
               )}
               {/* content_admin 专属首页 */}
