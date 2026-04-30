@@ -972,6 +972,11 @@ export const CoachVoiceChat = ({
     statusRef.current = mappedStatus;
     setStatus(mappedStatus);
     if (mappedStatus === 'connected') {
+      hasConnectedOnceRef.current = true;
+      reconnectAttemptsRef.current = 0;
+      isSilentReconnectingRef.current = false;
+      setIsRecoveringConnection(false);
+      clearReconnectTimer();
       lastActivityRef.current = Date.now();
       if (durationRef.current) clearInterval(durationRef.current);
       durationRef.current = setInterval(() => {
@@ -1022,6 +1027,33 @@ export const CoachVoiceChat = ({
       }
     } else if (mappedStatus === 'disconnected' || mappedStatus === 'error') {
       if (durationRef.current) clearInterval(durationRef.current);
+
+      const canSilentReconnect =
+        hasConnectedOnceRef.current &&
+        !isEndingRef.current &&
+        !insufficientDuringCall &&
+        !isSilentReconnectingRef.current &&
+        reconnectAttemptsRef.current < MAX_SILENT_RECONNECT_ATTEMPTS;
+
+      if (canSilentReconnect) {
+        isSilentReconnectingRef.current = true;
+        setIsRecoveringConnection(true);
+        const nextAttempt = reconnectAttemptsRef.current + 1;
+        reconnectAttemptsRef.current = nextAttempt;
+        const delay = Math.min(800 * nextAttempt, 2400);
+        clearReconnectTimer();
+        reconnectTimerRef.current = setTimeout(() => {
+          reconnectTimerRef.current = null;
+          try { chatRef.current?.disconnect(); } catch (err) { console.warn('[VoiceChat] cleanup before reconnect failed:', err); }
+          chatRef.current = null;
+          isInitializingRef.current = false;
+          startCall({ preserveTranscript: true, silentReconnect: true });
+        }, delay);
+        return;
+      }
+
+      isSilentReconnectingRef.current = false;
+      setIsRecoveringConnection(false);
 
       // 🔧 优先展示“明确断开原因”（例如计费网络失败/点数不足）
       const notice = disconnectNoticeRef.current;
