@@ -301,6 +301,17 @@ const ensurePrimaryCharacterLock = (script: DramaScript): DramaScript => ({
   primaryCharacterLock: script.primaryCharacterLock || buildPrimaryCharacterLockCard(script),
 });
 
+const formatPrimaryCharacterLock = (script?: DramaScript | null) => {
+  const lock = script?.primaryCharacterLock || buildPrimaryCharacterLockCard(script);
+  if (!lock) return "";
+  return `${lock.name}
+固定外貌：${lock.fixedAppearance}
+固定服装：${lock.fixedOutfit}
+身份气质：${lock.identityAndTemperament}
+视觉提示：${lock.visualPrompt}
+负面提示：${lock.negativePrompt}`;
+};
+
 const summarizeSceneForSequel = (scene?: Scene) => {
   if (!scene) return "上一集结尾暂无摘要";
   return [scene.characterAction, scene.dialogue || scene.narration]
