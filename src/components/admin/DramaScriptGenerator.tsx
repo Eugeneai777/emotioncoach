@@ -1023,8 +1023,9 @@ export default function DramaScriptGenerator() {
     pollingRefs.current[sceneNum] = interval;
   }, [updateSceneVideo]);
 
-  const generateSceneVideo = useCallback(async (scene: Scene) => {
+  const generateSceneVideo = useCallback(async (scene: Scene, forcedDuration?: number) => {
     const num = scene.sceneNumber;
+    const durationToUse = forcedDuration || videoDuration;
     setVideoPreviewFallbacks((prev) => {
       if (!prev[num]) return prev;
       const next = { ...prev };
@@ -1039,7 +1040,7 @@ export default function DramaScriptGenerator() {
           action: "submit",
           prompt: buildJimengVideoPrompt(scene),
           aspect_ratio: videoAspectRatio,
-          duration: videoDuration,
+          duration: durationToUse,
           image_urls: getVideoReferenceUrls(num),
         },
       });
