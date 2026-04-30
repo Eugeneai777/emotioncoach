@@ -99,6 +99,33 @@ serve(async (req) => {
     const ctx = await buildUserContext(userId, assessmentKey);
     const nickname = (ctx as any).nickname || "朋友";
 
+    // ============ Vitality-specific transforms ============
+    // Raw scores represent "recovery resistance" (lower = better state).
+    // Convert to "vitality status %" before sending to the LLM, so it never
+    // outputs reverse-semantic numbers like "0/12" to users.
+    const VITALITY_LABEL_MAP: Record<string, string> = {
+      "压力内耗": "压力调节",
+      "恢复阻力": "行动恢复力",
+    };
+    const toVitalityPct = (s: number, m: number) =>
+      m > 0 ? Math.max(0, Math.min(100, Math.round(100 - (s / m) * 100))) : 0;
+    const vitalityTone = (pct: number) =>
+      pct >= 80 ? "稳" : pct >= 60 ? "可调整" : pct >= 40 ? "需留意" : "优先恢复";
+
+    const dimensionDisplay = isMaleMidlifeVitality
+      ? (dimensionScores || [])
+          .map((d) => {
+            const pct = toVitalityPct(d.score, d.maxScore);
+            const lbl = VITALITY_LABEL_MAP[d.label] || d.label;
+            return `${lbl} ${pct}%(${vitalityTone(pct)})`;
+          })
+          .join("、")
+      : (dimensionScores || []).map((d) => `${d.label} ${d.score}/${d.maxScore}`).join("、");
+
+    const overallDisplay = isMaleMidlifeVitality
+      ? `综合有劲状态指数：${toVitalityPct(totalScore || 0, maxScore || 0)}%`
+      : `综合得分：${totalScore}/${maxScore}`;
+
     const baseSystem =
       aiInsightPrompt ||
       `你是劲老师，一位温暖专业的心理教练。请基于测评结果与用户画像提供高度个性化的建议。
@@ -109,7 +136,13 @@ serve(async (req) => {
 4. 如果 TA 之前做过其他测评或购买过项目，自然地引用一次（不堆砌）
 5. 末尾推荐 1 个最匹配 TA 当前状态的下一步动作（训练营/教练/小练习）
 6. 语气温暖、像朋友聊天、不说教、不出现"作为AI"
-7. 输出纯文本（可换行），不使用 Markdown 符号`;
+7. 输出纯文本（可换行），不使用 Markdown 符号
+8. 涉及品牌时统一使用"有劲AI"，禁止出现"施强健康""施强"等历史品牌词；如需提及训练营，统一用"7天有劲训练营"或"身份绽放训练营"${
+        isMaleMidlifeVitality
+          ? `
+9. 本测评维度数据已转译为"有劲状态指数"百分比（越高越稳）。文案中只能使用百分比+档位（如"精力续航 100% · 稳"）来描述维度状态，严禁出现 0/12、0/9 这类原始分数；也不要使用"压力内耗""恢复阻力"这类原始标签，统一用"压力调节""行动恢复力"`
+          : ""
+      }`;
 
     const userPrompt = `【用户画像】
 ${ctx.profileLine}
@@ -118,14 +151,9 @@ ${ctx.historyLine}
 
 【本次测评】
 测评名称：${title || "综合测评"}
-${
-  isMaleMidlifeVitality
-    ? "重要评分说明：本测评原始分是\"恢复阻力分\"，低分代表当前状态更稳，高分代表恢复阻力更高。解读时请转译为\"有劲状态\"。"
-    : ""
-}
 - 主要模式：${primaryPattern || "未知"}
-- 综合得分：${totalScore}/${maxScore}
-- 各维度得分：${(dimensionScores || []).map((d) => `${d.label} ${d.score}/${d.maxScore}`).join("、")}
+- ${overallDisplay}
+- 各维度${isMaleMidlifeVitality ? "有劲状态" : "得分"}：${dimensionDisplay}
 
 请给出针对 ${nickname} 的个性化洞察。`;
 
