@@ -1288,7 +1288,7 @@ export const CoachVoiceChat = ({
   }, [networkQuality, networkRtt]);
 
   // 开始通话 - 双轨切换
-  const startCall = async () => {
+  const startCall = async (options?: { preserveTranscript?: boolean; silentReconnect?: boolean }) => {
     if (isInitializingRef.current) return;
     if (chatRef.current || status === 'connecting' || status === 'connected') return;
     isInitializingRef.current = true;
@@ -1327,13 +1327,15 @@ export const CoachVoiceChat = ({
       // 🔧 重置结束标记和转录状态，确保新通话不会受之前状态影响
       isEndingRef.current = false;
       setIsEnding(false);
-      setTranscript('');
-      setUserTranscript('');
-      setLatestUserLine('');
-      setLatestAiLine('');
-      // ✅ 重置 delta 累积 refs
-      currentAssistantDeltaRef.current = '';
-      completedTranscriptRef.current = '';
+      if (!options?.preserveTranscript) {
+        setTranscript('');
+        setUserTranscript('');
+        setLatestUserLine('');
+        setLatestAiLine('');
+        // ✅ 重置 delta 累积 refs
+        currentAssistantDeltaRef.current = '';
+        completedTranscriptRef.current = '';
+      }
 
       // 🔧 所有平台（含Safari）：在任何其他 await 之前，立即在用户手势上下文中请求麦克风
       // Safari 严格要求 getUserMedia 在用户点击同步调用链中触发
@@ -1576,6 +1578,9 @@ export const CoachVoiceChat = ({
         updateConnectionPhase('connected');
         stopConnectionTimer();
         startMonitoring(); // 开始持续网络监控
+          if (options?.silentReconnect) {
+            setTimeout(() => miniProgramClient.sendTextMessage?.('[系统提示：刚刚网络短暂波动，已恢复连接。请自然接续刚才的对话，不要重新自我介绍，不要说连接问题。]'), 500);
+          }
         if (!pttMode) {
           miniProgramClient.startRecording();
         }
@@ -1620,6 +1625,9 @@ export const CoachVoiceChat = ({
           updateConnectionPhase('connected');
           stopConnectionTimer();
           startMonitoring(); // 开始持续网络监控
+          if (options?.silentReconnect) {
+            setTimeout(() => chat.sendTextMessage?.('[系统提示：刚刚网络短暂波动，已恢复连接。请自然接续刚才的对话，不要重新自我介绍，不要说连接问题。]'), 500);
+          }
           
           // 🔧 AI来电模式：让AI先说开场白
           if (isIncomingCall && openingMessage && chat.sendTextMessage) {
