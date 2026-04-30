@@ -134,6 +134,7 @@ interface PrimaryCharacterLockCard {
   identityAndTemperament: string;
   visualPrompt: string;
   negativePrompt: string;
+  confirmedPrompt?: string;
   referenceImageUrl?: string;
   createdAt: string;
 }
@@ -178,6 +179,7 @@ interface DramaScript {
     nextEpisodeHook: string;
   };
   primaryCharacterLock?: PrimaryCharacterLockCard;
+  styleLockPrompt?: string;
   characters: Character[];
   scenes: Scene[];
   totalScenes: number;
@@ -551,8 +553,8 @@ export default function DramaScriptGenerator() {
       }
       const generatedScript = ensurePrimaryCharacterLock(data as DramaScript);
       setResult(generatedScript);
-      setConfirmedPrimaryLock(formatPrimaryCharacterLock(generatedScript));
-      setConfirmedStyleLock(STYLE_LOCKS[style] || STYLE_LOCKS.realistic);
+      setConfirmedPrimaryLock(generatedScript.primaryCharacterLock?.confirmedPrompt || formatPrimaryCharacterLock(generatedScript));
+      setConfirmedStyleLock(generatedScript.styleLockPrompt || STYLE_LOCKS[style] || STYLE_LOCKS.realistic);
       setLocksConfirmed(false);
       setSavedScriptId(null);
       setActiveSavedScript(null);
@@ -627,8 +629,10 @@ export default function DramaScriptGenerator() {
       ...result,
       primaryCharacterLock: {
         ...(result.primaryCharacterLock || buildPrimaryCharacterLockCard(result)!),
+        confirmedPrompt: buildPrimaryCharacterLock(),
         referenceImageUrl: characterImages[0]?.imageUrl || result.primaryCharacterLock?.referenceImageUrl || result.characters[0]?.referenceImageUrl,
       },
+      styleLockPrompt: buildStyleLock(),
       conversionStyles: mode === "youjin" ? conversionStyles : undefined,
       characters: result.characters.map((char, index) => ({
         ...char,
@@ -639,7 +643,7 @@ export default function DramaScriptGenerator() {
         generatedImageUrl: sceneImages[scene.sceneNumber]?.imageUrl || scene.generatedImageUrl,
       })),
     };
-  }, [characterImages, conversionStyles, mode, result, sceneImages]);
+  }, [buildPrimaryCharacterLock, buildStyleLock, characterImages, conversionStyles, mode, result, sceneImages]);
 
   const loadSavedScript = (script: SavedDramaScript) => {
     setMode(script.mode || "generic");
@@ -652,8 +656,8 @@ export default function DramaScriptGenerator() {
     setSelectedProducts(new Set((script.selected_products || []).map((p) => p.key)));
     const loadedScript = ensurePrimaryCharacterLock(script.script_data);
     setResult(loadedScript);
-    setConfirmedPrimaryLock(formatPrimaryCharacterLock(loadedScript));
-    setConfirmedStyleLock(STYLE_LOCKS[script.style || style] || STYLE_LOCKS.realistic);
+    setConfirmedPrimaryLock(loadedScript.primaryCharacterLock?.confirmedPrompt || formatPrimaryCharacterLock(loadedScript));
+    setConfirmedStyleLock(loadedScript.styleLockPrompt || STYLE_LOCKS[script.style || style] || STYLE_LOCKS.realistic);
     setLocksConfirmed(Boolean(loadedScript.primaryCharacterLock));
     setSequelGenerationError(null);
     setSequelGenerationSource(null);
@@ -742,8 +746,8 @@ export default function DramaScriptGenerator() {
       }
       const sequelScript = ensurePrimaryCharacterLock(data as DramaScript);
       setPendingSequel({ source: script, script: sequelScript, products: productsForSequel, conversionStyles: sequelConversionStyles });
-      setConfirmedPrimaryLock(formatPrimaryCharacterLock(sequelScript));
-      setConfirmedStyleLock(STYLE_LOCKS[style] || STYLE_LOCKS.realistic);
+      setConfirmedPrimaryLock(sequelScript.primaryCharacterLock?.confirmedPrompt || formatPrimaryCharacterLock(sequelScript));
+      setConfirmedStyleLock(sequelScript.styleLockPrompt || STYLE_LOCKS[style] || STYLE_LOCKS.realistic);
       setLocksConfirmed(false);
       toast.success(`已生成第${script.episode_number + 1}集续集预览，未替换前不会改当前脚本`);
     } catch (e: any) {
