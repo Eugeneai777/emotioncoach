@@ -24,9 +24,96 @@ const TRADITIONAL_TO_SIMPLIFIED: Record<string, string> = {
   '風': '风', '險': '险', '醫': '医', '師': '师', '愛': '爱', '兒': '儿',
   '媽': '妈', '寶': '宝', '樂': '乐', '頂': '顶', '級': '级', '儲': '储',
   '調': '调', '查': '查', '夠': '够', '並': '并', '啓': '启', '總': '总',
+  '嗎': '吗', '隨': '随', '機': '机', '斷': '断', '續': '续', '連': '连',
+  '聽': '听', '雖': '虽', '傷': '伤', '煩': '烦', '憂': '忧', '慮': '虑',
+  '壞': '坏', '傳': '传', '達': '达', '記': '记', '憶': '忆', '聲': '声',
+  '夢': '梦', '壓': '压', '慣': '惯', '鬱': '郁', '沖': '冲', '穩': '稳',
 };
 
 export const normalizeToSimplifiedChinese = (text: string): string => {
   if (!text) return text;
   return Array.from(text).map((char) => TRADITIONAL_TO_SIMPLIFIED[char] ?? char).join('');
+};
+
+const KOREAN_RE = /[\uac00-\ud7af\u1100-\u11ff\u3130-\u318f]/;
+const CJK_RE = /[\u3400-\u9fff]/g;
+const LATIN_RE = /[A-Za-z]/g;
+const MEANINGFUL_PUNCT_RE = /[，。！？、,.!?]/g;
+
+const COMMON_NOISE_TRANSCRIPTS = new Set([
+  '谢谢观看',
+  '感谢观看',
+  '下个视频见',
+  '再见',
+  '拜拜',
+  '字幕由',
+  '优优独播剧场',
+  '请不吝点赞订阅转发打赏支持明镜与点点栏目',
+]);
+
+const stripCaptionNoise = (text: string): string => {
+  return text
+    .replace(/字幕[：:]?.*$/g, '')
+    .replace(/本字幕由.*$/g, '')
+    .replace(/请不吝.*$/g, '')
+    .replace(/谢谢观看[，,。！!\s]*(下个视频见|再见)?/g, '')
+    .replace(/感谢观看[，,。！!\s]*(下个视频见|再见)?/g, '')
+    .trim();
+};
+
+export interface VoiceTranscriptNormalizationResult {
+  text: string;
+  dropped: boolean;
+  reason?: 'empty' | 'korean' | 'latin_noise' | 'caption_noise' | 'symbol_noise' | 'too_short_noise';
+}
+
+export const normalizeVoiceTranscript = (
+  rawText: string,
+  role: 'user' | 'assistant'
+): VoiceTranscriptNormalizationResult => {
+  const simplified = normalizeToSimplifiedChinese(rawText || '')
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (!simplified) return { text: '', dropped: true, reason: 'empty' };
+
+  if (role === 'assistant') {
+    return { text: simplified, dropped: false };
+  }
+
+  const withoutCaptionNoise = stripCaptionNoise(simplified);
+  if (!withoutCaptionNoise) return { text: '', dropped: true, reason: 'caption_noise' };
+
+  const compact = withoutCaptionNoise.replace(/\s+/g, '');
+  if (COMMON_NOISE_TRANSCRIPTS.has(compact)) {
+    return { text: '', dropped: true, reason: 'caption_noise' };
+  }
+
+  const cjkCount = (withoutCaptionNoise.match(CJK_RE) || []).length;
+  const latinCount = (withoutCaptionNoise.match(LATIN_RE) || []).length;
+  const punctCount = (withoutCaptionNoise.match(MEANINGFUL_PUNCT_RE) || []).length;
+  const visibleLength = Array.from(withoutCaptionNoise.replace(/\s/g, '')).length;
+
+  if (KOREAN_RE.test(withoutCaptionNoise) && cjkCount === 0) {
+    return { text: '', dropped: true, reason: 'korean' };
+  }
+
+  if (KOREAN_RE.test(withoutCaptionNoise) && cjkCount < 4) {
+    return { text: '', dropped: true, reason: 'korean' };
+  }
+
+  if (cjkCount === 0 && latinCount > 0 && visibleLength <= 24) {
+    return { text: '', dropped: true, reason: 'latin_noise' };
+  }
+
+  if (cjkCount === 0 && latinCount === 0 && punctCount === 0) {
+    return { text: '', dropped: true, reason: 'symbol_noise' };
+  }
+
+  if (cjkCount > 0 && cjkCount <= 1 && visibleLength <= 2) {
+    return { text: '', dropped: true, reason: 'too_short_noise' };
+  }
+
+  return { text: withoutCaptionNoise, dropped: false };
 };
