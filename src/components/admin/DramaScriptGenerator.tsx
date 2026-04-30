@@ -2429,13 +2429,20 @@ export default function DramaScriptGenerator() {
 
                           {/* Video generation per scene */}
                           <div className="flex items-center gap-2 flex-wrap pt-1">
+                            <label className="flex h-8 items-center gap-1.5 rounded-md border border-border bg-muted/30 px-2 text-xs text-muted-foreground">
+                              <Checkbox
+                                checked={sceneKeepReferences[scene.sceneNumber] ?? true}
+                                onCheckedChange={(checked) => setSceneKeepReferences((prev) => ({ ...prev, [scene.sceneNumber]: checked === true }))}
+                              />
+                              保留参考图
+                            </label>
                             {videoState.status === "idle" && (
                               <div className="flex flex-wrap items-center gap-2">
                                 <Button
                                   variant="outline"
                                   size="sm"
                                   className="gap-1.5 text-xs h-8"
-                                  onClick={() => generateSceneVideo(scene)}
+                                  onClick={() => retrySceneVideoOnly(scene)}
                                   disabled={anyVideoGenerating && videoState.status === "idle"}
                                 >
                                   <Video className="h-3 w-3" /> 生成本镜头视频
@@ -2443,7 +2450,7 @@ export default function DramaScriptGenerator() {
                                 <Button
                                   size="sm"
                                   className="gap-1.5 text-xs h-8"
-                                  onClick={() => generateSceneVideo(scene, 10)}
+                                  onClick={() => retrySceneVideoOnly(scene, 10)}
                                   disabled={anyVideoGenerating && videoState.status === "idle"}
                                 >
                                   <Video className="h-3 w-3" /> 生成10秒视频
