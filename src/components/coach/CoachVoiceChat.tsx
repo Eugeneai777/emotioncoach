@@ -1028,6 +1028,11 @@ export const CoachVoiceChat = ({
     } else if (mappedStatus === 'disconnected' || mappedStatus === 'error') {
       if (durationRef.current) clearInterval(durationRef.current);
 
+      if (isSilentReconnectingRef.current) {
+        setIsRecoveringConnection(true);
+        return;
+      }
+
       const canSilentReconnect =
         hasConnectedOnceRef.current &&
         !isEndingRef.current &&
@@ -1505,7 +1510,7 @@ export const CoachVoiceChat = ({
       // 🔧 并行化：同时执行预扣费 + 获取时长限制（节省 300-800ms）
       updateConnectionPhase('requesting_mic');
       const [preDeductResult, durationResult] = await Promise.all([
-        deductQuotaWithRetry(1),
+        options?.silentReconnect ? Promise.resolve({ success: true, isNetworkError: false }) : deductQuotaWithRetry(1),
         // 如果有 maxDurationOverride，跳过 RPC 查询
         maxDurationOverride !== undefined 
           ? Promise.resolve(maxDurationOverride) 
