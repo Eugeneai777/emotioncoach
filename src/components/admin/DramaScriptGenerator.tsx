@@ -1528,6 +1528,47 @@ export default function DramaScriptGenerator() {
         </Card>
       )}
 
+      {pendingSequel && (
+        <Card className="mt-6 max-w-full min-w-0 overflow-hidden border-primary/40 bg-primary/5">
+          <CardHeader className="pb-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0 space-y-1">
+                <CardTitle className="text-base leading-snug break-words">
+                  续集预览：{pendingSequel.script.title}
+                </CardTitle>
+                <p className="text-xs text-muted-foreground break-words">当前脚本还没有被覆盖；满意后点“替换当前脚本”，不满意可重新生成或保留当前脚本。</p>
+              </div>
+              <div className="flex shrink-0 flex-wrap gap-2">
+                <Button type="button" size="sm" onClick={applyPendingSequel} className="gap-1.5"><Check className="h-3.5 w-3.5" /> 替换当前脚本</Button>
+                <Button type="button" variant="outline" size="sm" onClick={discardPendingSequel} className="gap-1.5"><X className="h-3.5 w-3.5" /> 保留当前脚本</Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground leading-relaxed break-words whitespace-pre-wrap">{pendingSequel.script.synopsis}</p>
+            {pendingSequel.script.consistencyCheck && (
+              <div className="rounded-lg border bg-background/70 p-3 text-xs">
+                <div className="mb-2 flex items-center justify-between gap-2 font-medium">
+                  <span>一致性检查</span>
+                  <span className={pendingSequel.script.consistencyCheck.overallScore < CONSISTENCY_THRESHOLD ? "text-destructive" : "text-primary"}>{pendingSequel.script.consistencyCheck.overallScore}/100</span>
+                </div>
+                <Progress value={pendingSequel.script.consistencyCheck.overallScore} className="h-2" />
+                {pendingSequel.script.consistencyCheck.issues.length > 0 && <p className="mt-2 text-muted-foreground break-words">{pendingSequel.script.consistencyCheck.issues.join("；")}</p>}
+              </div>
+            )}
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              {pendingSequel.script.scenes.slice(0, 4).map((scene) => (
+                <div key={scene.sceneNumber} className="rounded-lg border bg-background/70 p-3 min-w-0">
+                  <div className="mb-1 flex items-center gap-2 text-xs font-medium text-primary"><span>第{scene.sceneNumber}幕</span><span>{scene.duration}</span></div>
+                  <p className="text-sm break-words">{scene.characterAction}</p>
+                  {scene.dialogue && <p className="mt-2 border-l-2 border-primary/30 pl-2 text-sm italic break-words">「{scene.dialogue}」</p>}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Results */}
       {result && (
         <div className="space-y-4 mt-6 w-full max-w-full min-w-0 overflow-hidden">
