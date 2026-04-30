@@ -130,6 +130,8 @@ export function DynamicAssessmentResult({
   scoringType,
   aiInsight,
   loadingInsight,
+  insightError = false,
+  onRegenerateInsight,
   onRetake,
   onShowHistory,
   hasHistory,
@@ -631,10 +633,21 @@ export function DynamicAssessmentResult({
                 {loadingInsight ? (
                   <div className="flex items-center gap-2 text-sm text-muted-foreground py-4">
                     <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                    <span>AI 正在分析你的结果...</span>
+                    <span>AI 正在结合你的画像分析...</span>
                   </div>
                 ) : aiInsight ? (
                   <p className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">{aiInsight}</p>
+                ) : insightError ? (
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      AI 洞察生成失败，可能是网络波动。
+                    </p>
+                    {onRegenerateInsight && (
+                      <Button size="sm" variant="outline" onClick={onRegenerateInsight} className="gap-1.5">
+                        <RotateCcw className="w-3.5 h-3.5" /> 重新生成
+                      </Button>
+                    )}
+                  </div>
                 ) : (
                   <p className="text-sm text-muted-foreground leading-relaxed">
                     {isMaleMidlifeVitality ? 'AI 洞察正在生成中，你可以先查看上方状态雷达和恢复建议。' : 'AI 洞察正在生成中，请稍后查看。'}
