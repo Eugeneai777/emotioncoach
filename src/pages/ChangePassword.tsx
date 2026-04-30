@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Lock } from "lucide-react";
+import { useImpersonation } from "@/hooks/useImpersonation";
 
 const ChangePassword = () => {
   const [newPassword, setNewPassword] = useState("");
@@ -14,9 +15,15 @@ const ChangePassword = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { isImpersonating } = useImpersonation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (isImpersonating) {
+      toast({ title: "模拟登录会话不可修改密码", description: "请退出模拟后再试", variant: "destructive" });
+      return;
+    }
 
     if (newPassword.length < 6) {
       toast({ title: "密码至少需要6位", variant: "destructive" });
