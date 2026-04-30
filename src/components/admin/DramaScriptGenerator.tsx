@@ -658,7 +658,7 @@ export default function DramaScriptGenerator() {
         toast.error(`一致性评分 ${(data as DramaScript).consistencyCheck?.overallScore}，建议重新生成一次`);
       }
       setPendingSequel({ source: script, script: data as DramaScript, products: productsForSequel, conversionStyles: sequelConversionStyles });
-      toast.success(`已生成第${script.episode_number + 1}集续集，点击替换后生效`);
+      toast.success(`已生成第${script.episode_number + 1}集续集预览，未替换前不会改当前脚本`);
     } catch (e: any) {
       const message = e.message || "续集生成失败";
       setSequelGenerationError(message);
@@ -1482,7 +1482,7 @@ export default function DramaScriptGenerator() {
         </CardContent>
       </Card>
 
-      {(generatingSequel || sequelGenerationError || pendingSequel) && sequelGenerationSource && (
+      {(generatingSequel || sequelGenerationError) && sequelGenerationSource && (
         <Card ref={sequelStatusRef} className="mt-6 border-primary/30 bg-primary/5 max-w-full overflow-hidden">
           <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0 space-y-1">
@@ -2225,9 +2225,9 @@ export default function DramaScriptGenerator() {
           <div className="mx-auto flex max-w-5xl flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0 text-sm">
               <div className="flex items-center gap-2 font-medium text-primary">
-                <Check className="h-4 w-4" /> 第{sequelGenerationSource.episodeNumber + 1}集续集已生成
+                <Check className="h-4 w-4" /> 第{sequelGenerationSource.episodeNumber + 1}集续集预览已生成（尚未替换）
               </div>
-              <div className="truncate text-xs text-muted-foreground">点击替换后才会覆盖当前编辑区</div>
+              <div className="truncate text-xs text-muted-foreground">不点替换不会改当前脚本；可调方向后重新生成，满意后再替换。</div>
             </div>
             <div className="grid gap-2 sm:grid-cols-[180px_180px_auto_auto] sm:items-center">
               <Select value={sequelDirection} onValueChange={setSequelDirection} disabled={generatingSequel}>
