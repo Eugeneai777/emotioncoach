@@ -273,6 +273,8 @@ export default function DynamicAssessmentPage() {
             hasPurchased={hasPurchased}
             price={price}
             onPayClick={() => setShowPayDialog(true)}
+            lastRecord={historyRecords[0] as any}
+            historyCount={historyRecords.length}
           />
         </main>
         {requirePayment && packageKey && showPayDialog && (
