@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import PageHeader from "@/components/PageHeader";
 
 import { DynamicAssessmentIntro } from "@/components/dynamic-assessment/DynamicAssessmentIntro";
+import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { DynamicAssessmentQuestions } from "@/components/dynamic-assessment/DynamicAssessmentQuestions";
 import { DynamicAssessmentResult } from "@/components/dynamic-assessment/DynamicAssessmentResult";
 const AssessmentPromoShareDialog = lazy(() => import("@/components/dynamic-assessment/AssessmentPromoShareDialog").then((m) => ({ default: m.AssessmentPromoShareDialog })));
@@ -230,10 +231,17 @@ export default function DynamicAssessmentPage() {
     );
   }
 
+  // 链接分享卡片（OG meta + 微信 JSSDK）映射：测评 key -> og_configurations.page_key
+  const OG_PAGE_KEY_MAP: Record<string, string> = {
+    male_midlife_vitality: 'maleMidlifeVitalityAssessment',
+  };
+  const ogPageKey = template?.assessment_key ? OG_PAGE_KEY_MAP[template.assessment_key] : undefined;
+
   // === INTRO ===
   if (phase === "intro") {
     return (
       <div className="h-screen overflow-y-auto overscroll-contain bg-background" style={{ WebkitOverflowScrolling: 'touch' }}>
+        {ogPageKey && <DynamicOGMeta pageKey={ogPageKey} />}
         <PageHeader
           title={template.title}
           showBack={true}
@@ -304,6 +312,7 @@ export default function DynamicAssessmentPage() {
   if (phase === "history") {
     return (
       <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-background"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
+      {ogPageKey && <DynamicOGMeta pageKey={ogPageKey} />}
       <DynamicAssessmentHistory
         records={historyRecords}
         isLoading={historyLoading}
@@ -322,6 +331,7 @@ export default function DynamicAssessmentPage() {
   if (phase === "result" && result) {
     return (
       <>
+        {ogPageKey && <DynamicOGMeta pageKey={ogPageKey} />}
         <DynamicAssessmentResult
           result={result}
           template={{
