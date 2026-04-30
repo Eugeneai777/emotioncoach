@@ -125,6 +125,18 @@ interface Character {
   referenceImageUrl?: string;
 }
 
+interface PrimaryCharacterLockCard {
+  name: string;
+  sourceCharacterIndex: number;
+  fixedAppearance: string;
+  fixedOutfit: string;
+  identityAndTemperament: string;
+  visualPrompt: string;
+  negativePrompt: string;
+  referenceImageUrl?: string;
+  createdAt: string;
+}
+
 interface Scene {
   sceneNumber: number;
   panel: string;
@@ -164,6 +176,7 @@ interface DramaScript {
     unresolvedHookCarried: string;
     nextEpisodeHook: string;
   };
+  primaryCharacterLock?: PrimaryCharacterLockCard;
   characters: Character[];
   scenes: Scene[];
   totalScenes: number;
