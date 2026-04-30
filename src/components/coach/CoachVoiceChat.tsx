@@ -25,6 +25,7 @@ import { useNetworkQuality } from '@/hooks/useNetworkQuality';
 import { ContinueCallDialog } from './ContinueCallDialog';
 import { QuotaRechargeDialog } from '@/components/QuotaRechargeDialog';
 import { forceReleaseMicrophone } from '@/utils/microphoneManager';
+import { normalizeVoiceTranscript } from '@/utils/chineseText';
 
 export type VoiceChatMode = 'general' | 'parent_teen' | 'teen' | 'emotion';
 
@@ -1024,7 +1025,7 @@ export const CoachVoiceChat = ({
 
   // 🔧 身份替换：确保用户看到一致的身份
   const sanitizeIdentity = (text: string): string => {
-    return text
+    return normalizeVoiceTranscript(text, 'assistant').text
       .replace(/我是一个AI/g, '我是劲老师')
       .replace(/我是AI/g, '我是劲老师')
       .replace(/作为AI/g, '作为情绪教练');
@@ -1119,9 +1120,15 @@ export const CoachVoiceChat = ({
       }
       aiLastActivityRef.current = Date.now();
     } else if (role === 'user' && isFinal && text.trim()) {
+      const normalizedUserTranscript = normalizeVoiceTranscript(text, 'user');
+      if (normalizedUserTranscript.dropped) {
+        console.warn('[VoiceChat] Dropped noisy user transcript:', normalizedUserTranscript.reason, text);
+        return;
+      }
+      const cleanUserText = normalizedUserTranscript.text;
       // 用户发言：每次收到 final 文本时累积，用换行分隔
-      setUserTranscript(prev => prev ? `${prev}\n${text}` : text);
-      setLatestUserLine(text); // 🔧 PTT 字幕：仅保留最近一句
+      setUserTranscript(prev => prev ? `${prev}\n${cleanUserText}` : cleanUserText);
+      setLatestUserLine(cleanUserText); // 🔧 PTT 字幕：仅保留最近一句
       // 用户开口 = 新一轮，立即清空 AI 字幕（语义优先）
       if (aiFlushRafRef.current != null) {
         cancelAnimationFrame(aiFlushRafRef.current);
