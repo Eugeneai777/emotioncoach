@@ -218,6 +218,14 @@ export default function DynamicAssessmentPage() {
     }
   };
 
+  // 浏览器外跳落地：?recordId=xxx → 直接打开该条历史记录的结果页
+  useEffect(() => {
+    if (!urlRecordId || !template || phase !== 'intro' || historyLoading) return;
+    const rec = historyRecords.find((r: any) => r.id === urlRecordId);
+    if (rec) handleViewHistoryRecord(rec);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlRecordId, template?.id, historyLoading, historyRecords.length]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
