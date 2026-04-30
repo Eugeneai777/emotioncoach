@@ -176,6 +176,11 @@ export const CoachVoiceChat = ({
   const [useMiniProgramMode, setUseMiniProgramMode] = useState(false);  // 是否使用小程序模式
   const [pttDiag, setPttDiag] = useState<PttDiagnostics | null>(null); // 🩺 PTT 诊断（仅小程序+PTT 显示）
   const hasGreetedRef = useRef(false);  // 🔧 PTT 模式：仅注入一次主动问候
+  const hasConnectedOnceRef = useRef(false);
+  const reconnectAttemptsRef = useRef(0);
+  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isSilentReconnectingRef = useRef(false);
+  const [isRecoveringConnection, setIsRecoveringConnection] = useState(false);
   const shouldDelayMiniProgramPttConnect = pttMode && isWeChatMiniProgram();
   const pendingPttStartRef = useRef(false);
   const pendingPttReleaseCleanupRef = useRef<(() => void) | null>(null);
@@ -214,6 +219,13 @@ export const CoachVoiceChat = ({
     pendingPttStartRef.current = false;
     pendingPttReleaseCleanupRef.current?.();
     pendingPttReleaseCleanupRef.current = null;
+  }, []);
+
+  const clearReconnectTimer = useCallback(() => {
+    if (reconnectTimerRef.current) {
+      clearTimeout(reconnectTimerRef.current);
+      reconnectTimerRef.current = null;
+    }
   }, []);
 
   const armPendingPttReleaseWatch = useCallback(() => {
