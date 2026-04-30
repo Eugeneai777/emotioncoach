@@ -2265,6 +2265,7 @@ export const CoachVoiceChat = ({
       if (visibilityTimerRef.current) {
         clearTimeout(visibilityTimerRef.current);
       }
+      clearReconnectTimer();
       if (inactivityTimerRef.current) {
         clearInterval(inactivityTimerRef.current);
       }
@@ -2282,7 +2283,7 @@ export const CoachVoiceChat = ({
   }, []);
 
   // 🔧 连接中显示进度
-  if (isCheckingQuota || status === 'connecting') {
+  if ((isCheckingQuota || status === 'connecting') && !(hasConnectedOnceRef.current && isRecoveringConnection)) {
     // PTT 模式：极简接通画面（呼吸光圈 + 正在接通… + 取消）
     if (pttMode) {
       return (
