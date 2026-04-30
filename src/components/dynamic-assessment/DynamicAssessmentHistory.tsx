@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Trash2, Calendar, TrendingUp, TrendingDown, GitCompare, History, Sparkles, Brain, ChevronDown, Eye } from "lucide-react";
+import { ArrowLeft, Trash2, Calendar, TrendingUp, TrendingDown, GitCompare, History, Sparkles, Brain, ChevronDown, Eye, ChevronRight, MousePointerClick } from "lucide-react";
 import { format } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { zhCN } from "date-fns/locale";
