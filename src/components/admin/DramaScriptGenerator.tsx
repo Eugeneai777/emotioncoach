@@ -2369,6 +2369,33 @@ export default function DramaScriptGenerator() {
                     <Volume2 className="h-4 w-4" /> 下载合并旁白
                   </Button>
                 )}
+
+                {completedCount > 0 && (
+                  <Button
+                    variant="outline"
+                    onClick={handleMergeDownload}
+                    disabled={merging}
+                    className="gap-2"
+                  >
+                    {merging ? <><Loader2 className="h-4 w-4 animate-spin" /> 导出中...</> : <><Download className="h-4 w-4" /> 下载最终 MP4</>}
+                  </Button>
+                )}
+
+                <Button
+                  variant="outline"
+                  onClick={() => downloadSceneParameterRecords("json")}
+                  className="gap-2"
+                >
+                  <Save className="h-4 w-4" /> 导出参数 JSON
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  onClick={() => downloadSceneParameterRecords("csv")}
+                  className="gap-2"
+                >
+                  <Download className="h-4 w-4" /> 导出参数 CSV
+                </Button>
               </div>
 
               {completedCount > 0 && completedCount < result.scenes.length && (
