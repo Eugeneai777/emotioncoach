@@ -2014,7 +2014,17 @@ export default function DramaScriptGenerator() {
                   )}
                   <p className="text-xs text-muted-foreground break-words whitespace-pre-line">{buildPrimaryCharacterLock()}</p>
                   <div className="mt-2 flex flex-wrap items-center gap-2">
-                    {characterImages[0]?.imageUrl ? <span className="text-xs text-primary">已使用人物一定妆图作为视频参考</span> : <span className="text-xs text-muted-foreground">建议先生成角色定妆图</span>}
+                    {characterImages[0]?.imageUrl || result.primaryCharacterLock?.referenceImageUrl ? <span className="text-xs text-primary">已使用人物一参考图作为即梦图生视频参考</span> : <span className="text-xs text-muted-foreground">建议先生成并保存人物一参考图</span>}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 gap-1 text-xs"
+                      onClick={handleGenerateAndSavePrimaryReference}
+                      disabled={characterImages[0]?.status === "generating" || generatingCharacterRefs}
+                    >
+                      {characterImages[0]?.status === "generating" ? <Loader2 className="h-3 w-3 animate-spin" /> : <ImageIcon className="h-3 w-3" />}
+                      {characterImages[0]?.imageUrl || result.primaryCharacterLock?.referenceImageUrl ? "重生成人物一参考图" : "一键生成并保存人物一参考图"}
+                    </Button>
                     <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => copyToClipboard(buildPrimaryCharacterLock(), "人物一锁定词")}>
                       <Copy className="h-3 w-3" /> 复制
                     </Button>
