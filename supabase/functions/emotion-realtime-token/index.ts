@@ -51,43 +51,8 @@ const buildPersonaLayer = (): string => {
 如果用户提到身边有人，你可以自然地打招呼。`;
 };
 
-type EmotionBriefingContext = {
-  emotion_theme: string;
-  insight?: string | null;
-  action?: string | null;
-  stage_1_content?: string | null;
-  stage_2_content?: string | null;
-  stage_3_content?: string | null;
-  stage_4_content?: string | null;
-  created_at: string;
-};
-
-type CoachMemoryContext = {
-  memory_type: string;
-  content: string;
-  importance_score?: number | null;
-};
-
-const buildEmotionHistoryContext = (briefings: EmotionBriefingContext[] = [], memories: CoachMemoryContext[] = []) => {
-  const parts: string[] = [];
-  if (briefings.length > 0) {
-    parts.push('【用户近期情绪简报背景】');
-    briefings.slice(0, 5).forEach((b, index) => {
-      parts.push(`${index + 1}. 主题：${b.emotion_theme}${b.insight ? `；洞察：${b.insight}` : ''}${b.action ? `；行动：${b.action}` : ''}`);
-    });
-  }
-  if (memories.length > 0) {
-    parts.push('【用户重要记忆】');
-    parts.push(memories.slice(0, 5).map((m) => m.content).join('；'));
-  }
-  if (parts.length === 0) return '';
-  return `${parts.join('\n')}
-
-使用方式：这些信息只作为理解背景。不要机械复述，不要让用户感觉被审查；若自然相关，可以轻轻接续“上次我们聊到……现在感觉怎样？”`;
-};
-
 // 情绪教练专用 Prompt（与 vibrant-life-realtime-token 保持一致）
-const getEmotionCoachInstructions = (userName?: string, historyContext = '') => {
+const getEmotionCoachInstructions = (userName?: string) => {
   const name = userName || '';
   const dateInfo = getBeijingDateInfo();
   const persona = buildPersonaLayer();
@@ -110,10 +75,6 @@ const getEmotionCoachInstructions = (userName?: string, historyContext = '') => 
 ## 语言要求（必须遵守）
 - **必须使用简体中文**，不要使用繁体字或日文字符
 - 例如：使用"觉察"而非"覺察"，使用"情绪"而非"情緒"
-- 用户用中文对话时，始终用简体中文回应；不要因为转写里偶尔出现韩文、英文或乱码就切换语言
-- 如果用户没有明确要求外语，但转写出现韩文/英文短句、乱码、环境音，请判断为可能没听清，温柔确认：“刚才可能没听清，你愿意再说一遍吗？”
-
-${historyContext}
 
 【特殊身份】现在我是情绪教练模式，帮用户梳理情绪。
 
@@ -130,15 +91,6 @@ ${historyContext}
 - 下沉：当用户说"还好"时，"还好背后，有什么不太好的吗？"
 - 留白：说完等用户回应，不急着追问
 - 回应优先：用户有问题/犹豫时，先回应再引导
-
-【阶段推进规则 - 最高优先级】
-- 每轮只轻轻推进一个阶段，不能从“刚听到事件”直接跳到行动建议
-- 用户还没有说清楚事件、感受、需求前，禁止给建议、禁止总结大道理
-- 觉察阶段：问“发生了什么”“身体哪里有感觉”“这个情绪像什么”
-- 理解阶段：问“这背后你最在乎什么”“你当时需要什么”“最怕失去什么”
-- 反应阶段：问“你通常会怎么保护自己”“会压住、躲开、讨好，还是爆发”
-- 转化阶段：只给一个很小、温柔、当下可做的回应方式
-- 当用户说“还好/没事/不知道”时，用选择题降低压力，例如“更像委屈，还是更像累？”
 
 【情绪强度响应】
 - 低强度(1-3)：轻松对话，自然探索
@@ -219,38 +171,14 @@ serve(async (req) => {
 
     console.log('Authenticated user:', user.id);
 
-    // 获取用户名称、近期情绪简报与记忆（并行，不影响现有主流程）
-    const [profileResult, briefingsResult, emotionMemoriesResult, generalMemoriesResult] = await Promise.all([
-      supabase
-        .from('profiles')
-        .select('display_name')
-        .eq('id', user.id)
-        .maybeSingle(),
-      supabase
-        .from('briefings')
-        .select('emotion_theme, insight, action, stage_1_content, stage_2_content, stage_3_content, stage_4_content, created_at, conversations!inner(user_id)')
-        .eq('conversations.user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(5),
-      supabase
-        .from('user_coach_memory')
-        .select('memory_type, content, importance_score')
-        .eq('user_id', user.id)
-        .eq('coach_type', 'emotion')
-        .order('importance_score', { ascending: false })
-        .limit(5),
-      supabase
-        .from('user_coach_memory')
-        .select('memory_type, content, importance_score')
-        .eq('user_id', user.id)
-        .eq('coach_type', 'vibrant_life_sage')
-        .order('importance_score', { ascending: false })
-        .limit(3),
-    ]);
+    // 获取用户名称
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('display_name')
+      .eq('id', user.id)
+      .single();
 
-    const userName = profileResult.data?.display_name;
-    const memoryRows = (emotionMemoriesResult.data?.length ? emotionMemoriesResult.data : generalMemoriesResult.data) || [];
-    const historyContext = buildEmotionHistoryContext((briefingsResult.data || []) as EmotionBriefingContext[], memoryRows as CoachMemoryContext[]);
+    const userName = profile?.display_name;
 
     const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
     if (!OPENAI_API_KEY) {
@@ -265,7 +193,7 @@ serve(async (req) => {
     console.log('Creating OpenAI Realtime session via:', OPENAI_PROXY_URL ? 'proxy' : 'direct');
 
     // 获取情绪教练专用 instructions
-    const instructions = getEmotionCoachInstructions(userName, historyContext);
+    const instructions = getEmotionCoachInstructions(userName);
 
     // 解析 OpenAI Realtime voice 名称（从前端传入的 ElevenLabs ID 映射）
     // 有效值: alloy, ash, ballad, coral, echo, sage, shimmer, verse
@@ -303,17 +231,12 @@ serve(async (req) => {
         instructions: instructions,
         input_audio_format: "pcm16",
         output_audio_format: "pcm16",
-        input_audio_transcription: {
-          model: "whisper-1",
-          language: "zh",
-          prompt: "这是一段中文情绪教练对话。请优先转写为简体中文；忽略背景杂音、音乐、误触声。除非用户明确使用外语，否则不要输出韩文、英文或乱码。",
-        },
         max_response_output_tokens: "inf",
         turn_detection: {
           type: "server_vad",
-          threshold: 0.68,
+          threshold: 0.5,
           prefix_padding_ms: 300,
-          silence_duration_ms: 1600
+          silence_duration_ms: 1200
         }
       }),
     });

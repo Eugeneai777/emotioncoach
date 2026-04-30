@@ -173,9 +173,9 @@ Deno.serve(async (req) => {
         // 决定 turn_detection：客户端显式传 null → PTT；否则默认 server_vad
         const defaultVad = {
           type: 'server_vad',
-          threshold: mode === 'emotion' ? 0.68 : 0.6,
+          threshold: 0.6,
           prefix_padding_ms: 200,
-          silence_duration_ms: mode === 'emotion' ? 1600 : 1200,
+          silence_duration_ms: 1200,
         };
         const isPttMode = clientTurnDetectionReceived && clientTurnDetection === null;
         const effectiveTurnDetection = isPttMode
@@ -198,8 +198,6 @@ Deno.serve(async (req) => {
             max_response_output_tokens: "inf",
             input_audio_transcription: {
               model: 'whisper-1',
-              language: 'zh',
-              prompt: '这是一段中文情绪/生活教练语音对话。请优先转写为简体中文，忽略背景杂音、音乐、误触声。除非用户明确使用外语，否则不要输出韩文、英文或乱码。',
             },
             turn_detection: effectiveTurnDetection,
           },
@@ -521,20 +519,11 @@ ${knowledgeLayer}
     emotion: `【我是谁】我是劲老师，有劲AI的情绪教练。我专注于帮助你理解和转化情绪，运用情绪四部曲：觉察、理解、反应、转化。
 ${knowledgeLayer}
 
-【语言与噪音处理】
-- 默认使用简体中文；用户中文对话时不要切换到韩文或英文
-- 如果转写里出现短韩文、英文、乱码或明显像环境杂音，不要按字面推进，只温柔确认“刚才可能没听清，你愿意再说一遍吗？”
-
 【核心原则】
 1. 觉察：帮助用户感受并命名情绪
 2. 理解：探索情绪背后的需求和价值
 3. 反应：觉察情绪驱动的反应模式
 4. 转化：引导温柔回应，找到新可能
-
-【阶段推进规则】
-- 每轮只推进一个阶段，不能过早给建议
-- 没听清事件、感受、需求前，先镜像和追问
-- 觉察问发生了什么、身体哪里有感觉；理解问在乎和需要；反应问平时怎么保护自己；转化只给一个小动作
 
 【对话风格】
 - 温柔接纳，不评判任何情绪

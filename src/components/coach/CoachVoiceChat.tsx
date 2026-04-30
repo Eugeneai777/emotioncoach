@@ -74,23 +74,6 @@ type SpeakingStatus = 'idle' | 'user-speaking' | 'assistant-speaking';
 
 const POINTS_PER_MINUTE = 8;
 const DEFAULT_MAX_DURATION_MINUTES = 5; // 默认5分钟（未配置时）
-const MAX_SILENT_RECONNECT_ATTEMPTS = 3;
-
-const normalizeTranscriptText = (text: string): string => text.replace(/\s+/g, ' ').trim();
-
-const shouldDropUserTranscript = (text: string): boolean => {
-  const normalized = normalizeTranscriptText(text);
-  if (!normalized) return true;
-  const compact = normalized.replace(/[\s，。！？,.!?、~～…\-—_]/g, '');
-  if (compact.length <= 1) return true;
-  if (/^[嗯啊呃额哦喂诶哎哈]+$/.test(compact) && compact.length <= 3) return true;
-  const hangulCount = (compact.match(/[\uac00-\ud7af]/g) || []).length;
-  const latinCount = (compact.match(/[A-Za-z]/g) || []).length;
-  const cjkCount = (compact.match(/[\u4e00-\u9fff]/g) || []).length;
-  if (hangulCount > 0 && cjkCount === 0) return true;
-  if (latinCount >= Math.max(4, compact.length * 0.7) && cjkCount === 0) return true;
-  return false;
-};
 
 export const CoachVoiceChat = ({
   onClose,
@@ -176,11 +159,6 @@ export const CoachVoiceChat = ({
   const [useMiniProgramMode, setUseMiniProgramMode] = useState(false);  // 是否使用小程序模式
   const [pttDiag, setPttDiag] = useState<PttDiagnostics | null>(null); // 🩺 PTT 诊断（仅小程序+PTT 显示）
   const hasGreetedRef = useRef(false);  // 🔧 PTT 模式：仅注入一次主动问候
-  const hasConnectedOnceRef = useRef(false);
-  const reconnectAttemptsRef = useRef(0);
-  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isSilentReconnectingRef = useRef(false);
-  const [isRecoveringConnection, setIsRecoveringConnection] = useState(false);
   const shouldDelayMiniProgramPttConnect = pttMode && isWeChatMiniProgram();
   const pendingPttStartRef = useRef(false);
   const pendingPttReleaseCleanupRef = useRef<(() => void) | null>(null);
@@ -219,13 +197,6 @@ export const CoachVoiceChat = ({
     pendingPttStartRef.current = false;
     pendingPttReleaseCleanupRef.current?.();
     pendingPttReleaseCleanupRef.current = null;
-  }, []);
-
-  const clearReconnectTimer = useCallback(() => {
-    if (reconnectTimerRef.current) {
-      clearTimeout(reconnectTimerRef.current);
-      reconnectTimerRef.current = null;
-    }
   }, []);
 
   const armPendingPttReleaseWatch = useCallback(() => {
@@ -972,11 +943,6 @@ export const CoachVoiceChat = ({
     statusRef.current = mappedStatus;
     setStatus(mappedStatus);
     if (mappedStatus === 'connected') {
-      hasConnectedOnceRef.current = true;
-      reconnectAttemptsRef.current = 0;
-      isSilentReconnectingRef.current = false;
-      setIsRecoveringConnection(false);
-      clearReconnectTimer();
       lastActivityRef.current = Date.now();
       if (durationRef.current) clearInterval(durationRef.current);
       durationRef.current = setInterval(() => {
@@ -1027,38 +993,6 @@ export const CoachVoiceChat = ({
       }
     } else if (mappedStatus === 'disconnected' || mappedStatus === 'error') {
       if (durationRef.current) clearInterval(durationRef.current);
-
-      if (isSilentReconnectingRef.current) {
-        setIsRecoveringConnection(true);
-        return;
-      }
-
-      const canSilentReconnect =
-        hasConnectedOnceRef.current &&
-        !isEndingRef.current &&
-        !insufficientDuringCall &&
-        !isSilentReconnectingRef.current &&
-        reconnectAttemptsRef.current < MAX_SILENT_RECONNECT_ATTEMPTS;
-
-      if (canSilentReconnect) {
-        isSilentReconnectingRef.current = true;
-        setIsRecoveringConnection(true);
-        const nextAttempt = reconnectAttemptsRef.current + 1;
-        reconnectAttemptsRef.current = nextAttempt;
-        const delay = Math.min(800 * nextAttempt, 2400);
-        clearReconnectTimer();
-        reconnectTimerRef.current = setTimeout(() => {
-          reconnectTimerRef.current = null;
-          try { chatRef.current?.disconnect(); } catch (err) { console.warn('[VoiceChat] cleanup before reconnect failed:', err); }
-          chatRef.current = null;
-          isInitializingRef.current = false;
-          startCall({ preserveTranscript: true, silentReconnect: true });
-        }, delay);
-        return;
-      }
-
-      isSilentReconnectingRef.current = false;
-      setIsRecoveringConnection(false);
 
       // 🔧 优先展示“明确断开原因”（例如计费网络失败/点数不足）
       const notice = disconnectNoticeRef.current;
@@ -1185,14 +1119,9 @@ export const CoachVoiceChat = ({
       }
       aiLastActivityRef.current = Date.now();
     } else if (role === 'user' && isFinal && text.trim()) {
-      const normalizedUserText = normalizeTranscriptText(text);
-      if (shouldDropUserTranscript(normalizedUserText)) {
-        console.log('[VoiceChat] Dropped noisy user transcript:', text);
-        return;
-      }
       // 用户发言：每次收到 final 文本时累积，用换行分隔
-      setUserTranscript(prev => prev ? `${prev}\n${normalizedUserText}` : normalizedUserText);
-      setLatestUserLine(normalizedUserText); // 🔧 PTT 字幕：仅保留最近一句
+      setUserTranscript(prev => prev ? `${prev}\n${text}` : text);
+      setLatestUserLine(text); // 🔧 PTT 字幕：仅保留最近一句
       // 用户开口 = 新一轮，立即清空 AI 字幕（语义优先）
       if (aiFlushRafRef.current != null) {
         cancelAnimationFrame(aiFlushRafRef.current);
@@ -1298,7 +1227,7 @@ export const CoachVoiceChat = ({
   }, [networkQuality, networkRtt]);
 
   // 开始通话 - 双轨切换
-  const startCall = async (options?: { preserveTranscript?: boolean; silentReconnect?: boolean }) => {
+  const startCall = async () => {
     if (isInitializingRef.current) return;
     if (chatRef.current || status === 'connecting' || status === 'connected') return;
     isInitializingRef.current = true;
@@ -1312,8 +1241,7 @@ export const CoachVoiceChat = ({
     console.log('[VoiceChat] Platform info (early):', platformInfo);
 
     // ✅ 关键：用稳定 sessionId 作为锁 id，避免短时间内多次初始化拿到不同锁 id
-    const lockId = options?.silentReconnect ? sessionIdRef.current : acquireLock(sessionIdRef.current);
-    const acquiredLockThisAttempt = !options?.silentReconnect;
+    const lockId = acquireLock(sessionIdRef.current);
     if (!lockId) {
       isInitializingRef.current = false;
       toast({ title: "语音通话冲突", description: `已有语音会话在进行中 (${activeComponent})，请先结束当前通话`, variant: "destructive" });
@@ -1324,7 +1252,7 @@ export const CoachVoiceChat = ({
     // 如果组件已卸载/本次初始化已过期，直接终止（避免产生第二路连接）
     if (isStale()) {
       isInitializingRef.current = false;
-      if (acquiredLockThisAttempt) releaseLock();
+      releaseLock();
       return;
     }
     
@@ -1338,15 +1266,13 @@ export const CoachVoiceChat = ({
       // 🔧 重置结束标记和转录状态，确保新通话不会受之前状态影响
       isEndingRef.current = false;
       setIsEnding(false);
-      if (!options?.preserveTranscript) {
-        setTranscript('');
-        setUserTranscript('');
-        setLatestUserLine('');
-        setLatestAiLine('');
-        // ✅ 重置 delta 累积 refs
-        currentAssistantDeltaRef.current = '';
-        completedTranscriptRef.current = '';
-      }
+      setTranscript('');
+      setUserTranscript('');
+      setLatestUserLine('');
+      setLatestAiLine('');
+      // ✅ 重置 delta 累积 refs
+      currentAssistantDeltaRef.current = '';
+      completedTranscriptRef.current = '';
 
       // 🔧 所有平台（含Safari）：在任何其他 await 之前，立即在用户手势上下文中请求麦克风
       // Safari 严格要求 getUserMedia 在用户点击同步调用链中触发
@@ -1511,7 +1437,7 @@ export const CoachVoiceChat = ({
       // 🔧 并行化：同时执行预扣费 + 获取时长限制（节省 300-800ms）
       updateConnectionPhase('requesting_mic');
       const [preDeductResult, durationResult] = await Promise.all([
-        options?.silentReconnect ? Promise.resolve({ success: true, isNetworkError: false }) : deductQuotaWithRetry(1),
+        deductQuotaWithRetry(1),
         // 如果有 maxDurationOverride，跳过 RPC 查询
         maxDurationOverride !== undefined 
           ? Promise.resolve(maxDurationOverride) 
@@ -1542,12 +1468,10 @@ export const CoachVoiceChat = ({
 
       // ⚠️ 这里之后已经发生预扣费；如果卸载/过期，需要立刻退款并终止
       if (isStale()) {
-        if (!options?.silentReconnect) {
-          try {
-            await refundPreDeductedQuota('aborted_unmounted');
-          } catch {
-            // ignore
-          }
+        try {
+          await refundPreDeductedQuota('aborted_unmounted');
+        } catch {
+          // ignore
         }
         isInitializingRef.current = false;
         stopConnectionTimer();
@@ -1591,9 +1515,6 @@ export const CoachVoiceChat = ({
         updateConnectionPhase('connected');
         stopConnectionTimer();
         startMonitoring(); // 开始持续网络监控
-          if (options?.silentReconnect) {
-            setTimeout(() => miniProgramClient.sendTextMessage?.('[系统提示：刚刚网络短暂波动，已恢复连接。请自然接续刚才的对话，不要重新自我介绍，不要说连接问题。]'), 500);
-          }
         if (!pttMode) {
           miniProgramClient.startRecording();
         }
@@ -1638,9 +1559,6 @@ export const CoachVoiceChat = ({
           updateConnectionPhase('connected');
           stopConnectionTimer();
           startMonitoring(); // 开始持续网络监控
-          if (options?.silentReconnect) {
-            setTimeout(() => chat.sendTextMessage?.('[系统提示：刚刚网络短暂波动，已恢复连接。请自然接续刚才的对话，不要重新自我介绍，不要说连接问题。]'), 500);
-          }
           
           // 🔧 AI来电模式：让AI先说开场白
           if (isIncomingCall && openingMessage && chat.sendTextMessage) {
@@ -1736,7 +1654,7 @@ export const CoachVoiceChat = ({
       const errorMessage = error?.message || '';
       const errorType = (error as any)?.errorType || 'unknown';
       
-      if (!options?.silentReconnect && !errorMessage.includes('环境不支持')) {
+      if (!errorMessage.includes('环境不支持')) {
         // 如果不是环境不支持（已在上面退还），则在这里退还
         await refundPreDeductedQuota('connection_failed');
       }
@@ -2273,7 +2191,6 @@ export const CoachVoiceChat = ({
       if (visibilityTimerRef.current) {
         clearTimeout(visibilityTimerRef.current);
       }
-      clearReconnectTimer();
       if (inactivityTimerRef.current) {
         clearInterval(inactivityTimerRef.current);
       }
@@ -2291,7 +2208,7 @@ export const CoachVoiceChat = ({
   }, []);
 
   // 🔧 连接中显示进度
-  if ((isCheckingQuota || status === 'connecting') && !(hasConnectedOnceRef.current && isRecoveringConnection)) {
+  if (isCheckingQuota || status === 'connecting') {
     // PTT 模式：极简接通画面（呼吸光圈 + 正在接通… + 取消）
     if (pttMode) {
       return (
@@ -2365,11 +2282,6 @@ export const CoachVoiceChat = ({
           >
             前往充值
           </Button>
-        </div>
-      )}
-      {isRecoveringConnection && (
-        <div className="mx-4 mt-3 rounded-full bg-white/[0.08] px-4 py-2 text-center text-xs font-medium text-white/75 backdrop-blur-md animate-in fade-in slide-in-from-top-1 duration-300">
-          网络波动，正在恢复…
         </div>
       )}
       {/* 顶部状态栏 - 小程序环境预留胶囊按钮空间 */}
