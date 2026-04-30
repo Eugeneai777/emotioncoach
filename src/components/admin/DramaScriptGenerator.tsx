@@ -1088,7 +1088,10 @@ export default function DramaScriptGenerator() {
 
   const handleBatchGenerate = async () => {
     if (!result) return;
-    const hasPrimaryRef = Boolean(characterImages[0]?.imageUrl);
+    if (!locksConfirmed) {
+      toast.info("请先确认人物一锁定卡和统一风格锁定卡，系统仍将使用当前文案继续提交视频。", { duration: 5000 });
+    }
+    const hasPrimaryRef = Boolean(characterImages[0]?.imageUrl || result.primaryCharacterLock?.referenceImageUrl || result.characters[0]?.referenceImageUrl);
     const imageCount = result.scenes.filter((scene) => sceneImages[scene.sceneNumber]?.imageUrl).length;
     if (!hasPrimaryRef || imageCount < result.scenes.length) {
       toast.info("建议先生成“人物一参考图”和“全部分镜图片”，这样 8 个镜头的人物与风格更一致。仍将继续提交视频。", { duration: 6000 });
