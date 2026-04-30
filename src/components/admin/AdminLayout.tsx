@@ -137,6 +137,7 @@ export function AdminLayout({ userRole }: AdminLayoutProps) {
                   <Route path="coaches" element={<CoachTemplatesManagement />} />
                   <Route path="camps" element={<CampTemplatesManagement />} />
                   <Route path="assessments" element={<AssessmentsManagement />} />
+                  <Route path="assessments/:templateId/insights" element={<AssessmentInsightsDetail />} />
                   <Route path="human-coaches" element={<HumanCoachesManagement />} />
                   <Route path="videos" element={<VideoCoursesManagement />} />
                   <Route path="knowledge" element={<KnowledgeBaseManagement />} />
