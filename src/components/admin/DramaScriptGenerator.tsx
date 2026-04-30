@@ -1569,6 +1569,8 @@ export default function DramaScriptGenerator() {
         </Card>
       )}
 
+      {pendingSequel && <div aria-hidden="true" className="h-40 sm:h-28" />}
+
       {/* Results */}
       {result && (
         <div className="space-y-4 mt-6 w-full max-w-full min-w-0 overflow-hidden">
