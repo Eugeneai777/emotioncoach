@@ -1355,6 +1355,67 @@ export default function DramaScriptGenerator() {
     }
   };
 
+  const buildSceneParameterRecords = () => {
+    if (!result) return [];
+    return result.scenes.map((scene) => {
+      const refs = getVideoReferenceUrls(scene.sceneNumber);
+      const videoState = sceneVideos[scene.sceneNumber] || { status: "idle" as VideoStatus };
+      const audioState = sceneAudios[scene.sceneNumber] || { status: "idle" as AudioStatus };
+      return {
+        title: result.title,
+        sceneNumber: scene.sceneNumber,
+        panel: scene.panel,
+        durationSettingSeconds: videoDuration,
+        aspectRatio: videoAspectRatio,
+        keepReferences: sceneKeepReferences[scene.sceneNumber] ?? true,
+        videoStatus: videoState.status,
+        videoTaskId: videoState.taskId || "",
+        videoUrl: videoState.videoUrl || "",
+        sceneImageUrl: sceneImages[scene.sceneNumber]?.imageUrl || scene.generatedImageUrl || "",
+        primaryCharacterReferenceUrl: characterImages[0]?.imageUrl || result.primaryCharacterLock?.referenceImageUrl || result.characters[0]?.referenceImageUrl || "",
+        referenceImageUrls: refs,
+        audioStatus: audioState.status,
+        audioUrl: audioState.audioUrl || "",
+        imagePrompt: scene.imagePrompt,
+        jimengVideoPrompt: buildJimengVideoPrompt(scene),
+        primaryCharacterLock: buildPrimaryCharacterLock(),
+        styleLock: buildStyleLock(),
+        action: scene.characterAction,
+        dialogue: scene.dialogue || "",
+        narration: scene.narration || "",
+        bgm: scene.bgm,
+      };
+    });
+  };
+
+  const downloadSceneParameterRecords = (format: "json" | "csv") => {
+    if (!result) return;
+    const records = buildSceneParameterRecords();
+    const safeTitle = result.title || "drama";
+    if (format === "json") {
+      const blob = new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), records }, null, 2)], { type: "application/json;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${safeTitle}-scene-video-params.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("镜头提示词与参数记录 JSON 已导出");
+      return;
+    }
+    const headers = ["sceneNumber", "panel", "durationSettingSeconds", "aspectRatio", "keepReferences", "videoStatus", "videoTaskId", "videoUrl", "sceneImageUrl", "primaryCharacterReferenceUrl", "referenceImageUrls", "audioStatus", "audioUrl", "imagePrompt", "jimengVideoPrompt", "primaryCharacterLock", "styleLock", "action", "dialogue", "narration", "bgm"];
+    const escapeCsv = (value: unknown) => `"${(Array.isArray(value) ? value.join(" | ") : String(value ?? "")).replace(/"/g, '""')}"`;
+    const csv = [headers.join(","), ...records.map((record) => headers.map((key) => escapeCsv((record as any)[key])).join(","))].join("\n");
+    const blob = new Blob([`\ufeff${csv}`], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${safeTitle}-scene-video-params.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("镜头提示词与参数记录 CSV 已导出");
+  };
+
   const getStatusLabel = (status: VideoStatus): string => {
     switch (status) {
       case "submitting": return "提交中...";
