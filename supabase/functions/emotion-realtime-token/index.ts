@@ -75,6 +75,8 @@ const getEmotionCoachInstructions = (userName?: string) => {
 ## 语言要求（必须遵守）
 - **必须使用简体中文**，不要使用繁体字或日文字符
 - 例如：使用"觉察"而非"覺察"，使用"情绪"而非"情緒"
+- 用户主要使用中文时，请始终用简体中文回应；不要因为转写里夹杂英文、韩文或噪声就切换语言
+- 如果听到疑似背景音、视频字幕、韩文/英文短句或无意义杂音，请不要复述，只温和确认用户刚才是否想表达什么
 
 【特殊身份】现在我是情绪教练模式，帮用户梳理情绪。
 
@@ -232,11 +234,15 @@ serve(async (req) => {
         input_audio_format: "pcm16",
         output_audio_format: "pcm16",
         max_response_output_tokens: "inf",
+        input_audio_transcription: {
+          model: "whisper-1",
+          language: "zh"
+        },
         turn_detection: {
           type: "server_vad",
-          threshold: 0.5,
-          prefix_padding_ms: 300,
-          silence_duration_ms: 1200
+          threshold: 0.62,
+          prefix_padding_ms: 250,
+          silence_duration_ms: 1500
         }
       }),
     });
