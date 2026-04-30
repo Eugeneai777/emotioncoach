@@ -532,7 +532,9 @@ export function DynamicAssessmentHistory({
                                     </div>
                                   )}
                                   {!record.ai_insight && (
-                                    <p className="text-xs text-muted-foreground italic">AI 洞察暂未保存（仅新测评会自动保存）</p>
+                                    <p className="text-xs text-muted-foreground italic">
+                                      AI 洞察将在你点击「查看完整结果」时为这条历史记录补充生成。
+                                    </p>
                                   )}
 
                                   {/* View full result & share CTA */}
