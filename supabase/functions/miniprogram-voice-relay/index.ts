@@ -173,9 +173,9 @@ Deno.serve(async (req) => {
         // 决定 turn_detection：客户端显式传 null → PTT；否则默认 server_vad
         const defaultVad = {
           type: 'server_vad',
-          threshold: 0.6,
+          threshold: mode === 'emotion' ? 0.68 : 0.6,
           prefix_padding_ms: 200,
-          silence_duration_ms: 1200,
+          silence_duration_ms: mode === 'emotion' ? 1600 : 1200,
         };
         const isPttMode = clientTurnDetectionReceived && clientTurnDetection === null;
         const effectiveTurnDetection = isPttMode
@@ -198,6 +198,8 @@ Deno.serve(async (req) => {
             max_response_output_tokens: "inf",
             input_audio_transcription: {
               model: 'whisper-1',
+              language: 'zh',
+              prompt: '这是一段中文情绪/生活教练语音对话。请优先转写为简体中文，忽略背景杂音、音乐、误触声。除非用户明确使用外语，否则不要输出韩文、英文或乱码。',
             },
             turn_detection: effectiveTurnDetection,
           },
