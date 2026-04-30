@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { setPostAuthRedirect } from "@/lib/postAuthRedirect";
+import { PromoFloatingBackButton } from "@/components/promo/PromoFloatingBackButton";
 import zhileProductNew from "@/assets/zhile-product-new.jpg";
 
 import { SynergyRedeemDialog } from "@/components/promo/SynergyRedeemDialog";
@@ -233,6 +234,7 @@ export default function ZhileCoachPromoPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-orange-50 via-amber-50/30 to-white text-slate-800 overflow-x-hidden">
+      <PromoFloatingBackButton />
 
       {/* ===== HERO ===== */}
       <section className="relative min-h-[85vh] flex flex-col items-center justify-center text-center px-4 overflow-hidden bg-gradient-to-br from-amber-600 via-orange-500 to-amber-700">
