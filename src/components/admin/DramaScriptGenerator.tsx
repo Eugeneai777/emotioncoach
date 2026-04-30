@@ -2111,6 +2111,14 @@ export default function DramaScriptGenerator() {
                               >
                                 <Copy className="h-3 w-3" />
                               </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="shrink-0 h-7 gap-1 text-xs"
+                                onClick={() => copyToClipboard(buildJimengVideoPrompt(scene), `场景${scene.sceneNumber}即梦提示词`)}
+                              >
+                                <Video className="h-3 w-3" /> 即梦词
+                              </Button>
                             </div>
                           </div>
 
@@ -2157,7 +2165,7 @@ export default function DramaScriptGenerator() {
                                 onClick={() => generateSceneVideo(scene)}
                                 disabled={anyVideoGenerating && videoState.status === "idle"}
                               >
-                                <Video className="h-3 w-3" /> 生成视频
+                                <Video className="h-3 w-3" /> 生成本镜头视频
                               </Button>
                             )}
 
