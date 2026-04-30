@@ -148,6 +148,8 @@ export function DynamicAssessmentResult({
   recommendedCampTypes,
   isLiteMode = false,
   onLoginToUnlock,
+  recordId,
+  autoSavePdf,
 }: DynamicAssessmentResultProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -156,7 +158,15 @@ export function DynamicAssessmentResult({
   const [isSharing, setIsSharing] = useState(false);
   const [sharePreviewUrl, setSharePreviewUrl] = useState<string | null>(null);
   const shareCardRef = useRef<HTMLDivElement>(null);
+  const reportCardRef = useRef<HTMLDivElement>(null);
+  const saveButtonRef = useRef<HTMLDivElement>(null);
   const [profileData, setProfileData] = useState<{ displayName?: string; avatarUrl?: string }>({});
+  const [showSaveSheet, setShowSaveSheet] = useState(false);
+  const [showMoreFormats, setShowMoreFormats] = useState(false);
+  const [showWeChatPdfGuide, setShowWeChatPdfGuide] = useState(false);
+  const [reportPreviewUrl, setReportPreviewUrl] = useState<string | null>(null);
+  const [savingReport, setSavingReport] = useState(false);
+  const [pulseSaveBtn, setPulseSaveBtn] = useState(false);
 
   // Fetch coach route
   useEffect(() => {
