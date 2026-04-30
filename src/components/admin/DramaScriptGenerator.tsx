@@ -2199,6 +2199,36 @@ export default function DramaScriptGenerator() {
                 </div>
               </div>
 
+              {continuityNotice && (
+                <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm">
+                  <div className="mb-2 flex items-center gap-2 font-medium text-destructive">
+                    <AlertTriangle className="h-4 w-4" /> 连续性检查：参考素材不完整
+                  </div>
+                  <div className="space-y-1 text-xs text-muted-foreground">
+                    {continuityNotice.missingPrimaryReference && <p>缺少人物一参考图：建议先补生成，作为后续全部镜头图生视频的人物锚点。</p>}
+                    {continuityNotice.missingSceneNumbers.length > 0 && <p>缺少分镜图：镜头 {continuityNotice.missingSceneNumbers.join("、")}。建议补齐后再批量生成视频。</p>}
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {continuityNotice.missingPrimaryReference && (
+                      <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={handleGenerateAndSavePrimaryReference} disabled={characterImages[0]?.status === "generating" || generatingCharacterRefs}>
+                        {characterImages[0]?.status === "generating" ? <Loader2 className="h-3 w-3 animate-spin" /> : <User className="h-3 w-3" />} 补生成人物一参考图
+                      </Button>
+                    )}
+                    {continuityNotice.missingSceneNumbers.length > 0 && (
+                      <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={handleGenerateMissingSceneImages} disabled={batchGeneratingImages || anyImageGenerating}>
+                        {batchGeneratingImages ? <Loader2 className="h-3 w-3 animate-spin" /> : <ImageIcon className="h-3 w-3" />} 补生成缺失分镜图
+                      </Button>
+                    )}
+                    <Button size="sm" className="h-8 gap-1.5 text-xs" onClick={handleBatchGenerate} disabled={batchGenerating || anyVideoGenerating || batchGeneratingImages || anyImageGenerating}>
+                      <RefreshCw className="h-3 w-3" /> 重新检查并生成
+                    </Button>
+                    <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={handleContinueBatchGenerateAnyway} disabled={batchGenerating || anyVideoGenerating}>
+                      仍然按当前素材生成
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               {/* Batch controls */}
               <div className="flex w-full min-w-0 flex-wrap items-center gap-3 overflow-hidden">
                 <Button
