@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { setPostAuthRedirect } from "@/lib/postAuthRedirect";
+import { PromoFloatingBackButton } from "@/components/promo/PromoFloatingBackButton";
 import zhile4BoxCover from "@/assets/zhile-4box-cover.jpg";
 import wecomCoachQr from "@/assets/wecom-coach-qr.jpg";
 import IdentityBloomShareCard from "@/components/promo/IdentityBloomShareCard";
@@ -441,6 +442,7 @@ export default function IdentityBloomPromoPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-indigo-50 via-violet-50/30 to-white text-slate-800 overflow-x-hidden">
+      <PromoFloatingBackButton />
 
       {/* ===== HERO ===== */}
       <section className="relative min-h-[85vh] flex flex-col items-center justify-center text-center px-4 overflow-hidden bg-gradient-to-br from-indigo-700 via-violet-600 to-indigo-800">

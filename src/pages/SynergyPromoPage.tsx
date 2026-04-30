@@ -26,6 +26,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { setPostAuthRedirect } from "@/lib/postAuthRedirect";
+import { PromoFloatingBackButton } from "@/components/promo/PromoFloatingBackButton";
 import zhileProductNew from "@/assets/zhile-product-new.jpg";
 import wecomCoachQr from "@/assets/wecom-coach-qr.jpg";
 import SynergyShareCard from "@/components/promo/SynergyShareCard";
@@ -485,6 +486,7 @@ export default function SynergyPromoPage() {
 
   return (
     <div className="min-h-screen w-full" style={{ background: C.bg, color: C.text }}>
+      <PromoFloatingBackButton />
       <Helmet>
         <title>7 天有劲训练营 · 40 岁以后不该一个人扛着 ｜ 含知乐胶囊</title>
         <meta

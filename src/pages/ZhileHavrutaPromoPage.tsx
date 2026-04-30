@@ -14,6 +14,7 @@ import { usePaymentCallback } from "@/hooks/usePaymentCallback";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { setPostAuthRedirect, clearPostAuthRedirect } from "@/lib/postAuthRedirect";
+import { PromoFloatingBackButton } from "@/components/promo/PromoFloatingBackButton";
 import zhileCapsules from "@/assets/zhile-capsules.jpeg";
 
 /* ========== Floating particles ========== */
@@ -367,6 +368,7 @@ export default function ZhileHavrutaPromoPage() {
 
   return (
     <div className="min-h-screen bg-[#0a0e1a] text-slate-100 overflow-x-hidden">
+      <PromoFloatingBackButton />
 
       {/* ===== HERO ===== */}
       <section className="relative min-h-[80vh] flex flex-col items-center justify-center text-center px-4 overflow-hidden"

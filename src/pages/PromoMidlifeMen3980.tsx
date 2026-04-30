@@ -9,6 +9,7 @@ import { usePackageByKey } from "@/hooks/usePackages";
 import { useWechatOpenId } from "@/hooks/useWechatOpenId";
 import { useAuth } from "@/hooks/useAuth";
 import { setPostAuthRedirect } from "@/lib/postAuthRedirect";
+import { PromoFloatingBackButton } from "@/components/promo/PromoFloatingBackButton";
 
 /**
  * 中年男性 3980 闭门修复计划 售前页
@@ -119,6 +120,7 @@ export default function PromoMidlifeMen3980() {
       className="min-h-screen w-full"
       style={{ background: C.bg, color: C.text }}
     >
+      <PromoFloatingBackButton />
       <Helmet>
         <title>38–55 男人闭门修复计划 | 有劲 ✕ 施强健康</title>
         <meta

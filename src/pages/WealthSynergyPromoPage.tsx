@@ -14,6 +14,7 @@ import { usePaymentCallback } from "@/hooks/usePaymentCallback";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { setPostAuthRedirect, clearPostAuthRedirect } from "@/lib/postAuthRedirect";
+import { PromoFloatingBackButton } from "@/components/promo/PromoFloatingBackButton";
 import zhileCapsules from "@/assets/zhile-capsules.jpeg";
 import wecomCoachQr from "@/assets/wecom-coach-qr.jpg";
 
@@ -449,6 +450,7 @@ export default function WealthSynergyPromoPage() {
 
   return (
     <div className="min-h-screen bg-[#0a0f0a] text-slate-100 overflow-x-hidden">
+      <PromoFloatingBackButton />
 
       {/* ===== HERO ===== */}
       <section className="relative min-h-[85vh] flex flex-col items-center justify-center text-center px-4 overflow-hidden"
