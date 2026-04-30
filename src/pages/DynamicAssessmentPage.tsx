@@ -180,6 +180,8 @@ export default function DynamicAssessmentPage() {
   const handleRetake = () => {
     setResult(null);
     setAiInsight(null);
+    setInsightError(false);
+    setSavedResultId(null);
     setPhase("questions");
   };
 
@@ -202,8 +204,14 @@ export default function DynamicAssessmentPage() {
     const scoringResult = calculateScore(scoringType, storedAnswers, allQuestions, dimensions, patterns);
     setResult(scoringResult);
     setAiInsight(record.ai_insight || null);
+    setInsightError(false);
     setSavedResultId(record.id);
     setPhase("result");
+
+    // Auto-backfill missing insight for historical records
+    if (!record.ai_insight) {
+      generateInsight(scoringResult, record.id);
+    }
   };
 
   if (isLoading) {
