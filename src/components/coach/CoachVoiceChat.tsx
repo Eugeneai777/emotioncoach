@@ -1051,6 +1051,7 @@ export const CoachVoiceChat = ({
           reconnectTimerRef.current = null;
           try { chatRef.current?.disconnect(); } catch (err) { console.warn('[VoiceChat] cleanup before reconnect failed:', err); }
           chatRef.current = null;
+          releaseLock();
           isInitializingRef.current = false;
           startCall({ preserveTranscript: true, silentReconnect: true });
         }, delay);
@@ -1541,10 +1542,12 @@ export const CoachVoiceChat = ({
 
       // ⚠️ 这里之后已经发生预扣费；如果卸载/过期，需要立刻退款并终止
       if (isStale()) {
-        try {
-          await refundPreDeductedQuota('aborted_unmounted');
-        } catch {
-          // ignore
+        if (!options?.silentReconnect) {
+          try {
+            await refundPreDeductedQuota('aborted_unmounted');
+          } catch {
+            // ignore
+          }
         }
         isInitializingRef.current = false;
         stopConnectionTimer();
@@ -1733,7 +1736,7 @@ export const CoachVoiceChat = ({
       const errorMessage = error?.message || '';
       const errorType = (error as any)?.errorType || 'unknown';
       
-      if (!errorMessage.includes('环境不支持')) {
+      if (!options?.silentReconnect && !errorMessage.includes('环境不支持')) {
         // 如果不是环境不支持（已在上面退还），则在这里退还
         await refundPreDeductedQuota('connection_failed');
       }
