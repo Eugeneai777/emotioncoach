@@ -1159,6 +1159,20 @@ export default function DramaScriptGenerator() {
     toast.info("所有分镜已提交，请等待生成完成");
   };
 
+  const handleContinueBatchGenerateAnyway = async () => {
+    if (!result) return;
+    setContinuityNotice(null);
+    setBatchGenerating(true);
+    for (const scene of result.scenes) {
+      const state = sceneVideos[scene.sceneNumber];
+      if (state?.status === "done") continue;
+      await generateSceneVideo(scene);
+      await new Promise(r => setTimeout(r, 1000));
+    }
+    setBatchGenerating(false);
+    toast.info("已按当前参考图提交全部分镜");
+  };
+
   const allVideosDone = result?.scenes.every(s => sceneVideos[s.sceneNumber]?.status === "done") ?? false;
   const anyVideoGenerating = Object.values(sceneVideos).some(v => 
     v.status === "submitting" || v.status === "in_queue" || v.status === "generating"
