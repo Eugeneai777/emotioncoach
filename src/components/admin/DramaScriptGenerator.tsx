@@ -542,6 +542,7 @@ export default function DramaScriptGenerator() {
     setSceneImages({});
     setCharacterImages({});
     setSequelGenerationError(null);
+    setContinuityNotice(null);
     // Clear all polling
     Object.values(pollingRefs.current).forEach(clearInterval);
     pollingRefs.current = {};
@@ -579,6 +580,7 @@ export default function DramaScriptGenerator() {
     setSceneAudios({});
     setSceneImages({});
     setCharacterImages({});
+    setContinuityNotice(null);
     Object.values(pollingRefs.current).forEach(clearInterval);
     pollingRefs.current = {};
   };
@@ -678,6 +680,7 @@ export default function DramaScriptGenerator() {
     setSceneVideos({});
     setVideoPreviewFallbacks({});
     setSceneAudios({});
+    setContinuityNotice(null);
     Object.values(pollingRefs.current).forEach(clearInterval);
     pollingRefs.current = {};
     toast.success(`已载入《${script.title}》第${script.episode_number}集`);
