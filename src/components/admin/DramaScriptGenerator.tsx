@@ -688,6 +688,12 @@ export default function DramaScriptGenerator() {
     toast.success(`已替换为第${source.episode_number + 1}集续集`);
   };
 
+  const discardPendingSequel = () => {
+    setPendingSequel(null);
+    setSequelGenerationError(null);
+    toast.info("已保留当前脚本，续集预览已放弃");
+  };
+
   const copyToClipboard = (text: string, label = "提示词") => {
     navigator.clipboard.writeText(text);
     toast.success(`${label}已复制`);
