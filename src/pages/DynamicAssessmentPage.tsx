@@ -312,6 +312,7 @@ export default function DynamicAssessmentPage() {
   if (phase === "history") {
     return (
       <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-background"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
+      {ogPageKey && <DynamicOGMeta pageKey={ogPageKey} />}
       <DynamicAssessmentHistory
         records={historyRecords}
         isLoading={historyLoading}
@@ -330,6 +331,7 @@ export default function DynamicAssessmentPage() {
   if (phase === "result" && result) {
     return (
       <>
+        {ogPageKey && <DynamicOGMeta pageKey={ogPageKey} />}
         <DynamicAssessmentResult
           result={result}
           template={{
