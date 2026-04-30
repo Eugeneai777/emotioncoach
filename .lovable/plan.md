@@ -1,80 +1,113 @@
-## 问题确认（基于您手机小程序截图）
+## 背景
 
-打开 `src/components/dynamic-assessment/MaleMidlifeVitalityShareCard.tsx` 与 `ShareCardBase.tsx` 核对，发现 3 个真实 bug（与端口无关，是组件本身的问题，三端都会出现）：
+用户在 `/assessment/male_midlife_vitality` 进入「测评历史」后，看到历史卡片列表（如截图共 2 条记录）。当前每张卡片整体可点击会触发 `onViewRecord` 进入完整结果与分享页，但**没有任何视觉或文案引导**告诉中年男性用户"点击卡片即可查看完整测评结果"。需要补足"下一步"指引，并保证在**手机 H5、微信小程序 WebView、PC** 三端均稳定一致。
 
-1. **维度文字底部被截掉**（"精力续航 / 睡眠修复 / 关键时刻信心 / 压力调节" 字底有缺口）
-   - 第 115 行维度标签：`fontSize: 13, width: 78, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'`，没有显式 `lineHeight`，html2canvas 在不同字体度量下（小程序 webview vs PC Chrome）会把字底切掉。
-   - `width: 78px` 对 5 字标签（"关键时刻信心"）也偏紧。
+## 设计目标（商业架构师视角）
 
-2. **"下一步建议" 卡片重复出现两次**（第 125-128 行与 130-133 行渲染了完全相同的内容）。
-
-3. **底部 "Powered by 有劲AI" 被卡片圆角裁切**
-   - `ShareCardBase` 外层 `padding={0}` + `overflow:hidden`，但内层正文用了 `padding: '24px 24px 16px'`，footer（QR + Branding）落在 padding=0 的外层、紧贴卡片边缘，圆角把品牌行下半部切掉了。
+1. **降低认知摩擦**：用一句中年男性熟悉、克制、不娇气的话术告诉他下一步做什么。
+2. **显性化转化路径**：历史 → 单条结果详情 → 分享/再测，是核心二次留存与社交裂变路径。
+3. **视觉一致**：沿用结果页深色金属/能量配色（teal + amber），保持"有劲、稳重、男性化"的产品调性。
+4. **三端兼容稳定**：移动端 H5、微信小程序 WebView（含 Android `mmwebsdk`）、PC 端展示一致，不依赖花哨动画或 hover 状态。
 
 ## 改动范围
 
-只改 1 个文件：`src/components/dynamic-assessment/MaleMidlifeVitalityShareCard.tsx`。
-不改 `ShareCardBase`、不动截图工具链、不动评分逻辑、不动支付/路由。
+仅修改：
+- `src/components/dynamic-assessment/DynamicAssessmentHistory.tsx`
 
-## 具体方案
+只在 `assessmentKey === 'male_midlife_vitality'`、且记录数 ≥ 1、且未进入对比模式时生效，不影响其它测评（SCL90 / SBTI / 女性 / 伴侣等）。
 
-### A. 维度行文字不再被截（核心）
+## 跨端兼容设计原则
 
-把维度行的标签样式从：
-```text
-fontSize:13, width:78, whiteSpace:nowrap, overflow:hidden, textOverflow:ellipsis
+| 风险点 | 处理方案 |
+|---|---|
+| 小程序 WebView 不稳定支持 `backdrop-filter` | 引导横幅与 CTA 行**不使用** `backdrop-blur`，改用纯色 + 透明度 |
+| `hover` 在触屏端无效 | CTA 文字本身用 `font-semibold` + teal 主色，**不依赖 hover 形成按钮感**；hover 仅作 PC 端锦上添花 |
+| iOS Safari 对 `gap` + `flex` 在小屏的换行差异 | 引导横幅使用 `flex items-start gap-2`，主副文案用 `flex-1 min-w-0`，避免溢出 |
+| 微信 WebView 字体回退 | 沿用项目 Tailwind 默认字体栈（已含 PingFang / 微软雅黑），不引入 web font |
+| Android MP 触控热区 | 卡片本身就是大热区；新增 CTA 行不绑独立 `onClick`，统一冒泡到卡片 `onClick`，避免重复触发与 webview reentrancy（符合 Core 规范"navigate first, then close dialog"） |
+| 安全区 / 视觉一致 | 不改变现有 `max-w-lg md:max-w-2xl mx-auto p-4` 容器，复用现有响应式断点 |
+| PC 端宽屏 | 引导横幅在 `md:` 断点下不拉伸成大块，保持 `max-w-2xl` 容器内自然宽度，文案一行展示更舒服 |
+
+## 具体改动
+
+### 1. 列表顶部新增「下一步引导」横幅（仅男人有劲）
+
+插入位置：在 `records.length === 0` 之外的有数据分支，`<motion.div className="space-y-3 pb-4">` **之前**。
+
+```tsx
+{isMaleMidlifeVitality && !compareMode && (
+  <div
+    className="mb-3 rounded-xl border border-teal-600/25 bg-gradient-to-r from-teal-600/10 to-amber-500/10 px-4 py-3 flex items-start gap-2.5"
+    role="note"
+  >
+    <MousePointerClick className="w-4 h-4 mt-0.5 text-teal-700 dark:text-teal-400 shrink-0" />
+    <div className="flex-1 min-w-0">
+      <p className="text-sm font-semibold text-foreground leading-snug">
+        点击下方任一记录,查看完整状态报告
+      </p>
+      <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
+        含 6 维评分 · AI 个性化建议 · 一键分享海报
+      </p>
+    </div>
+  </div>
+)}
 ```
-改为：
-```text
-fontSize:13, lineHeight:1.45, width:96, whiteSpace:nowrap,
-paddingTop:2, paddingBottom:2, fontVariantNumeric:'tabular-nums',
-fontFamily:'-apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif'
+
+视觉规格：
+- 不使用 `backdrop-blur`（小程序兼容）
+- `MousePointerClick` 来自 lucide-react，避免 emoji 在 Android 小程序的字体差异
+- 文案用半角逗号避免不同输入法/字体下中文逗号渲染差异
+- 对比模式下隐藏，避免与"请选择 2 条记录"提示冲突
+
+### 2. 每张历史卡片底部新增「查看完整报告 →」行内 CTA（仅男人有劲非对比模式）
+
+在现有 `dimScores` Badge 行之后追加：
+
+```tsx
+{isMaleMidlifeVitality && !compareMode && onViewRecord && (
+  <div
+    className="flex items-center justify-end gap-1 mt-3 pt-2.5 border-t border-border/40
+               text-xs font-semibold text-teal-700 dark:text-teal-400
+               group-hover:text-teal-800 dark:group-hover:text-teal-300 transition-colors"
+  >
+    查看完整报告 & 分享海报
+    <ChevronRight className="w-3.5 h-3.5" />
+  </div>
+)}
 ```
 
-要点：
-- 显式 `lineHeight: 1.45` + 上下各 2px padding，给汉字降部留出空间，html2canvas 截图就不会切字底。
-- `width: 78 → 96`，"关键时刻信心" 6 字也能完整放下。
-- 去掉 `overflow:hidden / textOverflow:ellipsis`（在不同 webview 字体下会"突然吞字"，反而是不稳定来源）。
-- 显式声明中文字体栈，三端（PC Chrome / iOS Safari / 微信小程序 webview / Android webview）字体度量一致。
+- **不绑独立 onClick**：让点击事件冒泡到卡片根的 `onViewRecord(record)`，避免双触发与小程序 WebView reentrancy
+- 文字本身 600 字重 + teal 主色，触屏端无 hover 也具按钮感
+- `border-t` 形成视觉分隔，告知用户"下方为操作区"
 
-百分比数字同步加 `fontVariantNumeric:'tabular-nums'`，三端数字宽度一致。
+### 3. 可访问性与点击区域语义化
 
-维度数量保持 **`.slice(0, 4)`** 不变（按您反馈）。
+非 SBTI 卡片根 `<Card>` 在 `onViewRecord && !compareMode` 时增加：
+- `role="button"`
+- `tabIndex={0}`
+- `aria-label={\`查看 ${format(new Date(record.created_at), 'yyyy年MM月dd日')} 的完整测评报告\`}`
 
-### B. 删除重复 "下一步建议" 卡
+让读屏器与键盘用户也可访问；不改变实际 onClick 逻辑。
 
-删掉文件第 130-133 行那张重复白卡，只保留第 125-128 行那一张，字号 `13px`、行高 `1.6` 不变。
+### 4. 不动的部分
 
-### C. 修底部品牌行被切
+- SBTI 折叠卡逻辑（保持原本的展开/收起 + 「查看完整结果 & 分享」按钮）
+- 对比模式与删除逻辑
+- 顶部 Hero Header 与对比横幅
+- 其它测评类型的展示
 
-把 `<MaleMidlifeVitalityShareCard>` 传给 `ShareCardBase` 的 `padding` 从 `0` 改为 `20`，并把内层正文的 `padding` 从 `'24px 24px 16px'` 改为 `'4px 4px 12px'`。
+## 文案选型说明（中年男性接受度）
 
-效果：footer 也获得对称 20px 内边距，"Powered by 有劲AI" 不再被圆角裁掉。整体视觉宽度不变。
+采用：**"点击下方任一记录,查看完整状态报告"** + **"含 6 维评分 · AI 个性化建议 · 一键分享海报"**
+- 直给、不卖弄；"状态报告"贴近职场体检语境，比"测评结果"更稳重
+- 副文案点出价值钩子：评分 / AI 建议 / 海报，对应留存与裂变三件套
 
-### D. 跨端排版稳定性兜底
+## 三端验收清单
 
-在卡片根容器（ShareCardBase children 最外层 div）加：
-- `fontFamily` 显式声明（同上字体栈）
-- 所有数字元素加 `fontVariantNumeric: 'tabular-nums'`
-- 给 "下一步建议" 文本块也加 `lineHeight: 1.6`（已有）+ `wordBreak: 'break-word'`
-
-### E. （顺便）二维码副标题缩短
-
-`ctaSubtitle` 从 `'3分钟 · 私密评估 · 免费出结果'` 缩为 `'3分钟 · 私密 · 免费'`，避免 360px 宽度下右侧文字太挤。
-（仅这一行文案改动，不影响数据。）
-
-## 验收清单
-
-实现后我会：
-1. 在 PC 预览触发 `/assessment/male_midlife_vitality` 结果页生成海报，下载 PNG 检查：
-   - 4 个维度标签字底完整，无截断
-   - 只有一张"下一步建议"
-   - "Powered by 有劲AI" 完整可见
-   - 状态指数 % 与结果页主分数一致
-2. 用 360 / 390 / 414 三种主流移动宽度复核（覆盖手机端、小程序 webview、PC 缩放）。
-3. 不在页面正文显示这张海报（保持现有 `position:absolute; left:-9999px` 隐藏渲染）。
-
-## 不动的部分
-- 不改 `ShareCardBase`，不影响其它测评海报
-- 不改评分公式 / `toVitalityStatusScore`
-- 不改截图工具 / 上传链路 / 支付链路 / 路由
+| 端 | 验收点 |
+|---|---|
+| 手机 H5（iOS Safari + Android Chrome） | 引导横幅与卡片 CTA 一行内显示不溢出；点击卡片任意位置正确进入完整结果页 |
+| 微信小程序 WebView（iOS + Android `mmwebsdk` / `mmw`） | 渐变背景与边框正常显示；无 `backdrop-blur` 模糊残影；点击不出现重复跳转 |
+| PC（≥1024px） | 引导横幅在 `max-w-2xl` 容器内自然宽度；卡片 hover 时 CTA 文字加深；其它测评页无任何变化 |
+| 对比模式 | 引导横幅与卡片 CTA 自动隐藏；"请选择 2 条记录"提示正常显示 |
+| 其它测评（SCL90/SBTI/女性/伴侣） | 历史页**完全无视觉变化**，回归测试通过 |

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Trash2, Calendar, TrendingUp, TrendingDown, GitCompare, History, Sparkles, Brain, ChevronDown, Eye } from "lucide-react";
+import { ArrowLeft, Trash2, Calendar, TrendingUp, TrendingDown, GitCompare, History, Sparkles, Brain, ChevronDown, Eye, ChevronRight, MousePointerClick } from "lucide-react";
 import { format } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { zhCN } from "date-fns/locale";
@@ -357,6 +357,22 @@ export function DynamicAssessmentHistory({
           </motion.div>
         ) : (
           <div className="overflow-y-auto">
+            {isMaleMidlifeVitality && !compareMode && (
+              <div
+                className="mb-3 rounded-xl border border-teal-600/25 bg-gradient-to-r from-teal-600/10 to-amber-500/10 px-4 py-3 flex items-start gap-2.5"
+                role="note"
+              >
+                <MousePointerClick className="w-4 h-4 mt-0.5 text-teal-700 dark:text-teal-400 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-foreground leading-snug">
+                    点击下方任一记录,查看完整状态报告
+                  </p>
+                  <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
+                    含 6 维评分 · AI 个性化建议 · 一键分享海报
+                  </p>
+                </div>
+              </div>
+            )}
             <motion.div
               className="space-y-3 pb-4"
               variants={containerVariants}
@@ -588,6 +604,13 @@ export function DynamicAssessmentHistory({
                         compareMode || onViewRecord ? "cursor-pointer" : ""
                       } ${isSelected ? "ring-2 ring-primary border-primary/30 shadow-primary/10 shadow-lg" : ""}`}
                       onClick={compareMode ? () => toggleSelect(record.id) : onViewRecord ? () => onViewRecord(record) : undefined}
+                      role={!compareMode && onViewRecord ? "button" : undefined}
+                      tabIndex={!compareMode && onViewRecord ? 0 : undefined}
+                      aria-label={
+                        !compareMode && onViewRecord
+                          ? `查看 ${format(new Date(record.created_at), "yyyy年MM月dd日", { locale: zhCN })} 的完整测评报告`
+                          : undefined
+                      }
                     >
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between mb-2.5">
@@ -670,6 +693,14 @@ export function DynamicAssessmentHistory({
                                 </Badge>
                               );
                             })}
+                          </div>
+                        )}
+                        {isMaleMidlifeVitality && !compareMode && onViewRecord && (
+                          <div
+                            className="flex items-center justify-end gap-1 mt-3 pt-2.5 border-t border-border/40 text-xs font-semibold text-teal-700 dark:text-teal-400 group-hover:text-teal-800 dark:group-hover:text-teal-300 transition-colors"
+                          >
+                            查看完整报告 & 分享海报
+                            <ChevronRight className="w-3.5 h-3.5" />
                           </div>
                         )}
                       </CardContent>
