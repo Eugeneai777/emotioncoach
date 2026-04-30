@@ -191,11 +191,14 @@ ${ctx.historyLine}
     }
 
     const data = await response.json();
-    const insight = data.choices?.[0]?.message?.content || "";
+    let insight = data.choices?.[0]?.message?.content || "";
 
     if (!insight) {
       throw new Error("Empty insight returned");
     }
+
+    // Brand safety: replace legacy brand "施强健康/施强" with current "有劲AI"
+    insight = insight.replace(/施强健康/g, "有劲AI").replace(/施强/g, "有劲AI");
 
     // Persist to DB via service role (bypass RLS, eliminate frontend race)
     if (resultId) {
