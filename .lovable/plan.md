@@ -1,89 +1,80 @@
-# 修复"男人有劲状态评估"分享海报
+## 问题确认（基于您手机小程序截图）
 
-## 问题诊断
+打开 `src/components/dynamic-assessment/MaleMidlifeVitalityShareCard.tsx` 与 `ShareCardBase.tsx` 核对，发现 3 个真实 bug（与端口无关，是组件本身的问题，三端都会出现）：
 
-### 问题 1：海报数据与结果页对不上（核心 Bug）
-该测评使用"恢复阻力"逻辑：**原始分越低 = 状态越好**。
+1. **维度文字底部被截掉**（"精力续航 / 睡眠修复 / 关键时刻信心 / 压力调节" 字底有缺口）
+   - 第 115 行维度标签：`fontSize: 13, width: 78, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'`，没有显式 `lineHeight`，html2canvas 在不同字体度量下（小程序 webview vs PC Chrome）会把字底切掉。
+   - `width: 78px` 对 5 字标签（"关键时刻信心"）也偏紧。
 
-- 结果页：已通过 `toVitalityStatusScore()` 把原始分翻转为"状态指数 %"（高=好），并把维度名 `压力内耗→压力调节`、`恢复阻力→行动恢复力`。
-- 分享海报 (`MaleMidlifeVitalityShareCard`)：直接用 **原始分** 计算 `score / maxScore × 100`，**没有翻转**，也没有改名。
+2. **"下一步建议" 卡片重复出现两次**（第 125-128 行与 130-133 行渲染了完全相同的内容）。
 
-后果：用户在结果页看到"57% 状态指数"和"睡眠修复 78%"（高=好），但海报却显示"43% 状态指数"和"睡眠修复 22%"（实际还是阻力分，越高越糟）— 完全反了，且对中年男性用户传递"我状态很差"的负面错觉，伤害分享意愿。
+3. **底部 "Powered by 有劲AI" 被卡片圆角裁切**
+   - `ShareCardBase` 外层 `padding={0}` + `overflow:hidden`，但内层正文用了 `padding: '24px 24px 16px'`，footer（QR + Branding）落在 padding=0 的外层、紧贴卡片边缘，圆角把品牌行下半部切掉了。
 
-### 问题 2：海报文字展示不清晰
-（用户截图红框圈出维度区）
-- 维度名字号仅 11px，标签宽度只有 66px，"睡眠修复"等四字标签在高 DPR 截图下糊。
-- 主卡片宽度 340px 偏窄。
-- 维度行间距 9px 偏紧。
-- "下一步建议" 字号 12px 偏小。
+## 改动范围
 
-## 修复方案
+只改 1 个文件：`src/components/dynamic-assessment/MaleMidlifeVitalityShareCard.tsx`。
+不改 `ShareCardBase`、不动截图工具链、不动评分逻辑、不动支付/路由。
 
-### 一、修正分数翻转（关键）
+## 具体方案
 
-在 `MaleMidlifeVitalityShareCard.tsx` 内引入与结果页一致的 `toVitalityStatusScore()` helper，并在渲染前对 totalScore / dimensionScores 做翻转 + 重命名：
+### A. 维度行文字不再被截（核心）
 
-```ts
-const toVitalityStatusScore = (score: number, max: number) =>
-  max > 0 ? Math.max(0, Math.min(100, Math.round(100 - (score / max) * 100))) : 0;
-
-const labelMap: Record<string, string> = {
-  '压力内耗': '压力调节',
-  '恢复阻力': '行动恢复力',
-};
-
-const statusPercent = toVitalityStatusScore(totalScore, maxScore);
-const statusDimensions = dimensionScores.map(d => ({
-  ...d,
-  label: labelMap[d.label] ?? d.label,
-  score: toVitalityStatusScore(d.score, d.maxScore),
-  maxScore: 100,
-}));
+把维度行的标签样式从：
+```text
+fontSize:13, width:78, whiteSpace:nowrap, overflow:hidden, textOverflow:ellipsis
+```
+改为：
+```text
+fontSize:13, lineHeight:1.45, width:96, whiteSpace:nowrap,
+paddingTop:2, paddingBottom:2, fontVariantNumeric:'tabular-nums',
+fontFamily:'-apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif'
 ```
 
-把后续 `percentage` 与 `topDimensions` 的来源切换为 `statusPercent` / `statusDimensions`。这样海报的"状态指数 %"和每个维度条都与结果页完全一致，方向也正确（高=好）。
+要点：
+- 显式 `lineHeight: 1.45` + 上下各 2px padding，给汉字降部留出空间，html2canvas 截图就不会切字底。
+- `width: 78 → 96`，"关键时刻信心" 6 字也能完整放下。
+- 去掉 `overflow:hidden / textOverflow:ellipsis`（在不同 webview 字体下会"突然吞字"，反而是不稳定来源）。
+- 显式声明中文字体栈，三端（PC Chrome / iOS Safari / 微信小程序 webview / Android webview）字体度量一致。
 
-### 二、提升文字清晰度（中年男性可读性）
+百分比数字同步加 `fontVariantNumeric:'tabular-nums'`，三端数字宽度一致。
 
-调整 `MaleMidlifeVitalityShareCard.tsx` 样式：
+维度数量保持 **`.slice(0, 4)`** 不变（按您反馈）。
 
-| 元素 | 旧值 | 新值 |
-|---|---|---|
-| 卡片宽度 | 340 | **360** |
-| 头像/标题块 标题字号 | 14 | **15**（加粗 800） |
-| 主画像名字号 | 24 | **26** |
-| "% 状态指数" 数字字号 | 24 | **28**（加粗 900）|
-| 维度行 emoji 字号 | 14 | **16** |
-| 维度行 label 字号 | 11 | **13**，宽度 66→**78**，颜色 `#f1f5f9` |
-| 维度行百分比字号 | 10 | **13**（加粗 800）|
-| 维度行间距 marginBottom | 9 | **12** |
-| 维度卡片内边距 | 14 | **16** |
-| "下一步建议" 标题字号 | 12 | **13** |
-| "下一步建议" 正文字号 | 12 | **13**，行高 1.55→**1.6** |
-| 维度进度条高度 | 7 | **8** |
+### B. 删除重复 "下一步建议" 卡
 
-颜色加深确保对比度（深色背景下 `#cbd5e1` → `#e2e8f0` for 维度旁数字）。
+删掉文件第 130-133 行那张重复白卡，只保留第 125-128 行那一张，字号 `13px`、行高 `1.6` 不变。
 
-### 三、保留品牌一致性
-- 渐变背景、emoji 主画像、teal/amber 主色不变，仍切合"中年男性·稳重·能量恢复"调性。
-- Footer CTA "扫码看你的有劲状态"不变，符合中年群体的接地气表达。
+### C. 修底部品牌行被切
 
-## 修改文件
-- `src/components/dynamic-assessment/MaleMidlifeVitalityShareCard.tsx`（唯一改动文件）
+把 `<MaleMidlifeVitalityShareCard>` 传给 `ShareCardBase` 的 `padding` 从 `0` 改为 `20`，并把内层正文的 `padding` 从 `'24px 24px 16px'` 改为 `'4px 4px 12px'`。
 
-## 自检清单（实施后）
+效果：footer 也获得对称 20px 内边距，"Powered by 有劲AI" 不再被圆角裁掉。整体视觉宽度不变。
 
-1. **结果页 ↔ 结果分享海报一致性**
-   - 状态指数总分一致（如结果页 57% → 海报 57%）。
-   - 6 维顺序虽不同（海报 Top4），但每个维度的 % 与结果页同维度 % 一致。
-   - 维度名称使用"压力调节 / 行动恢复力"等用户友好版。
+### D. 跨端排版稳定性兜底
 
-2. **售前页海报 (`AssessmentPromoShareCard`) 准确性**
-   - 它不展示分数，只展示卖点文案，本次不改也无 bug；保持"3分钟看清你的精力、睡眠和关键时刻信心" + 6维扫描卖点。
+在卡片根容器（ShareCardBase children 最外层 div）加：
+- `fontFamily` 显式声明（同上字体栈）
+- 所有数字元素加 `fontVariantNumeric: 'tabular-nums'`
+- 给 "下一步建议" 文本块也加 `lineHeight: 1.6`（已有）+ `wordBreak: 'break-word'`
 
-3. **中年男性接受度**
-   - 文案避免"测试""疾病""分数"等说教/冷冰冰词汇 → 已用"有劲状态""状态指数""下一步建议"等行动型表达。
-   - 字号增大后在微信朋友圈缩略图下仍可辨认。
-   - 视觉保留深色 + 琥珀金调，符合稳重感，不显轻浮。
+### E. （顺便）二维码副标题缩短
 
-无后端 / 数据库 / 支付链路改动，零风险。
+`ctaSubtitle` 从 `'3分钟 · 私密评估 · 免费出结果'` 缩为 `'3分钟 · 私密 · 免费'`，避免 360px 宽度下右侧文字太挤。
+（仅这一行文案改动，不影响数据。）
+
+## 验收清单
+
+实现后我会：
+1. 在 PC 预览触发 `/assessment/male_midlife_vitality` 结果页生成海报，下载 PNG 检查：
+   - 4 个维度标签字底完整，无截断
+   - 只有一张"下一步建议"
+   - "Powered by 有劲AI" 完整可见
+   - 状态指数 % 与结果页主分数一致
+2. 用 360 / 390 / 414 三种主流移动宽度复核（覆盖手机端、小程序 webview、PC 缩放）。
+3. 不在页面正文显示这张海报（保持现有 `position:absolute; left:-9999px` 隐藏渲染）。
+
+## 不动的部分
+- 不改 `ShareCardBase`，不影响其它测评海报
+- 不改评分公式 / `toVitalityStatusScore`
+- 不改截图工具 / 上传链路 / 支付链路 / 路由
