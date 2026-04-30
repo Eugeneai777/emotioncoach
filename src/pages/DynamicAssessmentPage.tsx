@@ -336,6 +336,8 @@ export default function DynamicAssessmentPage() {
           recommendedCampTypes={tpl?.recommended_camp_types}
           aiInsight={aiInsight}
           loadingInsight={loadingInsight}
+          insightError={insightError}
+          onRegenerateInsight={regenerateInsight}
           onRetake={handleRetake}
           onShowHistory={() => setPhase("history")}
           hasHistory={historyRecords.length > 0}
