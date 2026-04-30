@@ -219,14 +219,38 @@ serve(async (req) => {
 
     console.log('Authenticated user:', user.id);
 
-    // 获取用户名称
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('display_name')
-      .eq('id', user.id)
-      .single();
+    // 获取用户名称、近期情绪简报与记忆（并行，不影响现有主流程）
+    const [profileResult, briefingsResult, emotionMemoriesResult, generalMemoriesResult] = await Promise.all([
+      supabase
+        .from('profiles')
+        .select('display_name')
+        .eq('id', user.id)
+        .maybeSingle(),
+      supabase
+        .from('briefings')
+        .select('emotion_theme, insight, action, stage_1_content, stage_2_content, stage_3_content, stage_4_content, created_at, conversations!inner(user_id)')
+        .eq('conversations.user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(5),
+      supabase
+        .from('user_coach_memory')
+        .select('memory_type, content, importance_score')
+        .eq('user_id', user.id)
+        .eq('coach_type', 'emotion')
+        .order('importance_score', { ascending: false })
+        .limit(5),
+      supabase
+        .from('user_coach_memory')
+        .select('memory_type, content, importance_score')
+        .eq('user_id', user.id)
+        .eq('coach_type', 'vibrant_life_sage')
+        .order('importance_score', { ascending: false })
+        .limit(3),
+    ]);
 
-    const userName = profile?.display_name;
+    const userName = profileResult.data?.display_name;
+    const memoryRows = (emotionMemoriesResult.data?.length ? emotionMemoriesResult.data : generalMemoriesResult.data) || [];
+    const historyContext = buildEmotionHistoryContext((briefingsResult.data || []) as EmotionBriefingContext[], memoryRows as CoachMemoryContext[]);
 
     const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
     if (!OPENAI_API_KEY) {
@@ -241,7 +265,7 @@ serve(async (req) => {
     console.log('Creating OpenAI Realtime session via:', OPENAI_PROXY_URL ? 'proxy' : 'direct');
 
     // 获取情绪教练专用 instructions
-    const instructions = getEmotionCoachInstructions(userName);
+    const instructions = getEmotionCoachInstructions(userName, historyContext);
 
     // 解析 OpenAI Realtime voice 名称（从前端传入的 ElevenLabs ID 映射）
     // 有效值: alloy, ash, ballad, coral, echo, sage, shimmer, verse
@@ -279,12 +303,17 @@ serve(async (req) => {
         instructions: instructions,
         input_audio_format: "pcm16",
         output_audio_format: "pcm16",
+        input_audio_transcription: {
+          model: "whisper-1",
+          language: "zh",
+          prompt: "这是一段中文情绪教练对话。请优先转写为简体中文；忽略背景杂音、音乐、误触声。除非用户明确使用外语，否则不要输出韩文、英文或乱码。",
+        },
         max_response_output_tokens: "inf",
         turn_detection: {
           type: "server_vad",
-          threshold: 0.5,
+          threshold: 0.68,
           prefix_padding_ms: 300,
-          silence_duration_ms: 1200
+          silence_duration_ms: 1600
         }
       }),
     });
