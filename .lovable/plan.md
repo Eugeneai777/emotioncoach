@@ -1,72 +1,86 @@
-## 问题诊断
+## 背景与商业价值
 
-**问题 1：小程序端保存"完整报告"失败，电脑端正常**
+**目标用户**：35-55 岁高压中年男性，他们做完测评后有强烈的"被理解、被跟进"需求。运营如果能在 24-48h 内基于测评结果定向触达（电话/微信），转化率显著高于群发。
 
-当前"保存完整报告"流程：
-1. 用 `html2canvas` 把 `MaleVitalityReportCard` 渲染成 blob
-2. **直接** `URL.createObjectURL(blob)` 得到 `blob:` 链接
-3. 把这个 `blob:` URL 塞进 `ShareImagePreview` 显示
+**现状**：测评数据 (`partner_assessment_results`) 已落库（截至现在 6 个用户、11 次测评），但后台没有"按测评维度查看人员"的入口，运营拿不到名单。
 
-为什么端口表现差异：
-- **PC 浏览器**：`ShareImagePreview` 走「保存按钮」分支，`<a download>` 直接下载，blob URL 完全可用 ✅
-- **小程序 / 微信 H5**：走「长按上方图片保存到相册」分支。微信内核的"保存到相册"**只识别 https 图片**，对 `blob:` URL 一律提示"保存图片到手机失败"（用户截图就是这个 toast）❌
-- 而分享海报 (`handleShare`) 走的是 `executeOneClickShare` → `handleShareWithFallback`，**会异步上传到 storage 拿 https URL**，所以分享海报能保存，但"完整报告"路径没接这一步
+**已有基础**（无需重建）：
+- `partner_assessment_templates` + `partner_assessment_results` 表已完整记录（含 user_id、维度分、主导类型、AI 洞察、时间）
+- `usePartnerAssessmentAnalytics` hook 已实现单测评的统计聚合（人数/分布/趋势）
+- RLS 已允许 `admin` 全量读取
+- 后台侧边栏「内容管理 → 测评管理」入口已存在
 
-底部那行"图片已生成，正在准备高清保存图"也是从 `ShareImagePreview` 来的 —— 它在等 `isRemoteReady=true`，而当前传入的是 false 且永不更新。
-
-**问题 2：顶部文案"预览海报"**
-
-`src/components/ui/share-image-preview.tsx:152` 写死了 `预览海报`，该组件被「分享海报」和「完整报告」两条路径复用。完整报告路径下应该显示"预览报告"。
-
----
-
-## 修复方案
-
-### 1. 让"完整报告"复用现成的"先 blob 占位 → 异步上传 → 替换 https"机制
-
-抽取 `handleSaveAsImage` 的逻辑，对齐 `shareUtils.ts` 里 `showUploadedPreview` 的双阶段模式：
+## 方案：聚焦"测评数据洞察"，分两层
 
 ```text
-生成 blob → 立即 setReportPreviewUrl(blobUrl, isRemoteReady:false) 显示预览
-        ↓ 后台并发
-        uploadShareImage(blob) → 拿到 https URL → setReportPreviewUrl(httpsUrl, isRemoteReady:true)
+┌─────────────────────────────────────────────────┐
+│ /admin/assessments  现有「测评管理」列表        │
+│  [男人有劲状态评估]   …  [📊 数据洞察] ← 新增  │
+└─────────────────────────────────────────────────┘
+                        ↓ 点击
+┌─────────────────────────────────────────────────┐
+│ /admin/assessments/:id/insights  新增详情页     │
+│                                                 │
+│ ① 顶部 KPI 卡片                                │
+│    总测评人数 / 总测评次数 / 今日新增 / 7日新增│
+│    复测率 (次数 ÷ 人数)                         │
+│                                                 │
+│ ② 用户画像板块                                  │
+│    ├ 主导类型分布 (饼图)                        │
+│    ├ 分数分布 (柱状图)                          │
+│    ├ 各维度均分 (横向条)                        │
+│    └ 30日趋势 (折线)                            │
+│                                                 │
+│ ③ 测评者名单 (核心运营工具)                    │
+│    表格列：头像｜昵称｜手机号｜主导类型         │
+│            ｜总分｜测评时间｜操作               │
+│    操作：[查看明细] [复制手机号] [拨打]         │
+│    筛选：主导类型 / 分数区间 / 时间区间         │
+│    搜索：按昵称/手机号                          │
+│    导出：CSV (含手机号、类型、分数、时间)       │
+│                                                 │
+│ ④ 单条明细抽屉                                  │
+│    完整答题、维度雷达、AI 洞察、历史复测列表    │
+└─────────────────────────────────────────────────┘
 ```
 
-`ShareImagePreview` 已支持 `isRemoteReady` 字段并切换底部提示文案，无需改它的核心逻辑。
+**为什么这样切分**：中年男性用户对"被打标签 + 被针对性沟通"接受度高于推送。给运营的是"姓名+电话+类型+分数"的可执行清单，而不是只看图表。
 
-为此把 `reportPreviewUrl: string | null` 改成对象 `{ url, isRemoteReady } | null`，并在 `<ShareImagePreview>` 调用处传 `isRemoteReady`。关闭时只 revoke blob URL，不动 https URL。
+## 文件改动清单
 
-失败兜底：上传失败时 keep blob URL，**额外 toast 提示**「网络较慢，建议先点右上角刷新或截屏保存」，避免用户卡在"正在准备高清保存图"状态。
+**新增**
+1. `src/components/admin/AssessmentInsightsDetail.tsx` — 详情页主组件（KPI + 图表 + 名单 + 抽屉）
+2. `src/hooks/useAdminAssessmentInsights.ts` — 拉取单个 template 的全量结果 + join profiles（display_name, avatar_url, phone, phone_country_code, created_at）
+3. `src/components/admin/AssessmentRespondentDrawer.tsx` — 单个用户明细抽屉（答题/维度/AI 洞察）
 
-### 2. 给 ShareImagePreview 加可选 `title` prop，调用处区分"预览海报"/"预览报告"
+**修改**
+1. `src/components/admin/AssessmentsManagement.tsx` — 每行卡片新增「📊 数据洞察」按钮，链接到详情页
+2. `src/components/admin/AdminLayout.tsx` — 新增路由 `assessments/:templateId/insights`
 
-- `ShareImagePreview` 新增可选 `title?: string`，默认 `"预览海报"`
-- 完整报告调用处传 `title="预览报告"`
-- 分享海报调用处不传（保持原文案）
+**复用**（无需修改）
+- `usePartnerAssessmentAnalytics`（聚合逻辑直接复用，传 templateId 而非 partnerId 时小改一下，或新写 hook 只查单个）
+- `recharts`（项目已用）
+- `AdminPageLayout` / `AdminStatCard` 现有共享组件
 
-### 3. 其他端口稳定性兼带优化（成本低）
+## 关键技术点
 
-- **小程序 WebView**：与微信 H5 行为一致（已是 `isWeChatLike` → 都走"长按保存"分支），上传 https 后即可正常长按保存 ✅
-- **PC / 移动浏览器**：当前已 OK，不动它的下载按钮分支
-- **超时保护**：上传增加 8s 超时（用 `Promise.race`），超时后保留 blob URL 并提示用户「请尝试截屏保存或切换到 PDF」
+- **RLS**：admin 已可读 `partner_assessment_results` 与 `profiles`（admin 角色 has_role 校验）。无需改库。
+- **隐私**：手机号在表格里默认中间 4 位脱敏 `188****3978`，「复制」按钮取完整号；操作日志在第二期再加。
+- **性能**：单测评目前 11 条，预期半年内 < 5000 条，前端一次性拉取 + 客户端筛选即可，无需分页。超过 1000 条时给 hook 加 `.limit(1000)` 警告。
+- **导出**：纯前端 CSV 生成（Blob + a.download），含表头中文。
+- **可扩展**：详情页用通用组件，后续其他测评（绽放、SCL90、SBTI）都能复用同一入口和详情页，只换 templateId。
 
----
+## 不做的事
 
-## 改动文件清单
+- 不做权限分级（partner_admin 不进入此页，避免跨合伙人数据泄漏）—— 入口仅 admin 可见。
+- 不做"自动外呼/微信群发"集成（涉及合规与第三方资质，二期评估）。
+- 不重写测评数据采集逻辑（已稳定）。
 
-| 文件 | 改动 |
-|---|---|
-| `src/components/ui/share-image-preview.tsx` | 新增 `title` prop（默认 `"预览海报"`），头部文案使用该 prop；新增 `isRemoteReady` 已有，无需改 |
-| `src/components/dynamic-assessment/DynamicAssessmentResult.tsx` | `reportPreviewUrl` 状态改为 `{url, isRemoteReady}`；`handleSaveAsImage` 接入 `uploadShareImage` 双阶段；`<ShareImagePreview>`（报告路径）传 `title="预览报告"` 与 `isRemoteReady`；上传超时与失败兜底 toast |
+## 上线后运营 SOP（建议）
 
-不改：`shareImageUploader.ts`、`shareUtils.ts`、`MaleVitalityReportCard.tsx`、`WeChatPdfGuideSheet.tsx`、PDF 导出工具。
+1. 每日 10:00 / 20:00 进入 `/admin/assessments` → 男人有劲 → 数据洞察
+2. 按"今日新增 + 主导类型 = 压力绷弦型/失衡警示型"筛选
+3. 复制手机号，按话术（不同类型不同话术）联系
+4. 7 日后复看复测率，验证触达效果
 
----
-
-## 验收点
-
-1. 微信小程序内：点「保存完整报告 → 保存为长图」→ 预览页底部从"正在准备高清保存图"在 1-3 秒内变为"高清图已准备好"→ 长按图片可正常保存到相册（不再提示失败）
-2. 微信 H5（手机浏览器内）：同上，长按可保存
-3. PC 浏览器：保留「保存图片」按钮，点击直接下载，行为与现状一致
-4. 头部文案：完整报告预览页显示「预览报告」，分享海报预览页仍显示「预览海报」
-5. 上传失败/超时：不会卡死，给出明确提示
+是否按此方案实施？批准后切换默认模式开始编码。
