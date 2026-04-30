@@ -14,6 +14,7 @@ import { lazyRetry } from "./utils/lazyRetry";
 import { useVersionCheck } from "./hooks/useVersionCheck";
 import ChunkErrorBoundary from "./components/ChunkErrorBoundary";
 import { RouteTracker } from "./components/system/RouteTracker";
+import { ImpersonationBanner } from "./components/ImpersonationBanner";
 const SmartHomeRedirect = lazyRetry(() => import("./components/SmartHomeRedirect"));
 // 页面加载状态组件
 const PageLoader = () => (
@@ -359,6 +360,7 @@ const App = () => (
           <GlobalVoiceProvider>
             <Toaster />
             <Sonner />
+            <ImpersonationBanner />
             <GlobalRefTracker />
             <GlobalPaymentCallback />
             <ScrollUnlocker />
