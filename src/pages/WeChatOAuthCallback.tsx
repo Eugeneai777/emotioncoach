@@ -99,8 +99,34 @@ export default function WeChatOAuthCallback() {
             }
           }
           
-        // 检查是否有待跳转的目标路径（如 promo 页支付后注册，带时效）
-          const postAuthRedirect = consumePostAuthRedirect();
+        // 检查是否有待跳转的目标路径
+        // 优先级：auth_redirect (业务页跳登录前写入) > state 中携带的 redirect > post_auth_redirect (支付场景) > 新用户引导 > 首页
+        const isSafePath = (p: string | null | undefined): p is string =>
+          !!p && p.startsWith("/") && !p.startsWith("//");
+
+        let resolvedRedirect: string | null = null;
+        try {
+          const saved = localStorage.getItem("auth_redirect");
+          if (isSafePath(saved)) {
+            resolvedRedirect = saved;
+            localStorage.removeItem("auth_redirect");
+          }
+        } catch {}
+
+        if (!resolvedRedirect && state.startsWith("login__r__")) {
+          try {
+            const decoded = decodeURIComponent(state.replace("login__r__", ""));
+            if (isSafePath(decoded)) resolvedRedirect = decoded;
+          } catch {}
+        }
+
+        const postAuthRedirect = consumePostAuthRedirect();
+
+        if (resolvedRedirect) {
+          navigate(resolvedRedirect, { replace: true });
+          return;
+        }
+
           if (postAuthRedirect) {
             navigate(postAuthRedirect, { replace: true });
             return;
