@@ -258,6 +258,7 @@ export default function DynamicAssessmentPage() {
     setAiInsight(null);
     setInsightError(false);
     setSavedResultId(null);
+    setRetakeNonce((n) => n + 1); // 触发题目顺序重洗
     setPhase("questions");
   };
 
