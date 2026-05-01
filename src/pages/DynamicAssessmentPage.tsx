@@ -78,7 +78,18 @@ export default function DynamicAssessmentPage() {
   const patterns = template?.result_patterns || [];
 
   // SBTI: randomly select 2 questions per dimension (+ 1 DRUNK_TRIGGER) = 31 total
+  // male_midlife_vitality: 全量 20 题, Fisher-Yates 随机顺序(不抽题, 保留维度完整性)
   const questions = useMemo(() => {
+    // 男人有劲: 全量打乱顺序, 每次重测 (retakeNonce 变化) 重新洗牌
+    if (template?.assessment_key === 'male_midlife_vitality' && allQuestions.length > 0) {
+      const arr = [...allQuestions];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
     if (scoringType !== 'sbti' || allQuestions.length <= 31) return allQuestions;
 
     const grouped: Record<string, any[]> = {};
@@ -104,7 +115,7 @@ export default function DynamicAssessmentPage() {
     // Shuffle final order
     return selected.sort(() => Math.random() - 0.5);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scoringType, allQuestions.length, phase]);
+  }, [scoringType, allQuestions.length, phase, template?.assessment_key, retakeNonce]);
 
   const [savedResultId, setSavedResultId] = useState<string | null>(null);
 
