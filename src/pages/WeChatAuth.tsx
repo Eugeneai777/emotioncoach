@@ -175,16 +175,32 @@ export default function WeChatAuth() {
       const appid = data.appId;
       const appDomain = window.location.origin;
       const redirectUri = encodeURIComponent(`${appDomain}/wechat-oauth-callback`);
-      const state = mode;
-      
+
+      // 把 ?redirect= 透传到 OAuth state，便于回调端兜底（auth_redirect localStorage 不可用时）
+      // state 命名格式：
+      //   - 'login' / 'register' / 'register_<orderNo>' / 'bind_<userId>'：保持现有协议，向后兼容
+      //   - 'login__r__<encodedPath>'：仅登录场景且带 redirect 时使用
+      const urlRedirect = searchParams.get("redirect");
+      const isSafeRedirect = urlRedirect && urlRedirect.startsWith("/") && !urlRedirect.startsWith("//");
+      let state = mode;
+      if (mode === "login" && isSafeRedirect) {
+        state = `login__r__${encodeURIComponent(urlRedirect!)}`;
+        try { localStorage.setItem("auth_redirect", urlRedirect!); } catch {}
+      }
+
       setIsOpenPlatform(data.isOpenPlatform !== false);
-      
+
       // 公众号网页授权URL
       const url = `https://open.weixin.qq.com/connect/oauth2/authorize?appid=${appid}&redirect_uri=${redirectUri}&response_type=code&scope=snsapi_userinfo&state=${state}#wechat_redirect`;
       setAuthUrl(url);
-      
-      // 不再自动跳转：让用户明确点击“继续授权”，降低多次跳转带来的不安全感。
-      // 授权 URL、state、scope 和后续回调逻辑保持不变，避免影响现有登录/注册/绑定业务。
+
+      // 微信内 H5 + 登录模式：跳过自建确认页，直接进入微信官方授权，压缩转化路径。
+      // 注册/绑定/非微信浏览器/桌面扫码保持现有 UI，避免影响其他业务。
+      if (mode === "login" && isMobileDevice() && isWeChatBrowser()) {
+        window.location.replace(url);
+        return;
+      }
+
       setLoading(false);
     } catch (error) {
       console.error("生成授权链接失败:", error);
