@@ -554,55 +554,68 @@ export function DynamicAssessmentResult({
         {!isSBTI && (
           <motion.div custom={2} variants={fadeUp} initial="hidden" animate="visible">
             <Card className="border-border/40 bg-card/90 backdrop-blur-sm shadow-sm">
-              <CardContent className="p-4 space-y-3">
+              <CardContent className="p-4 space-y-3 relative">
                 <div className="flex items-center gap-2">
                   <TrendingUp className="w-4 h-4 text-primary" />
                   <h3 className="font-semibold text-sm">{isMaleMidlifeVitality ? '六项状态' : '维度得分'}</h3>
                 </div>
-                {(isMaleMidlifeVitality ? vitalityStatusScores : result.dimensionScores).map((d, i) => {
-                  const pct = d.maxScore > 0 ? (d.score / d.maxScore) * 100 : 0;
-                  const vitalityTone = isMaleMidlifeVitality ? getVitalityStatusTone(pct) : null;
-                  return (
-                    <motion.div
-                      key={d.label}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.3 + i * 0.06 }}
-                    >
-                      <div className="flex justify-between text-sm mb-1">
-                        <span className="font-medium">
-                          {d.emoji} {d.label}
-                        </span>
-                        <span className={cn(
-                          "tabular-nums text-xs font-medium",
-                          isMaleMidlifeVitality
-                            ? vitalityTone?.text
-                            : pct >= 80 ? "text-emerald-600" : pct >= 50 ? "text-foreground" : "text-orange-500"
-                        )}>
-                          {isMaleMidlifeVitality ? `状态 ${Math.round(pct)}% · ${vitalityTone?.label}` : `${d.score}/${d.maxScore}`}
-                        </span>
-                      </div>
-                      <div className="relative h-2 rounded-full bg-muted overflow-hidden">
-                        <motion.div
-                          className={cn(
-                            "h-full rounded-full",
+                <div className={cn(
+                  "space-y-3",
+                  isMaleMidlifeVitality && isLiteMode && "blur-[5px] select-none pointer-events-none"
+                )}>
+                  {(isMaleMidlifeVitality ? vitalityStatusScores : result.dimensionScores).map((d, i) => {
+                    const pct = d.maxScore > 0 ? (d.score / d.maxScore) * 100 : 0;
+                    const vitalityTone = isMaleMidlifeVitality ? getVitalityStatusTone(pct) : null;
+                    return (
+                      <motion.div
+                        key={d.label}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.3 + i * 0.06 }}
+                      >
+                        <div className="flex justify-between text-sm mb-1">
+                          <span className="font-medium">
+                            {d.emoji} {d.label}
+                          </span>
+                          <span className={cn(
+                            "tabular-nums text-xs font-medium",
                             isMaleMidlifeVitality
-                              ? vitalityTone?.bar
-                              : pct >= 80 ? "bg-emerald-500" : pct >= 50 ? "bg-primary" : "bg-orange-400"
-                          )}
-                          initial={{ width: 0 }}
-                          animate={{ width: `${pct}%` }}
-                          transition={{ duration: 0.8, delay: 0.4 + i * 0.06, ease: "easeOut" }}
-                        />
-                      </div>
-                      {isMaleMidlifeVitality && (
-                        <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground">
-                          {vitalityDimensionTips[d.key || '']}
-                        </p>
-                      )}
-                    </motion.div>
-                  );
-                })}
+                              ? vitalityTone?.text
+                              : pct >= 80 ? "text-emerald-600" : pct >= 50 ? "text-foreground" : "text-orange-500"
+                          )}>
+                            {isMaleMidlifeVitality ? `状态 ${Math.round(pct)}% · ${vitalityTone?.label}` : `${d.score}/${d.maxScore}`}
+                          </span>
+                        </div>
+                        <div className="relative h-2 rounded-full bg-muted overflow-hidden">
+                          <motion.div
+                            className={cn(
+                              "h-full rounded-full",
+                              isMaleMidlifeVitality
+                                ? vitalityTone?.bar
+                                : pct >= 80 ? "bg-emerald-500" : pct >= 50 ? "bg-primary" : "bg-orange-400"
+                            )}
+                            initial={{ width: 0 }}
+                            animate={{ width: `${pct}%` }}
+                            transition={{ duration: 0.8, delay: 0.4 + i * 0.06, ease: "easeOut" }}
+                          />
+                        </div>
+                        {isMaleMidlifeVitality && (
+                          <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground">
+                            {vitalityDimensionTips[d.key || '']}
+                          </p>
+                        )}
+                      </motion.div>
+                    );
+                  })}
+                </div>
+                {isMaleMidlifeVitality && isLiteMode && (
+                  <div className="absolute inset-x-0 bottom-0 top-12 flex items-end justify-center pb-4 bg-gradient-to-b from-transparent via-card/60 to-card/95 rounded-b-lg">
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium border border-primary/20">
+                      <Lock className="w-3 h-3" />
+                      登录查看每项详细解读
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </motion.div>
