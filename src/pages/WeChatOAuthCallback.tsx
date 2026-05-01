@@ -160,18 +160,8 @@ export default function WeChatOAuthCallback() {
                 <Loader2 className="h-6 w-6 animate-spin text-primary" />
               )}
             </div>
-            <div className="text-lg font-medium text-foreground">
-              {step === "returning" ? "授权完成" : "正在安全验证"}
-            </div>
-            <div className="mt-2 text-sm text-muted-foreground">
-              {step === "received" && "已收到微信返回信息"}
-              {step === "verifying" && "正在确认身份与账号状态"}
-              {step === "returning" && "正在回到刚才的页面"}
-            </div>
-            <div className="mt-5 grid grid-cols-3 gap-2 text-xs text-muted-foreground">
-              <div className="rounded-md bg-muted/60 px-2 py-2">接收授权</div>
-              <div className="rounded-md bg-muted/60 px-2 py-2">验证身份</div>
-              <div className="rounded-md bg-muted/60 px-2 py-2">返回页面</div>
+            <div className="text-base font-medium text-foreground">
+              {step === "returning" ? "登录成功" : "正在登录..."}
             </div>
           </>
         )}
