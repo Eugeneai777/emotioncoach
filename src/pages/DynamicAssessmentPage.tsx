@@ -77,6 +77,9 @@ export default function DynamicAssessmentPage() {
   const dimensions = template?.dimensions || [];
   const patterns = template?.result_patterns || [];
 
+  // 重新测评 nonce: 自增触发 questions useMemo 重洗(必须在 useMemo 之前声明)
+  const [retakeNonce, setRetakeNonce] = useState(0);
+
   // SBTI: randomly select 2 questions per dimension (+ 1 DRUNK_TRIGGER) = 31 total
   // male_midlife_vitality: 全量 20 题, Fisher-Yates 随机顺序(不抽题, 保留维度完整性)
   const questions = useMemo(() => {
