@@ -676,6 +676,37 @@ export function DynamicAssessmentResult({
           </motion.div>
         )}
 
+        {/* Male Midlife Vitality Lite Mode: Login CTA */}
+        {isMaleMidlifeVitality && isLiteMode && (
+          <motion.div custom={4} variants={fadeUp} initial="hidden" animate="visible">
+            <Card className="border-amber-600/30 bg-gradient-to-br from-amber-50/60 via-card to-teal-50/40 dark:from-amber-950/20 dark:to-teal-950/20 shadow-lg overflow-hidden">
+              <CardContent className="p-5 text-center space-y-4">
+                <div className="w-12 h-12 mx-auto rounded-full bg-gradient-to-br from-amber-500/15 to-teal-600/15 flex items-center justify-center">
+                  <Lock className="w-6 h-6 text-amber-700 dark:text-amber-400" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-foreground mb-1">
+                    登录查看你的完整有劲状态报告
+                  </h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    6 维深度诊断 · AI 私人解读 · 个性化恢复方案
+                  </p>
+                </div>
+                <Button
+                  onClick={onLoginToUnlock}
+                  className="w-full h-11 rounded-xl bg-gradient-to-r from-teal-700 to-amber-600 hover:from-teal-600 hover:to-amber-500 text-white shadow-md"
+                >
+                  一键登录,解锁完整报告
+                  <ArrowRight className="w-4 h-4 ml-1" />
+                </Button>
+                <p className="text-[11px] text-muted-foreground/70">
+                  全程匿名 · 登录后自动恢复你的测评结果
+                </p>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
         {/* Tips (hidden for SBTI) */}
         {!isSBTI && result.primaryPattern?.tips?.length > 0 && (
           <motion.div custom={4} variants={fadeUp} initial="hidden" animate="visible">
