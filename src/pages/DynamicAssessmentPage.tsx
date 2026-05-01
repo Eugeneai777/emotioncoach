@@ -1,5 +1,5 @@
 import { Suspense, lazy, useState, useMemo, useEffect } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { useAssessmentTemplate, useSaveAssessmentResult } from "@/hooks/usePartnerAssessments";
 import { useAuth } from "@/hooks/useAuth";
 import { useDynamicAssessmentPurchase } from "@/hooks/useDynamicAssessmentPurchase";
@@ -25,6 +25,7 @@ type Phase = "intro" | "questions" | "result" | "history";
 export default function DynamicAssessmentPage() {
   const { assessmentKey } = useParams<{ assessmentKey: string }>();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const urlRecordId = searchParams.get('recordId');
   const autoSavePdf = searchParams.get('autoSave') === 'pdf';
   const { data: template, isLoading } = useAssessmentTemplate(assessmentKey || "");
@@ -442,8 +443,16 @@ export default function DynamicAssessmentPage() {
           autoSavePdf={autoSavePdf}
           isLiteMode={isLiteMode}
           onLoginToUnlock={() => {
-            const returnUrl = window.location.pathname;
-            window.location.href = `/auth?returnUrl=${encodeURIComponent(returnUrl)}`;
+            // 商业漏斗关键节点：写双重锚（URL + localStorage）保证微信 OAuth roundtrip 后仍能回到结果页
+            const returnUrl = window.location.pathname + window.location.search;
+            try { localStorage.setItem('auth_redirect', returnUrl); } catch {}
+            // 环境感知：微信内置浏览器走 wechat-auth，其他环境走 /auth 并默认聚焦"登录"
+            const isWeChat = /micromessenger/i.test(navigator.userAgent);
+            if (isWeChat) {
+              navigate(`/wechat-auth?mode=login&redirect=${encodeURIComponent(returnUrl)}`);
+            } else {
+              navigate(`/auth?default_login=true&redirect=${encodeURIComponent(returnUrl)}`);
+            }
           }}
         />
 
