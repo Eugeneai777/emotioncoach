@@ -1,5 +1,5 @@
 import { Suspense, lazy, useState, useMemo, useEffect } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { useAssessmentTemplate, useSaveAssessmentResult } from "@/hooks/usePartnerAssessments";
 import { useAuth } from "@/hooks/useAuth";
 import { useDynamicAssessmentPurchase } from "@/hooks/useDynamicAssessmentPurchase";
