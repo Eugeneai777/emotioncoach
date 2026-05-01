@@ -478,7 +478,16 @@ export function DynamicAssessmentIntro({ template, onStart, onShowHistory, hasHi
           <motion.div {...fadeUp(0.8)}>
             <p className="text-center text-xs text-muted-foreground">
               💡 <button
-                onClick={() => { window.location.href = `/auth?returnUrl=${encodeURIComponent(window.location.pathname)}`; }}
+                onClick={() => {
+                  const returnUrl = window.location.pathname + window.location.search;
+                  try { localStorage.setItem('auth_redirect', returnUrl); } catch {}
+                  const isWeChat = /micromessenger/i.test(navigator.userAgent);
+                  if (isWeChat) {
+                    navigate(`/wechat-auth?mode=login&redirect=${encodeURIComponent(returnUrl)}`);
+                  } else {
+                    navigate(`/auth?default_login=true&redirect=${encodeURIComponent(returnUrl)}`);
+                  }
+                }}
                 className="text-primary underline underline-offset-2"
               >登录</button> 后可保存测评记录
             </p>
