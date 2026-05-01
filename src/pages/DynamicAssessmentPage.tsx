@@ -122,9 +122,6 @@ export default function DynamicAssessmentPage() {
 
   const [savedResultId, setSavedResultId] = useState<string | null>(null);
 
-  // 重新测评 nonce: 自增触发 questions useMemo 重洗
-  const [retakeNonce, setRetakeNonce] = useState(0);
-
   const generateInsight = async (
     scoringResult: ScoringResult,
     resultId?: string | null,
