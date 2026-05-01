@@ -132,7 +132,18 @@ export default function WeChatAuth() {
 
              toast.success("登录成功！");
              setTimeout(() => {
-               window.location.href = '/';
+               // 优先 auth_redirect / URL ?redirect=，避免桌面扫码登录后丢失回跳目标
+               let target = "/";
+               try {
+                 const saved = localStorage.getItem("auth_redirect");
+                 const urlRedirect = searchParams.get("redirect");
+                 const candidate = saved || urlRedirect || "";
+                 if (candidate && candidate.startsWith("/") && !candidate.startsWith("//")) {
+                   target = candidate;
+                 }
+                 if (saved) localStorage.removeItem("auth_redirect");
+               } catch {}
+               window.location.href = target;
              }, 600);
            } catch (e) {
              const msg = e instanceof Error ? e.message : '登录失败';
