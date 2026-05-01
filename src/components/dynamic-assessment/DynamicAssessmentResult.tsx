@@ -708,7 +708,7 @@ export function DynamicAssessmentResult({
         )}
 
         {/* Tips (hidden for SBTI) */}
-        {!isSBTI && result.primaryPattern?.tips?.length > 0 && (
+        {!isSBTI && !isLiteMode && result.primaryPattern?.tips?.length > 0 && (
           <motion.div custom={4} variants={fadeUp} initial="hidden" animate="visible">
             <Card className="border-border/40 bg-card/90 backdrop-blur-sm shadow-sm">
               <CardContent className="p-4">
