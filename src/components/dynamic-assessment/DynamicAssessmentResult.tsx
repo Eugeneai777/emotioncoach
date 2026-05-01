@@ -686,10 +686,10 @@ export function DynamicAssessmentResult({
                 </div>
                 <div>
                   <h3 className="font-bold text-base text-foreground mb-1">
-                    登录查看你的完整有劲状态报告
+                    登录解锁完整报告 + 私密 PDF
                   </h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    6 维深度诊断 · AI 私人解读 · 个性化恢复方案
+                    6 维深度诊断 · AI 私人解读 · 一键保存私密 PDF
                   </p>
                 </div>
                 <Button
@@ -934,7 +934,7 @@ export function DynamicAssessmentResult({
 
         {/* Action Buttons */}
         <motion.div custom={8} variants={fadeUp} initial="hidden" animate="visible" className="space-y-3 mt-4">
-          {isMaleMidlifeVitality && aiInsight && (
+          {isMaleMidlifeVitality && aiInsight && !isLiteMode && (
             <div ref={saveButtonRef}>
               <Button
                 className={cn(
