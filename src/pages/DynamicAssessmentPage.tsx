@@ -442,8 +442,16 @@ export default function DynamicAssessmentPage() {
           autoSavePdf={autoSavePdf}
           isLiteMode={isLiteMode}
           onLoginToUnlock={() => {
-            const returnUrl = window.location.pathname;
-            window.location.href = `/auth?returnUrl=${encodeURIComponent(returnUrl)}`;
+            // 商业漏斗关键节点：写双重锚（URL + localStorage）保证微信 OAuth roundtrip 后仍能回到结果页
+            const returnUrl = window.location.pathname + window.location.search;
+            try { localStorage.setItem('auth_redirect', returnUrl); } catch {}
+            // 环境感知：微信内置浏览器走 wechat-auth，其他环境走 /auth 并默认聚焦"登录"
+            const isWeChat = /micromessenger/i.test(navigator.userAgent);
+            if (isWeChat) {
+              navigate(`/wechat-auth?mode=login&redirect=${encodeURIComponent(returnUrl)}`);
+            } else {
+              navigate(`/auth?default_login=true&redirect=${encodeURIComponent(returnUrl)}`);
+            }
           }}
         />
 
