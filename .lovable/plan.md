@@ -1,40 +1,35 @@
-## 升级 Lite 模式答案缓存:sessionStorage → localStorage + 24h 过期
+## 修复【男人有劲】测评两个问题
+
+### 问题1: 修复"保存完整报告"绕过登录漏洞
+
+**根因**: `保存完整报告` 按钮显示条件是 `aiInsight && isMaleMidlifeVitality`,但 `generateInsight()` 在未登录时仍然执行,导致未登录用户也能拿到完整 PDF/长图。
+
+**修复**(双重保险 + 节省 AI Token):
+1. **`src/pages/DynamicAssessmentPage.tsx` `generateInsight()` 顶部加守卫**:`if (isLiteMode) return;`
+2. **`src/components/dynamic-assessment/DynamicAssessmentResult.tsx` 保存按钮显示条件加 `&& !isLiteMode`**(L937)
+3. **lite 登录卡 CTA 文案升级**(L688-704):
+   - 主标题:`登录解锁完整报告 + 私密 PDF`
+   - 副标题:`6 维深度诊断 · AI 私人解读 · 一键保存私密 PDF`
+   - 强化"保存"是登录后的特权
+
+### 问题2: 重新测评题目顺序随机化
+
+**评估**: 题库共 20 题 / 6 维度(分布不均: stress/energy 各 4 题, 其余各 3 题)。**不做抽题**(样本太薄会破坏评估信效度),只做**全量 20 题 Fisher-Yates 顺序打乱**,既满足"题目都不一样"的体感,又保留维度完整性。
+
+**修复**(`src/pages/DynamicAssessmentPage.tsx`):
+1. **新增 `retakeNonce` state**(初值 0),作为 useMemo 依赖触发重洗
+2. **扩展 `questions` useMemo**: 对 `male_midlife_vitality` 走"全量 + Fisher-Yates shuffle"分支,依赖 `[allQuestions.length, retakeNonce]`
+3. **`handleRetake()` 中 `setRetakeNonce(n => n + 1)`**: 每次重测触发重洗
+4. **首次进入也用洗牌后顺序**(更自然)
+
+### 兼容性确认
+- ✅ 已登录/已购买用户: 行为不变,保存功能正常
+- ✅ 训练营支付链路: 不依赖测评题目顺序,无影响
+- ✅ 分享海报/雷达图: 基于 result 总分/维度分,与题目顺序无关
+- ✅ 历史记录: 每条用当时 `answers` 索引存储,顺序变化不影响存量数据
+- ✅ 三端(H5/微信WebView/桌面): 纯前端逻辑,无兼容性风险
+- ✅ 不涉及数据库 schema、RLS、边缘函数
 
 ### 改动文件
-- `src/pages/DynamicAssessmentPage.tsx`(单文件,约 30 行调整)
-
-### 关键改动
-
-1. **新增常量**:`LITE_CACHE_TTL_MS = 24 * 60 * 60 * 1000`(24 小时)
-
-2. **新增辅助函数 `clearLiteCache()`**:同时清除 localStorage + sessionStorage,防残留
-
-3. **`handleQuestionsComplete`(写入)**:把存储介质从 `sessionStorage` 改为 `localStorage`,并把数据格式从 `answers` 升级为 `{ answers, savedAt: Date.now() }`
-
-4. **登录回跳 useEffect(读取)**:
-   - 优先读 `localStorage`,回退读 `sessionStorage`(向前兼容旧缓存)
-   - 兼容两种数据格式(纯 answers 对象 / 带时间戳对象)
-   - 检查 `savedAt` 是否超过 24h → 过期则清除并退出
-   - 未过期则恢复结果 + 写入数据库 + 清缓存
-
-5. **登录用户成功保存后清缓存**:调用 `clearLiteCache()` 双清
-
-### 行为对比
-
-| 场景 | 旧版 (sessionStorage) | 新版 (localStorage + 24h) |
-|---|---|---|
-| 同会话内登录 | ✅ 恢复 | ✅ 恢复 |
-| 关掉浏览器 1 小时后回来登录 | ❌ 丢失 | ✅ 恢复 |
-| 跨设备登录 | ❌ 丢失 | ❌ 丢失(本地存储无法跨设备) |
-| 24 小时后 | ❌ 丢失 | ✅ 自动过期清除 |
-| 登录后保存成功 | ✅ 清除 | ✅ 清除 |
-
-### 兼容性 & 安全性
-- 向前兼容:旧 sessionStorage 缓存仍可被读取一次后清除
-- 24h 过期防止陈旧数据干扰("一周前的测评突然恢复")
-- localStorage 容量充足(单条 < 1KB),无溢出风险
-- 不涉及数据库 schema 改动,不涉及 RLS,不涉及边缘函数
-- 三端(H5 / 微信 WebView / 桌面)均原生支持 localStorage
-
-### 估时
-约 5 分钟代码改动 + 5 分钟回归 QA。
+- `src/pages/DynamicAssessmentPage.tsx` (~10 行)
+- `src/components/dynamic-assessment/DynamicAssessmentResult.tsx` (~5 行)

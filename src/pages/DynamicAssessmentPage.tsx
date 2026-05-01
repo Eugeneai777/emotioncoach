@@ -108,11 +108,16 @@ export default function DynamicAssessmentPage() {
 
   const [savedResultId, setSavedResultId] = useState<string | null>(null);
 
+  // 重新测评 nonce: 自增触发 questions useMemo 重洗
+  const [retakeNonce, setRetakeNonce] = useState(0);
+
   const generateInsight = async (
     scoringResult: ScoringResult,
     resultId?: string | null,
   ) => {
     if (!template) return;
+    // Lite 模式(未登录): 不生成 AI 洞察, 防止"保存完整报告"绕过登录导出完整内容
+    if (isLiteMode) return;
     setLoadingInsight(true);
     setInsightError(false);
     try {
