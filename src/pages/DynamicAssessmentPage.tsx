@@ -148,6 +148,13 @@ export default function DynamicAssessmentPage() {
   const liteCacheKey = template?.assessment_key
     ? `lite_assessment_answers_${template.assessment_key}`
     : null;
+  const LITE_CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 小时过期
+
+  const clearLiteCache = () => {
+    if (!liteCacheKey) return;
+    try { localStorage.removeItem(liteCacheKey); } catch {}
+    try { sessionStorage.removeItem(liteCacheKey); } catch {}
+  };
 
   const calculateAndShowResult = async (answers: Record<number, number>) => {
     if (!template) return;
@@ -170,10 +177,8 @@ export default function DynamicAssessmentPage() {
           newResultId = saved.id;
           setSavedResultId(saved.id);
         }
-        // 登录用户成功保存后,清除 lite 缓存
-        if (liteCacheKey) {
-          try { sessionStorage.removeItem(liteCacheKey); } catch {}
-        }
+        // 登录用户成功保存后,清除 lite 缓存(localStorage + sessionStorage 双清)
+        clearLiteCache();
       } catch (e) {
         console.error("Save assessment result failed:", e);
       }
@@ -184,9 +189,12 @@ export default function DynamicAssessmentPage() {
   };
 
   const handleQuestionsComplete = (answers: Record<number, number>) => {
-    // Lite 模式: 把答案缓存到 sessionStorage,登录回跳后自动恢复完整结果
+    // Lite 模式: 未登录时把答案 + 时间戳缓存到 localStorage(24h 过期),登录回跳后自动恢复
     if (!user && liteCacheKey) {
-      try { sessionStorage.setItem(liteCacheKey, JSON.stringify(answers)); } catch {}
+      try {
+        const payload = JSON.stringify({ answers, savedAt: Date.now() });
+        localStorage.setItem(liteCacheKey, payload);
+      } catch {}
     }
 
     if (requirePayment && !hasPurchased) {
@@ -198,19 +206,33 @@ export default function DynamicAssessmentPage() {
     calculateAndShowResult(answers);
   };
 
-  // 登录回跳后,若 sessionStorage 有缓存的 lite 答案,自动恢复结果
+  // 登录回跳后,若 localStorage 有未过期的 lite 答案,自动恢复结果并写入数据库
   useEffect(() => {
     if (!user || !liteCacheKey || result || !template || questions.length === 0) return;
     try {
-      const raw = sessionStorage.getItem(liteCacheKey);
+      // 优先 localStorage(跨标签/跨会话有效),回退 sessionStorage(兼容旧数据)
+      const raw = localStorage.getItem(liteCacheKey) || sessionStorage.getItem(liteCacheKey);
       if (!raw) return;
-      const cachedAnswers = JSON.parse(raw);
+      const parsed = JSON.parse(raw);
+      // 兼容两种格式: 旧版直接是 answers 对象,新版是 { answers, savedAt }
+      const cachedAnswers = parsed?.answers && typeof parsed.answers === 'object'
+        ? parsed.answers
+        : parsed;
+      const savedAt: number | undefined = parsed?.savedAt;
+
+      // 过期检查: 超过 24h 直接清除
+      if (savedAt && Date.now() - savedAt > LITE_CACHE_TTL_MS) {
+        clearLiteCache();
+        return;
+      }
+
       if (cachedAnswers && typeof cachedAnswers === 'object') {
-        sessionStorage.removeItem(liteCacheKey);
+        clearLiteCache();
         calculateAndShowResult(cachedAnswers);
       }
     } catch (e) {
       console.warn('[Lite resume] failed:', e);
+      clearLiteCache();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, liteCacheKey, template?.id, questions.length]);
