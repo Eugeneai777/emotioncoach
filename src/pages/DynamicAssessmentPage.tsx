@@ -25,6 +25,7 @@ type Phase = "intro" | "questions" | "result" | "history";
 export default function DynamicAssessmentPage() {
   const { assessmentKey } = useParams<{ assessmentKey: string }>();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const urlRecordId = searchParams.get('recordId');
   const autoSavePdf = searchParams.get('autoSave') === 'pdf';
   const { data: template, isLoading } = useAssessmentTemplate(assessmentKey || "");
