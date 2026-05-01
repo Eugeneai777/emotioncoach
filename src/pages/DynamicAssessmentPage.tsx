@@ -38,11 +38,16 @@ export default function DynamicAssessmentPage() {
   const [insightError, setInsightError] = useState<boolean>(false);
   const [showPayDialog, setShowPayDialog] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
-  const [isLiteMode] = useState(false);
 
   // Cast template to access extended fields
   const tpl = template as any;
   const _requireAuth = tpl?.require_auth ?? true;
+  // Lite mode: 未登录用户在指定测评下进入"半成品报告"模式,引导登录解锁
+  const LITE_MODE_KEYS = ['male_midlife_vitality'];
+  const isLiteMode = !user && (
+    (template?.assessment_key && LITE_MODE_KEYS.includes(template.assessment_key)) ||
+    (tpl?.scoring_type === 'sbti' || tpl?.scoring_logic?.scoring_type === 'sbti')
+  );
   const requirePayment = tpl?.require_payment ?? false;
   const packageKey = tpl?.package_key;
   const scoringType = (() => {
@@ -140,6 +145,10 @@ export default function DynamicAssessmentPage() {
     if (result) generateInsight(result, savedResultId);
   };
 
+  const liteCacheKey = template?.assessment_key
+    ? `lite_assessment_answers_${template.assessment_key}`
+    : null;
+
   const calculateAndShowResult = async (answers: Record<number, number>) => {
     if (!template) return;
     const scoringResult = calculateScore(scoringType, answers, questions, dimensions, patterns);
@@ -161,6 +170,10 @@ export default function DynamicAssessmentPage() {
           newResultId = saved.id;
           setSavedResultId(saved.id);
         }
+        // 登录用户成功保存后,清除 lite 缓存
+        if (liteCacheKey) {
+          try { sessionStorage.removeItem(liteCacheKey); } catch {}
+        }
       } catch (e) {
         console.error("Save assessment result failed:", e);
       }
@@ -171,7 +184,11 @@ export default function DynamicAssessmentPage() {
   };
 
   const handleQuestionsComplete = (answers: Record<number, number>) => {
-    // Login gate is now at Intro start button, so user should be authenticated here
+    // Lite 模式: 把答案缓存到 sessionStorage,登录回跳后自动恢复完整结果
+    if (!user && liteCacheKey) {
+      try { sessionStorage.setItem(liteCacheKey, JSON.stringify(answers)); } catch {}
+    }
+
     if (requirePayment && !hasPurchased) {
       calculateAndShowResult(answers);
       setShowPayDialog(true);
@@ -180,6 +197,23 @@ export default function DynamicAssessmentPage() {
 
     calculateAndShowResult(answers);
   };
+
+  // 登录回跳后,若 sessionStorage 有缓存的 lite 答案,自动恢复结果
+  useEffect(() => {
+    if (!user || !liteCacheKey || result || !template || questions.length === 0) return;
+    try {
+      const raw = sessionStorage.getItem(liteCacheKey);
+      if (!raw) return;
+      const cachedAnswers = JSON.parse(raw);
+      if (cachedAnswers && typeof cachedAnswers === 'object') {
+        sessionStorage.removeItem(liteCacheKey);
+        calculateAndShowResult(cachedAnswers);
+      }
+    } catch (e) {
+      console.warn('[Lite resume] failed:', e);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, liteCacheKey, template?.id, questions.length]);
 
   const handleRetake = () => {
     setResult(null);
