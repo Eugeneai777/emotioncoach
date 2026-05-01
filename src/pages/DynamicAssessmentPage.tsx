@@ -38,11 +38,16 @@ export default function DynamicAssessmentPage() {
   const [insightError, setInsightError] = useState<boolean>(false);
   const [showPayDialog, setShowPayDialog] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
-  const [isLiteMode] = useState(false);
 
   // Cast template to access extended fields
   const tpl = template as any;
   const _requireAuth = tpl?.require_auth ?? true;
+  // Lite mode: 未登录用户在指定测评下进入"半成品报告"模式,引导登录解锁
+  const LITE_MODE_KEYS = ['male_midlife_vitality'];
+  const isLiteMode = !user && (
+    (template?.assessment_key && LITE_MODE_KEYS.includes(template.assessment_key)) ||
+    (tpl?.scoring_type === 'sbti' || tpl?.scoring_logic?.scoring_type === 'sbti')
+  );
   const requirePayment = tpl?.require_payment ?? false;
   const packageKey = tpl?.package_key;
   const scoringType = (() => {
