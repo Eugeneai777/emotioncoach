@@ -419,6 +419,8 @@ export default function DramaScriptGenerator() {
   const [continuityNotice, setContinuityNotice] = useState<ContinuityCheckNotice | null>(null);
   const [merging, setMerging] = useState(false);
   const pollingRefs = useRef<Record<number, ReturnType<typeof setInterval>>>({});
+  const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const autosaveSkipFirstRef = useRef(true);
 
   // Audio/TTS state
   const [sceneAudios, setSceneAudios] = useState<Record<number, SceneAudioState>>({});
@@ -580,6 +582,7 @@ export default function DramaScriptGenerator() {
       setLocksConfirmed(false);
       setSavedScriptId(null);
       setActiveSavedScript(null);
+      autosaveSkipFirstRef.current = false;
       toast.success("脚本生成成功！");
     } catch (e: any) {
       toast.error(e.message || "生成失败");
@@ -600,9 +603,10 @@ export default function DramaScriptGenerator() {
     pollingRefs.current = {};
   };
 
-  const saveCurrentScript = async () => {
+  const saveCurrentScript = async (opts: { silent?: boolean } = {}) => {
     if (!result) return;
-    setSavingScript(true);
+    const { silent = false } = opts;
+    if (!silent) setSavingScript(true);
     try {
       const { data: userData, error: userError } = await supabase.auth.getUser();
       if (userError || !userData.user) throw new Error("请先登录后再保存脚本");
@@ -672,7 +676,29 @@ export default function DramaScriptGenerator() {
     };
   }, [characterImages, confirmedPrimaryLock, confirmedStyleLock, conversionStyles, mode, result, sceneImages, style]);
 
+  // Auto-persist generated images (debounced 1s) so refresh / sequel switching
+  // doesn't lose the URLs already produced.
+  useEffect(() => {
+    if (!result) return;
+    const sceneCount = Object.values(sceneImages).filter((s) => s.status === "done" && s.imageUrl).length;
+    const charCount = Object.values(characterImages).filter((s) => s.status === "done" && s.imageUrl).length;
+    if (sceneCount === 0 && charCount === 0) return;
+    if (autosaveSkipFirstRef.current) {
+      autosaveSkipFirstRef.current = false;
+      return;
+    }
+    if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+    autosaveTimerRef.current = setTimeout(() => {
+      saveCurrentScript({ silent: true });
+    }, 1000);
+    return () => {
+      if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sceneImages, characterImages, result?.title]);
+
   const loadSavedScript = (script: SavedDramaScript) => {
+    autosaveSkipFirstRef.current = true;
     setMode(script.mode || "generic");
     setTheme(script.theme || script.title);
     setGenre(script.genre || "suspense");
@@ -1969,7 +1995,7 @@ export default function DramaScriptGenerator() {
             <CardContent>
               <p className="text-sm text-muted-foreground leading-relaxed break-words whitespace-pre-wrap">{result.synopsis}</p>
               <div className="flex flex-wrap gap-2 mt-4">
-                <Button onClick={saveCurrentScript} disabled={savingScript} className="gap-2">
+                <Button onClick={() => saveCurrentScript()} disabled={savingScript} className="gap-2">
                   {savingScript ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                   {savedScriptId ? "更新已保存脚本" : "保存脚本"}
                 </Button>
