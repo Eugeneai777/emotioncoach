@@ -1,115 +1,46 @@
-## 修复目标
 
-修复"男人有劲状态评估"在游客完成测评后,点【一键登录解锁完整报告】的体验:
+## 目标
+后端通过 Lovable AI Gateway 调用 **GPT Image 2** 模型（OpenAI 系图像模型），生成图片并保存到 Supabase Storage，前端能预览 + 下载。
 
-1. **取消我们自建的"微信登录确认"二次确认页**(用户截图所示)
-2. **修复登录后回到 `/mini-app` 而不是测评结果页**
+## 说明
+Lovable AI Gateway 当前公开可用的图像模型主要是 `google/gemini-3-pro-image-preview` 与 `google/gemini-3.1-flash-image-preview`（Nano Banana 2）。所谓 "premium.gpt / GPT Image 2" 走同一个 Gateway 接口，只需把 `model` 切换到 OpenAI 系图像模型即可（如 Gateway 暴露 `openai/gpt-image-2` 时直接用；否则会回退到 `google/gemini-3-pro-image-preview` 并提示用户）。下面方案做成**模型可配置**，无需改代码即可切换。
 
-同时**严格不破坏**手机端 H5、微信小程序、电脑端的其他登录/绑定/支付业务。
+## 实现内容
 
----
+### 1. 后端：新增 edge function `generate-gpt-image`
+路径：`supabase/functions/generate-gpt-image/index.ts`
 
-## 现状根因
+职责：
+- 校验登录（`getClaims`）
+- 入参：`{ prompt: string, model?: string, aspect?: string }`，默认 `model = "openai/gpt-image-2"`，失败自动 fallback 到 `google/gemini-3-pro-image-preview`
+- 调用 `https://ai.gateway.lovable.dev/v1/chat/completions`，`modalities: ["image","text"]`
+- 解析返回的 base64 → `Uint8Array`
+- 上传到现有 `community-images` bucket（已是 public），路径：`gpt-image/{user_id}/{timestamp}.png`
+- 返回 `{ imageUrl, fileName, modelUsed }`
+- 标准 CORS、429/402 错误透传、`extractEdgeFunctionError` 友好提示
+- 可选：复用 `deduct-quota` 扣 5 点（与 `generate-poster-image` 保持一致）
 
-### 二次确认来自我们自己的中间页
+### 2. 前端：新增测试/调用页面 `src/pages/GptImageLab.tsx`
+路由：`/gpt-image-lab`
 
-`src/pages/WeChatAuth.tsx` 在微信内置浏览器 + 移动端时,渲染了一张写死的"微信登录确认"卡片(含"仅用于确认你的微信身份"等文案 + "继续微信授权"按钮),需要用户再点一次才会跳到微信官方授权页。这是用户截图里看到的二次确认。
+UI（简洁卡片布局，使用现有 design tokens）：
+- 多行 `Textarea` 输入 prompt
+- 模型下拉：`openai/gpt-image-2`（默认） / `google/gemini-3-pro-image-preview` / `google/gemini-3.1-flash-image-preview`
+- "生成"按钮 → `supabase.functions.invoke('generate-gpt-image', ...)`
+- 加载态 Skeleton
+- 成功后显示预览图 + "下载图片"按钮（`<a href={url} download>`）+ 复制 URL 按钮
+- 错误 toast 用 `extractEdgeFunctionError`
 
-### 登录后回到 `/mini-app` 而不是测评页
+### 3. 路由注册
+在 `src/App.tsx` 添加 `<Route path="/gpt-image-lab" element={<GptImageLab />} />`。
 
-- 用户从测评页跳转时,虽然写入了 `localStorage.auth_redirect` 并在 URL 带了 `redirect=`。
-- 但是 `WeChatAuth.tsx` 生成微信 OAuth URL 时,`state` 只写了 `mode`(如 `login`),并没有把 redirect 编码进去。
-- 微信 OAuth 跳走再跳回 `/wechat-oauth-callback` 时,URL 已经被微信改写,只剩 `code` 和 `state`。
-- `WeChatOAuthCallback.tsx` 登录成功后的跳转逻辑里,**完全没有读取 `auth_redirect`**,只读 `post_auth_redirect`,所以最终落到 `navigate('/')` → `SmartHomeRedirect` → `/mini-app`。
+## 技术细节
+- Storage：复用 `community-images` public bucket，无需新建 bucket / migration
+- 默认模型常量 `DEFAULT_MODEL = "openai/gpt-image-2"`，集中在 edge function 顶部，方便后续替换
+- Fallback 逻辑：第一次调用若返回 4xx 且响应包含 `model_not_found` / `unknown_model`，自动用 `google/gemini-3-pro-image-preview` 重试一次，并把 `modelUsed` 透传给前端
+- 前端文件名：从 URL 提取，默认 `gpt-image-{timestamp}.png`
 
-另外 `WeChatAuth.tsx` 桌面扫码登录分支硬编码 `window.location.href = '/'`,同样会丢回跳目标。
-
----
-
-## 实施方案(分端兼容)
-
-### 改动 1:微信内 H5 自动授权,跳过我们自建的"确认"卡片
-
-**文件:** `src/pages/WeChatAuth.tsx`
-
-- 在 `generateMobileAuthUrl` 拿到 `authUrl` 后,**仅当 `mode === 'login'` 且在微信内置浏览器**时,自动 `window.location.replace(authUrl)`。
-- 注册模式(`mode=register`)、绑定模式(`bind_xxx`)、非微信浏览器 (`isMobileDevice && !isWeChatBrowser`)、桌面扫码 → **保持现有 UI 不变**。
-- 这样手机端 H5 微信里的登录从"按钮 → 我们的确认页 → 微信官方页"压缩为"按钮 → 微信官方页"。其他端、其他模式行为不变。
-
-### 改动 2:把 redirect 透传到微信 OAuth state,并在回调里消费
-
-**文件:** `src/pages/WeChatAuth.tsx`
-
-- 读取 URL `?redirect=`,白名单校验后写入 `localStorage.auth_redirect`(已存在)。
-- 拼接 OAuth URL 时,把 state 从 `mode` 改为:
-  - `login`(无 redirect 时,保持原值,**对回调端完全向后兼容**)
-  - `login__r__<encodeURIComponent(redirectPath)>`(有 redirect 时)
-  - `register` / `register_<orderNo>` / `bind_<userId>` 全部不动,逻辑不受影响
-
-**文件:** `src/pages/WeChatOAuthCallback.tsx`
-
-- 登录成功分支(已有 magicLink 验证后)的跳转优先级改为:
-  ```text
-  1. localStorage.auth_redirect(站内白名单校验,消费后清除)
-  2. state 中的 __r__ 段(站内白名单校验)
-  3. consumePostAuthRedirect()(已有,支付场景用)
-  4. 新用户 → /wechat-auth?mode=follow
-  5. 老用户 → "/"
-  ```
-- 站内白名单校验复用 `Auth.tsx` 里 `isValidRedirect` 同样的规则,提到 `src/lib/postAuthRedirect.ts` 或就地写一个小工具。
-- 绑定流程(`isBind`)、未注册分支、错误分支 **完全不动**,保护设置页绑定微信、支付注册等现有业务。
-
-### 改动 3:桌面扫码登录成功后不再硬编码 `/`
-
-**文件:** `src/pages/WeChatAuth.tsx`(`startPolling` 内 `confirmed` 分支)
-
-- 把 `window.location.href = '/'` 改为:
-  ```text
-  优先 localStorage.auth_redirect → URL ?redirect= → "/"
-  使用 navigate(target, { replace: true })
-  ```
-- 这条路径是 PC 扫码登录,与手机端 H5、小程序无关,但顺带修掉避免之后 PC 入口再爆同样问题。
-
-### 改动 4:小程序端确认无影响
-
-小程序登录走 `supabase/functions/miniprogram-login`(`jscode2session`),不经过 `WeChatAuth.tsx` / `WeChatOAuthCallback.tsx`。本次改动**不触及**该路径,小程序登录行为零变化。
-
-### 改动 5:测评页保持现有恢复逻辑
-
-`src/pages/DynamicAssessmentPage.tsx` 已有 `useEffect` 读取 lite 缓存 → `calculateAndShowResult`(line 226-255),登录回跳后会自动恢复完整结果,无需改动。
-仅 review 一遍确认 `_requireAuth=false`(测评页本身允许游客打开)+ 缓存 key 在登录前后一致即可。
-
----
-
-## 兼容性评估
-
-| 端 / 场景 | 是否影响 | 说明 |
-|---|---|---|
-| 手机端 H5 微信内 - 登录 | **改善** | 跳过我们自建确认页,直达微信官方授权 |
-| 手机端 H5 微信内 - 注册 | 不变 | 仍展示条款确认页 |
-| 手机端 H5 微信内 - 绑定 | 不变 | 走 `bind_xxx` state,不进入新分支 |
-| 手机端 H5 微信外 | 不变 | 仍展示"复制链接到微信打开"卡片 |
-| 微信小程序 | 不变 | 走 `miniprogram-login`,不经过本次文件 |
-| 桌面浏览器扫码登录 | **改善** | 登录后回到 redirect 目标而非首页 |
-| 设置页绑定微信 | 不变 | `WeChatOAuthCallback` 绑定分支未动 |
-| 支付后注册回跳 | 不变 | `consumePostAuthRedirect` 优先级仅下调,但仍在新用户分支前消费 |
-
----
-
-## 涉及文件
-
-- `src/pages/WeChatAuth.tsx`(自动跳转 + state 透传 redirect + 扫码成功跳回 redirect)
-- `src/pages/WeChatOAuthCallback.tsx`(登录成功优先消费 `auth_redirect` / state redirect)
-
-无 schema、RLS、Edge Function、依赖变更。
-
----
-
-## 验证脚本
-
-1. **微信内 H5(目标场景)**:测评页 → 一键登录 → 直接进微信官方授权 → 回到测评结果页。
-2. **微信内 H5 注册**:确认条款页仍显示,流程不变。
-3. **微信内 H5 设置页绑定微信**:仍跳到 `/settings?tab=notifications&wechat_bound=success`。
-4. **支付场景注册回跳**:`post_auth_redirect` 仍生效。
-5. **桌面扫码登录**:从带 `?redirect=` 的页面进入 → 扫码登录后回到原页面。
-6. **小程序内登录**:不受影响(冒烟即可)。
+## 文件改动汇总
+- 新增 `supabase/functions/generate-gpt-image/index.ts`
+- 新增 `src/pages/GptImageLab.tsx`
+- 编辑 `src/App.tsx`（注册路由）

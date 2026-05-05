@@ -36,6 +36,7 @@ const DynamicCoach = lazyRetry(() => import("./pages/DynamicCoach"));
 const NotFound = lazyRetry(() => import("./pages/NotFound"));
 const ChangePassword = lazyRetry(() => import("./pages/ChangePassword"));
 const LifeCoachVoice = lazyRetry(() => import("./pages/LifeCoachVoice"));
+const GptImageLab = lazyRetry(() => import("./pages/GptImageLab"));
 
 // 历史和社区
 const History = lazyRetry(() => import("./pages/History"));
@@ -379,6 +380,7 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/wechat-auth" element={<WeChatAuth />} />
               <Route path="/wechat-oauth-callback" element={<WeChatOAuthCallback />} />
+              <Route path="/gpt-image-lab" element={<GptImageLab />} />
               <Route path="/history" element={<History />} />
               <Route path="/community/discover" element={<CommunityDiscover />} />
               <Route path="/settings" element={<Settings />} />
