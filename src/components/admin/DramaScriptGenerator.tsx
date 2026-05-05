@@ -1970,7 +1970,7 @@ export default function DramaScriptGenerator() {
             <CardContent>
               <p className="text-sm text-muted-foreground leading-relaxed break-words whitespace-pre-wrap">{result.synopsis}</p>
               <div className="flex flex-wrap gap-2 mt-4">
-                <Button onClick={saveCurrentScript} disabled={savingScript} className="gap-2">
+                <Button onClick={() => saveCurrentScript()} disabled={savingScript} className="gap-2">
                   {savingScript ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                   {savedScriptId ? "更新已保存脚本" : "保存脚本"}
                 </Button>
