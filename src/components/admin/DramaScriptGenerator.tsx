@@ -1553,7 +1553,7 @@ export default function DramaScriptGenerator() {
 
   return (
     <>
-    <div className={pendingSequel ? "pb-52 sm:pb-36" : undefined}>
+    <div className={`drama-workbench min-h-screen ${pendingSequel ? "pb-52 sm:pb-36" : ""}`}>
       <AdminPageLayout
         title={
           <span className="flex items-center gap-2">
