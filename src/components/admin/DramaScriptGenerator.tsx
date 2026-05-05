@@ -2286,47 +2286,72 @@ export default function DramaScriptGenerator() {
 
             <TabsContent value="characters" className="mt-4 space-y-4">
           {/* Characters */}
-          <div className="max-w-full min-w-0 overflow-hidden">
-            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-              <User className="h-4 w-4" /> 角色设定
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 min-w-0">
-              {result.characters.map((char, i) => (
-                <Card key={i} className="border-dashed max-w-full min-w-0 overflow-hidden">
-                  <CardContent className="pt-4 space-y-2">
-                    <div className="font-medium break-words">{char.name}</div>
-                    <p className="text-sm text-muted-foreground break-words">{char.description}</p>
-                    {characterImages[i]?.imageUrl && (
-                      <div className="w-full max-w-full min-w-0 overflow-hidden rounded-lg border bg-muted/30">
-                        <img src={characterImages[i].imageUrl} alt={`${char.name}定妆图`} className="aspect-square w-full max-h-64 object-contain" loading="lazy" />
-                      </div>
-                    )}
-                    <details className="bg-muted/50 rounded-lg p-3 min-w-0 overflow-hidden">
-                      <summary className="text-xs text-muted-foreground cursor-pointer select-none flex items-center justify-between gap-2">
-                        <span>AI 生图提示词（English，点击展开）</span>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="shrink-0 h-7 w-7"
-                          onClick={(e) => { e.preventDefault(); copyToClipboard(char.imagePrompt, "角色提示词"); }}
-                        >
-                          <Copy className="h-3 w-3" />
-                        </Button>
-                      </summary>
-                      <code className="text-xs break-all block mt-2">{char.imagePrompt}</code>
-                    </details>
-                    <div className="flex w-full min-w-0 flex-wrap items-center gap-2 overflow-hidden">
-                      <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => generateCharacterReference(char, i)} disabled={generatingCharacterRefs || characterImages[i]?.status === "generating"}>
-                        {characterImages[i]?.status === "generating" ? <Loader2 className="h-3 w-3 animate-spin" /> : <ImageIcon className="h-3 w-3" />}
-                        {characterImages[i]?.imageUrl ? "重生成定妆图" : "生成定妆图"}
-                      </Button>
-                      {characterImages[i]?.status === "failed" && <span className="text-xs text-destructive break-words">{characterImages[i].error}</span>}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
+          {(() => {
+            const sel = selectedSceneNum != null ? result.scenes.find((s) => s.sceneNumber === selectedSceneNum) : null;
+            // 根据当前镜头动作/台词匹配出场角色（按角色名出现）
+            const matchText = sel ? `${sel.characterAction || ""} ${sel.dialogue || ""} ${sel.narration || ""}` : "";
+            const matchedIndices = new Set<number>();
+            if (sel) {
+              result.characters.forEach((c, i) => {
+                if (c.name && matchText.includes(c.name)) matchedIndices.add(i);
+              });
+              if (matchedIndices.size === 0) matchedIndices.add(0); // 默认人物一
+            }
+            return (
+              <div className="max-w-full min-w-0 overflow-hidden">
+                <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                  <h3 className="text-sm font-semibold flex items-center gap-2">
+                    <User className="h-4 w-4" /> 角色设定
+                  </h3>
+                  {sel && (
+                    <span className="text-xs text-primary">镜头{sel.sceneNumber} 出场：{[...matchedIndices].map((i) => result.characters[i]?.name).filter(Boolean).join("、") || "—"}</span>
+                  )}
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 min-w-0">
+                  {result.characters.map((char, i) => {
+                    const highlighted = sel ? matchedIndices.has(i) : false;
+                    return (
+                      <Card key={i} className={`max-w-full min-w-0 overflow-hidden transition-all ${highlighted ? "border-primary shadow-[0_0_0_1px_hsl(var(--wb-accent))]" : "border-dashed opacity-70"}`}>
+                        <CardContent className="pt-4 space-y-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="font-medium break-words">{char.name}</div>
+                            {i === 0 && <span className="text-[10px] text-primary border border-primary/40 px-1.5 py-0.5 rounded">人物一</span>}
+                          </div>
+                          <p className="text-sm text-muted-foreground break-words">{char.description}</p>
+                          {characterImages[i]?.imageUrl && (
+                            <div className="w-full max-w-full min-w-0 overflow-hidden rounded-lg border bg-muted/30">
+                              <img src={characterImages[i].imageUrl} alt={`${char.name}定妆图`} className="aspect-square w-full max-h-64 object-contain" loading="lazy" />
+                            </div>
+                          )}
+                          <details className="bg-muted/50 rounded-lg p-3 min-w-0 overflow-hidden">
+                            <summary className="text-xs text-muted-foreground cursor-pointer select-none flex items-center justify-between gap-2">
+                              <span>AI 生图提示词（English，点击展开）</span>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="shrink-0 h-7 w-7"
+                                onClick={(e) => { e.preventDefault(); copyToClipboard(char.imagePrompt, "角色提示词"); }}
+                              >
+                                <Copy className="h-3 w-3" />
+                              </Button>
+                            </summary>
+                            <code className="text-xs break-all block mt-2">{char.imagePrompt}</code>
+                          </details>
+                          <div className="flex w-full min-w-0 flex-wrap items-center gap-2 overflow-hidden">
+                            <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => generateCharacterReference(char, i)} disabled={generatingCharacterRefs || characterImages[i]?.status === "generating"}>
+                              {characterImages[i]?.status === "generating" ? <Loader2 className="h-3 w-3 animate-spin" /> : <ImageIcon className="h-3 w-3" />}
+                              {characterImages[i]?.imageUrl ? "重生成定妆图" : "生成定妆图"}
+                            </Button>
+                            {characterImages[i]?.status === "failed" && <span className="text-xs text-destructive break-words">{characterImages[i].error}</span>}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
             </TabsContent>
 
             <TabsContent value="media" className="mt-4 space-y-4">
