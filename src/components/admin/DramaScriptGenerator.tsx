@@ -2272,7 +2272,9 @@ export default function DramaScriptGenerator() {
               ))}
             </div>
           </div>
+            </TabsContent>
 
+            <TabsContent value="media" className="mt-4 space-y-4">
           {/* Video Generation Settings */}
           <Card className="w-full max-w-full min-w-0 shrink overflow-hidden border-dashed border-primary/40">
             <CardHeader className="pb-3">
