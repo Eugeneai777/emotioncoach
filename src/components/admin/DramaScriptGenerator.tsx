@@ -799,12 +799,40 @@ export default function DramaScriptGenerator() {
       if ((data as DramaScript).consistencyCheck && ((data as DramaScript).consistencyCheck?.overallScore || 100) < CONSISTENCY_THRESHOLD) {
         toast.error(`一致性评分 ${(data as DramaScript).consistencyCheck?.overallScore}，建议重新生成一次`);
       }
-      const sequelScript = ensurePrimaryCharacterLock(data as DramaScript);
+      let sequelScript = ensurePrimaryCharacterLock(data as DramaScript);
+
+      // 继承上一集角色定妆图：按 index 优先，按中文名匹配兜底，
+      // 这样续集生场景图时会把同一张参考图传给 AI，保证脸型/穿着不漂。
+      const prevCharacters = script.script_data?.characters || [];
+      const prevPrimaryRef =
+        script.script_data?.primaryCharacterLock?.referenceImageUrl ||
+        prevCharacters[0]?.referenceImageUrl;
+      const inheritedCharacters = (sequelScript.characters || []).map((char, index) => {
+        const byIndex = prevCharacters[index];
+        const byName = prevCharacters.find((p) => p?.name && p.name === char.name);
+        const inheritedRef =
+          char.referenceImageUrl || byName?.referenceImageUrl || byIndex?.referenceImageUrl;
+        return inheritedRef ? { ...char, referenceImageUrl: inheritedRef } : char;
+      });
+      sequelScript = {
+        ...sequelScript,
+        characters: inheritedCharacters,
+        primaryCharacterLock: sequelScript.primaryCharacterLock
+          ? {
+              ...sequelScript.primaryCharacterLock,
+              referenceImageUrl:
+                sequelScript.primaryCharacterLock.referenceImageUrl ||
+                inheritedCharacters[0]?.referenceImageUrl ||
+                prevPrimaryRef,
+            }
+          : sequelScript.primaryCharacterLock,
+      };
+
       setPendingSequel({ source: script, script: sequelScript, products: productsForSequel, conversionStyles: sequelConversionStyles });
       setConfirmedPrimaryLock(sequelScript.primaryCharacterLock?.confirmedPrompt || formatPrimaryCharacterLock(sequelScript));
       setConfirmedStyleLock(sequelScript.styleLockPrompt || STYLE_LOCKS[style] || STYLE_LOCKS.realistic);
       setLocksConfirmed(false);
-      toast.success(`已生成第${script.episode_number + 1}集续集预览，未替换前不会改当前脚本`);
+      toast.success(`已生成第${script.episode_number + 1}集续集预览（已继承上一集角色定妆图）`);
     } catch (e: any) {
       const message = e.message || "续集生成失败";
       setSequelGenerationError(message);
