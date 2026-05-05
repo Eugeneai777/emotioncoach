@@ -380,6 +380,7 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/wechat-auth" element={<WeChatAuth />} />
               <Route path="/wechat-oauth-callback" element={<WeChatOAuthCallback />} />
+              <Route path="/gpt-image-lab" element={<GptImageLab />} />
               <Route path="/history" element={<History />} />
               <Route path="/community/discover" element={<CommunityDiscover />} />
               <Route path="/settings" element={<Settings />} />
