@@ -698,6 +698,7 @@ export default function DramaScriptGenerator() {
   }, [sceneImages, characterImages, result?.title]);
 
   const loadSavedScript = (script: SavedDramaScript) => {
+    autosaveSkipFirstRef.current = true;
     setMode(script.mode || "generic");
     setTheme(script.theme || script.title);
     setGenre(script.genre || "suspense");
