@@ -49,6 +49,7 @@ const WealthCoachVoice = () => {
 
   return (
     <>
+      <DynamicOGMeta pageKey="wealthCoachVoice" />
       <CoachVoiceChat
         onClose={handleClose}
         coachEmoji="💎"
