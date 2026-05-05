@@ -2822,6 +2822,8 @@ export default function DramaScriptGenerator() {
               </div>
             );
           })()}
+            </TabsContent>
+          </Tabs>
 
           {/* Export */}
           <div className="flex justify-end">
