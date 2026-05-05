@@ -2551,318 +2551,261 @@ export default function DramaScriptGenerator() {
             </CardContent>
           </Card>
 
-          {/* Scenes Timeline */}
-          <div className="max-w-full min-w-0 overflow-hidden">
-            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-              <Film className="h-4 w-4" /> 分镜时间线
-            </h3>
-            <div className="space-y-3 max-w-full min-w-0 overflow-hidden">
-              {result.scenes.map((scene) => {
-                const videoState = sceneVideos[scene.sceneNumber] || { status: "idle" as VideoStatus };
-                const imageState = sceneImages[scene.sceneNumber] || { status: "idle" as ImageStatus };
+          {/* Scenes — Grid Storyboard + Inspector */}
+          {(() => {
+            const renderSceneDetail = (scene: typeof result.scenes[number]) => {
+              const videoState = sceneVideos[scene.sceneNumber] || { status: "idle" as VideoStatus };
+              const imageState = sceneImages[scene.sceneNumber] || { status: "idle" as ImageStatus };
+              const audioState = sceneAudios[scene.sceneNumber] || { status: "idle" as AudioStatus };
+              return (
+                <div className="space-y-3 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded font-medium">{scene.panel}</span>
+                    <span className="text-xs text-muted-foreground">{scene.duration}</span>
+                    <span className="text-xs text-muted-foreground break-words">🎵 {scene.bgm}</span>
+                    {scene.relatedProduct && (
+                      <span className="text-xs bg-accent text-accent-foreground px-2 py-0.5 rounded">🔗 {getProductName(scene.relatedProduct)}</span>
+                    )}
+                  </div>
 
-                return (
-                  <Card key={scene.sceneNumber} className="max-w-full min-w-0 overflow-hidden">
-                    <CardContent className="pt-4 min-w-0 overflow-hidden">
-                      <div className="flex items-start gap-4 min-w-0">
-                        <div className="flex flex-col items-center shrink-0">
-                          <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">
+                  <div className="text-sm break-words">
+                    <span className="text-muted-foreground">动作：</span>{scene.characterAction}
+                  </div>
+                  {scene.dialogue && (
+                    <div className="text-sm italic border-l-2 border-primary/30 pl-3 break-words">「{scene.dialogue}」</div>
+                  )}
+
+                  {imageState.status === "done" && imageState.imageUrl && (
+                    <div className="w-full overflow-hidden rounded-lg border bg-muted/30">
+                      <img src={imageState.imageUrl} alt={`场景 ${scene.sceneNumber}`} className="max-h-[60vh] w-full object-contain" loading="lazy" />
+                    </div>
+                  )}
+
+                  {/* 图片操作 */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    {imageState.status === "idle" && (
+                      <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => generateSceneImage(scene)} disabled={anyImageGenerating}>
+                        <ImageIcon className="h-3 w-3" /> 生成图片
+                      </Button>
+                    )}
+                    {imageState.status === "generating" && (
+                      <span className="flex items-center gap-1.5 text-xs text-muted-foreground"><Loader2 className="h-3 w-3 animate-spin" /> GPT Image 2.0 生成中...</span>
+                    )}
+                    {imageState.status === "done" && imageState.imageUrl && (
+                      <>
+                        <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => window.open(imageState.imageUrl!, "_blank", "noopener,noreferrer")}><Play className="h-3 w-3" /> 打开</Button>
+                        <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => copyToClipboard(imageState.imageUrl!, "图片链接")}><Copy className="h-3 w-3" /> 复制链接</Button>
+                        <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => downloadImage(imageState.imageUrl!, `scene-${scene.sceneNumber}`)}><Download className="h-3 w-3" /> 下载</Button>
+                        <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => generateSceneImage(scene)} disabled={anyImageGenerating}>重生成</Button>
+                      </>
+                    )}
+                    {imageState.status === "failed" && (
+                      <>
+                        <span className="text-xs text-destructive break-words">{imageState.error || "图片生成失败"}</span>
+                        <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => generateSceneImage(scene)} disabled={anyImageGenerating}>重试</Button>
+                      </>
+                    )}
+                  </div>
+
+                  {/* 视频操作 */}
+                  <div className="flex items-center gap-2 flex-wrap pt-1 border-t pt-3">
+                    <label className="flex h-8 items-center gap-1.5 rounded-md border border-border bg-muted/30 px-2 text-xs text-muted-foreground">
+                      <Checkbox
+                        checked={sceneKeepReferences[scene.sceneNumber] ?? true}
+                        onCheckedChange={(checked) => setSceneKeepReferences((prev) => ({ ...prev, [scene.sceneNumber]: checked === true }))}
+                      />
+                      保留参考图
+                    </label>
+                    {videoState.status === "idle" && (
+                      <>
+                        <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8" onClick={() => retrySceneVideoOnly(scene)} disabled={anyVideoGenerating && videoState.status === "idle"}>
+                          <Video className="h-3 w-3" /> 生成本镜头视频
+                        </Button>
+                        <Button size="sm" className="gap-1.5 text-xs h-8" onClick={() => retrySceneVideoOnly(scene, 10)} disabled={anyVideoGenerating && videoState.status === "idle"}>
+                          <Video className="h-3 w-3" /> 生成10秒视频
+                        </Button>
+                      </>
+                    )}
+                    {(videoState.status === "submitting" || videoState.status === "in_queue" || videoState.status === "generating") && (
+                      <span className="text-xs text-muted-foreground flex items-center gap-1.5"><Loader2 className="h-3 w-3 animate-spin" /> {getStatusLabel(videoState.status)}</span>
+                    )}
+                    {videoState.status === "done" && videoState.videoUrl && (
+                      <>
+                        <span className="text-xs text-primary flex items-center gap-1"><Check className="h-3 w-3" /> 已完成</span>
+                        <Button variant="outline" size="sm" className="text-xs h-7 gap-1" onClick={() => retrySceneVideoOnly(scene)} disabled={anyVideoGenerating}><RefreshCw className="h-3 w-3" /> 一键重试</Button>
+                        <Button variant="ghost" size="sm" className="text-xs h-7 gap-1" onClick={() => openVideoUrl(videoState.videoUrl!)}><Play className="h-3 w-3" /> 打开</Button>
+                        <Button variant="ghost" size="sm" className="text-xs h-7 gap-1" onClick={() => downloadSingleVideo(videoState.videoUrl!, scene.sceneNumber)}><Download className="h-3 w-3" /> 下载</Button>
+                      </>
+                    )}
+                    {videoState.status === "failed" && (
+                      <>
+                        <span className="text-xs text-destructive">{videoState.error || "失败"}</span>
+                        <Button variant="ghost" size="sm" className="text-xs h-7" onClick={() => retrySceneVideoOnly(scene)}>一键重试</Button>
+                        <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => retrySceneVideoOnly(scene, 10)}>重试10秒</Button>
+                      </>
+                    )}
+                  </div>
+
+                  {videoState.status === "done" && videoState.videoUrl && (
+                    <div className="mt-2 max-w-full min-w-0 overflow-hidden">
+                      {videoPreviewFallbacks[scene.sceneNumber] ? (
+                        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-dashed p-3">
+                          <span className="text-xs text-muted-foreground">当前环境无法直接预览，请点击打开或复制链接</span>
+                          <Button variant="outline" size="sm" className="h-7 gap-1 text-xs" onClick={() => openVideoUrl(videoState.videoUrl!)}><Play className="h-3 w-3" /> 打开视频</Button>
+                          <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => copyToClipboard(videoState.videoUrl!, "视频链接")}><Copy className="h-3 w-3" /> 复制链接</Button>
+                        </div>
+                      ) : (
+                        <video
+                          key={`${scene.sceneNumber}-${videoState.videoUrl}`}
+                          src={videoState.videoUrl}
+                          controls
+                          className="w-full max-w-md max-h-[60vh] rounded-lg border"
+                          preload="metadata"
+                          onError={() => {
+                            setVideoPreviewFallbacks((prev) => prev[scene.sceneNumber] ? prev : { ...prev, [scene.sceneNumber]: true });
+                          }}
+                        />
+                      )}
+                      <p className="text-xs text-muted-foreground mt-1">⚠️ 视频链接有效期约1小时，请及时下载</p>
+                    </div>
+                  )}
+
+                  {/* 旁白 */}
+                  <div className="flex items-center gap-2 flex-wrap pt-3 border-t">
+                    {audioState.status === "idle" && (
+                      <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8" onClick={() => generateSceneAudio(scene)} disabled={anyAudioGenerating}>
+                        <Mic className="h-3 w-3" /> 生成旁白
+                      </Button>
+                    )}
+                    {audioState.status === "generating" && (
+                      <span className="text-xs text-muted-foreground flex items-center gap-1.5"><Loader2 className="h-3 w-3 animate-spin" /> 旁白生成中...</span>
+                    )}
+                    {audioState.status === "done" && audioState.audioBase64 && (
+                      <>
+                        <span className="text-xs text-primary flex items-center gap-1"><Volume2 className="h-3 w-3" /> 旁白已生成</span>
+                        <audio src={URL.createObjectURL(base64ToBlob(audioState.audioBase64, "audio/mpeg"))} controls className="h-7 w-full max-w-[240px]" preload="metadata" />
+                        <Button variant="ghost" size="sm" className="text-xs h-7 gap-1" onClick={() => downloadSceneAudio(scene.sceneNumber)}><Download className="h-3 w-3" /> 下载</Button>
+                      </>
+                    )}
+                    {audioState.status === "failed" && (
+                      <>
+                        <span className="text-xs text-destructive break-words">{audioState.error || "旁白生成失败"}</span>
+                        <Button variant="ghost" size="sm" className="text-xs h-7" onClick={() => generateSceneAudio(scene)}>重试</Button>
+                      </>
+                    )}
+                    {(scene.narration || scene.dialogue) && (
+                      <span className="text-xs text-muted-foreground break-words flex-1 min-w-0">📝 {(scene.narration || scene.dialogue).slice(0, 80)}{(scene.narration || scene.dialogue).length > 80 ? "..." : ""}</span>
+                    )}
+                  </div>
+
+                  {/* 提示词折叠 */}
+                  <details className="bg-muted/50 rounded-lg p-3 mt-3">
+                    <summary className="text-xs text-muted-foreground cursor-pointer select-none flex items-center justify-between gap-2 flex-wrap">
+                      <span>AI 生图提示词（English，点击展开）</span>
+                      <span className="flex items-center gap-1">
+                        <Button variant="ghost" size="icon" className="shrink-0 h-7 w-7" onClick={(e) => { e.preventDefault(); copyToClipboard(scene.imagePrompt, `场景${scene.sceneNumber}提示词`); }}>
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                        <Button variant="ghost" size="sm" className="shrink-0 h-7 gap-1 text-xs" onClick={(e) => { e.preventDefault(); copyToClipboard(buildJimengVideoPrompt(scene), `场景${scene.sceneNumber}即梦提示词`); }}>
+                          <Video className="h-3 w-3" /> 即梦词
+                        </Button>
+                      </span>
+                    </summary>
+                    <code className="text-xs break-all leading-relaxed block mt-2">{scene.imagePrompt}</code>
+                  </details>
+                </div>
+              );
+            };
+
+            const selectedScene = selectedSceneNum != null ? result.scenes.find((s) => s.sceneNumber === selectedSceneNum) : null;
+
+            return (
+              <div className="max-w-full min-w-0 overflow-hidden">
+                <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                  <h3 className="text-sm font-semibold flex items-center gap-2">
+                    <Film className="h-4 w-4" /> 分镜画板 · 共 {result.scenes.length} 镜
+                  </h3>
+                  <span className="text-xs text-muted-foreground">点击缩略卡查看详情、生图、生视频、配音</span>
+                </div>
+
+                {/* 网格画板 */}
+                <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
+                  {result.scenes.map((scene) => {
+                    const videoState = sceneVideos[scene.sceneNumber] || { status: "idle" as VideoStatus };
+                    const imageState = sceneImages[scene.sceneNumber] || { status: "idle" as ImageStatus };
+                    const audioState = sceneAudios[scene.sceneNumber] || { status: "idle" as AudioStatus };
+                    const isSelected = selectedSceneNum === scene.sceneNumber;
+                    return (
+                      <button
+                        key={scene.sceneNumber}
+                        type="button"
+                        className={`wb-thumb text-left ${isSelected ? "is-selected" : ""}`}
+                        onClick={() => setSelectedSceneNum(scene.sceneNumber)}
+                      >
+                        {/* 缩略图 */}
+                        <div className="aspect-[9/16] w-full relative bg-muted/30">
+                          {imageState.status === "done" && imageState.imageUrl ? (
+                            <img src={imageState.imageUrl} alt={`场景 ${scene.sceneNumber}`} className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
+                          ) : (
+                            <div className="wb-thumb-empty absolute inset-0 flex items-center justify-center text-xs text-muted-foreground">
+                              {imageState.status === "generating" ? (
+                                <Loader2 className="h-5 w-5 animate-spin" />
+                              ) : (
+                                <ImageIcon className="h-5 w-5 opacity-50" />
+                              )}
+                            </div>
+                          )}
+                          {/* 编号 */}
+                          <div className="absolute top-1.5 left-1.5 h-6 min-w-6 px-1.5 rounded bg-black/60 text-white text-xs font-bold flex items-center justify-center">
                             {scene.sceneNumber}
                           </div>
-                          <span className="text-xs text-muted-foreground mt-1">{scene.duration}</span>
+                          {/* 状态点 */}
+                          <div className="absolute top-1.5 right-1.5 flex items-center gap-1 rounded bg-black/60 px-1.5 py-1">
+                            <span title="图片" className={`wb-status-dot ${imageState.status === "done" ? "is-done" : imageState.status === "generating" ? "is-generating" : imageState.status === "failed" ? "is-failed" : ""}`} />
+                            <span title="视频" className={`wb-status-dot ${videoState.status === "done" ? "is-video" : (videoState.status === "submitting" || videoState.status === "in_queue" || videoState.status === "generating") ? "is-generating" : videoState.status === "failed" ? "is-failed" : ""}`} />
+                            <span title="旁白" className={`wb-status-dot ${audioState.status === "done" ? "is-done" : audioState.status === "generating" ? "is-generating" : audioState.status === "failed" ? "is-failed" : ""}`} />
+                          </div>
+                          {/* 时长 */}
+                          <div className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded bg-black/60 text-white text-[10px]">
+                            {scene.duration}
+                          </div>
                         </div>
+                        {/* 文案 */}
+                        <div className="p-2 space-y-1">
+                          <div className="text-[11px] text-primary font-medium truncate">{scene.panel}</div>
+                          <div className="text-xs line-clamp-2 leading-snug">{scene.dialogue || scene.characterAction}</div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
 
-                        <div className="flex-1 space-y-2 min-w-0 overflow-hidden">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded font-medium">
-                              {scene.panel}
+                {/* Inspector Sheet */}
+                <Sheet open={selectedScene != null} onOpenChange={(open) => { if (!open) setSelectedSceneNum(null); }}>
+                  <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto">
+                    {selectedScene && (
+                      <>
+                        <SheetHeader>
+                          <SheetTitle className="flex items-center gap-2">
+                            <span className="inline-flex h-7 w-7 rounded-full bg-primary text-primary-foreground items-center justify-center text-sm font-bold">
+                              {selectedScene.sceneNumber}
                             </span>
-                            <span className="text-xs text-muted-foreground break-words">🎵 {scene.bgm}</span>
-                            {scene.relatedProduct && (
-                              <span className="text-xs bg-accent text-accent-foreground px-2 py-0.5 rounded">
-                                🔗 {getProductName(scene.relatedProduct)}
-                              </span>
-                            )}
-                          </div>
-
-                          <div className="text-sm break-words">
-                            <span className="text-muted-foreground">动作：</span>
-                            {scene.characterAction}
-                          </div>
-                          {scene.dialogue && (
-                            <div className="text-sm italic border-l-2 border-primary/30 pl-3 break-words">
-                              「{scene.dialogue}」
-                            </div>
-                          )}
-
-                          <details className="bg-muted/50 rounded-lg p-3 min-w-0 overflow-hidden">
-                            <summary className="text-xs text-muted-foreground cursor-pointer select-none flex items-center justify-between gap-2 flex-wrap">
-                              <span>AI 生图提示词（English，点击展开）</span>
-                              <span className="flex items-center gap-1">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="shrink-0 h-7 w-7"
-                                  onClick={(e) => { e.preventDefault(); copyToClipboard(scene.imagePrompt, `场景${scene.sceneNumber}提示词`); }}
-                                >
-                                  <Copy className="h-3 w-3" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="shrink-0 h-7 gap-1 text-xs"
-                                  onClick={(e) => { e.preventDefault(); copyToClipboard(buildJimengVideoPrompt(scene), `场景${scene.sceneNumber}即梦提示词`); }}
-                                >
-                                  <Video className="h-3 w-3" /> 即梦词
-                                </Button>
-                              </span>
-                            </summary>
-                            <code className="text-xs break-all leading-relaxed block mt-2">
-                              {scene.imagePrompt}
-                            </code>
-                          </details>
-
-                          {/* GPT Image 2.0 image generation per scene */}
-                          <div className="flex w-full min-w-0 flex-wrap items-center gap-2 overflow-hidden pt-1">
-                            {imageState.status === "idle" && (
-                              <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => generateSceneImage(scene)} disabled={anyImageGenerating}>
-                                <ImageIcon className="h-3 w-3" /> 生成图片
-                              </Button>
-                            )}
-                            {imageState.status === "generating" && (
-                              <span className="flex items-center gap-1.5 text-xs text-muted-foreground"><Loader2 className="h-3 w-3 animate-spin" /> GPT Image 2.0 生成中...</span>
-                            )}
-                            {imageState.status === "done" && imageState.imageUrl && (
-                              <div className="flex flex-wrap items-center gap-2 min-w-0">
-                                <span className="flex items-center gap-1 text-xs text-primary"><Check className="h-3 w-3" /> 图片已生成</span>
-                                <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => window.open(imageState.imageUrl!, "_blank", "noopener,noreferrer")}><Play className="h-3 w-3" /> 打开</Button>
-                                <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => copyToClipboard(imageState.imageUrl!, "图片链接")}><Copy className="h-3 w-3" /> 复制链接</Button>
-                                <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => downloadImage(imageState.imageUrl!, `scene-${scene.sceneNumber}`)}><Download className="h-3 w-3" /> 下载</Button>
-                                <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => generateSceneImage(scene)} disabled={anyImageGenerating}>重生成</Button>
-                              </div>
-                            )}
-                            {imageState.status === "failed" && (
-                              <div className="flex flex-wrap items-center gap-2 min-w-0">
-                                <span className="text-xs text-destructive break-words">{imageState.error || "图片生成失败"}</span>
-                                <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => generateSceneImage(scene)} disabled={anyImageGenerating}>重试</Button>
-                              </div>
-                            )}
-                          </div>
-
-                          {imageState.status === "done" && imageState.imageUrl && (
-                            <div className="mt-2 w-full max-w-full min-w-0 overflow-hidden rounded-lg border bg-muted/30">
-                              <img src={imageState.imageUrl} alt={`场景 ${scene.sceneNumber} GPT Image 2.0 分镜图`} className="max-h-[520px] w-full object-contain" loading="lazy" />
-                            </div>
-                          )}
-
-                          {/* Video generation per scene */}
-                          <div className="flex items-center gap-2 flex-wrap pt-1">
-                            <label className="flex h-8 items-center gap-1.5 rounded-md border border-border bg-muted/30 px-2 text-xs text-muted-foreground">
-                              <Checkbox
-                                checked={sceneKeepReferences[scene.sceneNumber] ?? true}
-                                onCheckedChange={(checked) => setSceneKeepReferences((prev) => ({ ...prev, [scene.sceneNumber]: checked === true }))}
-                              />
-                              保留参考图
-                            </label>
-                            {videoState.status === "idle" && (
-                              <div className="flex flex-wrap items-center gap-2">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="gap-1.5 text-xs h-8"
-                                  onClick={() => retrySceneVideoOnly(scene)}
-                                  disabled={anyVideoGenerating && videoState.status === "idle"}
-                                >
-                                  <Video className="h-3 w-3" /> 生成本镜头视频
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  className="gap-1.5 text-xs h-8"
-                                  onClick={() => retrySceneVideoOnly(scene, 10)}
-                                  disabled={anyVideoGenerating && videoState.status === "idle"}
-                                >
-                                  <Video className="h-3 w-3" /> 生成10秒视频
-                                </Button>
-                              </div>
-                            )}
-
-                            {(videoState.status === "submitting" || videoState.status === "in_queue" || videoState.status === "generating") && (
-                              <span className="text-xs text-muted-foreground flex items-center gap-1.5">
-                                <Loader2 className="h-3 w-3 animate-spin" />
-                                {getStatusLabel(videoState.status)}
-                              </span>
-                            )}
-
-                            {videoState.status === "done" && videoState.videoUrl && (
-                              <div className="flex flex-wrap items-center gap-2 min-w-0">
-                                <span className="text-xs text-primary flex items-center gap-1">
-                                  <Check className="h-3 w-3" /> 已完成
-                                </span>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="text-xs h-7 gap-1"
-                                  onClick={() => retrySceneVideoOnly(scene)}
-                                  disabled={anyVideoGenerating}
-                                >
-                                  <RefreshCw className="h-3 w-3" /> 一键重试
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-xs h-7 gap-1"
-                                  onClick={() => openVideoUrl(videoState.videoUrl!)}
-                                >
-                                  <Play className="h-3 w-3" /> 打开
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-xs h-7 gap-1"
-                                  onClick={() => downloadSingleVideo(videoState.videoUrl!, scene.sceneNumber)}
-                                >
-                                  <Download className="h-3 w-3" /> 下载
-                                </Button>
-                              </div>
-                            )}
-
-                            {videoState.status === "failed" && (
-                              <div className="flex flex-wrap items-center gap-2 min-w-0">
-                                <span className="text-xs text-destructive">{videoState.error || "失败"}</span>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-xs h-7"
-                                  onClick={() => retrySceneVideoOnly(scene)}
-                                >
-                                  一键重试
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="text-xs h-7"
-                                  onClick={() => retrySceneVideoOnly(scene, 10)}
-                                >
-                                  重试10秒
-                                </Button>
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Audio/TTS per scene */}
-                          {(() => {
-                            const audioState = sceneAudios[scene.sceneNumber] || { status: "idle" as AudioStatus };
-                            return (
-                              <div className="flex items-center gap-2 flex-wrap">
-                                {audioState.status === "idle" && (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="gap-1.5 text-xs h-8"
-                                    onClick={() => generateSceneAudio(scene)}
-                                    disabled={anyAudioGenerating}
-                                  >
-                                    <Mic className="h-3 w-3" /> 生成旁白
-                                  </Button>
-                                )}
-                                {audioState.status === "generating" && (
-                                  <span className="text-xs text-muted-foreground flex items-center gap-1.5">
-                                    <Loader2 className="h-3 w-3 animate-spin" /> 旁白生成中...
-                                  </span>
-                                )}
-                                {audioState.status === "done" && audioState.audioBase64 && (
-                                  <div className="flex flex-wrap items-center gap-2 min-w-0">
-                                    <span className="text-xs text-primary flex items-center gap-1">
-                                      <Volume2 className="h-3 w-3" /> 旁白已生成
-                                    </span>
-                                    <audio
-                                      src={URL.createObjectURL(base64ToBlob(audioState.audioBase64, "audio/mpeg"))}
-                                      controls
-                                      className="h-7 w-full max-w-[200px] min-w-0"
-                                      preload="metadata"
-                                    />
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      className="text-xs h-7 gap-1"
-                                      onClick={() => downloadSceneAudio(scene.sceneNumber)}
-                                    >
-                                      <Download className="h-3 w-3" /> 下载
-                                    </Button>
-                                  </div>
-                                )}
-                                {audioState.status === "failed" && (
-                                  <div className="flex flex-wrap items-center gap-2 min-w-0">
-                                    <span className="text-xs text-destructive break-words">{audioState.error || "旁白生成失败"}</span>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      className="text-xs h-7"
-                                      onClick={() => generateSceneAudio(scene)}
-                                    >
-                                      重试
-                                    </Button>
-                                  </div>
-                                )}
-                                {(scene.narration || scene.dialogue) && audioState.status === "idle" && (
-                                  <span className="text-xs text-muted-foreground truncate max-w-full sm:max-w-[200px]">
-                                    📝 {(scene.narration || scene.dialogue).slice(0, 30)}...
-                                  </span>
-                                )}
-                              </div>
-                            );
-                          })()}
-
-                          {/* Video preview */}
-                          {videoState.status === "done" && videoState.videoUrl && (
-                            <div className="mt-2 max-w-full min-w-0 overflow-hidden">
-                              {videoPreviewFallbacks[scene.sceneNumber] ? (
-                                <div className="flex flex-wrap items-center gap-2 rounded-lg border border-dashed p-3">
-                                  <span className="text-xs text-muted-foreground">当前环境无法直接预览，请点击打开或复制链接</span>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-7 gap-1 text-xs"
-                                    onClick={() => openVideoUrl(videoState.videoUrl!)}
-                                  >
-                                    <Play className="h-3 w-3" /> 打开视频
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-7 gap-1 text-xs"
-                                    onClick={() => copyToClipboard(videoState.videoUrl!, "视频链接")}
-                                  >
-                                    <Copy className="h-3 w-3" /> 复制链接
-                                  </Button>
-                                </div>
-                              ) : (
-                                <video
-                                  key={`${scene.sceneNumber}-${videoState.videoUrl}`}
-                                  src={videoState.videoUrl}
-                                  controls
-                                  className="w-full max-w-md max-h-[70vh] rounded-lg border"
-                                  preload="metadata"
-                                  onError={() => {
-                                    setVideoPreviewFallbacks((prev) =>
-                                      prev[scene.sceneNumber]
-                                        ? prev
-                                        : { ...prev, [scene.sceneNumber]: true }
-                                    );
-                                  }}
-                                />
-                              )}
-                              <p className="text-xs text-muted-foreground mt-1">⚠️ 视频链接有效期约1小时，请及时下载</p>
-                            </div>
-                          )}
+                            分镜详情
+                          </SheetTitle>
+                          <SheetDescription className="text-xs">
+                            在此面板进行生图、生视频、生成旁白和编辑提示词
+                          </SheetDescription>
+                        </SheetHeader>
+                        <div className="mt-4">
+                          {renderSceneDetail(selectedScene)}
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          </div>
+                      </>
+                    )}
+                  </SheetContent>
+                </Sheet>
+              </div>
+            );
+          })()}
 
           {/* Export */}
           <div className="flex justify-end">
