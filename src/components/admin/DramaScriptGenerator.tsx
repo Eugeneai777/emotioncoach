@@ -410,6 +410,7 @@ export default function DramaScriptGenerator() {
   // Video generation state
   const [videoAspectRatio, setVideoAspectRatio] = useState("9:16");
   const [selectedSceneNum, setSelectedSceneNum] = useState<number | null>(null);
+  const [workbenchTab, setWorkbenchTab] = useState<"overview" | "characters" | "storyboard" | "media">("storyboard");
   const [videoDuration, setVideoDuration] = useState(5);
   const [sceneVideos, setSceneVideos] = useState<Record<number, SceneVideoState>>({});
   const [videoPreviewFallbacks, setVideoPreviewFallbacks] = useState<Record<number, boolean>>({});
@@ -2004,6 +2005,15 @@ export default function DramaScriptGenerator() {
       {/* Results */}
       {result && (
         <div className="space-y-4 mt-6 w-full max-w-full min-w-0 overflow-hidden">
+          <Tabs value={workbenchTab} onValueChange={(v) => setWorkbenchTab(v as typeof workbenchTab)} className="w-full">
+            <TabsList className="grid w-full grid-cols-4 max-w-2xl">
+              <TabsTrigger value="overview" className="gap-1.5"><Film className="h-3.5 w-3.5" />设定</TabsTrigger>
+              <TabsTrigger value="characters" className="gap-1.5"><User className="h-3.5 w-3.5" />角色</TabsTrigger>
+              <TabsTrigger value="storyboard" className="gap-1.5"><LayoutGrid className="h-3.5 w-3.5" />分镜<span className="text-xs opacity-70">{result.scenes.length}</span></TabsTrigger>
+              <TabsTrigger value="media" className="gap-1.5"><Video className="h-3.5 w-3.5" />媒体</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="overview" className="mt-4 space-y-4">
           {/* Title & Synopsis */}
           <Card className="max-w-full overflow-hidden">
             <CardHeader className="pb-3">
@@ -2217,7 +2227,9 @@ export default function DramaScriptGenerator() {
               </CardContent>
             </Card>
           )}
+            </TabsContent>
 
+            <TabsContent value="characters" className="mt-4 space-y-4">
           {/* Characters */}
           <div className="max-w-full min-w-0 overflow-hidden">
             <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
@@ -2260,7 +2272,9 @@ export default function DramaScriptGenerator() {
               ))}
             </div>
           </div>
+            </TabsContent>
 
+            <TabsContent value="media" className="mt-4 space-y-4">
           {/* Video Generation Settings */}
           <Card className="w-full max-w-full min-w-0 shrink overflow-hidden border-dashed border-primary/40">
             <CardHeader className="pb-3">
@@ -2550,7 +2564,9 @@ export default function DramaScriptGenerator() {
               </p>
             </CardContent>
           </Card>
+            </TabsContent>
 
+            <TabsContent value="storyboard" className="mt-4 space-y-4">
           {/* Scenes — Grid Storyboard + Inspector */}
           {(() => {
             const renderSceneDetail = (scene: typeof result.scenes[number]) => {
@@ -2806,6 +2822,8 @@ export default function DramaScriptGenerator() {
               </div>
             );
           })()}
+            </TabsContent>
+          </Tabs>
 
           {/* Export */}
           <div className="flex justify-end">
