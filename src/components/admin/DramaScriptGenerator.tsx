@@ -18,7 +18,7 @@ import { composeComicGrid } from "@/utils/comicGridComposer";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { toast } from "sonner";
-import { Copy, Loader2, Download, Clapperboard, User, Film, Sparkles, ShoppingCart, Target, MessageSquare, Video, Play, Square, Check, X, Mic, Volume2, RefreshCw, Save, Library, Trash2, Wand2, Image as ImageIcon, AlertTriangle, LayoutGrid } from "lucide-react";
+import { Copy, Loader2, Download, Clapperboard, User, Film, Sparkles, ShoppingCart, Target, MessageSquare, Video, Play, Square, Check, X, Mic, Volume2, RefreshCw, Save, Library, Trash2, Wand2, Image as ImageIcon, AlertTriangle, LayoutGrid, ChevronDown, ChevronRight, FilePlus, Pencil } from "lucide-react";
 
 const GENRES = [
   { value: "suspense", label: "🔍 悬疑推理" },
