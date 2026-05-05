@@ -2564,7 +2564,9 @@ export default function DramaScriptGenerator() {
               </p>
             </CardContent>
           </Card>
+            </TabsContent>
 
+            <TabsContent value="storyboard" className="mt-4 space-y-4">
           {/* Scenes — Grid Storyboard + Inspector */}
           {(() => {
             const renderSceneDetail = (scene: typeof result.scenes[number]) => {
