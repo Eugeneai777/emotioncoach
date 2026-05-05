@@ -81,7 +81,14 @@ SERIES VISUAL BIBLE:
 - Keep the same art style, color palette, lighting language, lens quality, and character proportions across every frame.
 - Use cinematic short-drama composition with strong emotional tension.
 - Keep faces, age, hairstyle, outfit, body type, recognizable props, and identity consistent with the character bible.
-- No text, no subtitles, no logos, no watermarks, no UI elements.
+- No subtitles, no captions, no logos, no watermarks, no UI overlays.
+
+LANGUAGE / TEXT POLICY (CRITICAL):
+- The audience and setting are Mainland China. Any visible written language inside the image MUST be Simplified Chinese (简体中文) only.
+- Absolutely NO English, no romaji, no pinyin, no Latin letters, no Arabic numerals styled as English UI text. This includes phone screens, chat bubbles, app icons, notifications, status bars, signage, posters, billboards, books, packaging, shop fronts, license plates, name tags, T-shirts, tattoos, and any background text.
+- If a phone / tablet / computer screen is visible: its UI, app names, time, contact names, chat messages, notifications must all be rendered in 简体中文. Prefer a clean WeChat-like / 微信 style Chinese chat interface unless the scene specifies otherwise.
+- If the scene description happens to contain English words, treat them as semantic hints only — render the equivalent Chinese in the actual image.
+- When in doubt, render NO text rather than English text.
 
 CHARACTER BIBLE:
 ${characterBible || "No named characters provided. Keep all visible people consistent with the scene prompt."}
@@ -97,7 +104,7 @@ Dialogue/emotion context: ${scene.dialogue || ""}
 Image prompt from script: ${scene.imagePrompt || input.prompt || ""}
 
 NEGATIVE CONSISTENCY RULES:
-Do not change any established face, age, hairstyle, outfit, body shape, color palette, art style, or identity. Do not add random extra main characters. Do not include readable text.`;
+Do not change any established face, age, hairstyle, outfit, body shape, color palette, art style, or identity. Do not add random extra main characters. Do not include any English text or Latin letters anywhere in the frame — phone screens, signage, captions, logos, props must all be in Simplified Chinese (简体中文) or contain no text at all.`;
 }
 
 async function fetchReferenceImages(urls: string[]) {
