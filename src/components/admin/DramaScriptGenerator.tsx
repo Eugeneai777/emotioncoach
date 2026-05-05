@@ -2431,6 +2431,17 @@ export default function DramaScriptGenerator() {
                   </Button>
                 )}
 
+                {completedImageCount > 0 && (
+                  <Button
+                    variant="outline"
+                    onClick={() => { setComicPreviewUrl(null); setComicOpen(true); }}
+                    className="gap-2"
+                  >
+                    <LayoutGrid className="h-4 w-4" /> 合成多宫格漫画
+                  </Button>
+                )}
+
+
                 {completedCount > 0 && (
                   <Button
                     variant="outline"
