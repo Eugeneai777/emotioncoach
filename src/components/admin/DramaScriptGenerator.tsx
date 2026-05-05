@@ -582,6 +582,7 @@ export default function DramaScriptGenerator() {
       setLocksConfirmed(false);
       setSavedScriptId(null);
       setActiveSavedScript(null);
+      autosaveSkipFirstRef.current = false;
       toast.success("脚本生成成功！");
     } catch (e: any) {
       toast.error(e.message || "生成失败");
