@@ -600,9 +600,10 @@ export default function DramaScriptGenerator() {
     pollingRefs.current = {};
   };
 
-  const saveCurrentScript = async () => {
+  const saveCurrentScript = async (opts: { silent?: boolean } = {}) => {
     if (!result) return;
-    setSavingScript(true);
+    const { silent = false } = opts;
+    if (!silent) setSavingScript(true);
     try {
       const { data: userData, error: userError } = await supabase.auth.getUser();
       if (userError || !userData.user) throw new Error("请先登录后再保存脚本");
