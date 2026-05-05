@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
 import { PostCallAdvisorDialog } from "@/components/wealth-block/PostCallAdvisorDialog";
+import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { useAuth } from "@/hooks/useAuth";
 
 interface LocationState {
@@ -48,6 +49,7 @@ const WealthCoachVoice = () => {
 
   return (
     <>
+      <DynamicOGMeta pageKey="wealthCoachVoice" />
       <CoachVoiceChat
         onClose={handleClose}
         coachEmoji="💎"

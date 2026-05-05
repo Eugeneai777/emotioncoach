@@ -55,7 +55,7 @@ export function useMiniProgramShareBridge(config: ShareBridgeConfig | null | und
       ts: Date.now(),
     };
 
-    const sig = `${payload.title}|${payload.imageUrl}|${payload.path}`;
+    const sig = `${payload.title}|${payload.imageUrl}|${payload.path}|${payload.routeKey}`;
     if (sig === sentRef.current && sig === lastSentRef.current) return;
     sentRef.current = sig;
     lastSentRef.current = sig;

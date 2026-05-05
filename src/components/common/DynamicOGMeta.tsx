@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef } from "react";
 import { Helmet } from "react-helmet";
+import { useLocation } from "react-router-dom";
 import { usePageOG } from "@/hooks/usePageOG";
-import { OG_BASE_URL } from "@/config/ogConfig";
+import { DEFAULT_OG_CONFIG, OG_BASE_URL } from "@/config/ogConfig";
 import { useWechatShare } from "@/hooks/useWechatShare";
 import { useMiniProgramShareBridge } from "@/hooks/useMiniProgramShareBridge";
 import { getPromotionDomain } from "@/utils/partnerQRUtils";
@@ -59,19 +60,39 @@ export function DynamicOGMeta({ pageKey, overrides }: DynamicOGMetaProps) {
     twitterCard: ogConfig.twitterCard || 'summary_large_image',
   };
 
-  // 生成 Canonical URL (移除查询参数/Hash，保证分享/SEO 入口稳定)
+  // 当前实际路由（含 query/hash），用于在路由切换时强制重发分享桥接
+  const location = useLocation();
+
+  // Canonical URL（剥离 query/hash，保证 SEO 入口稳定）
   const baseDomain = getPromotionDomain() || OG_BASE_URL;
-  const fallbackUrl = `${baseDomain}${window.location.pathname}`;
+  const fallbackUrl = `${baseDomain}${location.pathname}`;
   const canonicalUrl = (finalConfig.url || fallbackUrl).split('?')[0].split('#')[0];
-  // 分享专用的稳定 URL：固定带 ref=share，便于归因，且对所有渠道（微信/小程序/外站）一致
-  const shareUrl = `${canonicalUrl}?ref=share`;
+
+  // 分享 URL：基于当前页面真实 path + query + hash，并附加 ref=share，确保深链可还原子状态
+  const shareUrl = useMemo(() => {
+    const currentSearch = location.search || '';
+    const currentHash = location.hash || '';
+    const params = new URLSearchParams(currentSearch);
+    if (params.get('ref') !== 'share') {
+      params.set('ref', 'share');
+    }
+    const search = params.toString();
+    return `${baseDomain}${location.pathname}${search ? `?${search}` : ''}${currentHash}`;
+  }, [baseDomain, location.pathname, location.search, location.hash]);
+
+  // 分享封面降级：缺失/非 https 时退回默认封面，避免微信/小程序卡片图裂
+  const safeShareImage = useMemo(() => {
+    const img = finalConfig.image;
+    if (img && /^https:\/\//i.test(img)) return img;
+    return DEFAULT_OG_CONFIG.image;
+  }, [finalConfig.image]);
 
   // 微信 JS-SDK 分享配置（H5 / 微信浏览器内）
   useWechatShare({
     title: finalConfig.ogTitle,
     desc: finalConfig.description,
     link: shareUrl,
-    imgUrl: finalConfig.image,
+    imgUrl: safeShareImage,
   });
 
   // 小程序 web-view 分享桥接：把分享配置同步给小程序壳层
@@ -79,11 +100,11 @@ export function DynamicOGMeta({ pageKey, overrides }: DynamicOGMetaProps) {
     () => ({
       title: finalConfig.ogTitle,
       desc: finalConfig.description,
-      imageUrl: finalConfig.image,
+      imageUrl: safeShareImage,
       h5Url: shareUrl,
-      routeKey: pageKey,
+      routeKey: `${pageKey}|${location.pathname}${location.search}`,
     }),
-    [finalConfig.ogTitle, finalConfig.description, finalConfig.image, shareUrl, pageKey]
+    [finalConfig.ogTitle, finalConfig.description, safeShareImage, shareUrl, pageKey, location.pathname, location.search]
   );
   useMiniProgramShareBridge(bridgeConfig);
 
@@ -130,13 +151,13 @@ export function DynamicOGMeta({ pageKey, overrides }: DynamicOGMetaProps) {
       <link rel="canonical" href={canonicalUrl} />
       
       {/* OG 图片预加载 - 加速分享卡片渲染 */}
-      <link rel="preload" as="image" href={finalConfig.image} />
+      <link rel="preload" as="image" href={safeShareImage} />
       
       {/* Open Graph 基础标签 */}
       <meta property="og:title" content={finalConfig.ogTitle} />
       <meta property="og:description" content={finalConfig.description} />
-      <meta property="og:image" content={finalConfig.image} />
-      <meta property="og:url" content={finalConfig.url} />
+      <meta property="og:image" content={safeShareImage} />
+      <meta property="og:url" content={shareUrl} />
       <meta property="og:site_name" content={finalConfig.siteName} />
       <meta property="og:type" content="website" />
       <meta property="og:locale" content={finalConfig.locale} />
@@ -151,7 +172,7 @@ export function DynamicOGMeta({ pageKey, overrides }: DynamicOGMetaProps) {
       <meta name="twitter:card" content={finalConfig.twitterCard} />
       <meta name="twitter:title" content={finalConfig.ogTitle} />
       <meta name="twitter:description" content={finalConfig.description} />
-      <meta name="twitter:image" content={finalConfig.image} />
+      <meta name="twitter:image" content={safeShareImage} />
       <meta name="twitter:image:alt" content={finalConfig.ogTitle} />
     </Helmet>
   );
