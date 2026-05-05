@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef } from "react";
 import { Helmet } from "react-helmet";
+import { useLocation } from "react-router-dom";
 import { usePageOG } from "@/hooks/usePageOG";
-import { OG_BASE_URL } from "@/config/ogConfig";
+import { DEFAULT_OG_CONFIG, OG_BASE_URL } from "@/config/ogConfig";
 import { useWechatShare } from "@/hooks/useWechatShare";
 import { useMiniProgramShareBridge } from "@/hooks/useMiniProgramShareBridge";
 import { getPromotionDomain } from "@/utils/partnerQRUtils";
