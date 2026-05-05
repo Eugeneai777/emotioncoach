@@ -2005,6 +2005,15 @@ export default function DramaScriptGenerator() {
       {/* Results */}
       {result && (
         <div className="space-y-4 mt-6 w-full max-w-full min-w-0 overflow-hidden">
+          <Tabs value={workbenchTab} onValueChange={(v) => setWorkbenchTab(v as typeof workbenchTab)} className="w-full">
+            <TabsList className="grid w-full grid-cols-4 max-w-2xl">
+              <TabsTrigger value="overview" className="gap-1.5"><Film className="h-3.5 w-3.5" />设定</TabsTrigger>
+              <TabsTrigger value="characters" className="gap-1.5"><User className="h-3.5 w-3.5" />角色</TabsTrigger>
+              <TabsTrigger value="storyboard" className="gap-1.5"><LayoutGrid className="h-3.5 w-3.5" />分镜<span className="text-xs opacity-70">{result.scenes.length}</span></TabsTrigger>
+              <TabsTrigger value="media" className="gap-1.5"><Video className="h-3.5 w-3.5" />媒体</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="overview" className="mt-4 space-y-4">
           {/* Title & Synopsis */}
           <Card className="max-w-full overflow-hidden">
             <CardHeader className="pb-3">
