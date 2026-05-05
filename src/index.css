@@ -655,3 +655,74 @@ input:focus, textarea:focus, select:focus {
   --laoge-text-muted: 215 15% 60%;
   --laoge-accent: 212 90% 64%;
 }
+
+/* ========================================
+   /drama-script 深色工作台令牌
+   ======================================== */
+.drama-workbench {
+  --wb-bg: 220 13% 9%;
+  --wb-panel: 220 13% 13%;
+  --wb-panel-2: 220 13% 16%;
+  --wb-border: 220 9% 22%;
+  --wb-accent: 24 100% 58%;
+  --wb-info: 199 90% 60%;
+  --wb-ok: 142 70% 45%;
+  --wb-warn: 38 92% 56%;
+  --wb-fg: 0 0% 96%;
+  --wb-muted: 220 9% 65%;
+
+  background: hsl(var(--wb-bg));
+  color: hsl(var(--wb-fg));
+  color-scheme: dark;
+}
+.drama-workbench .wb-panel {
+  background: hsl(var(--wb-panel));
+  border: 1px solid hsl(var(--wb-border));
+}
+.drama-workbench .wb-panel-2 {
+  background: hsl(var(--wb-panel-2));
+  border: 1px solid hsl(var(--wb-border));
+}
+.drama-workbench .wb-divider { border-color: hsl(var(--wb-border)); }
+.drama-workbench .wb-muted { color: hsl(var(--wb-muted)); }
+.drama-workbench .wb-accent-text { color: hsl(var(--wb-accent)); }
+.drama-workbench .wb-thumb {
+  position: relative;
+  border: 1px solid hsl(var(--wb-border));
+  background: hsl(var(--wb-panel-2));
+  border-radius: 8px;
+  overflow: hidden;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+  cursor: pointer;
+}
+.drama-workbench .wb-thumb:hover {
+  border-color: hsl(var(--wb-accent) / 0.7);
+  transform: translateY(-1px);
+}
+.drama-workbench .wb-thumb.is-selected {
+  border-color: hsl(var(--wb-accent));
+  box-shadow: 0 0 0 1px hsl(var(--wb-accent)), 0 6px 18px -6px hsl(var(--wb-accent) / 0.6);
+}
+.drama-workbench .wb-thumb-empty {
+  background-image:
+    linear-gradient(45deg, hsl(var(--wb-panel)) 25%, transparent 25%),
+    linear-gradient(-45deg, hsl(var(--wb-panel)) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, hsl(var(--wb-panel)) 75%),
+    linear-gradient(-45deg, transparent 75%, hsl(var(--wb-panel)) 75%);
+  background-size: 14px 14px;
+  background-position: 0 0, 0 7px, 7px -7px, -7px 0;
+}
+.drama-workbench .wb-status-dot {
+  display: inline-block;
+  width: 6px; height: 6px;
+  border-radius: 999px;
+  background: hsl(var(--wb-muted));
+}
+.drama-workbench .wb-status-dot.is-generating { background: hsl(var(--wb-warn)); animation: wb-pulse 1.2s ease-in-out infinite; }
+.drama-workbench .wb-status-dot.is-done { background: hsl(var(--wb-ok)); }
+.drama-workbench .wb-status-dot.is-video { background: hsl(var(--wb-info)); }
+.drama-workbench .wb-status-dot.is-failed { background: hsl(0 84% 60%); }
+@keyframes wb-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+}
