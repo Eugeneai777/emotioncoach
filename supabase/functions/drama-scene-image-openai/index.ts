@@ -104,7 +104,7 @@ Dialogue/emotion context: ${scene.dialogue || ""}
 Image prompt from script: ${scene.imagePrompt || input.prompt || ""}
 
 NEGATIVE CONSISTENCY RULES:
-Do not change any established face, age, hairstyle, outfit, body shape, color palette, art style, or identity. Do not add random extra main characters. Do not include readable text.`;
+Do not change any established face, age, hairstyle, outfit, body shape, color palette, art style, or identity. Do not add random extra main characters. Do not include any English text or Latin letters anywhere in the frame — phone screens, signage, captions, logos, props must all be in Simplified Chinese (简体中文) or contain no text at all.`;
 }
 
 async function fetchReferenceImages(urls: string[]) {
