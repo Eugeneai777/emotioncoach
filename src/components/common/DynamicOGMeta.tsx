@@ -151,13 +151,13 @@ export function DynamicOGMeta({ pageKey, overrides }: DynamicOGMetaProps) {
       <link rel="canonical" href={canonicalUrl} />
       
       {/* OG 图片预加载 - 加速分享卡片渲染 */}
-      <link rel="preload" as="image" href={finalConfig.image} />
+      <link rel="preload" as="image" href={safeShareImage} />
       
       {/* Open Graph 基础标签 */}
       <meta property="og:title" content={finalConfig.ogTitle} />
       <meta property="og:description" content={finalConfig.description} />
-      <meta property="og:image" content={finalConfig.image} />
-      <meta property="og:url" content={finalConfig.url} />
+      <meta property="og:image" content={safeShareImage} />
+      <meta property="og:url" content={shareUrl} />
       <meta property="og:site_name" content={finalConfig.siteName} />
       <meta property="og:type" content="website" />
       <meta property="og:locale" content={finalConfig.locale} />
@@ -172,7 +172,7 @@ export function DynamicOGMeta({ pageKey, overrides }: DynamicOGMetaProps) {
       <meta name="twitter:card" content={finalConfig.twitterCard} />
       <meta name="twitter:title" content={finalConfig.ogTitle} />
       <meta name="twitter:description" content={finalConfig.description} />
-      <meta name="twitter:image" content={finalConfig.image} />
+      <meta name="twitter:image" content={safeShareImage} />
       <meta name="twitter:image:alt" content={finalConfig.ogTitle} />
     </Helmet>
   );
