@@ -853,13 +853,20 @@ export default function DramaScriptGenerator() {
     setConversionStyles(nextConversionStyles);
     setSelectedProducts(new Set(products.map((p) => p.key)));
     clearGeneratedAssets();
+    // 恢复角色定妆图（场景图/视频/音频仍清空，因为它们属于新一集）
+    const inheritedCharacterImages: Record<number, SceneImageState> = {};
+    (script.characters || []).forEach((char, index) => {
+      const url = char.referenceImageUrl || (index === 0 ? script.primaryCharacterLock?.referenceImageUrl : undefined);
+      if (url) inheritedCharacterImages[index] = { status: "done", imageUrl: url };
+    });
+    setCharacterImages(inheritedCharacterImages);
     setTheme(script.title);
     setResult(script);
     setSavedScriptId(null);
     setActiveSavedScript(source);
     setPendingSequel(null);
     setSequelGenerationError(null);
-    toast.success(`已替换为第${source.episode_number + 1}集续集`);
+    toast.success(`已替换为第${source.episode_number + 1}集续集（人物一参考图已沿用）`);
   };
 
   const discardPendingSequel = () => {
