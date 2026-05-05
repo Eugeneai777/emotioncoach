@@ -726,3 +726,24 @@ input:focus, textarea:focus, select:focus {
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.5; transform: scale(0.8); }
 }
+
+/* 让 .drama-workbench 覆写 shadcn 语义色，子组件自动变深色 */
+.drama-workbench {
+  --background: var(--wb-bg);
+  --foreground: var(--wb-fg);
+  --card: var(--wb-panel);
+  --card-foreground: var(--wb-fg);
+  --popover: var(--wb-panel);
+  --popover-foreground: var(--wb-fg);
+  --muted: var(--wb-panel-2);
+  --muted-foreground: var(--wb-muted);
+  --border: var(--wb-border);
+  --input: var(--wb-border);
+  --ring: var(--wb-accent);
+  --primary: var(--wb-accent);
+  --primary-foreground: 0 0% 100%;
+  --secondary: var(--wb-panel-2);
+  --secondary-foreground: var(--wb-fg);
+  --accent: var(--wb-panel-2);
+  --accent-foreground: var(--wb-fg);
+}
