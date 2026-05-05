@@ -2355,6 +2355,55 @@ export default function DramaScriptGenerator() {
             </TabsContent>
 
             <TabsContent value="media" className="mt-4 space-y-4">
+          {/* 当前镜头快捷面板 */}
+          {(() => {
+            const sel = selectedSceneNum != null ? result.scenes.find((s) => s.sceneNumber === selectedSceneNum) : null;
+            if (!sel) return null;
+            const img = sceneImages[sel.sceneNumber];
+            const vid = sceneVideos[sel.sceneNumber];
+            const aud = sceneAudios[sel.sceneNumber];
+            return (
+              <Card className="border-primary/40">
+                <CardContent className="pt-4 space-y-3">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="inline-flex h-7 min-w-7 px-2 rounded-full bg-primary text-primary-foreground items-center justify-center text-xs font-bold">{sel.sceneNumber}</span>
+                    <span className="text-sm font-medium">当前镜头快捷面板</span>
+                    <span className="text-xs text-muted-foreground">{sel.panel} · {sel.duration}</span>
+                    <Button variant="ghost" size="sm" className="h-7 ml-auto text-xs" onClick={() => setWorkbenchTab("storyboard")}>打开完整 Inspector →</Button>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                    <div className="rounded border p-2 flex items-center gap-2">
+                      <span className={`wb-status-dot ${img?.status === "done" ? "is-done" : img?.status === "generating" ? "is-generating" : img?.status === "failed" ? "is-failed" : ""}`} />
+                      图片：{img?.status === "done" ? "已生成" : img?.status === "generating" ? "生成中" : img?.status === "failed" ? "失败" : "未生成"}
+                      {img?.status !== "generating" && (
+                        <Button size="sm" variant="outline" className="h-6 ml-auto text-[11px]" onClick={() => generateSceneImage(sel)} disabled={anyImageGenerating}>
+                          {img?.status === "done" ? "重生成" : "生成"}
+                        </Button>
+                      )}
+                    </div>
+                    <div className="rounded border p-2 flex items-center gap-2">
+                      <span className={`wb-status-dot ${vid?.status === "done" ? "is-video" : (vid?.status === "submitting" || vid?.status === "in_queue" || vid?.status === "generating") ? "is-generating" : vid?.status === "failed" ? "is-failed" : ""}`} />
+                      视频：{vid?.status === "done" ? "已完成" : (vid?.status === "submitting" || vid?.status === "in_queue" || vid?.status === "generating") ? "生成中" : vid?.status === "failed" ? "失败" : "未生成"}
+                      {(!vid || vid.status === "idle" || vid.status === "done" || vid.status === "failed") && (
+                        <Button size="sm" variant="outline" className="h-6 ml-auto text-[11px]" onClick={() => retrySceneVideoOnly(sel)} disabled={anyVideoGenerating}>
+                          {vid?.status === "done" ? "重生成" : "生成"}
+                        </Button>
+                      )}
+                    </div>
+                    <div className="rounded border p-2 flex items-center gap-2">
+                      <span className={`wb-status-dot ${aud?.status === "done" ? "is-done" : aud?.status === "generating" ? "is-generating" : aud?.status === "failed" ? "is-failed" : ""}`} />
+                      旁白：{aud?.status === "done" ? "已生成" : aud?.status === "generating" ? "生成中" : aud?.status === "failed" ? "失败" : "未生成"}
+                      {aud?.status !== "generating" && (
+                        <Button size="sm" variant="outline" className="h-6 ml-auto text-[11px]" onClick={() => generateSceneAudio(sel)} disabled={anyAudioGenerating}>
+                          {aud?.status === "done" ? "重生成" : "生成"}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })()}
           {/* Video Generation Settings */}
           <Card className="w-full max-w-full min-w-0 shrink overflow-hidden border-dashed border-primary/40">
             <CardHeader className="pb-3">
