@@ -2114,19 +2114,20 @@ export default function DramaScriptGenerator() {
                     <p className="text-sm font-medium mt-1 break-words">{result.coverPoster.hookText}</p>
                   </div>
                 </div>
-                <div className="bg-muted/50 rounded-lg p-3 min-w-0 overflow-hidden">
-                  <div className="flex items-start justify-between gap-2 min-w-0">
-                    <code className="text-xs break-all flex-1 min-w-0 leading-relaxed">{result.coverPoster.posterImagePrompt}</code>
+                <details className="bg-muted/50 rounded-lg p-3 min-w-0 overflow-hidden group">
+                  <summary className="text-xs text-muted-foreground cursor-pointer select-none flex items-center justify-between gap-2">
+                    <span>AI 生图提示词（English，点击展开）</span>
                     <Button
                       variant="ghost"
                       size="icon"
                       className="shrink-0 h-7 w-7"
-                      onClick={() => copyToClipboard(result.coverPoster!.posterImagePrompt, "封面图片提示词")}
+                      onClick={(e) => { e.preventDefault(); copyToClipboard(result.coverPoster!.posterImagePrompt, "封面图片提示词"); }}
                     >
                       <Copy className="h-3 w-3" />
                     </Button>
-                  </div>
-                </div>
+                  </summary>
+                  <code className="text-xs break-all leading-relaxed block mt-2">{result.coverPoster.posterImagePrompt}</code>
+                </details>
               </CardContent>
             </Card>
           )}
