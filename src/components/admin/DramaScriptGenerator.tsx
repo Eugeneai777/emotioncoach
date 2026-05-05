@@ -2227,7 +2227,9 @@ export default function DramaScriptGenerator() {
               </CardContent>
             </Card>
           )}
+            </TabsContent>
 
+            <TabsContent value="characters" className="mt-4 space-y-4">
           {/* Characters */}
           <div className="max-w-full min-w-0 overflow-hidden">
             <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
