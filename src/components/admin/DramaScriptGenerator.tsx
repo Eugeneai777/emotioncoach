@@ -14,8 +14,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { extractEdgeFunctionError } from "@/lib/edgeFunctionError";
 import { mergeVideosClientSide } from "@/utils/videoMerger";
+import { composeComicGrid } from "@/utils/comicGridComposer";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Copy, Loader2, Download, Clapperboard, User, Film, Sparkles, ShoppingCart, Target, MessageSquare, Video, Play, Square, Check, X, Mic, Volume2, RefreshCw, Save, Library, Trash2, Wand2, Image as ImageIcon, AlertTriangle } from "lucide-react";
+import { Copy, Loader2, Download, Clapperboard, User, Film, Sparkles, ShoppingCart, Target, MessageSquare, Video, Play, Square, Check, X, Mic, Volume2, RefreshCw, Save, Library, Trash2, Wand2, Image as ImageIcon, AlertTriangle, LayoutGrid } from "lucide-react";
 
 const GENRES = [
   { value: "suspense", label: "🔍 悬疑推理" },
@@ -393,6 +395,16 @@ export default function DramaScriptGenerator() {
   const [characterImages, setCharacterImages] = useState<Record<number, SceneImageState>>({});
   const [batchGeneratingImages, setBatchGeneratingImages] = useState(false);
   const [generatingCharacterRefs, setGeneratingCharacterRefs] = useState(false);
+
+  // Comic grid composition state
+  const [comicOpen, setComicOpen] = useState(false);
+  const [comicColumns, setComicColumns] = useState<1 | 2 | 3>(2);
+  const [comicTextMode, setComicTextMode] = useState<"narration" | "dialogue" | "both" | "none">("narration");
+  const [comicTextStyle, setComicTextStyle] = useState<"banner" | "bubble">("banner");
+  const [comicShowNumber, setComicShowNumber] = useState(true);
+  const [comicShowTitle, setComicShowTitle] = useState(true);
+  const [comicBuilding, setComicBuilding] = useState(false);
+  const [comicPreviewUrl, setComicPreviewUrl] = useState<string | null>(null);
 
   // Video generation state
   const [videoAspectRatio, setVideoAspectRatio] = useState("9:16");
@@ -1300,6 +1312,55 @@ export default function DramaScriptGenerator() {
     a.click();
     URL.revokeObjectURL(url);
     toast.success("合并旁白下载成功");
+  };
+
+  const handleBuildComic = async () => {
+    if (!result) return;
+    const panels = result.scenes
+      .map((s) => {
+        const url = sceneImages[s.sceneNumber]?.imageUrl || s.generatedImageUrl;
+        if (!url) return null;
+        return {
+          sceneNumber: s.sceneNumber,
+          imageUrl: url,
+          narration: s.narration,
+          dialogue: s.dialogue,
+        };
+      })
+      .filter(Boolean) as { sceneNumber: number; imageUrl: string; narration?: string; dialogue?: string }[];
+
+    if (panels.length === 0) {
+      toast.error("还没有任何分镜图片，请先生成");
+      return;
+    }
+    setComicBuilding(true);
+    try {
+      const blob = await composeComicGrid({
+        title: result.title || "短剧漫画",
+        panels,
+        columns: comicColumns,
+        textMode: comicTextMode,
+        textStyle: comicTextStyle,
+        showSceneNumber: comicShowNumber,
+        showTitle: comicShowTitle,
+        watermark: "eugeneai.me",
+      });
+      if (comicPreviewUrl) URL.revokeObjectURL(comicPreviewUrl);
+      setComicPreviewUrl(URL.createObjectURL(blob));
+      toast.success(`已合成 ${panels.length} 宫格漫画`);
+    } catch (e: any) {
+      toast.error(e?.message || "合成失败");
+    } finally {
+      setComicBuilding(false);
+    }
+  };
+
+  const downloadComic = () => {
+    if (!comicPreviewUrl || !result) return;
+    const a = document.createElement("a");
+    a.href = comicPreviewUrl;
+    a.download = `${result.title || "drama"}-comic.png`;
+    a.click();
   };
 
   const handleMergeDownload = async () => {
@@ -2370,6 +2431,17 @@ export default function DramaScriptGenerator() {
                   </Button>
                 )}
 
+                {completedImageCount > 0 && (
+                  <Button
+                    variant="outline"
+                    onClick={() => { setComicPreviewUrl(null); setComicOpen(true); }}
+                    className="gap-2"
+                  >
+                    <LayoutGrid className="h-4 w-4" /> 合成多宫格漫画
+                  </Button>
+                )}
+
+
                 {completedCount > 0 && (
                   <Button
                     variant="outline"
@@ -2802,6 +2874,87 @@ export default function DramaScriptGenerator() {
           </div>
         </div>
       )}
+
+      <Dialog open={comicOpen} onOpenChange={(o) => { setComicOpen(o); if (!o && comicPreviewUrl) { URL.revokeObjectURL(comicPreviewUrl); setComicPreviewUrl(null); } }}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <LayoutGrid className="h-5 w-5" /> 合成多宫格漫画
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="grid gap-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs">布局</Label>
+                <Select value={String(comicColumns)} onValueChange={(v) => setComicColumns(Number(v) as 1 | 2 | 3)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">1 列长条</SelectItem>
+                    <SelectItem value="2">2 列（默认）</SelectItem>
+                    <SelectItem value="3">3 列</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs">文本来源</Label>
+                <Select value={comicTextMode} onValueChange={(v) => setComicTextMode(v as any)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="narration">仅旁白</SelectItem>
+                    <SelectItem value="dialogue">仅台词</SelectItem>
+                    <SelectItem value="both">旁白 + 台词</SelectItem>
+                    <SelectItem value="none">不显示文字</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs">文本样式</Label>
+                <Select value={comicTextStyle} onValueChange={(v) => setComicTextStyle(v as any)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="banner">底部条幅</SelectItem>
+                    <SelectItem value="bubble">顶部气泡</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex flex-col gap-2 pt-5">
+                <label className="flex items-center gap-2 text-sm">
+                  <Checkbox checked={comicShowNumber} onCheckedChange={(v) => setComicShowNumber(!!v)} />
+                  显示镜头号
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <Checkbox checked={comicShowTitle} onCheckedChange={(v) => setComicShowTitle(!!v)} />
+                  显示标题
+                </label>
+              </div>
+            </div>
+
+            <Button onClick={handleBuildComic} disabled={comicBuilding} className="gap-2">
+              {comicBuilding ? <><Loader2 className="h-4 w-4 animate-spin" /> 合成中...</> : <><Sparkles className="h-4 w-4" /> 生成漫画预览</>}
+            </Button>
+
+            {comicPreviewUrl ? (
+              <div className="border rounded-md overflow-hidden bg-muted/30">
+                <img src={comicPreviewUrl} alt="comic preview" className="w-full h-auto" />
+              </div>
+            ) : (
+              <div className="text-center text-xs text-muted-foreground py-6 border border-dashed rounded-md">
+                选择参数后点击「生成漫画预览」
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="flex-wrap gap-2">
+            <Button variant="outline" onClick={downloadMergedAudio} disabled={!allAudiosDone} className="gap-2">
+              <Volume2 className="h-4 w-4" /> 下载合并旁白 MP3
+            </Button>
+            <Button onClick={downloadComic} disabled={!comicPreviewUrl} className="gap-2">
+              <Download className="h-4 w-4" /> 下载漫画 PNG
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
