@@ -2013,6 +2013,61 @@ export default function DramaScriptGenerator() {
               <TabsTrigger value="media" className="gap-1.5"><Video className="h-3.5 w-3.5" />媒体</TabsTrigger>
             </TabsList>
 
+            {/* 当前选中镜头条 — 跨 Tab 持久同步 */}
+            {(() => {
+              const sel = selectedSceneNum != null ? result.scenes.find((s) => s.sceneNumber === selectedSceneNum) : null;
+              const goScene = (n: number | null) => {
+                setSelectedSceneNum(n);
+              };
+              return (
+                <div className="mt-3 wb-panel rounded-lg p-2 flex items-center gap-2 overflow-x-auto scrollbar-hide">
+                  <span className="text-[11px] text-muted-foreground shrink-0 px-1">当前镜头</span>
+                  <div className="flex items-center gap-1 shrink-0">
+                    {result.scenes.map((s) => {
+                      const active = s.sceneNumber === selectedSceneNum;
+                      const imgDone = sceneImages[s.sceneNumber]?.status === "done";
+                      const vidDone = sceneVideos[s.sceneNumber]?.status === "done";
+                      return (
+                        <button
+                          key={s.sceneNumber}
+                          type="button"
+                          onClick={() => goScene(active ? null : s.sceneNumber)}
+                          className={`relative h-7 min-w-7 px-2 rounded text-xs font-medium border transition-colors ${
+                            active
+                              ? "bg-primary text-primary-foreground border-primary"
+                              : "bg-background border-border hover:bg-muted"
+                          }`}
+                          title={`镜头${s.sceneNumber} · ${s.panel}`}
+                        >
+                          {s.sceneNumber}
+                          {(imgDone || vidDone) && (
+                            <span className={`absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full ${vidDone ? "bg-sky-400" : "bg-emerald-400"}`} />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {sel && (
+                    <>
+                      <span className="text-[11px] text-primary shrink-0 px-1">{sel.panel} · {sel.duration}</span>
+                      <span className="text-[11px] text-muted-foreground truncate flex-1 min-w-0">
+                        {sel.dialogue ? `「${sel.dialogue}」` : sel.characterAction}
+                      </span>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 gap-1 text-xs shrink-0"
+                        onClick={() => setWorkbenchTab("storyboard")}
+                      >
+                        <LayoutGrid className="h-3 w-3" /> 打开分镜
+                      </Button>
+                    </>
+                  )}
+                </div>
+              );
+            })()}
+
+
             <TabsContent value="overview" className="mt-4 space-y-4">
           {/* Title & Synopsis */}
           <Card className="max-w-full overflow-hidden">
