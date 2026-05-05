@@ -410,6 +410,7 @@ export default function DramaScriptGenerator() {
   // Video generation state
   const [videoAspectRatio, setVideoAspectRatio] = useState("9:16");
   const [selectedSceneNum, setSelectedSceneNum] = useState<number | null>(null);
+  const [workbenchTab, setWorkbenchTab] = useState<"overview" | "characters" | "storyboard" | "media">("storyboard");
   const [videoDuration, setVideoDuration] = useState(5);
   const [sceneVideos, setSceneVideos] = useState<Record<number, SceneVideoState>>({});
   const [videoPreviewFallbacks, setVideoPreviewFallbacks] = useState<Record<number, boolean>>({});
