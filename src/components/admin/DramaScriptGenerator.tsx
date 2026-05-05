@@ -675,6 +675,27 @@ export default function DramaScriptGenerator() {
     };
   }, [characterImages, confirmedPrimaryLock, confirmedStyleLock, conversionStyles, mode, result, sceneImages, style]);
 
+  // Auto-persist generated images (debounced 1s) so refresh / sequel switching
+  // doesn't lose the URLs already produced.
+  useEffect(() => {
+    if (!result) return;
+    const sceneCount = Object.values(sceneImages).filter((s) => s.status === "done" && s.imageUrl).length;
+    const charCount = Object.values(characterImages).filter((s) => s.status === "done" && s.imageUrl).length;
+    if (sceneCount === 0 && charCount === 0) return;
+    if (autosaveSkipFirstRef.current) {
+      autosaveSkipFirstRef.current = false;
+      return;
+    }
+    if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+    autosaveTimerRef.current = setTimeout(() => {
+      saveCurrentScript({ silent: true });
+    }, 1000);
+    return () => {
+      if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sceneImages, characterImages, result?.title]);
+
   const loadSavedScript = (script: SavedDramaScript) => {
     setMode(script.mode || "generic");
     setTheme(script.theme || script.title);
