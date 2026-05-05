@@ -2013,6 +2013,61 @@ export default function DramaScriptGenerator() {
               <TabsTrigger value="media" className="gap-1.5"><Video className="h-3.5 w-3.5" />媒体</TabsTrigger>
             </TabsList>
 
+            {/* 当前选中镜头条 — 跨 Tab 持久同步 */}
+            {(() => {
+              const sel = selectedSceneNum != null ? result.scenes.find((s) => s.sceneNumber === selectedSceneNum) : null;
+              const goScene = (n: number | null) => {
+                setSelectedSceneNum(n);
+              };
+              return (
+                <div className="mt-3 wb-panel rounded-lg p-2 flex items-center gap-2 overflow-x-auto scrollbar-hide">
+                  <span className="text-[11px] text-muted-foreground shrink-0 px-1">当前镜头</span>
+                  <div className="flex items-center gap-1 shrink-0">
+                    {result.scenes.map((s) => {
+                      const active = s.sceneNumber === selectedSceneNum;
+                      const imgDone = sceneImages[s.sceneNumber]?.status === "done";
+                      const vidDone = sceneVideos[s.sceneNumber]?.status === "done";
+                      return (
+                        <button
+                          key={s.sceneNumber}
+                          type="button"
+                          onClick={() => goScene(active ? null : s.sceneNumber)}
+                          className={`relative h-7 min-w-7 px-2 rounded text-xs font-medium border transition-colors ${
+                            active
+                              ? "bg-primary text-primary-foreground border-primary"
+                              : "bg-background border-border hover:bg-muted"
+                          }`}
+                          title={`镜头${s.sceneNumber} · ${s.panel}`}
+                        >
+                          {s.sceneNumber}
+                          {(imgDone || vidDone) && (
+                            <span className={`absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full ${vidDone ? "bg-sky-400" : "bg-emerald-400"}`} />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {sel && (
+                    <>
+                      <span className="text-[11px] text-primary shrink-0 px-1">{sel.panel} · {sel.duration}</span>
+                      <span className="text-[11px] text-muted-foreground truncate flex-1 min-w-0">
+                        {sel.dialogue ? `「${sel.dialogue}」` : sel.characterAction}
+                      </span>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 gap-1 text-xs shrink-0"
+                        onClick={() => setWorkbenchTab("storyboard")}
+                      >
+                        <LayoutGrid className="h-3 w-3" /> 打开分镜
+                      </Button>
+                    </>
+                  )}
+                </div>
+              );
+            })()}
+
+
             <TabsContent value="overview" className="mt-4 space-y-4">
           {/* Title & Synopsis */}
           <Card className="max-w-full overflow-hidden">
@@ -2231,50 +2286,124 @@ export default function DramaScriptGenerator() {
 
             <TabsContent value="characters" className="mt-4 space-y-4">
           {/* Characters */}
-          <div className="max-w-full min-w-0 overflow-hidden">
-            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-              <User className="h-4 w-4" /> 角色设定
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 min-w-0">
-              {result.characters.map((char, i) => (
-                <Card key={i} className="border-dashed max-w-full min-w-0 overflow-hidden">
-                  <CardContent className="pt-4 space-y-2">
-                    <div className="font-medium break-words">{char.name}</div>
-                    <p className="text-sm text-muted-foreground break-words">{char.description}</p>
-                    {characterImages[i]?.imageUrl && (
-                      <div className="w-full max-w-full min-w-0 overflow-hidden rounded-lg border bg-muted/30">
-                        <img src={characterImages[i].imageUrl} alt={`${char.name}定妆图`} className="aspect-square w-full max-h-64 object-contain" loading="lazy" />
-                      </div>
-                    )}
-                    <details className="bg-muted/50 rounded-lg p-3 min-w-0 overflow-hidden">
-                      <summary className="text-xs text-muted-foreground cursor-pointer select-none flex items-center justify-between gap-2">
-                        <span>AI 生图提示词（English，点击展开）</span>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="shrink-0 h-7 w-7"
-                          onClick={(e) => { e.preventDefault(); copyToClipboard(char.imagePrompt, "角色提示词"); }}
-                        >
-                          <Copy className="h-3 w-3" />
-                        </Button>
-                      </summary>
-                      <code className="text-xs break-all block mt-2">{char.imagePrompt}</code>
-                    </details>
-                    <div className="flex w-full min-w-0 flex-wrap items-center gap-2 overflow-hidden">
-                      <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => generateCharacterReference(char, i)} disabled={generatingCharacterRefs || characterImages[i]?.status === "generating"}>
-                        {characterImages[i]?.status === "generating" ? <Loader2 className="h-3 w-3 animate-spin" /> : <ImageIcon className="h-3 w-3" />}
-                        {characterImages[i]?.imageUrl ? "重生成定妆图" : "生成定妆图"}
-                      </Button>
-                      {characterImages[i]?.status === "failed" && <span className="text-xs text-destructive break-words">{characterImages[i].error}</span>}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
+          {(() => {
+            const sel = selectedSceneNum != null ? result.scenes.find((s) => s.sceneNumber === selectedSceneNum) : null;
+            // 根据当前镜头动作/台词匹配出场角色（按角色名出现）
+            const matchText = sel ? `${sel.characterAction || ""} ${sel.dialogue || ""} ${sel.narration || ""}` : "";
+            const matchedIndices = new Set<number>();
+            if (sel) {
+              result.characters.forEach((c, i) => {
+                if (c.name && matchText.includes(c.name)) matchedIndices.add(i);
+              });
+              if (matchedIndices.size === 0) matchedIndices.add(0); // 默认人物一
+            }
+            return (
+              <div className="max-w-full min-w-0 overflow-hidden">
+                <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                  <h3 className="text-sm font-semibold flex items-center gap-2">
+                    <User className="h-4 w-4" /> 角色设定
+                  </h3>
+                  {sel && (
+                    <span className="text-xs text-primary">镜头{sel.sceneNumber} 出场：{[...matchedIndices].map((i) => result.characters[i]?.name).filter(Boolean).join("、") || "—"}</span>
+                  )}
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 min-w-0">
+                  {result.characters.map((char, i) => {
+                    const highlighted = sel ? matchedIndices.has(i) : false;
+                    return (
+                      <Card key={i} className={`max-w-full min-w-0 overflow-hidden transition-all ${highlighted ? "border-primary shadow-[0_0_0_1px_hsl(var(--wb-accent))]" : "border-dashed opacity-70"}`}>
+                        <CardContent className="pt-4 space-y-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="font-medium break-words">{char.name}</div>
+                            {i === 0 && <span className="text-[10px] text-primary border border-primary/40 px-1.5 py-0.5 rounded">人物一</span>}
+                          </div>
+                          <p className="text-sm text-muted-foreground break-words">{char.description}</p>
+                          {characterImages[i]?.imageUrl && (
+                            <div className="w-full max-w-full min-w-0 overflow-hidden rounded-lg border bg-muted/30">
+                              <img src={characterImages[i].imageUrl} alt={`${char.name}定妆图`} className="aspect-square w-full max-h-64 object-contain" loading="lazy" />
+                            </div>
+                          )}
+                          <details className="bg-muted/50 rounded-lg p-3 min-w-0 overflow-hidden">
+                            <summary className="text-xs text-muted-foreground cursor-pointer select-none flex items-center justify-between gap-2">
+                              <span>AI 生图提示词（English，点击展开）</span>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="shrink-0 h-7 w-7"
+                                onClick={(e) => { e.preventDefault(); copyToClipboard(char.imagePrompt, "角色提示词"); }}
+                              >
+                                <Copy className="h-3 w-3" />
+                              </Button>
+                            </summary>
+                            <code className="text-xs break-all block mt-2">{char.imagePrompt}</code>
+                          </details>
+                          <div className="flex w-full min-w-0 flex-wrap items-center gap-2 overflow-hidden">
+                            <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => generateCharacterReference(char, i)} disabled={generatingCharacterRefs || characterImages[i]?.status === "generating"}>
+                              {characterImages[i]?.status === "generating" ? <Loader2 className="h-3 w-3 animate-spin" /> : <ImageIcon className="h-3 w-3" />}
+                              {characterImages[i]?.imageUrl ? "重生成定妆图" : "生成定妆图"}
+                            </Button>
+                            {characterImages[i]?.status === "failed" && <span className="text-xs text-destructive break-words">{characterImages[i].error}</span>}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
             </TabsContent>
 
             <TabsContent value="media" className="mt-4 space-y-4">
+          {/* 当前镜头快捷面板 */}
+          {(() => {
+            const sel = selectedSceneNum != null ? result.scenes.find((s) => s.sceneNumber === selectedSceneNum) : null;
+            if (!sel) return null;
+            const img = sceneImages[sel.sceneNumber];
+            const vid = sceneVideos[sel.sceneNumber];
+            const aud = sceneAudios[sel.sceneNumber];
+            return (
+              <Card className="border-primary/40">
+                <CardContent className="pt-4 space-y-3">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="inline-flex h-7 min-w-7 px-2 rounded-full bg-primary text-primary-foreground items-center justify-center text-xs font-bold">{sel.sceneNumber}</span>
+                    <span className="text-sm font-medium">当前镜头快捷面板</span>
+                    <span className="text-xs text-muted-foreground">{sel.panel} · {sel.duration}</span>
+                    <Button variant="ghost" size="sm" className="h-7 ml-auto text-xs" onClick={() => setWorkbenchTab("storyboard")}>打开完整 Inspector →</Button>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                    <div className="rounded border p-2 flex items-center gap-2">
+                      <span className={`wb-status-dot ${img?.status === "done" ? "is-done" : img?.status === "generating" ? "is-generating" : img?.status === "failed" ? "is-failed" : ""}`} />
+                      图片：{img?.status === "done" ? "已生成" : img?.status === "generating" ? "生成中" : img?.status === "failed" ? "失败" : "未生成"}
+                      {img?.status !== "generating" && (
+                        <Button size="sm" variant="outline" className="h-6 ml-auto text-[11px]" onClick={() => generateSceneImage(sel)} disabled={anyImageGenerating}>
+                          {img?.status === "done" ? "重生成" : "生成"}
+                        </Button>
+                      )}
+                    </div>
+                    <div className="rounded border p-2 flex items-center gap-2">
+                      <span className={`wb-status-dot ${vid?.status === "done" ? "is-video" : (vid?.status === "submitting" || vid?.status === "in_queue" || vid?.status === "generating") ? "is-generating" : vid?.status === "failed" ? "is-failed" : ""}`} />
+                      视频：{vid?.status === "done" ? "已完成" : (vid?.status === "submitting" || vid?.status === "in_queue" || vid?.status === "generating") ? "生成中" : vid?.status === "failed" ? "失败" : "未生成"}
+                      {(!vid || vid.status === "idle" || vid.status === "done" || vid.status === "failed") && (
+                        <Button size="sm" variant="outline" className="h-6 ml-auto text-[11px]" onClick={() => retrySceneVideoOnly(sel)} disabled={anyVideoGenerating}>
+                          {vid?.status === "done" ? "重生成" : "生成"}
+                        </Button>
+                      )}
+                    </div>
+                    <div className="rounded border p-2 flex items-center gap-2">
+                      <span className={`wb-status-dot ${aud?.status === "done" ? "is-done" : aud?.status === "generating" ? "is-generating" : aud?.status === "failed" ? "is-failed" : ""}`} />
+                      旁白：{aud?.status === "done" ? "已生成" : aud?.status === "generating" ? "生成中" : aud?.status === "failed" ? "失败" : "未生成"}
+                      {aud?.status !== "generating" && (
+                        <Button size="sm" variant="outline" className="h-6 ml-auto text-[11px]" onClick={() => generateSceneAudio(sel)} disabled={anyAudioGenerating}>
+                          {aud?.status === "done" ? "重生成" : "生成"}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })()}
           {/* Video Generation Settings */}
           <Card className="w-full max-w-full min-w-0 shrink overflow-hidden border-dashed border-primary/40">
             <CardHeader className="pb-3">
