@@ -14,8 +14,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { extractEdgeFunctionError } from "@/lib/edgeFunctionError";
 import { mergeVideosClientSide } from "@/utils/videoMerger";
+import { composeComicGrid } from "@/utils/comicGridComposer";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Copy, Loader2, Download, Clapperboard, User, Film, Sparkles, ShoppingCart, Target, MessageSquare, Video, Play, Square, Check, X, Mic, Volume2, RefreshCw, Save, Library, Trash2, Wand2, Image as ImageIcon, AlertTriangle } from "lucide-react";
+import { Copy, Loader2, Download, Clapperboard, User, Film, Sparkles, ShoppingCart, Target, MessageSquare, Video, Play, Square, Check, X, Mic, Volume2, RefreshCw, Save, Library, Trash2, Wand2, Image as ImageIcon, AlertTriangle, LayoutGrid } from "lucide-react";
 
 const GENRES = [
   { value: "suspense", label: "🔍 悬疑推理" },
