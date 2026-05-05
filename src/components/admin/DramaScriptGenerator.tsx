@@ -16,6 +16,7 @@ import { extractEdgeFunctionError } from "@/lib/edgeFunctionError";
 import { mergeVideosClientSide } from "@/utils/videoMerger";
 import { composeComicGrid } from "@/utils/comicGridComposer";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { toast } from "sonner";
 import { Copy, Loader2, Download, Clapperboard, User, Film, Sparkles, ShoppingCart, Target, MessageSquare, Video, Play, Square, Check, X, Mic, Volume2, RefreshCw, Save, Library, Trash2, Wand2, Image as ImageIcon, AlertTriangle, LayoutGrid } from "lucide-react";
 
@@ -408,6 +409,7 @@ export default function DramaScriptGenerator() {
 
   // Video generation state
   const [videoAspectRatio, setVideoAspectRatio] = useState("9:16");
+  const [selectedSceneNum, setSelectedSceneNum] = useState<number | null>(null);
   const [videoDuration, setVideoDuration] = useState(5);
   const [sceneVideos, setSceneVideos] = useState<Record<number, SceneVideoState>>({});
   const [videoPreviewFallbacks, setVideoPreviewFallbacks] = useState<Record<number, boolean>>({});
@@ -1551,7 +1553,7 @@ export default function DramaScriptGenerator() {
 
   return (
     <>
-    <div className={pendingSequel ? "pb-52 sm:pb-36" : undefined}>
+    <div className={`drama-workbench min-h-screen ${pendingSequel ? "pb-52 sm:pb-36" : ""}`}>
       <AdminPageLayout
         title={
           <span className="flex items-center gap-2">
