@@ -752,6 +752,40 @@ export default function DramaScriptGenerator() {
     }
   };
 
+  const renameSavedScript = async (script: SavedDramaScript) => {
+    const next = window.prompt("重命名脚本", script.title);
+    if (!next || !next.trim() || next.trim() === script.title) return;
+    try {
+      const { data, error } = await (supabase as any)
+        .from("drama_scripts")
+        .update({ title: next.trim() })
+        .eq("id", script.id)
+        .select();
+      if (error) throw error;
+      if (!data || data.length === 0) throw new Error("重命名失败：权限不足或记录不存在");
+      await fetchSavedScripts();
+      if (savedScriptId === script.id && result) {
+        setResult({ ...result, title: next.trim() });
+      }
+      toast.success("已重命名");
+    } catch (e: any) {
+      toast.error(e.message || "重命名失败");
+    }
+  };
+
+  const startNewScript = () => {
+    setResult(null);
+    setSavedScriptId(null);
+    setActiveSavedScript(null);
+    setSceneVideos({});
+    setSceneAudios({});
+    setSceneImages({});
+    setCharacterImages({});
+    setSelectedSceneNum(null);
+    setTheme("");
+    toast.info("已清空编辑区，可开始新脚本");
+  };
+
   const generateSequel = async (script = activeSavedScript) => {
     if (!script) {
       toast.error("请先保存或载入一个脚本，再生成续集");
