@@ -2006,66 +2006,133 @@ export default function DramaScriptGenerator() {
       {result && (
         <div className="space-y-4 mt-6 w-full max-w-full min-w-0 overflow-hidden">
           <Tabs value={workbenchTab} onValueChange={(v) => setWorkbenchTab(v as typeof workbenchTab)} className="w-full">
-            <TabsList className="grid w-full grid-cols-4 max-w-2xl">
-              <TabsTrigger value="overview" className="gap-1.5"><Film className="h-3.5 w-3.5" />设定</TabsTrigger>
-              <TabsTrigger value="characters" className="gap-1.5"><User className="h-3.5 w-3.5" />角色</TabsTrigger>
-              <TabsTrigger value="storyboard" className="gap-1.5"><LayoutGrid className="h-3.5 w-3.5" />分镜<span className="text-xs opacity-70">{result.scenes.length}</span></TabsTrigger>
-              <TabsTrigger value="media" className="gap-1.5"><Video className="h-3.5 w-3.5" />媒体</TabsTrigger>
-            </TabsList>
-
-            {/* 当前选中镜头条 — 跨 Tab 持久同步 */}
             {(() => {
               const sel = selectedSceneNum != null ? result.scenes.find((s) => s.sceneNumber === selectedSceneNum) : null;
-              const goScene = (n: number | null) => {
-                setSelectedSceneNum(n);
-              };
+              const img = sel ? sceneImages[sel.sceneNumber] : undefined;
+              const vid = sel ? sceneVideos[sel.sceneNumber] : undefined;
+              const aud = sel ? sceneAudios[sel.sceneNumber] : undefined;
+              const dotCls = (st?: string, kind?: "video") =>
+                st === "done" ? (kind === "video" ? "is-video" : "is-done") :
+                st === "generating" || st === "submitting" || st === "in_queue" ? "is-generating" :
+                st === "failed" ? "is-failed" : "";
               return (
-                <div className="mt-3 wb-panel rounded-lg p-2 flex items-center gap-2 overflow-x-auto scrollbar-hide">
-                  <span className="text-[11px] text-muted-foreground shrink-0 px-1">当前镜头</span>
-                  <div className="flex items-center gap-1 shrink-0">
-                    {result.scenes.map((s) => {
-                      const active = s.sceneNumber === selectedSceneNum;
-                      const imgDone = sceneImages[s.sceneNumber]?.status === "done";
-                      const vidDone = sceneVideos[s.sceneNumber]?.status === "done";
-                      return (
-                        <button
-                          key={s.sceneNumber}
-                          type="button"
-                          onClick={() => goScene(active ? null : s.sceneNumber)}
-                          className={`relative h-7 min-w-7 px-2 rounded text-xs font-medium border transition-colors ${
-                            active
-                              ? "bg-primary text-primary-foreground border-primary"
-                              : "bg-background border-border hover:bg-muted"
-                          }`}
-                          title={`镜头${s.sceneNumber} · ${s.panel}`}
-                        >
-                          {s.sceneNumber}
-                          {(imgDone || vidDone) && (
-                            <span className={`absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full ${vidDone ? "bg-sky-400" : "bg-emerald-400"}`} />
-                          )}
-                        </button>
-                      );
-                    })}
+                <>
+                  <TabsList className="grid w-full grid-cols-4 max-w-2xl">
+                    <TabsTrigger value="overview" className="gap-1.5"><Film className="h-3.5 w-3.5" />设定</TabsTrigger>
+                    <TabsTrigger value="characters" className="gap-1.5"><User className="h-3.5 w-3.5" />角色</TabsTrigger>
+                    <TabsTrigger value="storyboard" className="gap-1.5">
+                      <LayoutGrid className="h-3.5 w-3.5" />分镜
+                      {sel ? (
+                        <span className="ml-1 inline-flex items-center gap-0.5 rounded bg-background/40 px-1 py-0.5">
+                          <span title="图" className={`wb-status-dot ${dotCls(img?.status)}`} />
+                          <span title="视频" className={`wb-status-dot ${dotCls(vid?.status, "video")}`} />
+                          <span title="音" className={`wb-status-dot ${dotCls(aud?.status)}`} />
+                        </span>
+                      ) : (
+                        <span className="text-xs opacity-70">{result.scenes.length}</span>
+                      )}
+                    </TabsTrigger>
+                    <TabsTrigger value="media" className="gap-1.5"><Video className="h-3.5 w-3.5" />媒体</TabsTrigger>
+                  </TabsList>
+
+                  {/* 当前选中镜头条 — 跨 Tab 持久同步 */}
+                  <div className="mt-3 wb-panel rounded-lg p-2 flex items-center gap-2 overflow-x-auto scrollbar-hide">
+                    <span className="text-[11px] text-muted-foreground shrink-0 px-1">当前镜头</span>
+                    <div className="flex items-center gap-1 shrink-0">
+                      {result.scenes.map((s) => {
+                        const active = s.sceneNumber === selectedSceneNum;
+                        const imgDone = sceneImages[s.sceneNumber]?.status === "done";
+                        const vidDone = sceneVideos[s.sceneNumber]?.status === "done";
+                        return (
+                          <button
+                            key={s.sceneNumber}
+                            type="button"
+                            onClick={() => setSelectedSceneNum(active ? null : s.sceneNumber)}
+                            className={`relative h-7 min-w-7 px-2 rounded text-xs font-medium border transition-colors ${
+                              active ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border hover:bg-muted"
+                            }`}
+                            title={`镜头${s.sceneNumber} · ${s.panel}`}
+                          >
+                            {s.sceneNumber}
+                            {(imgDone || vidDone) && (
+                              <span className={`absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full ${vidDone ? "bg-sky-400" : "bg-emerald-400"}`} />
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {sel && (
+                      <>
+                        <span className="text-[11px] text-primary shrink-0 px-1">{sel.panel} · {sel.duration}</span>
+                        <span className="text-[11px] text-muted-foreground truncate flex-1 min-w-0">
+                          {sel.dialogue ? `「${sel.dialogue}」` : sel.characterAction}
+                        </span>
+                        <Button size="sm" variant="outline" className="h-7 gap-1 text-xs shrink-0" onClick={() => setWorkbenchTab("storyboard")}>
+                          <LayoutGrid className="h-3 w-3" /> 打开分镜
+                        </Button>
+                      </>
+                    )}
                   </div>
-                  {sel && (
-                    <>
-                      <span className="text-[11px] text-primary shrink-0 px-1">{sel.panel} · {sel.duration}</span>
-                      <span className="text-[11px] text-muted-foreground truncate flex-1 min-w-0">
-                        {sel.dialogue ? `「${sel.dialogue}」` : sel.characterAction}
-                      </span>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-7 gap-1 text-xs shrink-0"
-                        onClick={() => setWorkbenchTab("storyboard")}
-                      >
-                        <LayoutGrid className="h-3 w-3" /> 打开分镜
-                      </Button>
-                    </>
-                  )}
-                </div>
+
+                  {/* 下一步引导 — 显示选中镜头的生成状态与未完成项的 CTA */}
+                  {sel && (() => {
+                    const imgDone = img?.status === "done";
+                    const vidDone = vid?.status === "done";
+                    const audDone = aud?.status === "done";
+                    const imgBusy = img?.status === "generating";
+                    const vidBusy = vid?.status === "generating" || vid?.status === "submitting" || vid?.status === "in_queue";
+                    const audBusy = aud?.status === "generating";
+                    const allDone = imgDone && vidDone && audDone;
+                    return (
+                      <div className={`mt-2 rounded-lg border p-2.5 flex flex-wrap items-center gap-2 text-xs ${allDone ? "border-primary/40 bg-primary/5" : "border-amber-500/30 bg-amber-500/5"}`}>
+                        <span className="font-medium shrink-0">
+                          镜头 {sel.sceneNumber} 状态：
+                        </span>
+                        {/* 三项状态徽章 */}
+                        {[
+                          { key: "img", label: "图片", done: imgDone, busy: imgBusy, failed: img?.status === "failed" },
+                          { key: "vid", label: "视频", done: vidDone, busy: vidBusy, failed: vid?.status === "failed" },
+                          { key: "aud", label: "旁白", done: audDone, busy: audBusy, failed: aud?.status === "failed" },
+                        ].map((t) => (
+                          <span key={t.key} className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 border ${t.done ? "border-emerald-500/40 text-emerald-600 dark:text-emerald-400" : t.busy ? "border-amber-500/40 text-amber-600 dark:text-amber-400" : t.failed ? "border-destructive/40 text-destructive" : "border-border text-muted-foreground"}`}>
+                            <span className={`wb-status-dot ${t.done ? (t.key === "vid" ? "is-video" : "is-done") : t.busy ? "is-generating" : t.failed ? "is-failed" : ""}`} />
+                            {t.label}
+                            {t.done ? "✓" : t.busy ? "…" : t.failed ? "✗" : "—"}
+                          </span>
+                        ))}
+                        {allDone ? (
+                          <span className="ml-auto text-emerald-600 dark:text-emerald-400">本镜头已就绪 🎉</span>
+                        ) : (
+                          <div className="ml-auto flex flex-wrap items-center gap-1.5">
+                            <span className="text-muted-foreground">下一步：</span>
+                            {!imgDone && !imgBusy && (
+                              <Button size="sm" className="h-7 gap-1 text-xs" onClick={() => generateSceneImage(sel)} disabled={anyImageGenerating}>
+                                <ImageIcon className="h-3 w-3" /> 生成图片
+                              </Button>
+                            )}
+                            {imgDone && !vidDone && !vidBusy && (
+                              <Button size="sm" className="h-7 gap-1 text-xs" onClick={() => retrySceneVideoOnly(sel)} disabled={anyVideoGenerating}>
+                                <Video className="h-3 w-3" /> 生成视频
+                              </Button>
+                            )}
+                            {!audDone && !audBusy && (
+                              <Button size="sm" variant={imgDone && vidDone ? "default" : "outline"} className="h-7 gap-1 text-xs" onClick={() => generateSceneAudio(sel)} disabled={anyAudioGenerating}>
+                                <Mic className="h-3 w-3" /> 生成旁白
+                              </Button>
+                            )}
+                            {!imgDone && !imgBusy && (
+                              <span className="text-muted-foreground">先生成分镜图，再依序生成视频/旁白</span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+                </>
               );
             })()}
+
+
 
 
             <TabsContent value="overview" className="mt-4 space-y-4">
