@@ -372,6 +372,7 @@ export default function DramaScriptGenerator() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<DramaScript | null>(null);
   const [savedScripts, setSavedScripts] = useState<SavedDramaScript[]>([]);
+  const [collapsedSeries, setCollapsedSeries] = useState<Record<string, boolean>>({});
   const [savedScriptId, setSavedScriptId] = useState<string | null>(null);
   const [activeSavedScript, setActiveSavedScript] = useState<SavedDramaScript | null>(null);
   const [savingScript, setSavingScript] = useState(false);
