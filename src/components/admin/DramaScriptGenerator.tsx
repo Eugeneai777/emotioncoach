@@ -2114,19 +2114,20 @@ export default function DramaScriptGenerator() {
                     <p className="text-sm font-medium mt-1 break-words">{result.coverPoster.hookText}</p>
                   </div>
                 </div>
-                <div className="bg-muted/50 rounded-lg p-3 min-w-0 overflow-hidden">
-                  <div className="flex items-start justify-between gap-2 min-w-0">
-                    <code className="text-xs break-all flex-1 min-w-0 leading-relaxed">{result.coverPoster.posterImagePrompt}</code>
+                <details className="bg-muted/50 rounded-lg p-3 min-w-0 overflow-hidden group">
+                  <summary className="text-xs text-muted-foreground cursor-pointer select-none flex items-center justify-between gap-2">
+                    <span>AI 生图提示词（English，点击展开）</span>
                     <Button
                       variant="ghost"
                       size="icon"
                       className="shrink-0 h-7 w-7"
-                      onClick={() => copyToClipboard(result.coverPoster!.posterImagePrompt, "封面图片提示词")}
+                      onClick={(e) => { e.preventDefault(); copyToClipboard(result.coverPoster!.posterImagePrompt, "封面图片提示词"); }}
                     >
                       <Copy className="h-3 w-3" />
                     </Button>
-                  </div>
-                </div>
+                  </summary>
+                  <code className="text-xs break-all leading-relaxed block mt-2">{result.coverPoster.posterImagePrompt}</code>
+                </details>
               </CardContent>
             </Card>
           )}
@@ -2196,19 +2197,20 @@ export default function DramaScriptGenerator() {
                         <img src={characterImages[i].imageUrl} alt={`${char.name}定妆图`} className="aspect-square w-full max-h-64 object-contain" loading="lazy" />
                       </div>
                     )}
-                    <div className="bg-muted/50 rounded-lg p-3 min-w-0 overflow-hidden">
-                      <div className="flex items-start justify-between gap-2 min-w-0">
-                        <code className="text-xs break-all flex-1 min-w-0">{char.imagePrompt}</code>
+                    <details className="bg-muted/50 rounded-lg p-3 min-w-0 overflow-hidden">
+                      <summary className="text-xs text-muted-foreground cursor-pointer select-none flex items-center justify-between gap-2">
+                        <span>AI 生图提示词（English，点击展开）</span>
                         <Button
                           variant="ghost"
                           size="icon"
                           className="shrink-0 h-7 w-7"
-                          onClick={() => copyToClipboard(char.imagePrompt, "角色提示词")}
+                          onClick={(e) => { e.preventDefault(); copyToClipboard(char.imagePrompt, "角色提示词"); }}
                         >
                           <Copy className="h-3 w-3" />
                         </Button>
-                      </div>
-                    </div>
+                      </summary>
+                      <code className="text-xs break-all block mt-2">{char.imagePrompt}</code>
+                    </details>
                     <div className="flex w-full min-w-0 flex-wrap items-center gap-2 overflow-hidden">
                       <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => generateCharacterReference(char, i)} disabled={generatingCharacterRefs || characterImages[i]?.status === "generating"}>
                         {characterImages[i]?.status === "generating" ? <Loader2 className="h-3 w-3 animate-spin" /> : <ImageIcon className="h-3 w-3" />}
@@ -2556,29 +2558,32 @@ export default function DramaScriptGenerator() {
                             </div>
                           )}
 
-                          <div className="bg-muted/50 rounded-lg p-3 min-w-0 overflow-hidden">
-                            <div className="flex items-start justify-between gap-2 min-w-0">
-                              <code className="text-xs break-all flex-1 min-w-0 leading-relaxed">
-                                {scene.imagePrompt}
-                              </code>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="shrink-0 h-7 w-7"
-                                onClick={() => copyToClipboard(scene.imagePrompt, `场景${scene.sceneNumber}提示词`)}
-                              >
-                                <Copy className="h-3 w-3" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="shrink-0 h-7 gap-1 text-xs"
-                                onClick={() => copyToClipboard(buildJimengVideoPrompt(scene), `场景${scene.sceneNumber}即梦提示词`)}
-                              >
-                                <Video className="h-3 w-3" /> 即梦词
-                              </Button>
-                            </div>
-                          </div>
+                          <details className="bg-muted/50 rounded-lg p-3 min-w-0 overflow-hidden">
+                            <summary className="text-xs text-muted-foreground cursor-pointer select-none flex items-center justify-between gap-2 flex-wrap">
+                              <span>AI 生图提示词（English，点击展开）</span>
+                              <span className="flex items-center gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="shrink-0 h-7 w-7"
+                                  onClick={(e) => { e.preventDefault(); copyToClipboard(scene.imagePrompt, `场景${scene.sceneNumber}提示词`); }}
+                                >
+                                  <Copy className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="shrink-0 h-7 gap-1 text-xs"
+                                  onClick={(e) => { e.preventDefault(); copyToClipboard(buildJimengVideoPrompt(scene), `场景${scene.sceneNumber}即梦提示词`); }}
+                                >
+                                  <Video className="h-3 w-3" /> 即梦词
+                                </Button>
+                              </span>
+                            </summary>
+                            <code className="text-xs break-all leading-relaxed block mt-2">
+                              {scene.imagePrompt}
+                            </code>
+                          </details>
 
                           {/* GPT Image 2.0 image generation per scene */}
                           <div className="flex w-full min-w-0 flex-wrap items-center gap-2 overflow-hidden pt-1">
