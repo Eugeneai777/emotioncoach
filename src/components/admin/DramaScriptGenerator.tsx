@@ -1314,6 +1314,55 @@ export default function DramaScriptGenerator() {
     toast.success("合并旁白下载成功");
   };
 
+  const handleBuildComic = async () => {
+    if (!result) return;
+    const panels = result.scenes
+      .map((s) => {
+        const url = sceneImages[s.sceneNumber]?.imageUrl || s.generatedImageUrl;
+        if (!url) return null;
+        return {
+          sceneNumber: s.sceneNumber,
+          imageUrl: url,
+          narration: s.narration,
+          dialogue: s.dialogue,
+        };
+      })
+      .filter(Boolean) as { sceneNumber: number; imageUrl: string; narration?: string; dialogue?: string }[];
+
+    if (panels.length === 0) {
+      toast.error("还没有任何分镜图片，请先生成");
+      return;
+    }
+    setComicBuilding(true);
+    try {
+      const blob = await composeComicGrid({
+        title: result.title || "短剧漫画",
+        panels,
+        columns: comicColumns,
+        textMode: comicTextMode,
+        textStyle: comicTextStyle,
+        showSceneNumber: comicShowNumber,
+        showTitle: comicShowTitle,
+        watermark: "eugeneai.me",
+      });
+      if (comicPreviewUrl) URL.revokeObjectURL(comicPreviewUrl);
+      setComicPreviewUrl(URL.createObjectURL(blob));
+      toast.success(`已合成 ${panels.length} 宫格漫画`);
+    } catch (e: any) {
+      toast.error(e?.message || "合成失败");
+    } finally {
+      setComicBuilding(false);
+    }
+  };
+
+  const downloadComic = () => {
+    if (!comicPreviewUrl || !result) return;
+    const a = document.createElement("a");
+    a.href = comicPreviewUrl;
+    a.download = `${result.title || "drama"}-comic.png`;
+    a.click();
+  };
+
   const handleMergeDownload = async () => {
     if (!result) return;
     setMerging(true);
