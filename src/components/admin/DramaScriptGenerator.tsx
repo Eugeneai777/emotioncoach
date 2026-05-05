@@ -419,6 +419,8 @@ export default function DramaScriptGenerator() {
   const [continuityNotice, setContinuityNotice] = useState<ContinuityCheckNotice | null>(null);
   const [merging, setMerging] = useState(false);
   const pollingRefs = useRef<Record<number, ReturnType<typeof setInterval>>>({});
+  const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const autosaveSkipFirstRef = useRef(true);
 
   // Audio/TTS state
   const [sceneAudios, setSceneAudios] = useState<Record<number, SceneAudioState>>({});
