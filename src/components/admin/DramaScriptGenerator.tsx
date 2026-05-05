@@ -2874,6 +2874,87 @@ export default function DramaScriptGenerator() {
           </div>
         </div>
       )}
+
+      <Dialog open={comicOpen} onOpenChange={(o) => { setComicOpen(o); if (!o && comicPreviewUrl) { URL.revokeObjectURL(comicPreviewUrl); setComicPreviewUrl(null); } }}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <LayoutGrid className="h-5 w-5" /> 合成多宫格漫画
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="grid gap-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs">布局</Label>
+                <Select value={String(comicColumns)} onValueChange={(v) => setComicColumns(Number(v) as 1 | 2 | 3)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">1 列长条</SelectItem>
+                    <SelectItem value="2">2 列（默认）</SelectItem>
+                    <SelectItem value="3">3 列</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs">文本来源</Label>
+                <Select value={comicTextMode} onValueChange={(v) => setComicTextMode(v as any)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="narration">仅旁白</SelectItem>
+                    <SelectItem value="dialogue">仅台词</SelectItem>
+                    <SelectItem value="both">旁白 + 台词</SelectItem>
+                    <SelectItem value="none">不显示文字</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs">文本样式</Label>
+                <Select value={comicTextStyle} onValueChange={(v) => setComicTextStyle(v as any)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="banner">底部条幅</SelectItem>
+                    <SelectItem value="bubble">顶部气泡</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex flex-col gap-2 pt-5">
+                <label className="flex items-center gap-2 text-sm">
+                  <Checkbox checked={comicShowNumber} onCheckedChange={(v) => setComicShowNumber(!!v)} />
+                  显示镜头号
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <Checkbox checked={comicShowTitle} onCheckedChange={(v) => setComicShowTitle(!!v)} />
+                  显示标题
+                </label>
+              </div>
+            </div>
+
+            <Button onClick={handleBuildComic} disabled={comicBuilding} className="gap-2">
+              {comicBuilding ? <><Loader2 className="h-4 w-4 animate-spin" /> 合成中...</> : <><Sparkles className="h-4 w-4" /> 生成漫画预览</>}
+            </Button>
+
+            {comicPreviewUrl ? (
+              <div className="border rounded-md overflow-hidden bg-muted/30">
+                <img src={comicPreviewUrl} alt="comic preview" className="w-full h-auto" />
+              </div>
+            ) : (
+              <div className="text-center text-xs text-muted-foreground py-6 border border-dashed rounded-md">
+                选择参数后点击「生成漫画预览」
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="flex-wrap gap-2">
+            <Button variant="outline" onClick={downloadMergedAudio} disabled={!allAudiosDone} className="gap-2">
+              <Volume2 className="h-4 w-4" /> 下载合并旁白 MP3
+            </Button>
+            <Button onClick={downloadComic} disabled={!comicPreviewUrl} className="gap-2">
+              <Download className="h-4 w-4" /> 下载漫画 PNG
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
