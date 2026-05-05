@@ -396,6 +396,16 @@ export default function DramaScriptGenerator() {
   const [batchGeneratingImages, setBatchGeneratingImages] = useState(false);
   const [generatingCharacterRefs, setGeneratingCharacterRefs] = useState(false);
 
+  // Comic grid composition state
+  const [comicOpen, setComicOpen] = useState(false);
+  const [comicColumns, setComicColumns] = useState<1 | 2 | 3>(2);
+  const [comicTextMode, setComicTextMode] = useState<"narration" | "dialogue" | "both" | "none">("narration");
+  const [comicTextStyle, setComicTextStyle] = useState<"banner" | "bubble">("banner");
+  const [comicShowNumber, setComicShowNumber] = useState(true);
+  const [comicShowTitle, setComicShowTitle] = useState(true);
+  const [comicBuilding, setComicBuilding] = useState(false);
+  const [comicPreviewUrl, setComicPreviewUrl] = useState<string | null>(null);
+
   // Video generation state
   const [videoAspectRatio, setVideoAspectRatio] = useState("9:16");
   const [videoDuration, setVideoDuration] = useState(5);
