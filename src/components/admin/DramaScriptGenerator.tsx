@@ -1876,17 +1876,23 @@ export default function DramaScriptGenerator() {
         </CardContent>
       </Card>
 
-      {/* Saved Scripts */}
+      {/* Saved Scripts — 系列/剧集分组 */}
       <Card className="mt-4 max-w-full overflow-hidden">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between gap-3 min-w-0">
             <CardTitle className="text-base flex items-center gap-2 min-w-0">
-              <Library className="h-4 w-4" /> 已保存脚本
+              <Library className="h-4 w-4" /> 脚本库
+              <span className="text-xs text-muted-foreground font-normal">{savedScripts.length} 个剧集</span>
             </CardTitle>
-            <Button variant="outline" size="sm" onClick={fetchSavedScripts} disabled={loadingSavedScripts} className="h-8 gap-1.5 text-xs">
-              {loadingSavedScripts ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
-              刷新
-            </Button>
+            <div className="flex items-center gap-1.5">
+              <Button variant="default" size="sm" onClick={startNewScript} className="h-8 gap-1.5 text-xs">
+                <FilePlus className="h-3.5 w-3.5" /> 新建
+              </Button>
+              <Button variant="outline" size="sm" onClick={fetchSavedScripts} disabled={loadingSavedScripts} className="h-8 gap-1.5 text-xs">
+                {loadingSavedScripts ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                刷新
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -1896,62 +1902,119 @@ export default function DramaScriptGenerator() {
             </div>
           ) : savedScripts.length === 0 ? (
             <p className="text-sm text-muted-foreground">还没有保存的脚本，生成后点击保存即可沉淀为系列。</p>
-          ) : (
-            <div className="max-h-72 w-full min-w-0 space-y-2 overflow-auto overflow-x-hidden pr-1">
-              {savedScripts.map((script) => (
-                  <div key={script.id} className="flex flex-col gap-3 rounded-lg border p-3 min-w-0 overflow-hidden">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 min-w-0">
-                  <button className="min-w-0 flex-1 text-left overflow-hidden" onClick={() => loadSavedScript(script)}>
-                    <div className="flex items-center gap-2 flex-wrap min-w-0">
-                      <span className="font-medium text-sm truncate min-w-0 max-w-full">{script.title}</span>
-                      <span className="text-xs bg-muted px-2 py-0.5 rounded">第{script.episode_number}集</span>
-                      <span className="text-xs text-muted-foreground bg-muted/60 px-2 py-0.5 rounded">
-                        {script.mode === "youjin" ? "有劲AI" : "通用"}
-                      </span>
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-1 truncate">
-                      {script.synopsis || script.theme} · {new Date(script.created_at).toLocaleString()}
-                    </div>
-                  </button>
-                  <div className="flex flex-wrap items-center gap-1 shrink-0">
-                    <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => loadSavedScript(script)}>载入</Button>
-                    <Button variant="ghost" size="sm" className="h-8 text-xs gap-1" onClick={() => generateSequel(script)} disabled={generatingSequel}>
-                      <Wand2 className="h-3 w-3" /> 续集
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteSavedScript(script)}>
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                    </div>
-                    {script.mode === "youjin" && (
-                      <div className="rounded-md bg-muted/40 p-2 min-w-0">
-                        <div className="mb-2 text-xs text-muted-foreground">续集将继承的转化方式</div>
-                        <div className="flex flex-wrap gap-1.5">
-                          {CONVERSION_STYLES.map((style) => {
-                            const selected = getSequelConversionStyles(script).includes(style.value);
+          ) : (() => {
+            // 按 series_id 分组（无 series_id 时按 title 分组）
+            const groups = new Map<string, { key: string; title: string; episodes: SavedDramaScript[] }>();
+            savedScripts.forEach((s) => {
+              const key = s.series_id || `solo:${s.id}`;
+              const title = s.title || "未命名";
+              if (!groups.has(key)) groups.set(key, { key, title, episodes: [] });
+              const g = groups.get(key)!;
+              g.episodes.push(s);
+              // 用最早集的标题作为系列名
+              if (s.episode_number === 1) g.title = s.title;
+            });
+            // 每组按集数排序；组之间按最近更新排序
+            const groupList = [...groups.values()].map((g) => ({
+              ...g,
+              episodes: [...g.episodes].sort((a, b) => a.episode_number - b.episode_number),
+            }));
+            groupList.sort((a, b) => {
+              const ta = Math.max(...a.episodes.map((e) => +new Date(e.created_at)));
+              const tb = Math.max(...b.episodes.map((e) => +new Date(e.created_at)));
+              return tb - ta;
+            });
+            return (
+              <div className="max-h-[28rem] w-full min-w-0 space-y-2 overflow-auto overflow-x-hidden pr-1">
+                {groupList.map((g) => {
+                  const isOpen = collapsedSeries[g.key] !== true; // 默认展开
+                  const total = g.episodes.length;
+                  const containsActive = g.episodes.some((e) => e.id === savedScriptId);
+                  return (
+                    <div key={g.key} className={`rounded-lg border ${containsActive ? "border-primary/60" : "border-border"} overflow-hidden`}>
+                      {/* 系列标题 */}
+                      <button
+                        type="button"
+                        onClick={() => setCollapsedSeries((p) => ({ ...p, [g.key]: isOpen }))}
+                        className="w-full flex items-center gap-2 px-3 py-2 bg-muted/40 hover:bg-muted text-left"
+                      >
+                        {isOpen ? <ChevronDown className="h-3.5 w-3.5 shrink-0" /> : <ChevronRight className="h-3.5 w-3.5 shrink-0" />}
+                        <span className="font-medium text-sm truncate flex-1 min-w-0">{g.title}</span>
+                        <span className="text-[11px] text-muted-foreground shrink-0">{total} 集</span>
+                        {containsActive && <span className="text-[10px] text-primary border border-primary/40 rounded px-1.5 py-0.5 shrink-0">编辑中</span>}
+                      </button>
+                      {/* 剧集列表 */}
+                      {isOpen && (
+                        <ul className="divide-y">
+                          {g.episodes.map((script) => {
+                            const active = script.id === savedScriptId;
                             return (
-                              <button
-                                key={style.value}
-                                type="button"
-                                onClick={() => toggleSequelConversionStyle(script, style.value)}
-                                disabled={generatingSequel}
-                                className={`max-w-full rounded-full border px-2.5 py-1 text-left text-xs transition-colors ${
-                                  selected
-                                    ? "border-primary bg-primary text-primary-foreground"
-                                    : "border-border bg-background hover:bg-muted"
-                                }`}
-                              >
-                                {style.label}
-                              </button>
+                              <li key={script.id} className={`p-2.5 ${active ? "bg-primary/10" : "hover:bg-muted/30"}`}>
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <button onClick={() => loadSavedScript(script)} className="min-w-0 flex-1 text-left">
+                                    <div className="flex items-center gap-2 flex-wrap min-w-0">
+                                      <span className={`text-xs px-2 py-0.5 rounded shrink-0 ${active ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
+                                        E{script.episode_number}
+                                      </span>
+                                      <span className={`text-sm truncate min-w-0 ${active ? "font-medium" : ""}`}>{script.title}</span>
+                                      {script.mode === "youjin" && (
+                                        <span className="text-[10px] text-primary border border-primary/40 rounded px-1.5 py-0.5 shrink-0">有劲</span>
+                                      )}
+                                    </div>
+                                    <div className="text-[11px] text-muted-foreground mt-0.5 truncate">
+                                      {script.synopsis || script.theme}
+                                    </div>
+                                  </button>
+                                  <div className="flex items-center gap-0.5 shrink-0">
+                                    {!active && (
+                                      <Button variant="ghost" size="sm" className="h-7 text-[11px] px-2" onClick={() => loadSavedScript(script)}>载入</Button>
+                                    )}
+                                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => generateSequel(script)} disabled={generatingSequel} title="生成续集">
+                                      <Wand2 className="h-3.5 w-3.5" />
+                                    </Button>
+                                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => renameSavedScript(script)} title="重命名">
+                                      <Pencil className="h-3.5 w-3.5" />
+                                    </Button>
+                                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => { if (window.confirm(`确认删除《${script.title}》第${script.episode_number}集？`)) deleteSavedScript(script); }} title="删除">
+                                      <Trash2 className="h-3.5 w-3.5" />
+                                    </Button>
+                                  </div>
+                                </div>
+                                {/* 有劲 模式的转化方式选择 — 仅展开当前集 */}
+                                {active && script.mode === "youjin" && (
+                                  <div className="rounded-md bg-background/60 p-2 mt-2">
+                                    <div className="mb-1.5 text-[11px] text-muted-foreground">续集将继承的转化方式</div>
+                                    <div className="flex flex-wrap gap-1">
+                                      {CONVERSION_STYLES.map((style) => {
+                                        const selected = getSequelConversionStyles(script).includes(style.value);
+                                        return (
+                                          <button
+                                            key={style.value}
+                                            type="button"
+                                            onClick={() => toggleSequelConversionStyle(script, style.value)}
+                                            disabled={generatingSequel}
+                                            className={`rounded-full border px-2 py-0.5 text-[11px] transition-colors ${
+                                              selected ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:bg-muted"
+                                            }`}
+                                          >
+                                            {style.label}
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                )}
+                              </li>
                             );
                           })}
-                        </div>
-                      </div>
-                    )}
-                </div>
-              ))}
-            </div>
-          )}
+                        </ul>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
         </CardContent>
       </Card>
 
