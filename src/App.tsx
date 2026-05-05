@@ -36,6 +36,7 @@ const DynamicCoach = lazyRetry(() => import("./pages/DynamicCoach"));
 const NotFound = lazyRetry(() => import("./pages/NotFound"));
 const ChangePassword = lazyRetry(() => import("./pages/ChangePassword"));
 const LifeCoachVoice = lazyRetry(() => import("./pages/LifeCoachVoice"));
+const GptImageLab = lazyRetry(() => import("./pages/GptImageLab"));
 
 // 历史和社区
 const History = lazyRetry(() => import("./pages/History"));
