@@ -378,6 +378,22 @@ export function DynamicAssessmentHistory({
                 </div>
               </div>
             )}
+            {isWomenCompetitiveness && !compareMode && (
+              <div
+                className="mb-3 rounded-xl border border-rose-300/40 bg-gradient-to-r from-rose-100/60 to-purple-100/50 dark:from-rose-950/20 dark:to-purple-950/20 px-4 py-3 flex items-start gap-2.5"
+                role="note"
+              >
+                <MousePointerClick className="w-4 h-4 mt-0.5 text-rose-600 dark:text-rose-400 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-foreground leading-snug">
+                    点击下方任一记录,查看完整绽放报告
+                  </p>
+                  <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
+                    含 5 维评分 · AI 个性洞察 · 一键分享海报
+                  </p>
+                </div>
+              </div>
+            )}
             <motion.div
               className="space-y-3 pb-4"
               variants={containerVariants}
