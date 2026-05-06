@@ -40,9 +40,11 @@ export function useMiniProgramShareBridge(config: ShareBridgeConfig | null | und
     const mp = (window as any).wx?.miniProgram;
     if (!mp || typeof mp.postMessage !== 'function') return;
 
+    // 注意:这里的 path 必须与小程序实际的 web-view 容器页路径一致
+    // 当前小程序壳层为 /pages/index/index,接收 options.url 作为 H5 落地地址
     const path =
       config.path ||
-      `/pages/webview/webview?url=${encodeURIComponent(config.h5Url)}`;
+      `/pages/index/index?url=${encodeURIComponent(config.h5Url)}`;
 
     const payload = {
       type: 'SET_SHARE_CONFIG',
