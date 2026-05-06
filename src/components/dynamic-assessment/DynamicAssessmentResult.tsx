@@ -303,8 +303,12 @@ export function DynamicAssessmentResult({
     setSavingReport(true);
     setShowSaveSheet(false);
     try {
+      const fileBase =
+        template.assessment_key === 'women_competitiveness'
+          ? '35+绽放报告'
+          : '男人有劲状态报告';
       await exportNodeToPdf(reportCardRef.current, {
-        filename: `男人有劲状态报告_${new Date().toISOString().slice(0, 10)}`,
+        filename: `${fileBase}_${new Date().toISOString().slice(0, 10)}`,
       });
       toast.success('PDF 已开始下载');
     } catch (e) {
