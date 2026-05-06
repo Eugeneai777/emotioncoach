@@ -14,6 +14,8 @@ import DynamicAssessmentShareCard from "./DynamicAssessmentShareCard";
 import SBTIShareCard from "./SBTIShareCard";
 import MaleMidlifeVitalityShareCard from "./MaleMidlifeVitalityShareCard";
 import MaleVitalityReportCard from "./MaleVitalityReportCard";
+import WomenCompetitivenessShareCard from "./WomenCompetitivenessShareCard";
+import WomenCompetitivenessReportCard from "./WomenCompetitivenessReportCard";
 import { WeChatPdfGuideSheet } from "./WeChatPdfGuideSheet";
 import ShareImagePreview from "@/components/ui/share-image-preview";
 import { executeOneClickShare } from "@/utils/oneClickShare";
@@ -301,8 +303,12 @@ export function DynamicAssessmentResult({
     setSavingReport(true);
     setShowSaveSheet(false);
     try {
+      const fileBase =
+        template.assessment_key === 'women_competitiveness'
+          ? '35+绽放报告'
+          : '男人有劲状态报告';
       await exportNodeToPdf(reportCardRef.current, {
-        filename: `男人有劲状态报告_${new Date().toISOString().slice(0, 10)}`,
+        filename: `${fileBase}_${new Date().toISOString().slice(0, 10)}`,
       });
       toast.success('PDF 已开始下载');
     } catch (e) {
@@ -329,6 +335,8 @@ export function DynamicAssessmentResult({
   const scorePercent = result.maxScore > 0 ? Math.round((result.totalScore / result.maxScore) * 100) : 0;
   const isSBTI = scoringType === 'sbti';
   const isMaleMidlifeVitality = template.assessment_key === 'male_midlife_vitality';
+  const isWomenCompetitiveness = template.assessment_key === 'women_competitiveness';
+  const useExpandedLayout = isMaleMidlifeVitality || isWomenCompetitiveness;
   const vitalityStatusPercent = isMaleMidlifeVitality ? toVitalityStatusScore(result.totalScore, result.maxScore) : scorePercent;
   const vitalityStatusScores = useMemo(() => {
     if (!isMaleMidlifeVitality) return result.dimensionScores;
@@ -348,6 +356,13 @@ export function DynamicAssessmentResult({
       : vitalityStatusPercent >= 40
         ? "你不是不行，是长期消耗让身体和信心都变紧了。建议先把恢复放到优先级前面。"
         : "当前已经接近低电量运行，不建议继续硬扛。先从睡眠、呼吸和每日小行动开始修复。";
+  const competitivenessSummary = scorePercent >= 80
+    ? "你已经在绽放期：底盘稳，资源、能量、关系都在你这边。可以开始把它放大成系统性影响力。"
+    : scorePercent >= 60
+      ? "你具备绽放底气，只是被多线消耗稀释了。重启节奏感后会快速回弹。"
+      : scorePercent >= 40
+        ? "你不是不行，是 35+ 的你同时在扛太多线。先把电量充回来，再谈竞争力。"
+        : "当前已经在低电量运行。不建议硬撑，先把睡眠、情绪、节奏修复，再谈外部突破。";
   const sbtiGroups = isSBTI ? [
     { name: '自我模型', emoji: '🪞', keys: ['S1','S2','S3'] },
     { name: '情感模型', emoji: '💗', keys: ['E1','E2','E3'] },
@@ -458,6 +473,10 @@ export function DynamicAssessmentResult({
                     <p className="text-sm text-muted-foreground max-w-sm mx-auto mb-3 leading-relaxed">
                       {vitalitySummary}
                     </p>
+                  ) : isWomenCompetitiveness ? (
+                    <p className="text-sm text-muted-foreground max-w-sm mx-auto mb-3 leading-relaxed">
+                      {competitivenessSummary}
+                    </p>
                   ) : result.primaryPattern?.description && (
                   <p className="text-sm text-muted-foreground max-w-xs mx-auto mb-3">
                     {result.primaryPattern.description}
@@ -465,7 +484,11 @@ export function DynamicAssessmentResult({
                 )}
                 <div className="flex items-center justify-center gap-2">
                   <Badge className="text-base px-4 py-1.5 bg-primary/10 text-primary border-primary/20 hover:bg-primary/15">
-                    {isMaleMidlifeVitality ? `有劲状态指数 ${vitalityStatusPercent}%` : `${result.totalScore} / ${result.maxScore} 分`}
+                    {isMaleMidlifeVitality
+                      ? `有劲状态指数 ${vitalityStatusPercent}%`
+                      : isWomenCompetitiveness
+                        ? `绽放指数 ${scorePercent}%`
+                        : `${result.totalScore} / ${result.maxScore} 分`}
                   </Badge>
                   <Button
                     variant="ghost"
@@ -485,24 +508,29 @@ export function DynamicAssessmentResult({
 
       <div className={cn(
         "mx-auto px-4",
-        isMaleMidlifeVitality
+        useExpandedLayout
           ? "max-w-lg space-y-4 lg:max-w-5xl lg:grid lg:grid-cols-[minmax(0,1.15fr)_minmax(340px,0.85fr)] lg:items-start lg:gap-4 lg:space-y-0"
           : "max-w-lg space-y-4"
       )}>
         {/* Radar Chart (non-SBTI only) */}
         {!isSBTI && result.dimensionScores.length >= 3 && (
-          <motion.div custom={1} variants={fadeUp} initial="hidden" animate="visible" className={cn(isMaleMidlifeVitality && "lg:row-span-2")}>
+          <motion.div custom={1} variants={fadeUp} initial="hidden" animate="visible" className={cn(useExpandedLayout && "lg:row-span-2")}>
             <Card className="border-border/40 bg-card/90 backdrop-blur-sm shadow-sm overflow-hidden">
               <CardContent className="p-4 pt-3 sm:p-5">
                 <div className="flex items-center gap-2 mb-1">
                   <Target className="w-4 h-4 text-primary" />
-                  <h3 className="font-semibold text-sm">{isMaleMidlifeVitality ? '有劲状态雷达' : '能力雷达'}</h3>
+                  <h3 className="font-semibold text-sm">
+                    {isMaleMidlifeVitality ? '有劲状态雷达' : isWomenCompetitiveness ? '绽放力雷达' : '能力雷达'}
+                  </h3>
                 </div>
                 {isMaleMidlifeVitality && (
                   <p className="text-[11px] text-muted-foreground mb-2">越靠外代表状态越稳，越靠内代表越需要优先恢复。</p>
                 )}
-                <div className={cn(isMaleMidlifeVitality ? "h-[360px] sm:h-[390px] lg:h-[430px]" : "h-[300px] sm:h-[320px]") }>
-                  <DimensionRadarChart dimensionScores={isMaleMidlifeVitality ? vitalityStatusScores : result.dimensionScores} variant={isMaleMidlifeVitality ? "large" : "default"} />
+                {isWomenCompetitiveness && (
+                  <p className="text-[11px] text-muted-foreground mb-2">越靠外代表越绽放，越靠内代表越被消耗、需要优先恢复。</p>
+                )}
+                <div className={cn(useExpandedLayout ? "h-[360px] sm:h-[390px] lg:h-[430px]" : "h-[300px] sm:h-[320px]") }>
+                  <DimensionRadarChart dimensionScores={isMaleMidlifeVitality ? vitalityStatusScores : result.dimensionScores} variant={useExpandedLayout ? "large" : "default"} />
                 </div>
               </CardContent>
             </Card>
@@ -763,6 +791,18 @@ export function DynamicAssessmentResult({
           </motion.div>
         )}
 
+        {isWomenCompetitiveness && (
+          <motion.div custom={4} variants={fadeUp} initial="hidden" animate="visible">
+            <Button
+              onClick={handleShare}
+              disabled={isSharing}
+              className="w-full h-12 gap-2 rounded-xl bg-gradient-to-r from-rose-500 via-fuchsia-500 to-purple-600 hover:from-rose-400 hover:via-fuchsia-400 hover:to-purple-500 text-white shadow-lg shadow-rose-500/20"
+            >
+              <Share2 className="w-5 h-5" /> 分享我的35+绽放报告
+            </Button>
+          </motion.div>
+        )}
+
         {/* AI Insight (hidden in lite mode) */}
         {!isLiteMode && (
           <motion.div custom={5} variants={fadeUp} initial="hidden" animate="visible">
@@ -852,9 +892,9 @@ export function DynamicAssessmentResult({
           </motion.div>
         )}
 
-        {/* 35+女性竞争力测评 → 7天有劲训练营推荐 */}
-        {template.assessment_key === 'women_competitiveness' && !isLiteMode && (
-          <motion.div custom={7} variants={fadeUp} initial="hidden" animate="visible">
+        {/* 35+女性竞争力测评 → 双训练营推荐卡 */}
+        {isWomenCompetitiveness && !isLiteMode && (
+          <motion.div custom={7} variants={fadeUp} initial="hidden" animate="visible" className="space-y-3">
             <Card className="border-0 bg-gradient-to-br from-rose-500 to-purple-600 text-white shadow-lg overflow-hidden">
               <CardContent className="p-4 space-y-3">
                 <div className="flex items-start gap-3">
@@ -874,6 +914,23 @@ export function DynamicAssessmentResult({
                   onClick={() => navigate('/camp-intro/emotion_stress_7')}
                 >
                   了解7天有劲训练营 <ArrowRight className="w-4 h-4" />
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="border-border/40 bg-card/90 backdrop-blur-sm shadow-sm">
+              <CardContent className="p-4 space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center text-xl shrink-0">🌸</div>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-bold text-sm text-foreground">如果你想从根本绽放</h3>
+                    <p className="text-xs text-muted-foreground leading-relaxed mt-1">
+                      当 35+ 的身份、价值感、节奏都在重新洗牌，你需要的可能不只是充电，而是一次系统的身份绽放。
+                    </p>
+                  </div>
+                </div>
+                <Button variant="outline" className="w-full h-11 rounded-xl gap-2" onClick={() => navigate('/camp-intro/identity_bloom')}>
+                  看看身份绽放训练营 <ArrowRight className="w-4 h-4" />
                 </Button>
               </CardContent>
             </Card>
@@ -962,7 +1019,7 @@ export function DynamicAssessmentResult({
 
         {/* Action Buttons */}
         <motion.div custom={8} variants={fadeUp} initial="hidden" animate="visible" className="space-y-3 mt-4">
-          {isMaleMidlifeVitality && aiInsight && !isLiteMode && (
+          {(isMaleMidlifeVitality || isWomenCompetitiveness) && aiInsight && !isLiteMode && (
             <div ref={saveButtonRef}>
               <Button
                 className={cn(
@@ -1040,7 +1097,7 @@ export function DynamicAssessmentResult({
       </Sheet>
 
       {/* 微信内 PDF 引导 */}
-      {isMaleMidlifeVitality && (
+      {(isMaleMidlifeVitality || isWomenCompetitiveness) && (
         <WeChatPdfGuideSheet
           open={showWeChatPdfGuide}
           onOpenChange={setShowWeChatPdfGuide}
@@ -1086,6 +1143,16 @@ export function DynamicAssessmentResult({
             displayName={profileData.displayName}
             avatarUrl={profileData.avatarUrl}
           />
+        ) : isWomenCompetitiveness ? (
+          <WomenCompetitivenessShareCard
+            ref={shareCardRef}
+            totalScore={result.totalScore}
+            maxScore={result.maxScore}
+            dimensionScores={result.dimensionScores}
+            primaryPattern={result.primaryPattern}
+            displayName={profileData.displayName}
+            avatarUrl={profileData.avatarUrl}
+          />
         ) : (
           <DynamicAssessmentShareCard
             ref={shareCardRef}
@@ -1104,6 +1171,17 @@ export function DynamicAssessmentResult({
             ref={reportCardRef}
             totalScorePct={vitalityStatusPercent}
             dimensionScores={vitalityStatusScores as any}
+            primaryPattern={result.primaryPattern}
+            aiInsight={aiInsight}
+            displayName={profileData.displayName}
+            testedAt={new Date().toISOString()}
+          />
+        )}
+        {isWomenCompetitiveness && (
+          <WomenCompetitivenessReportCard
+            ref={reportCardRef}
+            totalScorePct={scorePercent}
+            dimensionScores={result.dimensionScores}
             primaryPattern={result.primaryPattern}
             aiInsight={aiInsight}
             displayName={profileData.displayName}
