@@ -995,6 +995,19 @@ export function DynamicAssessmentResult({
           </motion.div>
         )}
 
+        {/* 35+女性版：训练营卡下方的轻量复测入口 */}
+        {isWomenCompetitiveness && !isLiteMode && (
+          <motion.div custom={7} variants={fadeUp} initial="hidden" animate="visible" className="text-center">
+            <button
+              type="button"
+              onClick={onRetake}
+              className="text-xs text-muted-foreground hover:text-rose-600 underline underline-offset-4 decoration-dotted py-1.5 inline-flex items-center gap-1"
+            >
+              <RotateCcw className="w-3 h-3" /> 想再测一次？立即重新测评
+            </button>
+          </motion.div>
+        )}
+
         {/* SBTI-specific paid assessment recommendations */}
         {isSBTI && !isLiteMode && (
           <motion.div custom={7} variants={fadeUp} initial="hidden" animate="visible" className="space-y-3">
