@@ -47,9 +47,9 @@ export default function EmotionHealthPage() {
   const [showPayDialog, setShowPayDialog] = useState(false);
   
   
-  // 购买状态检查
+  // 购买状态检查（情绪健康测评已改为免费，hasPurchased 永远为 true 以绕过付费门控）
   const { data: purchaseRecord, isLoading: purchaseLoading, refetch: refetchPurchase } = useEmotionHealthPurchase();
-  const hasPurchased = !!purchaseRecord;
+  const hasPurchased = true;
   
   // 获取价格
   const { data: packageData } = usePackageByKey(PACKAGE_KEY);
