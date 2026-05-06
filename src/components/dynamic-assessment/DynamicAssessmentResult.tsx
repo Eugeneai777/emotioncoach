@@ -1097,7 +1097,7 @@ export function DynamicAssessmentResult({
       </Sheet>
 
       {/* 微信内 PDF 引导 */}
-      {isMaleMidlifeVitality && (
+      {(isMaleMidlifeVitality || isWomenCompetitiveness) && (
         <WeChatPdfGuideSheet
           open={showWeChatPdfGuide}
           onOpenChange={setShowWeChatPdfGuide}
@@ -1143,6 +1143,16 @@ export function DynamicAssessmentResult({
             displayName={profileData.displayName}
             avatarUrl={profileData.avatarUrl}
           />
+        ) : isWomenCompetitiveness ? (
+          <WomenCompetitivenessShareCard
+            ref={shareCardRef}
+            totalScore={result.totalScore}
+            maxScore={result.maxScore}
+            dimensionScores={result.dimensionScores}
+            primaryPattern={result.primaryPattern}
+            displayName={profileData.displayName}
+            avatarUrl={profileData.avatarUrl}
+          />
         ) : (
           <DynamicAssessmentShareCard
             ref={shareCardRef}
@@ -1161,6 +1171,17 @@ export function DynamicAssessmentResult({
             ref={reportCardRef}
             totalScorePct={vitalityStatusPercent}
             dimensionScores={vitalityStatusScores as any}
+            primaryPattern={result.primaryPattern}
+            aiInsight={aiInsight}
+            displayName={profileData.displayName}
+            testedAt={new Date().toISOString()}
+          />
+        )}
+        {isWomenCompetitiveness && (
+          <WomenCompetitivenessReportCard
+            ref={reportCardRef}
+            totalScorePct={scorePercent}
+            dimensionScores={result.dimensionScores}
             primaryPattern={result.primaryPattern}
             aiInsight={aiInsight}
             displayName={profileData.displayName}
