@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { isWeChatMiniProgram } from '@/utils/platform';
+import { detectMiniProgramAsync, isWeChatMiniProgram } from '@/utils/platform';
 
 interface ShareBridgeConfig {
   title: string;
@@ -35,16 +35,12 @@ export function useMiniProgramShareBridge(config: ShareBridgeConfig | null | und
     if (!config) return;
     if (!config.title || !config.imageUrl || !config.h5Url) return;
 
-    if (!isWeChatMiniProgram()) return;
-
-    const mp = (window as any).wx?.miniProgram;
-    if (!mp || typeof mp.postMessage !== 'function') return;
+    let cancelled = false;
+    const timers: number[] = [];
 
     // 注意:这里的 path 必须与小程序实际的 web-view 容器页路径一致
     // 当前小程序壳层为 /pages/index/index,接收 options.url 作为 H5 落地地址
-    const path =
-      config.path ||
-      `/pages/index/index?url=${encodeURIComponent(config.h5Url)}`;
+    const path = config.path || `/pages/index/index?url=${encodeURIComponent(config.h5Url)}`;
 
     const payload = {
       type: 'SET_SHARE_CONFIG',
@@ -53,22 +49,53 @@ export function useMiniProgramShareBridge(config: ShareBridgeConfig | null | und
       imageUrl: config.imageUrl,
       h5Url: config.h5Url,
       path,
+      // 兼容小程序壳层可能读取的字段名
+      sharePath: path,
+      landingUrl: config.h5Url,
       routeKey: config.routeKey || '',
       ts: Date.now(),
     };
 
     const sig = `${payload.title}|${payload.imageUrl}|${payload.path}|${payload.routeKey}`;
     if (sig === sentRef.current && sig === lastSentRef.current) return;
-    sentRef.current = sig;
-    lastSentRef.current = sig;
 
-    try {
-      mp.postMessage({ data: payload });
-      // eslint-disable-next-line no-console
-      console.log('[MPShareBridge] SET_SHARE_CONFIG sent:', payload);
-    } catch (e) {
-      console.warn('[MPShareBridge] postMessage failed:', e);
-    }
+    const sendOnce = async (attempt: number) => {
+      if (cancelled) return;
+      const mp = (window as any).wx?.miniProgram;
+      const hasPostMessage = mp && typeof mp.postMessage === 'function';
+      const isMiniProgram = isWeChatMiniProgram() || (await detectMiniProgramAsync());
+
+      if (!hasPostMessage || !isMiniProgram) {
+        if (attempt < 5) {
+          timers.push(window.setTimeout(() => sendOnce(attempt + 1), 300));
+        } else {
+          console.warn('[MPShareBridge] MiniProgram bridge not ready:', {
+            hasPostMessage: !!hasPostMessage,
+            isMiniProgram,
+            userAgent: navigator.userAgent,
+            wxjsEnvironment: (window as any).__wxjs_environment,
+          });
+        }
+        return;
+      }
+
+      try {
+        mp.postMessage({ data: payload });
+        sentRef.current = sig;
+        lastSentRef.current = sig;
+        // eslint-disable-next-line no-console
+        console.log('[MPShareBridge] SET_SHARE_CONFIG sent:', payload);
+      } catch (e) {
+        console.warn('[MPShareBridge] postMessage failed:', e);
+      }
+    };
+
+    sendOnce(0);
+
+    return () => {
+      cancelled = true;
+      timers.forEach((timer) => window.clearTimeout(timer));
+    };
   }, [config?.title, config?.desc, config?.imageUrl, config?.h5Url, config?.path, config?.routeKey]);
 }
 
