@@ -1330,6 +1330,7 @@ export default function DramaScriptGenerator() {
       return;
     }
     setSceneAudios(prev => ({ ...prev, [num]: { status: "generating" } }));
+    bumpBusy();
     try {
       const { data, error } = await supabase.functions.invoke("volcengine-tts", {
         body: { text, voice_type: "zh_female_cancan_mars_bigtts" },
@@ -1365,6 +1366,8 @@ export default function DramaScriptGenerator() {
       toast.success(`场景 ${num} 旁白已生成`);
     } catch (e: any) {
       setSceneAudios(prev => ({ ...prev, [num]: { status: "failed", error: e.message } }));
+    } finally {
+      releaseBusy();
     }
   }, []);
 
