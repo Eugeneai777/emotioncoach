@@ -1,58 +1,27 @@
-## 商业架构师视角评估
+## 问题定位
 
-当前 `/emotion-health` 已改为免费测评，作为引流入口。结果页是关键转化节点。三项优化分别承担：**用户沉淀（登录）→ 付费转化（推荐测评）→ 私域沉淀（助教企微）**，构成完整漏斗。
+经核实代码，35+女性竞争力测评结果页（`CompetitivenessResult.tsx`）**已有**「7天有劲训练营」跳转入口（第472-482行），但只是一个 `variant="outline"` 的细长按钮，紧跟在「AI 深度解读」卡片之后。在长长的雷达图 + 折叠式 AI 解读之后，用户视觉上很容易忽略它，所以反馈"没有"。
 
----
+而财富卡点测评（`WealthBlockResult.tsx` 第720-750行）使用的是**emerald-teal 渐变卡片 + 图标 + 文案 + CTA 按钮**的高显眼组件，因此一眼就能看到。
 
-## 改动一：结果页登录门槛
+两者实现质量不一致，需统一为同等显眼程度。
 
-**商业逻辑**：免费测评吸引流量，但必须通过登录把用户沉淀到自有账号体系（手机号/微信），否则流量浪费。答完题再要求登录，沉没成本最大化，转化率最高。
+## 优化方案
 
-**实现**：
-- 在 `src/pages/EmotionHealthPage.tsx` 和 `EmotionHealthLite.tsx` 中，`pageState === "result"` 渲染前判断 `user`：
-  - 未登录 → 渲染登录引导卡（"答题成果已生成，登录后立即查看完整报告"），CTA 跳 `/login?redirect=/emotion-health&restore=1`
-  - 答案缓存到 `sessionStorage`（参考 `mem://features/assessment/state-persistence-pattern-zh`），登录回跳后自动恢复并展示结果
-- 已登录 → 直接展示结果（行为不变）
+把 `CompetitivenessResult.tsx` 中 `{/* 7天有劲训练营推荐 */}` 那一段（472-482行）从「outline 细按钮」升级为与财富卡点页一致的「渐变推荐卡片」：
 
----
+- 使用 rose→purple 渐变（沿用本页 35+ 女性主题色，避免突兀）
+- 卡片内含：图标 + 标题「7天有劲训练营」+ 一句针对 35+ 女性的贴合文案（例如"职场+家庭双线疲惫？7天每日15分钟能量练习，帮你重启节奏感、找回竞争力底气"）+ 主按钮「了解7天有劲训练营」
+- 位置保留在「AI 深度解读」之后、分享卡片之前
+- 跳转目标 `/camp-intro/emotion_stress_7` 不变
 
-## 改动二：替换底部按钮为付费测评推荐
+## 技术细节
 
-**商业逻辑**：
-- "查看完整成长支持路径" 是站内导航，无变现价值，去除
-- 替换为两张高客单测评推荐卡，承接情绪健康人群的两大延伸需求：
-  - **35+女性竞争力测评**（`/assessment/women_competitiveness`）— 命中"中年情绪压力多源自职场/角色焦虑"的女性用户
-  - **财富卡点测评**（`/wealth-block-intro`）— 命中"情绪压力背后是经济/财富焦虑"的全性别用户
-- 保留"7天情绪压力训练营"按钮（¥399 主转化路径不变）
+- 仅修改 `src/components/women-competitiveness/CompetitivenessResult.tsx` 第472-482行
+- 复用项目已有的 `Card / CardContent / Button` 组件，颜色用 Tailwind 渐变类（与财富卡点页一致的写法）
+- 不动任何业务逻辑、数据库、付费墙
+- 历史报告也走同一组件，所以老用户回看时也会看到新卡片
 
-**实现**：在 `src/components/emotion-health/EmotionHealthResult.tsx` 第 261-270 行，删除"查看完整成长支持路径"按钮，替换为两张推荐卡（emoji + 标题 + 简介 + 立即测评 CTA），样式参考 `MarriageAssessmentCards.tsx` 的渐变卡风格。
+## 验证
 
----
-
-## 改动三：助教企微二维码
-
-**商业逻辑**：免费测评 → 私域 → 1v1 转化是标准漏斗。当前 `QiWeiQRCard` 是"客服"定位，新增"助教"卡片定位为"答疑/推荐课程"，更贴近测评后场景。
-
-**实现**：
-- 上传的二维码图片保存为 `src/assets/qiwei-assistant-qr.jpg`
-- 新建 `src/components/emotion-health/AssistantQRCard.tsx`（参考 `QiWeiQRCard` 结构，文案改为"添加助教企微，获取你的个性化情绪疏导方案"，小程序内显示"截屏后用企业微信扫码"）
-- 在结果页"统一承接区"卡片（CTA 按钮下方）插入助教卡，让用户在最高情绪共鸣点接触助教
-
----
-
-## 文件改动清单
-
-| 文件 | 改动 |
-|---|---|
-| `src/pages/EmotionHealthPage.tsx` | 结果页前加登录门槛 + sessionStorage 答案恢复 |
-| `src/pages/EmotionHealthLite.tsx` | 同上 |
-| `src/components/emotion-health/EmotionHealthResult.tsx` | 移除成长路径按钮 → 两张测评推荐卡；插入助教二维码 |
-| `src/components/emotion-health/AssistantQRCard.tsx` | 新建 |
-| `src/assets/qiwei-assistant-qr.jpg` | 新建（用户上传图） |
-
----
-
-## 风险与说明
-
-- **登录门槛会折损完播率**，但沉淀质量高，符合"先免费后转化"商业模型；如希望更宽松，可改为只对"分享"和"AI 教练"功能加门槛，结果页保持开放——请你确认采用哪种力度。
-- 财富卡点测评是付费测评，会与"7 天训练营 ¥399"在结果页同时存在，按 **¥9.9 → ¥399 阶梯** 排序：先小额测评，后训练营，避免互相压制。
+实现后用浏览器工具进入 `/women-competitiveness` 历史报告页截图确认卡片渲染正常即可。
