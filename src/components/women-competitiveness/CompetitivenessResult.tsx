@@ -468,6 +468,18 @@ export function CompetitivenessResult({ result, answers, followUpInsights, onBac
             </CardContent>
           </Card>
         </motion.div>
+
+        {/* 7天有劲训练营推荐 */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45, duration: 0.4 }}>
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={() => navigate('/camp-intro/emotion_stress_7')}
+          >
+            了解7天有劲训练营
+            <ChevronRight className="w-4 h-4 ml-1" />
+          </Button>
+        </motion.div>
       </div>
 
       {/* 隐藏的分享卡片 */}
