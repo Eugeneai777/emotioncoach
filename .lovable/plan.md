@@ -1,55 +1,36 @@
-## 背景
+# 修复：35+ 女性竞争力测评 未登录直接进入支付
 
-用户在 `/assessment/women_competitiveness` 结果页发现 3 个体验断点，与已对齐的【男人有劲】版本相比仍有差距：
+## 问题定位
+- 数据库 `partner_assessment_templates.women_competitiveness` 中 `require_auth = false`，`require_payment = true`。
+- 因此 `DynamicAssessmentIntro` 里的 `if (requireAuth && !user)` 守卫直接被跳过，未登录用户点击「¥9.9 开始测评」会直接打开 `AssessmentPayDialog`，未做登录确认。
+- 与男版「未登录先答题」Lite 模式不同，女版希望付费类入口必须先登录再付费。
 
-1. **「改善建议」太单薄**：当前只渲染 `result.primaryPattern.tips`（通常 2 条干巴巴的短句，如"把觉察变成持续行动"），缺乏 35+ 女性场景的代入感和可执行性。
-2. **「测评历史」缺点击提示**：现有"点击查看详情"指引只在 `isMaleMidlifeVitality` 时渲染，女性版用户进入历史页看不到任何引导，记录卡看起来像静态展示。
-3. **「重新测评」按钮埋得太深**：当前位置在 → 双训练营推荐 → AI 洞察 → AI 教练 → 保存完整报告 → 查看历史 → **重新测评**。用户想快速复测要滚到最底部，而男频版本同样问题但他们价值锚是「保存报告」，女频用户复测意愿更高（成长心态强），按钮顺序需要调整。
+## 方案（单步，最小改动）
 
-## 商业架构师评估
+### Step 1：数据迁移，开启 require_auth
+将该模板的 `require_auth` 改为 `true`：
 
-| 优化点 | 商业价值 | 风险 |
-|---|---|---|
-| 加厚改善建议 | 提升报告"专业感"知觉 → 直接拉动 7 天训练营卡片转化（紧邻下方） | 文案需贴 35+ 女性场景，避免空话 |
-| 历史卡点击提示 | 降低复访用户跳出 → 释放历史报告分享传播 | 零风险，纯 UI 复用男版逻辑 |
-| 重新测评前移 | 缩短复测路径 → 提升留存 + 多次测评数据沉淀（利好 AI 个性化） | 不能挤占主转化（训练营 + 保存报告）位置 |
+```sql
+UPDATE public.partner_assessment_templates
+SET require_auth = true
+WHERE assessment_key = 'women_competitiveness';
+```
 
-**取舍**：重新测评不能放最顶部（会冲淡分享/转化），合理位置是「**双训练营推荐卡之后、AI 洞察之前**」作为软分隔，或保留底部但**同时**在历史按钮旁做平级布局。建议后者更稳。
+效果：
+- 未登录点击「¥9.9 开始测评」→ toast 提示「请先登录后开始测评」→ 跳转 `/auth?redirect=/assessment/women_competitiveness`。
+- 登录回跳后再次点击 → 弹出付费弹窗 → 完成 9.9 支付 → 进入答题。
+- 已登录已购用户：直接进入答题，行为不变。
 
-## 改动范围（仅前端）
+## 兜底原则（无需改代码）
+- `DynamicAssessmentIntro` 的两个 CTA（顶部"再测一次"、底部主按钮）均已实现 `requireAuth && !user` 拦截，本次仅靠数据开关即可生效。
+- 不影响男版 `male_midlife_vitality` 的 Lite 体验（其 `require_auth = false` 保持不变）。
 
-### 1. `src/components/dynamic-assessment/DynamicAssessmentResult.tsx`
+## 验证
+1. 退出登录，访问 `/assessment/women_competitiveness`。
+2. 点击「¥9.9 开始测评」→ 应跳转登录页，URL 携带 redirect。
+3. 登录成功 → 回到 intro，再点 → 弹出支付。
+4. 完成支付 → 进入答题。
 
-**A. 改善建议加厚（~line 738-764）**
-- 当 `isWomenCompetitiveness` 时，独立渲染一张「绽放行动清单」卡片，替代通用 tips 卡。
-- 内容结构（按 `scorePercent` 分档动态生成 3-4 条）：
-  - 每条 = `emoji + 一句场景化标题 + 一句可执行的「今天就做」`
-  - 例（≥60 分档）：
-    - 🌸 守住属于你的 15 分钟｜下班路上别接工作电话，把这段路当成"切换舱"
-    - 💼 把"撑着"换成"调度"｜本周挑 1 件家务外包出去，省下的时间给身体
-    - 💗 给关系做一次"减负"｜列出 3 个最消耗你的关系，本月减少 1 次接触
-  - 低分档（<40）：聚焦"先停下来"而非"加行动"
-- 视觉延续 rose→purple 渐变背景，区别于男版 amber tone
-
-**B. 历史卡片点击指引（`DynamicAssessmentHistory.tsx` ~line 364）**
-- 把 `isMaleMidlifeVitality && !compareMode` 的提示条件扩展为 `(isMaleMidlifeVitality || isWomenCompetitiveness) && !compareMode`
-- 女性版换 rose/purple 调色 + 文案：「点击下方任一记录，查看完整绽放报告 · 含 5 维评分 · AI 个性洞察 · 一键分享海报」
-
-**C. 重新测评按钮位置优化（~line 1020-1048）**
-- 把「查看历史记录 + 重新测评」从底部纵向堆叠改为**两按钮一行平级**（`grid-cols-2 gap-2`），保持在「保存完整报告」下方
-- 同时在「双训练营推荐卡」下方、AI 洞察上方，新增一个**轻量文字 link**：「想再测一次？→ 重新测评」（只对女性版显示），让有意复测的用户中途就能跳，不必滚到底
-- 男版不动，避免回归
-
-## 不做
-
-- 不动业务逻辑、得分算法、付费墙
-- 不动男频版本的任何行为
-- 不引入新的训练营或 AI prompt
-
-## 验收
-
-- 女性版结果页改善建议从 2 条短语 → 3-4 条带场景的可执行行动
-- 历史页顶部出现 rose/purple 提示条
-- 重新测评：①与查看历史平级一行；②训练营卡下方有 inline 入口
-
-完成后截图验证 3 处。
+## 涉及文件
+- 数据库 migration（仅 1 条 UPDATE）。
+- 无前端代码改动。
