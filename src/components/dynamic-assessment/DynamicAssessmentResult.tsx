@@ -892,9 +892,9 @@ export function DynamicAssessmentResult({
           </motion.div>
         )}
 
-        {/* 35+女性竞争力测评 → 7天有劲训练营推荐 */}
-        {template.assessment_key === 'women_competitiveness' && !isLiteMode && (
-          <motion.div custom={7} variants={fadeUp} initial="hidden" animate="visible">
+        {/* 35+女性竞争力测评 → 双训练营推荐卡 */}
+        {isWomenCompetitiveness && !isLiteMode && (
+          <motion.div custom={7} variants={fadeUp} initial="hidden" animate="visible" className="space-y-3">
             <Card className="border-0 bg-gradient-to-br from-rose-500 to-purple-600 text-white shadow-lg overflow-hidden">
               <CardContent className="p-4 space-y-3">
                 <div className="flex items-start gap-3">
@@ -914,6 +914,23 @@ export function DynamicAssessmentResult({
                   onClick={() => navigate('/camp-intro/emotion_stress_7')}
                 >
                   了解7天有劲训练营 <ArrowRight className="w-4 h-4" />
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="border-border/40 bg-card/90 backdrop-blur-sm shadow-sm">
+              <CardContent className="p-4 space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center text-xl shrink-0">🌸</div>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-bold text-sm text-foreground">如果你想从根本绽放</h3>
+                    <p className="text-xs text-muted-foreground leading-relaxed mt-1">
+                      当 35+ 的身份、价值感、节奏都在重新洗牌，你需要的可能不只是充电，而是一次系统的身份绽放。
+                    </p>
+                  </div>
+                </div>
+                <Button variant="outline" className="w-full h-11 rounded-xl gap-2" onClick={() => navigate('/camp-intro/identity_bloom')}>
+                  看看身份绽放训练营 <ArrowRight className="w-4 h-4" />
                 </Button>
               </CardContent>
             </Card>
