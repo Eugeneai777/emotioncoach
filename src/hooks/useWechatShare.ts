@@ -166,6 +166,30 @@ function getWxJssdk(): WxJssdkMethods | null {
 }
 
 /**
+ * 等待 jweixin SDK 异步加载完成（最长 ~6s），避免首屏 race condition
+ */
+function waitForWxJssdk(timeoutMs = 6000, intervalMs = 100): Promise<WxJssdkMethods | null> {
+  return new Promise((resolve) => {
+    const immediate = getWxJssdk();
+    if (immediate) return resolve(immediate);
+
+    const start = Date.now();
+    const timer = setInterval(() => {
+      const wx = getWxJssdk();
+      if (wx) {
+        clearInterval(timer);
+        resolve(wx);
+        return;
+      }
+      if (Date.now() - start > timeoutMs) {
+        clearInterval(timer);
+        resolve(null);
+      }
+    }, intervalMs);
+  });
+}
+
+/**
  * 获取 JS-SDK 签名
  */
 async function getJssdkSignature(url: string): Promise<WxConfig> {
@@ -207,31 +231,38 @@ export function useWechatShare(config: WechatShareConfig) {
       return;
     }
 
-    // 检查 wx 对象是否存在
-    const wx = getWxJssdk();
-    if (!wx) {
-      console.warn('[WechatShare] wx JS-SDK not found. Check if jweixin script is loaded in index.html');
-      return;
-    }
-    
-    console.log('[WechatShare] wx object found, proceeding with configuration');
+    // 检查 wx 对象是否存在（jweixin 异步加载，需轮询等待）
+    let cancelled = false;
 
-    // 配置唯一标识（避免重复配置）
-    const configKey = `${config.title}|${config.desc}|${config.link}|${config.imgUrl}`;
-    if (configuredRef.current && lastConfigRef.current === configKey) {
-      return;
-    }
+    (async () => {
+      const wx = await waitForWxJssdk();
+      if (cancelled) return;
+      if (!wx) {
+        console.warn('[WechatShare] wx JS-SDK not ready after waiting. Check if jweixin script is loaded in index.html');
+        return;
+      }
+
+      console.log('[WechatShare] wx object found, proceeding with configuration');
+
+      // 配置唯一标识（避免重复配置）
+      const configKey = `${config.title}|${config.desc}|${config.link}|${config.imgUrl}`;
+      if (configuredRef.current && lastConfigRef.current === configKey) {
+        return;
+      }
+
+      await configWechatShare();
+    })();
 
     async function configWechatShare() {
       try {
         // 使用当前页面完整 URL（不含 hash）
         const currentUrl = window.location.href.split('#')[0];
-        
+
         console.log('[WechatShare] Configuring share for URL:', currentUrl);
-        
+
         // 获取签名（带本地缓存，减少首屏 race condition）
         const wxConfig = await getJssdkSignatureCached(currentUrl);
-        
+
         console.log('[WechatShare] Got signature config:', {
           appId: wxConfig.appId,
           timestamp: wxConfig.timestamp,
@@ -262,14 +293,14 @@ export function useWechatShare(config: WechatShareConfig) {
         // 配置成功后设置分享内容
         wxSdk.ready(() => {
           console.log('[WechatShare] wx.ready - setting share data');
-          
+
           const sdk = getWxJssdk();
           if (!sdk) return;
 
           setWechatShareData(sdk, config);
 
           configuredRef.current = true;
-          lastConfigRef.current = configKey;
+          lastConfigRef.current = `${config.title}|${config.desc}|${config.link}|${config.imgUrl}`;
         });
 
         // 错误处理（静默失败，不影响其他功能）
@@ -283,7 +314,9 @@ export function useWechatShare(config: WechatShareConfig) {
       }
     }
 
-    configWechatShare();
+    return () => {
+      cancelled = true;
+    };
   }, [config.title, config.desc, config.link, config.imgUrl]);
 }
 
