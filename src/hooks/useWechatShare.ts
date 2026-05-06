@@ -231,14 +231,29 @@ export function useWechatShare(config: WechatShareConfig) {
       return;
     }
 
-    // 检查 wx 对象是否存在
-    const wx = getWxJssdk();
-    if (!wx) {
-      console.warn('[WechatShare] wx JS-SDK not found. Check if jweixin script is loaded in index.html');
-      return;
-    }
-    
-    console.log('[WechatShare] wx object found, proceeding with configuration');
+    // 检查 wx 对象是否存在（jweixin 异步加载，需轮询等待）
+    let cancelled = false;
+
+    (async () => {
+      const wx = await waitForWxJssdk();
+      if (cancelled) return;
+      if (!wx) {
+        console.warn('[WechatShare] wx JS-SDK not ready after waiting. Check if jweixin script is loaded in index.html');
+        return;
+      }
+
+      console.log('[WechatShare] wx object found, proceeding with configuration');
+
+      // 配置唯一标识（避免重复配置）
+      const configKey = `${config.title}|${config.desc}|${config.link}|${config.imgUrl}`;
+      if (configuredRef.current && lastConfigRef.current === configKey) {
+        return;
+      }
+
+      await configWechatShare();
+    })();
+
+    async function configWechatShare() {
 
     // 配置唯一标识（避免重复配置）
     const configKey = `${config.title}|${config.desc}|${config.link}|${config.imgUrl}`;
