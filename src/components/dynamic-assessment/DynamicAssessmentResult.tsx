@@ -1108,14 +1108,20 @@ export function DynamicAssessmentResult({
               </p>
             </div>
           )}
-          {hasHistory && onShowHistory && (
-            <Button variant="outline" className="w-full gap-2 rounded-xl h-11" onClick={onShowHistory}>
-              <History className="w-4 h-4" /> 查看历史记录
+          {hasHistory && onShowHistory ? (
+            <div className="grid grid-cols-2 gap-2">
+              <Button variant="outline" className="w-full gap-2 rounded-xl h-11" onClick={onShowHistory}>
+                <History className="w-4 h-4" /> 查看历史记录
+              </Button>
+              <Button variant="outline" className="w-full gap-2 rounded-xl h-11" onClick={onRetake}>
+                <RotateCcw className="w-4 h-4" /> 重新测评
+              </Button>
+            </div>
+          ) : (
+            <Button variant="outline" className="w-full gap-2 rounded-xl h-11" onClick={onRetake}>
+              <RotateCcw className="w-4 h-4" /> 重新测评
             </Button>
           )}
-          <Button variant="outline" className="w-full gap-2 rounded-xl h-11" onClick={onRetake}>
-            <RotateCcw className="w-4 h-4" /> 重新测评
-          </Button>
         </motion.div>
       </div>
 
