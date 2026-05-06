@@ -3261,8 +3261,13 @@ export default function DramaScriptGenerator() {
                 <Select value={comicTextStyle} onValueChange={(v) => setComicTextStyle(v as any)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="banner">底部条幅</SelectItem>
-                    <SelectItem value="bubble">顶部气泡</SelectItem>
+                    <SelectItem value="mixed">漫画混合（旁白框+对话气泡）</SelectItem>
+                    <SelectItem value="caption">叙事框（米黄折角）</SelectItem>
+                    <SelectItem value="speech">对话气泡（带尖角）</SelectItem>
+                    <SelectItem value="thought">心声云朵</SelectItem>
+                    <SelectItem value="shout">爆炸喊叫框</SelectItem>
+                    <SelectItem value="banner">底部条幅（旧）</SelectItem>
+                    <SelectItem value="bubble">顶部气泡（旧）</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
