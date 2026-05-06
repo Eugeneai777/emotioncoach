@@ -328,18 +328,22 @@ export default function EmotionHealthPage() {
         )}
         
         {step === 'result' && result && (
-          <>
-            <EmotionHealthResult
-              result={result}
-              onShare={handleShare}
-              onRetake={handleRetake}
-            />
-            <EmotionHealthShareDialog
-              open={shareDialogOpen}
-              onOpenChange={setShareDialogOpen}
-              result={result}
-            />
-          </>
+          !user ? (
+            <ResultLoginGate onLogin={redirectToAuth} />
+          ) : (
+            <>
+              <EmotionHealthResult
+                result={result}
+                onShare={handleShare}
+                onRetake={handleRetake}
+              />
+              <EmotionHealthShareDialog
+                open={shareDialogOpen}
+                onOpenChange={setShareDialogOpen}
+                result={result}
+              />
+            </>
+          )
         )}
 
         {/* 非结果页的推广分享弹窗 */}
