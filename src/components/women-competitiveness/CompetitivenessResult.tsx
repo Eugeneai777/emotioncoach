@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2, ChevronDown, Share2, ChevronRight } from "lucide-react";
+import { ArrowLeft, Loader2, ChevronDown, Share2, ChevronRight, Sparkles } from "lucide-react";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { executeOneClickShare } from "@/utils/oneClickShare";
 import ShareImagePreview from "@/components/ui/share-image-preview";
