@@ -1070,6 +1070,7 @@ export default function DramaScriptGenerator() {
     if (!result) return null;
     const num = scene.sceneNumber;
     setSceneImages((prev) => ({ ...prev, [num]: { status: "generating" } }));
+    bumpBusy();
     try {
       const { data, error } = await supabase.functions.invoke("drama-scene-image-openai", {
         body: {
@@ -1095,6 +1096,8 @@ export default function DramaScriptGenerator() {
       setSceneImages((prev) => ({ ...prev, [num]: { status: "failed", error: e.message || "生成失败" } }));
       toast.error(`场景 ${num} 图片生成失败：${e.message || "请重试"}`);
       return null;
+    } finally {
+      releaseBusy();
     }
   }, [characterImages, characterReferenceUrls, imageAspectRatio, result, style]);
 
