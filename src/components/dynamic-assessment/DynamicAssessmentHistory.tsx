@@ -724,6 +724,14 @@ export function DynamicAssessmentHistory({
                             <ChevronRight className="w-3.5 h-3.5" />
                           </div>
                         )}
+                        {isWomenCompetitiveness && !compareMode && onViewRecord && (
+                          <div
+                            className="flex items-center justify-end gap-1 mt-3 pt-2.5 border-t border-border/40 text-xs font-semibold text-rose-600 dark:text-rose-400 group-hover:text-rose-700 dark:group-hover:text-rose-300 transition-colors"
+                          >
+                            查看完整绽放报告 & 分享海报
+                            <ChevronRight className="w-3.5 h-3.5" />
+                          </div>
+                        )}
                       </CardContent>
                     </Card>
                   </motion.div>
