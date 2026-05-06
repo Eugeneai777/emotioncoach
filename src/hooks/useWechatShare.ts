@@ -166,6 +166,30 @@ function getWxJssdk(): WxJssdkMethods | null {
 }
 
 /**
+ * 等待 jweixin SDK 异步加载完成（最长 ~6s），避免首屏 race condition
+ */
+function waitForWxJssdk(timeoutMs = 6000, intervalMs = 100): Promise<WxJssdkMethods | null> {
+  return new Promise((resolve) => {
+    const immediate = getWxJssdk();
+    if (immediate) return resolve(immediate);
+
+    const start = Date.now();
+    const timer = setInterval(() => {
+      const wx = getWxJssdk();
+      if (wx) {
+        clearInterval(timer);
+        resolve(wx);
+        return;
+      }
+      if (Date.now() - start > timeoutMs) {
+        clearInterval(timer);
+        resolve(null);
+      }
+    }, intervalMs);
+  });
+}
+
+/**
  * 获取 JS-SDK 签名
  */
 async function getJssdkSignature(url: string): Promise<WxConfig> {
