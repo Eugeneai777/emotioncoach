@@ -1,27 +1,11 @@
-## 问题定位
+原因已经定位：你现在访问的是 `/assessment/women_competitiveness`，它走的是通用动态测评结果页 `DynamicAssessmentResult.tsx`，不是之前改过的旧版 `CompetitivenessResult.tsx`。所以你账号 18898593978 的历史报告看不到推荐，是因为推荐卡片加在旧入口组件里，当前真实入口没有给 `women_competitiveness` 显示该卡片。
 
-经核实代码，35+女性竞争力测评结果页（`CompetitivenessResult.tsx`）**已有**「7天有劲训练营」跳转入口（第472-482行），但只是一个 `variant="outline"` 的细长按钮，紧跟在「AI 深度解读」卡片之后。在长长的雷达图 + 折叠式 AI 解读之后，用户视觉上很容易忽略它，所以反馈"没有"。
+计划如下：
 
-而财富卡点测评（`WealthBlockResult.tsx` 第720-750行）使用的是**emerald-teal 渐变卡片 + 图标 + 文案 + CTA 按钮**的高显眼组件，因此一眼就能看到。
+1. 在 `DynamicAssessmentResult.tsx` 增加对 `template.assessment_key === 'women_competitiveness'` 的判断。
+2. 在 AI 洞察之后、分享/历史操作之前，插入「7天有劲训练营」推荐卡片。
+3. 卡片复用当前动态结果页的卡片风格，文案针对 35+ 女性：职场+家庭双线疲惫、每日15分钟能量练习、重启节奏感与竞争力底气。
+4. CTA 继续跳转到 `/camp-intro/emotion_stress_7`。
+5. 不改数据库、不改付费逻辑、不影响情绪健康测评之前去掉训练营入口的设置。
 
-两者实现质量不一致，需统一为同等显眼程度。
-
-## 优化方案
-
-把 `CompetitivenessResult.tsx` 中 `{/* 7天有劲训练营推荐 */}` 那一段（472-482行）从「outline 细按钮」升级为与财富卡点页一致的「渐变推荐卡片」：
-
-- 使用 rose→purple 渐变（沿用本页 35+ 女性主题色，避免突兀）
-- 卡片内含：图标 + 标题「7天有劲训练营」+ 一句针对 35+ 女性的贴合文案（例如"职场+家庭双线疲惫？7天每日15分钟能量练习，帮你重启节奏感、找回竞争力底气"）+ 主按钮「了解7天有劲训练营」
-- 位置保留在「AI 深度解读」之后、分享卡片之前
-- 跳转目标 `/camp-intro/emotion_stress_7` 不变
-
-## 技术细节
-
-- 仅修改 `src/components/women-competitiveness/CompetitivenessResult.tsx` 第472-482行
-- 复用项目已有的 `Card / CardContent / Button` 组件，颜色用 Tailwind 渐变类（与财富卡点页一致的写法）
-- 不动任何业务逻辑、数据库、付费墙
-- 历史报告也走同一组件，所以老用户回看时也会看到新卡片
-
-## 验证
-
-实现后用浏览器工具进入 `/women-competitiveness` 历史报告页截图确认卡片渲染正常即可。
+实施后，你账号之前做过的历史 35+女性竞争力测评报告也会显示该推荐，因为历史报告同样走这个动态结果组件。
