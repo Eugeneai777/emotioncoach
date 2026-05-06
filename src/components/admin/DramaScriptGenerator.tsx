@@ -982,6 +982,7 @@ export default function DramaScriptGenerator() {
   const generateCharacterReference = useCallback(async (char: Character, index: number) => {
     if (!result) return null;
     setCharacterImages((prev) => ({ ...prev, [index]: { status: "generating" } }));
+    bumpBusy();
     try {
       const { data, error } = await supabase.functions.invoke("drama-scene-image-openai", {
         body: {
@@ -1008,6 +1009,8 @@ export default function DramaScriptGenerator() {
       setCharacterImages((prev) => ({ ...prev, [index]: { status: "failed", error: e.message || "生成失败" } }));
       toast.error(`${char.name} 定妆图生成失败：${e.message || "请重试"}`);
       return null;
+    } finally {
+      releaseBusy();
     }
   }, [result, style]);
 
