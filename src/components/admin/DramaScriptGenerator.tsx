@@ -1190,6 +1190,15 @@ export default function DramaScriptGenerator() {
       clearInterval(pollingRefs.current[sceneNum]);
     }
 
+    // 持有忙碌锁,直到此 poll 终止
+    bumpBusy();
+    let released = false;
+    const releaseOnce = () => {
+      if (released) return;
+      released = true;
+      releaseBusy();
+    };
+
     const interval = setInterval(async () => {
       try {
         const { data, error } = await supabase.functions.invoke("jimeng-video-gen", {
@@ -1199,6 +1208,7 @@ export default function DramaScriptGenerator() {
           clearInterval(interval);
           delete pollingRefs.current[sceneNum];
           updateSceneVideo(sceneNum, { status: "failed", error: data?.error || "查询失败" });
+          releaseOnce();
           return;
         }
 
@@ -1208,10 +1218,12 @@ export default function DramaScriptGenerator() {
           delete pollingRefs.current[sceneNum];
           updateSceneVideo(sceneNum, { status: "done", videoUrl: data.video_url });
           toast.success(`场景 ${sceneNum} 视频生成完成！`);
+          releaseOnce();
         } else if (status === "failed" || status === "error") {
           clearInterval(interval);
           delete pollingRefs.current[sceneNum];
           updateSceneVideo(sceneNum, { status: "failed", error: "视频生成失败" });
+          releaseOnce();
         } else {
           // in_queue or generating
           updateSceneVideo(sceneNum, { status: status === "generating" ? "generating" : "in_queue" });
@@ -1235,6 +1247,7 @@ export default function DramaScriptGenerator() {
     });
     updateSceneVideo(num, { status: "submitting" });
 
+    bumpBusy();
     try {
       const { data, error } = await supabase.functions.invoke("jimeng-video-gen", {
         body: {
@@ -1257,6 +1270,8 @@ export default function DramaScriptGenerator() {
     } catch (e: any) {
       updateSceneVideo(num, { status: "failed", error: e.message });
       return false;
+    } finally {
+      releaseBusy();
     }
   }, [buildJimengVideoPrompt, getVideoReferenceUrls, videoAspectRatio, videoDuration, updateSceneVideo, pollVideoStatus]);
 
