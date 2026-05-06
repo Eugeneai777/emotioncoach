@@ -735,8 +735,8 @@ export function DynamicAssessmentResult({
           </motion.div>
         )}
 
-        {/* Tips (hidden for SBTI) */}
-        {!isSBTI && !isLiteMode && result.primaryPattern?.tips?.length > 0 && (
+        {/* Tips (hidden for SBTI; women version uses dedicated bloom action list) */}
+        {!isSBTI && !isLiteMode && !isWomenCompetitiveness && result.primaryPattern?.tips?.length > 0 && (
           <motion.div custom={4} variants={fadeUp} initial="hidden" animate="visible">
             <Card className="border-border/40 bg-card/90 backdrop-blur-sm shadow-sm">
               <CardContent className="p-4">
@@ -762,6 +762,64 @@ export function DynamicAssessmentResult({
             </Card>
           </motion.div>
         )}
+
+        {/* 35+女性版：场景化「绽放行动清单」替代通用 tips */}
+        {isWomenCompetitiveness && !isLiteMode && (() => {
+          const bloomActions = scorePercent >= 60
+            ? [
+                { emoji: '🌸', title: '守住属于你的 15 分钟', body: '下班路上别接工作电话，把这段路当成你的"切换舱"——只属于你自己。' },
+                { emoji: '💼', title: '把"撑着"换成"调度"', body: '本周挑 1 件家务外包出去（保洁/做饭/接送），省下的时间还给身体。' },
+                { emoji: '💗', title: '给关系做一次"减负"', body: '列出 3 个最消耗你的关系，本月主动减少 1 次接触，把能量留给自己。' },
+                { emoji: '✨', title: '每周一次"我说了算"', body: '挑一件别人替你做主太久的小事（穿什么/吃什么/几点睡），自己定。' },
+              ]
+            : scorePercent >= 40
+              ? [
+                  { emoji: '🛏️', title: '先把睡眠还回来', body: '今晚 11 点前放下手机，睡眠是 35+ 女性最便宜也最贵的"竞争力"。' },
+                  { emoji: '🤝', title: '说出第一个"不"', body: '本周拒绝一件"本不该是你扛"的事——同事的甩锅、家人的过度索取都行。' },
+                  { emoji: '📒', title: '每天写下 1 件"我做到了"', body: '不是宏大目标，是"今天没崩"也算。重建对自己的相信，从这里开始。' },
+                  { emoji: '🌿', title: '找一个低门槛的"独处仪式"', body: '泡澡、散步、写 5 行字都行——35+ 的底气，从有"自己的时间"开始。' },
+                ]
+              : [
+                  { emoji: '🚨', title: '现在不是加油，是要停下', body: '当前已经低电量运行。请允许自己这周不再加任何新承诺。' },
+                  { emoji: '🩺', title: '本周做 1 件"自我照顾"', body: '一次正经体检、一次心理咨询、或一次睡到自然醒——你需要被照顾，不是再扛。' },
+                  { emoji: '🗣️', title: '找一个人说真话', body: '老朋友、咨询师、AI 教练都行。把"我撑不住了"说出口，比硬撑更有力量。' },
+                  { emoji: '🪟', title: '把目标砍到 1/3', body: '不是你不行，是 35+ 同时背负的太多。先卸下 2/3，剩下的才走得动。' },
+                ];
+          return (
+            <motion.div custom={4} variants={fadeUp} initial="hidden" animate="visible">
+              <Card className="border-rose-200/60 bg-gradient-to-br from-rose-50/80 via-card to-purple-50/60 dark:from-rose-950/20 dark:to-purple-950/20 shadow-sm overflow-hidden">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-rose-500 to-purple-600 flex items-center justify-center">
+                      <Sparkles className="w-3.5 h-3.5 text-white" />
+                    </div>
+                    <h3 className="font-bold text-sm text-foreground">绽放行动清单</h3>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground mb-3 ml-8">
+                    专为 35+ 女性场景设计 · 今天就能做的 4 件小事
+                  </p>
+                  <ul className="space-y-2">
+                    {bloomActions.map((a, i) => (
+                      <motion.li
+                        key={i}
+                        initial={{ opacity: 0, x: -8 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.5 + i * 0.08 }}
+                        className="flex items-start gap-2.5 p-2.5 rounded-lg bg-white/70 dark:bg-card/60 border border-rose-100/60"
+                      >
+                        <span className="text-base mt-0.5 shrink-0">{a.emoji}</span>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-sm font-semibold text-foreground leading-snug">{a.title}</div>
+                          <div className="text-xs text-muted-foreground leading-relaxed mt-0.5">{a.body}</div>
+                        </div>
+                      </motion.li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            </motion.div>
+          );
+        })()}
 
         {/* SBTI Entertainment Disclaimer + Share CTA */}
         {isSBTI && (
@@ -937,6 +995,19 @@ export function DynamicAssessmentResult({
           </motion.div>
         )}
 
+        {/* 35+女性版：训练营卡下方的轻量复测入口 */}
+        {isWomenCompetitiveness && !isLiteMode && (
+          <motion.div custom={7} variants={fadeUp} initial="hidden" animate="visible" className="text-center">
+            <button
+              type="button"
+              onClick={onRetake}
+              className="text-xs text-muted-foreground hover:text-rose-600 underline underline-offset-4 decoration-dotted py-1.5 inline-flex items-center gap-1"
+            >
+              <RotateCcw className="w-3 h-3" /> 想再测一次？立即重新测评
+            </button>
+          </motion.div>
+        )}
+
         {/* SBTI-specific paid assessment recommendations */}
         {isSBTI && !isLiteMode && (
           <motion.div custom={7} variants={fadeUp} initial="hidden" animate="visible" className="space-y-3">
@@ -1037,14 +1108,20 @@ export function DynamicAssessmentResult({
               </p>
             </div>
           )}
-          {hasHistory && onShowHistory && (
-            <Button variant="outline" className="w-full gap-2 rounded-xl h-11" onClick={onShowHistory}>
-              <History className="w-4 h-4" /> 查看历史记录
+          {hasHistory && onShowHistory ? (
+            <div className="grid grid-cols-2 gap-2">
+              <Button variant="outline" className="w-full gap-2 rounded-xl h-11" onClick={onShowHistory}>
+                <History className="w-4 h-4" /> 查看历史记录
+              </Button>
+              <Button variant="outline" className="w-full gap-2 rounded-xl h-11" onClick={onRetake}>
+                <RotateCcw className="w-4 h-4" /> 重新测评
+              </Button>
+            </div>
+          ) : (
+            <Button variant="outline" className="w-full gap-2 rounded-xl h-11" onClick={onRetake}>
+              <RotateCcw className="w-4 h-4" /> 重新测评
             </Button>
           )}
-          <Button variant="outline" className="w-full gap-2 rounded-xl h-11" onClick={onRetake}>
-            <RotateCcw className="w-4 h-4" /> 重新测评
-          </Button>
         </motion.div>
       </div>
 

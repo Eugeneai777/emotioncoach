@@ -94,6 +94,7 @@ export function DynamicAssessmentHistory({
 
   const isSBTI = scoringType === 'sbti';
   const isMaleMidlifeVitality = assessmentKey === 'male_midlife_vitality';
+  const isWomenCompetitiveness = assessmentKey === 'women_competitiveness';
 
   // Auto-expand first record on mount
   if (expandedId === null && records.length > 0 && isSBTI) {
@@ -373,6 +374,22 @@ export function DynamicAssessmentHistory({
                   </p>
                   <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
                     含 6 维评分 · AI 个性化建议 · 一键分享海报
+                  </p>
+                </div>
+              </div>
+            )}
+            {isWomenCompetitiveness && !compareMode && (
+              <div
+                className="mb-3 rounded-xl border border-rose-300/40 bg-gradient-to-r from-rose-100/60 to-purple-100/50 dark:from-rose-950/20 dark:to-purple-950/20 px-4 py-3 flex items-start gap-2.5"
+                role="note"
+              >
+                <MousePointerClick className="w-4 h-4 mt-0.5 text-rose-600 dark:text-rose-400 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-foreground leading-snug">
+                    点击下方任一记录,查看完整绽放报告
+                  </p>
+                  <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
+                    含 5 维评分 · AI 个性洞察 · 一键分享海报
                   </p>
                 </div>
               </div>
@@ -704,6 +721,14 @@ export function DynamicAssessmentHistory({
                             className="flex items-center justify-end gap-1 mt-3 pt-2.5 border-t border-border/40 text-xs font-semibold text-teal-700 dark:text-teal-400 group-hover:text-teal-800 dark:group-hover:text-teal-300 transition-colors"
                           >
                             查看完整报告 & 分享海报
+                            <ChevronRight className="w-3.5 h-3.5" />
+                          </div>
+                        )}
+                        {isWomenCompetitiveness && !compareMode && onViewRecord && (
+                          <div
+                            className="flex items-center justify-end gap-1 mt-3 pt-2.5 border-t border-border/40 text-xs font-semibold text-rose-600 dark:text-rose-400 group-hover:text-rose-700 dark:group-hover:text-rose-300 transition-colors"
+                          >
+                            查看完整绽放报告 & 分享海报
                             <ChevronRight className="w-3.5 h-3.5" />
                           </div>
                         )}
