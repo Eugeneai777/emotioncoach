@@ -1019,7 +1019,7 @@ export function DynamicAssessmentResult({
 
         {/* Action Buttons */}
         <motion.div custom={8} variants={fadeUp} initial="hidden" animate="visible" className="space-y-3 mt-4">
-          {isMaleMidlifeVitality && aiInsight && !isLiteMode && (
+          {(isMaleMidlifeVitality || isWomenCompetitiveness) && aiInsight && !isLiteMode && (
             <div ref={saveButtonRef}>
               <Button
                 className={cn(
