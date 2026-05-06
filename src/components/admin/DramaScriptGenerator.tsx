@@ -403,7 +403,7 @@ export default function DramaScriptGenerator() {
   const [comicOpen, setComicOpen] = useState(false);
   const [comicColumns, setComicColumns] = useState<1 | 2 | 3>(2);
   const [comicTextMode, setComicTextMode] = useState<"narration" | "dialogue" | "both" | "none">("narration");
-  const [comicTextStyle, setComicTextStyle] = useState<"banner" | "bubble">("banner");
+  const [comicTextStyle, setComicTextStyle] = useState<"mixed" | "caption" | "speech" | "thought" | "shout" | "banner" | "bubble">("mixed");
   const [comicShowNumber, setComicShowNumber] = useState(true);
   const [comicShowTitle, setComicShowTitle] = useState(true);
   const [comicBuilding, setComicBuilding] = useState(false);
