@@ -17,7 +17,7 @@ export default function EmotionHealthLitePage() {
   
   const { user } = useAuth();
   const { data: purchaseRecord, refetch: refetchPurchase } = useEmotionHealthPurchase();
-  const hasPurchased = !!purchaseRecord;
+  const hasPurchased = true; // 情绪健康测评已改为免费
   
   // 完成测评回调
   const handleComplete = useCallback((answers: Record<number, number>) => {
