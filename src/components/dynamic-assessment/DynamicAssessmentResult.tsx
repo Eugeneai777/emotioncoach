@@ -791,6 +791,18 @@ export function DynamicAssessmentResult({
           </motion.div>
         )}
 
+        {isWomenCompetitiveness && (
+          <motion.div custom={4} variants={fadeUp} initial="hidden" animate="visible">
+            <Button
+              onClick={handleShare}
+              disabled={isSharing}
+              className="w-full h-12 gap-2 rounded-xl bg-gradient-to-r from-rose-500 via-fuchsia-500 to-purple-600 hover:from-rose-400 hover:via-fuchsia-400 hover:to-purple-500 text-white shadow-lg shadow-rose-500/20"
+            >
+              <Share2 className="w-5 h-5" /> 分享我的35+绽放报告
+            </Button>
+          </motion.div>
+        )}
+
         {/* AI Insight (hidden in lite mode) */}
         {!isLiteMode && (
           <motion.div custom={5} variants={fadeUp} initial="hidden" animate="visible">
