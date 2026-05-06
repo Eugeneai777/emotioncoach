@@ -303,14 +303,6 @@ export function EmotionHealthResult({ result, onShare, onRetake }: EmotionHealth
 
       {/* 其他操作按钮 */}
       <div className="space-y-3 pb-[calc(20px+env(safe-area-inset-bottom))]">
-        <Button 
-          variant="outline" 
-          className="w-full"
-          onClick={() => navigate('/camp-intro/emotion_stress_7')}
-        >
-          {resultPageSectionTitles.cta.secondaryText}
-          <ChevronRight className="w-4 h-4 ml-1" />
-        </Button>
 
         <div className="flex gap-3 pt-2">
           {onShare && (
