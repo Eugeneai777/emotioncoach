@@ -94,6 +94,7 @@ export function DynamicAssessmentHistory({
 
   const isSBTI = scoringType === 'sbti';
   const isMaleMidlifeVitality = assessmentKey === 'male_midlife_vitality';
+  const isWomenCompetitiveness = assessmentKey === 'women_competitiveness';
 
   // Auto-expand first record on mount
   if (expandedId === null && records.length > 0 && isSBTI) {
