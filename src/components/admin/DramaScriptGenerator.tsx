@@ -2775,10 +2775,17 @@ export default function DramaScriptGenerator() {
                 >
                   {batchGenerating ? (
                     <><Loader2 className="h-4 w-4 animate-spin" /> 批量提交中...</>
+                  ) : anyVideoGenerating ? (
+                    <><Loader2 className="h-4 w-4 animate-spin" /> 视频生成中 {completedCount}/{result.scenes.length}</>
                   ) : (
                     <><Play className="h-4 w-4" /> 按统一人物/风格生成全部视频</>
                   )}
                 </Button>
+                {anyVideoGenerating && (
+                  <span className="text-xs text-muted-foreground">
+                    进行中：{Object.entries(sceneVideos).filter(([,v]) => v.status==="submitting"||v.status==="in_queue"||v.status==="generating").map(([n])=>`#${n}`).join(" ")}
+                  </span>
+                )}
 
                 <Button
                   variant="outline"
