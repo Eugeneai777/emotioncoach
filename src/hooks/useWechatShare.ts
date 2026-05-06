@@ -292,7 +292,14 @@ export function useWechatShare(config: WechatShareConfig) {
 
         // 配置成功后设置分享内容
         wxSdk.ready(() => {
-          console.log('[WechatShare] wx.ready - setting share data');
+          console.log('[WechatShare] ✅ wx.ready - setting share data', {
+            signedUrl: currentUrl,
+            currentHref: window.location.href,
+            urlMatch: currentUrl === window.location.href.split('#')[0],
+            shareLink: config.link,
+            shareImg: config.imgUrl,
+            shareTitle: config.title,
+          });
 
           const sdk = getWxJssdk();
           if (!sdk) return;
@@ -303,10 +310,17 @@ export function useWechatShare(config: WechatShareConfig) {
           lastConfigRef.current = `${config.title}|${config.desc}|${config.link}|${config.imgUrl}`;
         });
 
-        // 错误处理（静默失败，不影响其他功能）
+        // 错误处理（输出完整对象方便定位）
         wxSdk.error((res) => {
-          console.warn('[WechatShare] wx.error:', res.errMsg);
-          console.warn('[WechatShare] Possible causes: 1) JS接口安全域名未配置 2) 签名过期 3) appId不匹配');
+          console.error('[WechatShare] ❌ wx.error full:', JSON.stringify(res));
+          console.error('[WechatShare] Diagnostic:', {
+            signedUrl: currentUrl,
+            currentHref: window.location.href.split('#')[0],
+            urlMismatch: currentUrl !== window.location.href.split('#')[0],
+            appId: wxConfig.appId,
+            timestamp: wxConfig.timestamp,
+          });
+          console.error('[WechatShare] 常见原因: 1) invalid signature → URL与签名URL不一致(SPA路由变化) 2) JS接口安全域名未在公众号后台配置 wechat.eugenewe.net 3) appId不匹配 4) 签名过期(>2h)');
         });
       } catch (error) {
         console.warn('[WechatShare] Failed to configure share:', error);
