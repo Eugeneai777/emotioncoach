@@ -695,7 +695,7 @@ export default function DramaScriptGenerator() {
     if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     autosaveTimerRef.current = setTimeout(() => {
       saveCurrentScript({ silent: true });
-    }, 1000);
+    }, 200);
     return () => {
       if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     };
