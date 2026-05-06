@@ -471,14 +471,26 @@ export function CompetitivenessResult({ result, answers, followUpInsights, onBac
 
         {/* 7天有劲训练营推荐 */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45, duration: 0.4 }}>
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={() => navigate('/camp-intro/emotion_stress_7')}
-          >
-            了解7天有劲训练营
-            <ChevronRight className="w-4 h-4 ml-1" />
-          </Button>
+          <Card className="border-0 bg-gradient-to-br from-rose-500 to-purple-600 text-white shadow-lg">
+            <CardContent className="p-5">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center">
+                  <Sparkles className="w-5 h-5" />
+                </div>
+                <h3 className="text-lg font-bold">7天有劲训练营</h3>
+              </div>
+              <p className="text-sm text-white/90 leading-relaxed mb-4">
+                职场+家庭双线疲惫？每日15分钟能量练习，帮你重启节奏感、找回35+女性的竞争力底气。
+              </p>
+              <Button
+                className="w-full bg-white text-rose-600 hover:bg-white/90 font-semibold"
+                onClick={() => navigate('/camp-intro/emotion_stress_7')}
+              >
+                了解7天有劲训练营
+                <ChevronRight className="w-4 h-4 ml-1" />
+              </Button>
+            </CardContent>
+          </Card>
         </motion.div>
       </div>
 
