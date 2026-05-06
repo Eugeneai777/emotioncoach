@@ -7,7 +7,8 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { MessageCircle, Sparkles, ChevronRight, Share2, RotateCcw, AlertTriangle, Target, Compass, Search, Brain, Bot, Map } from "lucide-react";
+import { MessageCircle, Sparkles, ChevronRight, Share2, RotateCcw, AlertTriangle, Target, Compass, Search, Brain, Bot } from "lucide-react";
+import { AssistantQRCard } from "./AssistantQRCard";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
@@ -256,19 +257,52 @@ export function EmotionHealthResult({ result, onShare, onRetake }: EmotionHealth
         </CardContent>
       </Card>
 
+      {/* 助教企微 - 私域沉淀 */}
+      <AssistantQRCard />
+
+      {/* 延伸测评推荐 - 付费转化 */}
+      <div className="space-y-3">
+        <h3 className="text-sm font-semibold text-foreground px-1">你可能还需要的深度测评</h3>
+
+        <button
+          onClick={() => navigate('/assessment/women_competitiveness')}
+          className="w-full text-left rounded-2xl p-4 bg-gradient-to-r from-rose-50 to-pink-50 dark:from-rose-950/30 dark:to-pink-950/30 border border-rose-100 dark:border-rose-900 hover:shadow-md transition-shadow"
+        >
+          <div className="flex items-start gap-3">
+            <span className="text-3xl mt-0.5">👩‍💼</span>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between gap-2">
+                <h4 className="text-sm font-bold text-foreground">35+女性竞争力测评</h4>
+                <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed mt-1">
+                看清职场、家庭、自我三重角色下的竞争力优势与盲区
+              </p>
+            </div>
+          </div>
+        </button>
+
+        <button
+          onClick={() => navigate('/wealth-block-intro')}
+          className="w-full text-left rounded-2xl p-4 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 border border-amber-100 dark:border-amber-900 hover:shadow-md transition-shadow"
+        >
+          <div className="flex items-start gap-3">
+            <span className="text-3xl mt-0.5">💰</span>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between gap-2">
+                <h4 className="text-sm font-bold text-foreground">财富卡点测评</h4>
+                <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed mt-1">
+                识别情绪压力背后的财富信念障碍，打开赚钱与守钱通道
+              </p>
+            </div>
+          </div>
+        </button>
+      </div>
+
       {/* 其他操作按钮 */}
       <div className="space-y-3 pb-[calc(20px+env(safe-area-inset-bottom))]">
-        {/* 成长支持路径入口 */}
-        <Button 
-          variant="outline" 
-          className="w-full bg-gradient-to-r from-violet-500/5 to-purple-500/5 border-violet-200 dark:border-violet-800 hover:from-violet-500/10 hover:to-purple-500/10"
-          onClick={() => navigate('/growth-path')}
-        >
-          <Map className="w-4 h-4 mr-2 text-violet-600 dark:text-violet-400" />
-          查看完整成长支持路径
-          <ChevronRight className="w-4 h-4 ml-1" />
-        </Button>
-
         <Button 
           variant="outline" 
           className="w-full"
