@@ -473,6 +473,10 @@ export function DynamicAssessmentResult({
                     <p className="text-sm text-muted-foreground max-w-sm mx-auto mb-3 leading-relaxed">
                       {vitalitySummary}
                     </p>
+                  ) : isWomenCompetitiveness ? (
+                    <p className="text-sm text-muted-foreground max-w-sm mx-auto mb-3 leading-relaxed">
+                      {competitivenessSummary}
+                    </p>
                   ) : result.primaryPattern?.description && (
                   <p className="text-sm text-muted-foreground max-w-xs mx-auto mb-3">
                     {result.primaryPattern.description}
@@ -480,7 +484,11 @@ export function DynamicAssessmentResult({
                 )}
                 <div className="flex items-center justify-center gap-2">
                   <Badge className="text-base px-4 py-1.5 bg-primary/10 text-primary border-primary/20 hover:bg-primary/15">
-                    {isMaleMidlifeVitality ? `有劲状态指数 ${vitalityStatusPercent}%` : `${result.totalScore} / ${result.maxScore} 分`}
+                    {isMaleMidlifeVitality
+                      ? `有劲状态指数 ${vitalityStatusPercent}%`
+                      : isWomenCompetitiveness
+                        ? `绽放指数 ${scorePercent}%`
+                        : `${result.totalScore} / ${result.maxScore} 分`}
                   </Badge>
                   <Button
                     variant="ghost"
