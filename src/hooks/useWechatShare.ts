@@ -254,23 +254,15 @@ export function useWechatShare(config: WechatShareConfig) {
     })();
 
     async function configWechatShare() {
-
-    // 配置唯一标识（避免重复配置）
-    const configKey = `${config.title}|${config.desc}|${config.link}|${config.imgUrl}`;
-    if (configuredRef.current && lastConfigRef.current === configKey) {
-      return;
-    }
-
-    async function configWechatShare() {
       try {
         // 使用当前页面完整 URL（不含 hash）
         const currentUrl = window.location.href.split('#')[0];
-        
+
         console.log('[WechatShare] Configuring share for URL:', currentUrl);
-        
+
         // 获取签名（带本地缓存，减少首屏 race condition）
         const wxConfig = await getJssdkSignatureCached(currentUrl);
-        
+
         console.log('[WechatShare] Got signature config:', {
           appId: wxConfig.appId,
           timestamp: wxConfig.timestamp,
@@ -301,14 +293,14 @@ export function useWechatShare(config: WechatShareConfig) {
         // 配置成功后设置分享内容
         wxSdk.ready(() => {
           console.log('[WechatShare] wx.ready - setting share data');
-          
+
           const sdk = getWxJssdk();
           if (!sdk) return;
 
           setWechatShareData(sdk, config);
 
           configuredRef.current = true;
-          lastConfigRef.current = configKey;
+          lastConfigRef.current = `${config.title}|${config.desc}|${config.link}|${config.imgUrl}`;
         });
 
         // 错误处理（静默失败，不影响其他功能）
@@ -322,7 +314,9 @@ export function useWechatShare(config: WechatShareConfig) {
       }
     }
 
-    configWechatShare();
+    return () => {
+      cancelled = true;
+    };
   }, [config.title, config.desc, config.link, config.imgUrl]);
 }
 
