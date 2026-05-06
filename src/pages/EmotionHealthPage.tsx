@@ -24,6 +24,31 @@ import {
   type EmotionHealthResultType
 } from "@/components/emotion-health";
 import type { EmotionHealthHistoryRecord } from "@/hooks/useEmotionHealthHistory";
+import { Lock } from "lucide-react";
+
+function ResultLoginGate({ onLogin }: { onLogin: () => void }) {
+  return (
+    <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-rose-50 via-white to-purple-50 dark:from-rose-950/30 dark:via-background dark:to-purple-950/30 p-6 text-center space-y-4">
+      <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
+        <Lock className="w-6 h-6 text-primary" />
+      </div>
+      <div className="space-y-1">
+        <h3 className="text-base font-bold text-foreground">你的专属测评报告已生成</h3>
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          登录后立即查看完整结果、AI 教练解读与个性化成长建议
+        </p>
+      </div>
+      <Button
+        size="lg"
+        className="w-full h-12 bg-gradient-to-r from-rose-500 to-purple-500 hover:from-rose-600 hover:to-purple-600"
+        onClick={onLogin}
+      >
+        登录 / 注册查看完整报告
+      </Button>
+      <p className="text-[11px] text-muted-foreground">登录后答题进度自动保留</p>
+    </div>
+  );
+}
 
 type PageStep = 'start' | 'questions' | 'result';
 type ActiveTab = 'assessment' | 'history';
