@@ -852,6 +852,34 @@ export function DynamicAssessmentResult({
           </motion.div>
         )}
 
+        {/* 35+女性竞争力测评 → 7天有劲训练营推荐 */}
+        {template.assessment_key === 'women_competitiveness' && !isLiteMode && (
+          <motion.div custom={7} variants={fadeUp} initial="hidden" animate="visible">
+            <Card className="border-0 bg-gradient-to-br from-rose-500 to-purple-600 text-white shadow-lg overflow-hidden">
+              <CardContent className="p-4 space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center text-xl shrink-0">
+                    <Sparkles className="w-5 h-5" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-bold text-base">7天有劲训练营</h3>
+                    <p className="text-xs leading-relaxed mt-1 text-white/90">
+                      职场+家庭双线疲惫？每日15分钟能量练习，帮你重启节奏感、找回35+女性的竞争力底气。
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  variant="secondary"
+                  className="w-full h-11 rounded-xl gap-2 bg-white text-rose-600 hover:bg-white/90"
+                  onClick={() => navigate('/camp-intro/emotion_stress_7')}
+                >
+                  了解7天有劲训练营 <ArrowRight className="w-4 h-4" />
+                </Button>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
         {/* SBTI-specific paid assessment recommendations */}
         {isSBTI && !isLiteMode && (
           <motion.div custom={7} variants={fadeUp} initial="hidden" animate="visible" className="space-y-3">
