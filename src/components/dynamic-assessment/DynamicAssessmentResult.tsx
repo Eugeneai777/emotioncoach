@@ -335,6 +335,8 @@ export function DynamicAssessmentResult({
   const scorePercent = result.maxScore > 0 ? Math.round((result.totalScore / result.maxScore) * 100) : 0;
   const isSBTI = scoringType === 'sbti';
   const isMaleMidlifeVitality = template.assessment_key === 'male_midlife_vitality';
+  const isWomenCompetitiveness = template.assessment_key === 'women_competitiveness';
+  const useExpandedLayout = isMaleMidlifeVitality || isWomenCompetitiveness;
   const vitalityStatusPercent = isMaleMidlifeVitality ? toVitalityStatusScore(result.totalScore, result.maxScore) : scorePercent;
   const vitalityStatusScores = useMemo(() => {
     if (!isMaleMidlifeVitality) return result.dimensionScores;
@@ -354,6 +356,13 @@ export function DynamicAssessmentResult({
       : vitalityStatusPercent >= 40
         ? "你不是不行，是长期消耗让身体和信心都变紧了。建议先把恢复放到优先级前面。"
         : "当前已经接近低电量运行，不建议继续硬扛。先从睡眠、呼吸和每日小行动开始修复。";
+  const competitivenessSummary = scorePercent >= 80
+    ? "你已经在绽放期：底盘稳，资源、能量、关系都在你这边。可以开始把它放大成系统性影响力。"
+    : scorePercent >= 60
+      ? "你具备绽放底气，只是被多线消耗稀释了。重启节奏感后会快速回弹。"
+      : scorePercent >= 40
+        ? "你不是不行，是 35+ 的你同时在扛太多线。先把电量充回来，再谈竞争力。"
+        : "当前已经在低电量运行。不建议硬撑，先把睡眠、情绪、节奏修复，再谈外部突破。";
   const sbtiGroups = isSBTI ? [
     { name: '自我模型', emoji: '🪞', keys: ['S1','S2','S3'] },
     { name: '情感模型', emoji: '💗', keys: ['E1','E2','E3'] },
