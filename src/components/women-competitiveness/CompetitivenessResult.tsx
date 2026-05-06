@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2, ChevronDown, Share2 } from "lucide-react";
+import { ArrowLeft, Loader2, ChevronDown, Share2, ChevronRight } from "lucide-react";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { executeOneClickShare } from "@/utils/oneClickShare";
 import ShareImagePreview from "@/components/ui/share-image-preview";
@@ -71,6 +72,7 @@ function splitMarkdownSections(md: string): { title: string; content: string }[]
 }
 
 export function CompetitivenessResult({ result, answers, followUpInsights, onBack, assessmentId: existingId, preloadedAiAnalysis }: CompetitivenessResultProps) {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
   const [isLoadingAI, setIsLoadingAI] = useState(true);
@@ -465,6 +467,18 @@ export function CompetitivenessResult({ result, answers, followUpInsights, onBac
               )}
             </CardContent>
           </Card>
+        </motion.div>
+
+        {/* 7天有劲训练营推荐 */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45, duration: 0.4 }}>
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={() => navigate('/camp-intro/emotion_stress_7')}
+          >
+            了解7天有劲训练营
+            <ChevronRight className="w-4 h-4 ml-1" />
+          </Button>
         </motion.div>
       </div>
 

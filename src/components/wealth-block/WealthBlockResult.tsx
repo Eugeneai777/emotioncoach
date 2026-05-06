@@ -717,6 +717,38 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
         dominantPoor={result.dominantPoor}
       />
 
+      {/* 5.6 7天有劲训练营推荐 */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.35 }}
+      >
+        <Card className="overflow-hidden border-0 shadow-lg">
+          <div className="bg-gradient-to-br from-emerald-500 to-teal-600 p-4 sm:p-5 text-white">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2 bg-white/20 rounded-xl backdrop-blur-sm">
+                <span className="text-2xl">🌿</span>
+              </div>
+              <div>
+                <p className="text-white/80 text-xs">释放压力，找回能量</p>
+                <h3 className="text-lg font-bold">7天有劲训练营</h3>
+              </div>
+            </div>
+            <p className="text-white/90 text-sm leading-relaxed mb-4">
+              如果你感到身心疲惫、情绪内耗严重，7天有劲训练营将通过每日15分钟的能量练习，帮你从根源化解压力，找回生活的节奏感。
+            </p>
+            <Button
+              variant="secondary"
+              className="w-full bg-white text-emerald-600 hover:bg-white/90 font-semibold"
+              onClick={() => navigate('/camp-intro/emotion_stress_7')}
+            >
+              了解7天有劲训练营
+              <ChevronRight className="w-4 h-4 ml-1" />
+            </Button>
+          </div>
+        </Card>
+      </motion.div>
+
 
       {/* 6. 绽放邀请码入口 - 未购买时显示 */}
       {!hasPurchased && (
