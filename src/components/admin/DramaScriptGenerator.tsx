@@ -2868,12 +2868,29 @@ export default function DramaScriptGenerator() {
                 </Button>
               </div>
 
-              {completedCount > 0 && completedCount < result.scenes.length && (
-                <Progress value={(completedCount / result.scenes.length) * 100} className="h-2" />
-              )}
+              {(anyVideoGenerating || (completedCount > 0 && completedCount < result.scenes.length)) && (() => {
+                const generatingScenes = Object.entries(sceneVideos)
+                  .filter(([, v]) => v.status === "submitting" || v.status === "in_queue" || v.status === "generating")
+                  .map(([n, v]) => `#${n}(${getStatusLabel(v.status)})`);
+                return (
+                  <div className="space-y-1 rounded-md border border-primary/30 bg-primary/5 p-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="flex items-center gap-1.5 font-medium text-primary">
+                        {anyVideoGenerating && <Loader2 className="h-3 w-3 animate-spin" />}
+                        视频生成进度 {completedCount}/{result.scenes.length}
+                      </span>
+                      {anyVideoGenerating && (
+                        <span className="text-muted-foreground">进行中：{generatingScenes.slice(0, 4).join(" ")}{generatingScenes.length > 4 ? ` +${generatingScenes.length - 4}` : ""}</span>
+                      )}
+                    </div>
+                    <Progress value={(completedCount / result.scenes.length) * 100} className="h-2" />
+                    <div className="text-[11px] text-muted-foreground">每片段约需 1-3 分钟，可在下方各分镜卡片查看单独状态。</div>
+                  </div>
+                );
+              })()}
               {completedAudioCount > 0 && completedAudioCount < result.scenes.length && (
                 <div className="space-y-1">
-                  <span className="text-xs text-muted-foreground">旁白生成进度</span>
+                  <span className="text-xs text-muted-foreground">旁白生成进度 {completedAudioCount}/{result.scenes.length}</span>
                   <Progress value={(completedAudioCount / result.scenes.length) * 100} className="h-2" />
                 </div>
               )}
