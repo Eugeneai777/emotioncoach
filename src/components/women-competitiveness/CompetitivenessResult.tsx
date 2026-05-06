@@ -72,6 +72,7 @@ function splitMarkdownSections(md: string): { title: string; content: string }[]
 }
 
 export function CompetitivenessResult({ result, answers, followUpInsights, onBack, assessmentId: existingId, preloadedAiAnalysis }: CompetitivenessResultProps) {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
   const [isLoadingAI, setIsLoadingAI] = useState(true);
