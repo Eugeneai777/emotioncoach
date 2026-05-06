@@ -14,6 +14,8 @@ import DynamicAssessmentShareCard from "./DynamicAssessmentShareCard";
 import SBTIShareCard from "./SBTIShareCard";
 import MaleMidlifeVitalityShareCard from "./MaleMidlifeVitalityShareCard";
 import MaleVitalityReportCard from "./MaleVitalityReportCard";
+import WomenCompetitivenessShareCard from "./WomenCompetitivenessShareCard";
+import WomenCompetitivenessReportCard from "./WomenCompetitivenessReportCard";
 import { WeChatPdfGuideSheet } from "./WeChatPdfGuideSheet";
 import ShareImagePreview from "@/components/ui/share-image-preview";
 import { executeOneClickShare } from "@/utils/oneClickShare";
