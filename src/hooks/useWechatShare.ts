@@ -255,8 +255,42 @@ export function useWechatShare(config: WechatShareConfig) {
 
     async function configWechatShare() {
       try {
-        // 使用当前页面完整 URL（不含 hash）
-        const currentUrl = window.location.href.split('#')[0];
+        // 剔除易变/追踪参数，保证「微信实际 URL」与「签名 URL」一致
+        // _cb: 缓存破坏戳；ref: 分享/推广来源；utm_*: 营销追踪
+        const VOLATILE_PARAMS = ['_cb', 'ref', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'];
+
+        const stripVolatile = (href: string): string => {
+          try {
+            const u = new URL(href);
+            let changed = false;
+            for (const p of VOLATILE_PARAMS) {
+              if (u.searchParams.has(p)) {
+                u.searchParams.delete(p);
+                changed = true;
+              }
+            }
+            // 去掉 hash（微信签名要求不含 #）
+            u.hash = '';
+            return changed || href.includes('#') ? u.toString().replace(/\?$/, '') : href.split('#')[0];
+          } catch {
+            return href.split('#')[0];
+          }
+        };
+
+        const rawHref = window.location.href;
+        const cleanedUrl = stripVolatile(rawHref);
+
+        // 同步浏览器地址栏，使微信读取到的 URL 与签名 URL 完全一致
+        if (cleanedUrl !== rawHref.split('#')[0]) {
+          try {
+            window.history.replaceState(window.history.state, '', cleanedUrl);
+            console.log('[WechatShare] Stripped volatile params from URL', { from: rawHref, to: cleanedUrl });
+          } catch (e) {
+            console.warn('[WechatShare] history.replaceState failed (non-blocking):', e);
+          }
+        }
+
+        const currentUrl = cleanedUrl;
 
         console.log('[WechatShare] Configuring share for URL:', currentUrl);
 
