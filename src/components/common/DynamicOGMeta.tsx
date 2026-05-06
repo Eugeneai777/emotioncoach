@@ -102,9 +102,9 @@ export function DynamicOGMeta({ pageKey, overrides }: DynamicOGMetaProps) {
       desc: finalConfig.description,
       imageUrl: safeShareImage,
       h5Url: shareUrl,
-      routeKey: `${pageKey}|${location.pathname}${location.search}`,
+      routeKey: `${pageKey}|${location.pathname}${location.search}${location.hash}`,
     }),
-    [finalConfig.ogTitle, finalConfig.description, safeShareImage, shareUrl, pageKey, location.pathname, location.search]
+    [finalConfig.ogTitle, finalConfig.description, safeShareImage, shareUrl, pageKey, location.pathname, location.search, location.hash]
   );
   useMiniProgramShareBridge(bridgeConfig);
 
