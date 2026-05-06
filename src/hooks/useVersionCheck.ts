@@ -21,6 +21,11 @@ export function useVersionCheck() {
           // 防止无限刷新
           const already = sessionStorage.getItem(RELOAD_KEY);
           if (already === version) return;
+          // 忙碌守卫:正在生图/生视频/生音频时,跳过本次 reload,等下次轮询
+          if ((window as any).__LOVABLE_BUSY__) {
+            console.log("[useVersionCheck] busy, skip reload");
+            return;
+          }
           sessionStorage.setItem(RELOAD_KEY, version);
           window.location.reload();
         }

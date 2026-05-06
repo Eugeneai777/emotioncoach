@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { extractEdgeFunctionError } from "@/lib/edgeFunctionError";
 import { mergeVideosClientSide } from "@/utils/videoMerger";
+import { bumpBusy, releaseBusy } from "@/hooks/useBusyGuard";
 import { composeComicGrid } from "@/utils/comicGridComposer";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
@@ -694,7 +695,7 @@ export default function DramaScriptGenerator() {
     if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     autosaveTimerRef.current = setTimeout(() => {
       saveCurrentScript({ silent: true });
-    }, 1000);
+    }, 200);
     return () => {
       if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     };
@@ -981,6 +982,7 @@ export default function DramaScriptGenerator() {
   const generateCharacterReference = useCallback(async (char: Character, index: number) => {
     if (!result) return null;
     setCharacterImages((prev) => ({ ...prev, [index]: { status: "generating" } }));
+    bumpBusy();
     try {
       const { data, error } = await supabase.functions.invoke("drama-scene-image-openai", {
         body: {
@@ -1007,6 +1009,8 @@ export default function DramaScriptGenerator() {
       setCharacterImages((prev) => ({ ...prev, [index]: { status: "failed", error: e.message || "生成失败" } }));
       toast.error(`${char.name} 定妆图生成失败：${e.message || "请重试"}`);
       return null;
+    } finally {
+      releaseBusy();
     }
   }, [result, style]);
 
@@ -1069,6 +1073,7 @@ export default function DramaScriptGenerator() {
     if (!result) return null;
     const num = scene.sceneNumber;
     setSceneImages((prev) => ({ ...prev, [num]: { status: "generating" } }));
+    bumpBusy();
     try {
       const { data, error } = await supabase.functions.invoke("drama-scene-image-openai", {
         body: {
@@ -1094,6 +1099,8 @@ export default function DramaScriptGenerator() {
       setSceneImages((prev) => ({ ...prev, [num]: { status: "failed", error: e.message || "生成失败" } }));
       toast.error(`场景 ${num} 图片生成失败：${e.message || "请重试"}`);
       return null;
+    } finally {
+      releaseBusy();
     }
   }, [characterImages, characterReferenceUrls, imageAspectRatio, result, style]);
 
@@ -1183,6 +1190,15 @@ export default function DramaScriptGenerator() {
       clearInterval(pollingRefs.current[sceneNum]);
     }
 
+    // 持有忙碌锁,直到此 poll 终止
+    bumpBusy();
+    let released = false;
+    const releaseOnce = () => {
+      if (released) return;
+      released = true;
+      releaseBusy();
+    };
+
     const interval = setInterval(async () => {
       try {
         const { data, error } = await supabase.functions.invoke("jimeng-video-gen", {
@@ -1192,6 +1208,7 @@ export default function DramaScriptGenerator() {
           clearInterval(interval);
           delete pollingRefs.current[sceneNum];
           updateSceneVideo(sceneNum, { status: "failed", error: data?.error || "查询失败" });
+          releaseOnce();
           return;
         }
 
@@ -1201,10 +1218,12 @@ export default function DramaScriptGenerator() {
           delete pollingRefs.current[sceneNum];
           updateSceneVideo(sceneNum, { status: "done", videoUrl: data.video_url });
           toast.success(`场景 ${sceneNum} 视频生成完成！`);
+          releaseOnce();
         } else if (status === "failed" || status === "error") {
           clearInterval(interval);
           delete pollingRefs.current[sceneNum];
           updateSceneVideo(sceneNum, { status: "failed", error: "视频生成失败" });
+          releaseOnce();
         } else {
           // in_queue or generating
           updateSceneVideo(sceneNum, { status: status === "generating" ? "generating" : "in_queue" });
@@ -1228,6 +1247,7 @@ export default function DramaScriptGenerator() {
     });
     updateSceneVideo(num, { status: "submitting" });
 
+    bumpBusy();
     try {
       const { data, error } = await supabase.functions.invoke("jimeng-video-gen", {
         body: {
@@ -1250,6 +1270,8 @@ export default function DramaScriptGenerator() {
     } catch (e: any) {
       updateSceneVideo(num, { status: "failed", error: e.message });
       return false;
+    } finally {
+      releaseBusy();
     }
   }, [buildJimengVideoPrompt, getVideoReferenceUrls, videoAspectRatio, videoDuration, updateSceneVideo, pollVideoStatus]);
 
@@ -1323,6 +1345,7 @@ export default function DramaScriptGenerator() {
       return;
     }
     setSceneAudios(prev => ({ ...prev, [num]: { status: "generating" } }));
+    bumpBusy();
     try {
       const { data, error } = await supabase.functions.invoke("volcengine-tts", {
         body: { text, voice_type: "zh_female_cancan_mars_bigtts" },
@@ -1358,6 +1381,8 @@ export default function DramaScriptGenerator() {
       toast.success(`场景 ${num} 旁白已生成`);
     } catch (e: any) {
       setSceneAudios(prev => ({ ...prev, [num]: { status: "failed", error: e.message } }));
+    } finally {
+      releaseBusy();
     }
   }, []);
 
