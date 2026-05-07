@@ -234,7 +234,7 @@ export default function OGHealthMonitor() {
       />
 
       {/* 统计卡片 */}
-      <div className="grid gap-3 grid-cols-2 md:grid-cols-7">
+      <div className="grid gap-3 grid-cols-2 md:grid-cols-4 xl:grid-cols-7">
         {Object.entries(ISSUE_TYPE_CONFIG).map(([key, cfg]) => {
           const Icon = cfg.icon;
           const count = stats[key as keyof typeof stats] || 0;
@@ -378,10 +378,11 @@ export default function OGHealthMonitor() {
           ) : (
             <div className="space-y-3 max-h-[600px] overflow-y-auto">
               {filtered.map((r: any) => {
-                const cfg = ISSUE_TYPE_CONFIG[r.issue_type] || { label: r.issue_type, icon: AlertTriangle, color: 'text-muted-foreground' };
+                 const cfg = ISSUE_TYPE_CONFIG[r.issue_type] || { label: r.issue_type, icon: AlertTriangle, color: 'text-muted-foreground' };
                 const Icon = cfg.icon;
                 const sev = SEVERITY_BADGE[r.severity] || SEVERITY_BADGE.info;
                 const isResolved = r.status === 'resolved';
+                 const traceId = r.extra?.traceId;
                 return (
                   <div
                     key={r.id}
@@ -394,6 +395,7 @@ export default function OGHealthMonitor() {
                         <Badge variant={sev.variant} className="text-[10px]">{sev.label}</Badge>
                         <Badge variant="outline" className="text-[10px]">{cfg.label}</Badge>
                         <Badge variant="outline" className="text-[10px]">{getPlatformLabel(r.platform)}</Badge>
+                        {traceId && <Badge variant="outline" className="text-[10px]">{traceId}</Badge>}
                         {isResolved && (
                           <Badge variant="outline" className="text-[10px] text-emerald-600 border-emerald-300">
                             <CheckCircle className="h-2.5 w-2.5 mr-0.5" />已解决
