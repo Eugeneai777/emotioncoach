@@ -297,10 +297,10 @@ export function DynamicAssessmentResult({
     }
   };
 
-  const handleSaveAsPdf = async () => {
+  const handleSaveAsPdf = async (opts?: { force?: boolean }) => {
     if (savingReport) return;
-    // 微信内不直接下载 PDF，弹引导卡
-    if (isWeChatLike) {
+    // 微信内不直接下载 PDF，弹引导卡（管理员自动下载场景 force=true 跳过）
+    if (isWeChatLike && !opts?.force) {
       setShowSaveSheet(false);
       setShowWeChatPdfGuide(true);
       return;
@@ -325,16 +325,23 @@ export function DynamicAssessmentResult({
     }
   };
 
-  // 浏览器外跳落地：autoSavePdf=true 时,滚动到保存按钮 + 高亮脉冲 + 提示
+  // 浏览器外跳落地：autoSavePdf=true 时,自动滚动 + 直接触发下载（管理员一键导出）
   useEffect(() => {
     if (!autoSavePdf) return;
-    const t = setTimeout(() => {
+    const t = setTimeout(async () => {
       saveButtonRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       setPulseSaveBtn(true);
-      toast.info('点这里保存 PDF ↓', { duration: 4000 });
-      setTimeout(() => setPulseSaveBtn(false), 4000);
-    }, 800);
+      try {
+        await handleSaveAsPdf({ force: true });
+        toast.success('PDF 已自动下载，可关闭此页面');
+      } catch {
+        toast.info('自动下载失败，请点击下方按钮手动保存');
+      } finally {
+        setTimeout(() => setPulseSaveBtn(false), 2000);
+      }
+    }, 1800);
     return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoSavePdf]);
 
   // Score percentage for the ring
@@ -1232,7 +1239,7 @@ export function DynamicAssessmentResult({
             ) : (
               <button
                 type="button"
-                onClick={handleSaveAsPdf}
+                onClick={() => handleSaveAsPdf()}
                 className="w-full flex items-center gap-3 p-4 rounded-xl border border-border hover:bg-muted/50 transition-colors text-left min-h-[60px]"
               >
                 <FileText className="w-5 h-5 text-primary shrink-0" />
