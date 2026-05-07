@@ -184,6 +184,7 @@ export function useAdminAssessmentInsights(templateId: string | undefined) {
           id: t.id,
           title: t.title,
           emoji: t.emoji,
+          assessmentKey: t.assessment_key || null,
           questionCount: t.question_count || 0,
           maxScore: maxS,
           dimensions: t.dimensions,
