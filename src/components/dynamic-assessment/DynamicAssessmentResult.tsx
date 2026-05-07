@@ -1189,7 +1189,16 @@ export function DynamicAssessmentResult({
             </Button>
           )}
         </motion.div>
+        <div ref={bottomAnchorRef} aria-hidden className="h-px" />
       </div>
+
+      {/* Sticky 底部 CTA — 男版常驻领取入口 */}
+      {isMaleMidlifeVitality && !isLiteMode && (
+        <MaleVitalityClaimStickyBar
+          onClick={() => setShowClaimSheet(true)}
+          hideOnAnchorRef={saveButtonRef}
+        />
+      )}
 
       {/* 保存格式 Sheet */}
       <Sheet open={showSaveSheet} onOpenChange={setShowSaveSheet}>
