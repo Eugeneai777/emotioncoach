@@ -1141,7 +1141,7 @@ export function DynamicAssessmentResult({
             <div ref={saveButtonRef}>
               <Button
                 className={cn(
-                  "w-full gap-2 rounded-xl h-12 text-base font-semibold",
+                  "w-full gap-2 rounded-xl h-12 text-base font-semibold bg-gradient-to-r from-teal-700 to-amber-600 hover:from-teal-600 hover:to-amber-500 text-white shadow-lg shadow-teal-700/20",
                   pulseSaveBtn && "ring-4 ring-primary/40 animate-pulse"
                 )}
                 onClick={() => {
@@ -1149,10 +1149,10 @@ export function DynamicAssessmentResult({
                   setShowClaimSheet(true);
                 }}
               >
-                📩 加运营企微 · 免费领完整 PDF 报告
+                📋 领取我的完整诊断报告（PDF）
               </Button>
               <p className="text-center text-[11px] text-muted-foreground mt-1.5">
-                限时免费领 · 1 个工作日内收到完整 PDF
+                由 EUGENE 顾问亲自发送 · 24 小时内送达 · 1v1 解读建议
               </p>
             </div>
           )}
