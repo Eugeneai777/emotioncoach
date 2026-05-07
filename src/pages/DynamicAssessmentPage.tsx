@@ -423,7 +423,7 @@ export default function DynamicAssessmentPage() {
         <main className="container max-w-2xl mx-auto px-4 py-4">
           <DynamicAssessmentIntro
             template={template}
-            onStart={() => setPhase("questions")}
+            onStart={requireAuthOrStart}
             onShowHistory={() => setPhase("history")}
             hasHistory={historyRecords.length > 0}
             requireAuth={_requireAuth}
