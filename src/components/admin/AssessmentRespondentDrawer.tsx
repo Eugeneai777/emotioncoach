@@ -1,9 +1,15 @@
+import { useEffect, useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Lock, Save, X } from "lucide-react";
 import { format } from "date-fns";
 import type { RespondentRow } from "@/hooks/useAdminAssessmentInsights";
+import { useUpsertAdminUserNote } from "@/hooks/useAdminUserNote";
 
 interface Props {
   open: boolean;
