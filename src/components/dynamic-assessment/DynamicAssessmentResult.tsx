@@ -165,6 +165,7 @@ export function DynamicAssessmentResult({
   const shareCardRef = useRef<HTMLDivElement>(null);
   const reportCardRef = useRef<HTMLDivElement>(null);
   const saveButtonRef = useRef<HTMLDivElement>(null);
+  const bottomAnchorRef = useRef<HTMLDivElement>(null);
   const [profileData, setProfileData] = useState<{ displayName?: string; avatarUrl?: string }>({});
   const [showSaveSheet, setShowSaveSheet] = useState(false);
   const [showMoreFormats, setShowMoreFormats] = useState(false);
