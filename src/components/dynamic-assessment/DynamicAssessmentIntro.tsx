@@ -237,15 +237,7 @@ export function DynamicAssessmentIntro({ template, onStart, onShowHistory, hasHi
                   </Button>
                   <Button
                     className="min-h-[44px] gap-1.5 text-xs sm:text-sm"
-                    onClick={() => {
-                      if (requireAuth && !user) {
-                        toast.info("请先登录后开始测评");
-                        setPostAuthRedirect(window.location.pathname + window.location.search);
-                        navigate(`/auth?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`);
-                        return;
-                      }
-                      needPay ? (onPayClick ?? onStart)() : onStart();
-                    }}
+                    onClick={handleStart}
                   >
                     <RotateCw className="w-4 h-4" /> 再测一次
                   </Button>
