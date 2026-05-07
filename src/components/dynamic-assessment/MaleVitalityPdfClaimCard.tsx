@@ -259,7 +259,7 @@ const MaleVitalityPdfClaimCard = forwardRef<HTMLDivElement, MaleVitalityPdfClaim
           >
             <img
               src={qiweiQr}
-              alt="EUGENE 顾问微信"
+              alt="有劲顾问微信"
               crossOrigin="anonymous"
               style={{ width: 220, height: 220, display: "block" }}
             />

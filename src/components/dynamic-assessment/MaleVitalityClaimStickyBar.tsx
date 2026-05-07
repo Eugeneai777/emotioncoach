@@ -62,7 +62,7 @@ export function MaleVitalityClaimStickyBar({ onClick, hideOnAnchorRef }: Props) 
           📋 领取我的完整诊断报告（PDF）
         </Button>
         <p className="text-center text-[11px] text-muted-foreground mt-1.5">
-          由 EUGENE 顾问亲自发送 · 24 小时内送达 · 1v1 解读建议
+          由 有劲顾问 亲自发送 · 24 小时内送达 · 1v1 解读建议
         </p>
       </div>
     </div>
