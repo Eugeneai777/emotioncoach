@@ -293,12 +293,32 @@ export default function DynamicAssessmentPage() {
   };
 
   // 浏览器外跳落地：?recordId=xxx → 直接打开该条历史记录的结果页
+  // 管理员模式：?recordId=xxx&adminPdf=1 → 直查数据库（受 RLS 保护）
+  const adminPdf = searchParams.get('adminPdf') === '1';
   useEffect(() => {
     if (!urlRecordId || !template || phase !== 'intro' || historyLoading) return;
     const rec = historyRecords.find((r: any) => r.id === urlRecordId);
-    if (rec) handleViewHistoryRecord(rec);
+    if (rec) {
+      handleViewHistoryRecord(rec);
+      return;
+    }
+    if (adminPdf) {
+      (async () => {
+        const { data, error } = await supabase
+          .from('partner_assessment_results')
+          .select('*')
+          .eq('id', urlRecordId)
+          .maybeSingle();
+        if (error || !data) {
+          toast.error('未找到该测评记录或无权访问');
+          return;
+        }
+        toast.message('管理员视图：正在查看他人报告');
+        handleViewHistoryRecord(data as any);
+      })();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [urlRecordId, template?.id, historyLoading, historyRecords.length]);
+  }, [urlRecordId, template?.id, historyLoading, historyRecords.length, adminPdf]);
 
   if (isLoading) {
     return (
