@@ -27,13 +27,13 @@ serve(async (req) => {
   }
 
   try {
-    const { url } = await req.json();
+    const { url, traceId } = await req.json();
     
     if (!url) {
       throw new Error('Missing url parameter');
     }
 
-    console.log('[JSSDK] Generating signature for URL:', url);
+    console.log('[JSSDK] Generating signature:', JSON.stringify({ url, traceId: traceId || null, userAgent: req.headers.get('user-agent') }));
 
     // 初始化 Supabase 客户端
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -170,6 +170,7 @@ serve(async (req) => {
         timestamp,
         nonceStr,
         signature,
+        traceId: traceId || null,
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
