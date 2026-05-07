@@ -17,6 +17,8 @@ import MaleVitalityReportCard from "./MaleVitalityReportCard";
 import WomenCompetitivenessShareCard from "./WomenCompetitivenessShareCard";
 import WomenCompetitivenessReportCard from "./WomenCompetitivenessReportCard";
 import { WeChatPdfGuideSheet } from "./WeChatPdfGuideSheet";
+import { MaleVitalityPdfClaimSheet } from "./MaleVitalityPdfClaimSheet";
+import { useClaimCode } from "@/hooks/useClaimCode";
 import ShareImagePreview from "@/components/ui/share-image-preview";
 import { executeOneClickShare } from "@/utils/oneClickShare";
 import { generateCardBlob } from "@/utils/shareCardConfig";
