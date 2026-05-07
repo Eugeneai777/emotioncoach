@@ -223,7 +223,7 @@ const MaleVitalityPdfClaimCard = forwardRef<HTMLDivElement, MaleVitalityPdfClaim
             {formatClaimCode(claimCode)}
           </div>
           <div style={{ fontSize: 14, color: "#FCD34D", fontWeight: 500 }}>
-            🔥 限时免费领 · 1 个工作日内送达
+            🔒 仅限本人凭码领取 · 24 小时内送达
           </div>
         </div>
 
