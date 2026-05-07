@@ -32,6 +32,7 @@ const ISSUE_TYPE_CONFIG: Record<string, { label: string; icon: typeof ImageIcon;
   wechat_jssdk_sdk_ready: { label: 'JSSDK已加载', icon: CheckCircle, color: 'text-emerald-500' },
   wechat_jssdk_sdk_missing: { label: 'JSSDK未加载', icon: XCircle, color: 'text-destructive' },
   wechat_jssdk_signature_request: { label: '签名请求', icon: Share2, color: 'text-blue-500' },
+  wechat_jssdk_signature_cache_hit: { label: '签名缓存命中', icon: CheckCircle, color: 'text-emerald-500' },
   wechat_jssdk_signature_success: { label: '签名成功', icon: CheckCircle, color: 'text-emerald-500' },
   wechat_jssdk_signature_error: { label: '签名失败', icon: XCircle, color: 'text-destructive' },
   wechat_jssdk_config_start: { label: '开始配置', icon: Share2, color: 'text-blue-500' },
