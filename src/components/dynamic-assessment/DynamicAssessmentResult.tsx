@@ -84,6 +84,8 @@ interface DynamicAssessmentResultProps {
   recordId?: string | null;
   /** 落地页自动定位/高亮"保存 PDF"按钮（来自浏览器外跳链接 ?autoSave=pdf） */
   autoSavePdf?: boolean;
+  /** 管理员代查时的「报告所属用户」资料；存在时优先于当前登录用户 */
+  subjectProfile?: { userId: string; displayName?: string; avatarUrl?: string };
 }
 
 // SBTI → paid assessment recommendations
@@ -155,6 +157,7 @@ export function DynamicAssessmentResult({
   onLoginToUnlock,
   recordId,
   autoSavePdf,
+  subjectProfile,
 }: DynamicAssessmentResultProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
