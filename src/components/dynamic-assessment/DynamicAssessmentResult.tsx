@@ -741,8 +741,8 @@ export function DynamicAssessmentResult({
           </motion.div>
         )}
 
-        {/* Tips (hidden for SBTI; women version uses dedicated bloom action list) */}
-        {!isSBTI && !isLiteMode && !isWomenCompetitiveness && result.primaryPattern?.tips?.length > 0 && (
+        {/* Tips (hidden for SBTI / women / male — male & women use dedicated lists) */}
+        {!isSBTI && !isLiteMode && !isWomenCompetitiveness && !isMaleMidlifeVitality && result.primaryPattern?.tips?.length > 0 && (
           <motion.div custom={4} variants={fadeUp} initial="hidden" animate="visible">
             <Card className="border-border/40 bg-card/90 backdrop-blur-sm shadow-sm">
               <CardContent className="p-4">
