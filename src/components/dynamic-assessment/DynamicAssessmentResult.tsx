@@ -171,6 +171,8 @@ export function DynamicAssessmentResult({
   const [reportPreview, setReportPreview] = useState<{ url: string; isRemoteReady: boolean; isBlob: boolean } | null>(null);
   const [savingReport, setSavingReport] = useState(false);
   const [pulseSaveBtn, setPulseSaveBtn] = useState(false);
+  const [showClaimSheet, setShowClaimSheet] = useState(false);
+  const { claimCode, loading: loadingClaimCode } = useClaimCode(recordId);
 
   // Fetch coach route
   useEffect(() => {
