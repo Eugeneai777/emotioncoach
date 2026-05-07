@@ -205,6 +205,29 @@ export function DynamicAssessmentIntro({ template, onStart, onShowHistory, hasHi
       </div>
 
       <div className="max-w-lg mx-auto px-4 -mt-6 space-y-4 pb-8 relative z-20">
+        {/* 顶部 CTA：避免用户必须滑到底部才能开始 */}
+        {!showVitalityQuickCard && (
+          <motion.div {...fadeUp(0.3)}>
+            <Button
+              onClick={handleStart}
+              className="w-full h-12 text-base gap-2 shadow-lg active:scale-[0.98] transition-transform"
+              size="lg"
+            >
+              {needPay
+                ? <>{`¥${price ?? '?'} 开始测评`} <ArrowRight className="w-5 h-5" /></>
+                : isMaleMidlifeVitality
+                  ? <>🔥 限时免费开始评估 <ArrowRight className="w-5 h-5" /></>
+                  : template.assessment_key === 'sbti_personality'
+                    ? <>🔥 限时免费测评 <ArrowRight className="w-5 h-5" /></>
+                    : <>开始测评 <ArrowRight className="w-5 h-5" /></>}
+            </Button>
+            {!needPay && isMaleMidlifeVitality && (
+              <p className="text-center text-[10px] text-muted-foreground mt-2">
+                <span className="line-through opacity-60">原价 ¥29.9</span> · 限时免费开放 · 测完生成 AI 私密报告
+              </p>
+            )}
+          </motion.div>
+        )}
         {/* 老用户快捷卡（仅 vitality + 已有历史） */}
         {showVitalityQuickCard && lastSummary && onShowHistory && (
           <motion.div {...fadeUp(0.32)}>
