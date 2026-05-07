@@ -1,116 +1,81 @@
-## 方案 v2：底部 Sticky CTA（替代"中间滑动+上下固定"）
+## 问题诊断
 
-### 您的诉求
-让【领取我的完整 PDF 诊断报告】始终可见，不被埋在长内容中。
+**1. 残留「EUGENE」文案**（凭证海报 `MaleVitalityPdfClaimCard.tsx`，上次只改了 alt 没改可视文案）：
+- L85：`EUGENE · 你的专属凭证`
+- L240：`长按识别二维码，添加你的 EUGENE 专属顾问`（图中红框 1）
+- L278：`扫码添加 · EUGENE 私人顾问`（图中红框 2）
+- L289：`仅供本人使用，请勿外传 · EUGENE 出品`
 
-### 商业架构师评估：为什么不建议"上下两端固定 + 中间滑动"
+**2. 凭证图加载慢的根因**
+- `MaleVitalityPdfClaimSheet.tsx` 打开 Sheet 后才开始：等 150ms → html2canvas 离屏渲染 750px 海报 → `forceScale: 2`（实际渲染 1500px 大画布）
+- 卡片内含两张图：远程头像 `avatarUrl`（跨域、网络等待）+ 本地企微 QR（小，问题不大）
+- 头像 `crossOrigin="anonymous"` 若服务端 CORS 不全或网络慢，html2canvas 会等待或降级，整体首屏 1.5-3s 起
+- 每次开 Sheet 都重新生成（无缓存），重复打开依旧慢
 
-技术上可行（CSS `position:fixed` + `overflow-y:auto`），但**强烈不推荐**，原因如下：
+## 优化方案（仅前端展示层，不动业务/DB/领取码逻辑）
 
-| 维度 | "上下固定 + 中间滑动" | 仅"底部 Sticky CTA" |
-|------|----------------------|-------------------|
-| iOS Safari 兼容性 | ❌ 顶/底 fixed 在 iOS 滚动时频繁抖动、地址栏伸缩导致高度跳变 | ✅ 原生支持 `position:sticky`，无抖动 |
-| 微信内置浏览器 | ❌ 微信 WebView 已知 fixed 元素回弹/键盘弹起遮挡 bug | ✅ 稳定 |
-| 安卓键盘弹起 | ❌ 中间滚动容器会被压缩到几乎不可见 | ✅ 仅底部按钮被键盘推高 |
-| 浏览器原生下拉刷新 | ❌ 双层滚动会拦截，体验割裂 | ✅ 保留原生体验 |
-| 分享截图/保存图片 | ❌ 内嵌滚动容器无法截全 | ✅ 长截图正常 |
-| 移动端历史滚动恢复 | ❌ 路由返回时滚动位置丢失 | ✅ 正常恢复 |
-| 桌面端阅读体验 | ⚠️ 双滚动条混乱，鼠标滚轮容易"穿透" | ✅ 单一滚动 |
-| 实施复杂度 | 高（需要测多端 + 处理键盘/地址栏事件） | 低 |
+### A. 文案修复（一次性）
+将 `MaleVitalityPdfClaimCard.tsx` 中 4 处 `EUGENE` 全部替换为「有劲」品牌：
+- L85 → `有劲 · 你的专属凭证`
+- L240 → `↓ 长按识别二维码，添加你的「有劲顾问」 ↓`
+- L278 → `扫码添加 · 有劲私人顾问`
+- L289 → `仅供本人使用，请勿外传 · 有劲出品`
 
-**结论：用「底部 Sticky CTA」可以达到 95% 的同等效果，且兼容性、稳定性远胜，强烈推荐采用此方案。**
+### B. 凭证图性能与稳定性优化（多端兼容）
 
----
+**B1. 头像预加载 + 跨域降级（核心瓶颈）**
+- 在 `useEffect` 内 `generateCardBlob` 之前，先用 `new Image()` + `crossOrigin="anonymous"` 异步预解码头像，设 1.5s 超时
+- 若加载失败 / 超时 / 跨域被污染：传 `avatarUrl=undefined` 给海报，降级为「首字母彩色块」（已有兜底逻辑），避免 html2canvas 卡死或产生空白头像
+- 微信内置浏览器对跨域图片极不稳定，这一步是首屏速度收益最大的
 
-### 推荐方案：底部 Sticky 双按钮栏
+**B2. 调小渲染清晰度，权衡体积与速度**
+- `forceScale` 从 `2` 降到 `1.6`（750 → 1200px 输出，朋友圈/聊天窗口完全够用）
+- iOS 老机型 / 安卓低端机内存压力降一档，html2canvas 提速约 30-40%
 
-```text
-─────────────────────────
-  正常滚动的结果页内容
-  （雷达图 / 状态 / 改善建议 / AI 解读 / 训练营 / ...）
-─────────────────────────
-┊  ↓ 滚动时这一栏固定在底部 ↓        ┊
-┊                                    ┊
-┊ [📋 领取我的完整诊断报告]   [🤖 AI] ┊  ← sticky bar
-┊  由 EUGENE 顾问 · 24 小时内送达     ┊  ← 副文案
-┊                                    ┊
-─────────────────────────
-```
+**B3. 结果缓存，避免重复生成**
+- 在 `MaleVitalityPdfClaimSheet` 顶层用 `useRef` 缓存 `{ key: claimCode, url, blob }`
+- 同一 `claimCode` 二次打开 Sheet 直接复用缓存 URL（0ms），仅在卸载时统一 `revokeObjectURL`
+- 缓存 key 用 `claimCode + statusPercent`，避免数据变化时拿到旧图
 
-#### 技术实现要点
+**B4. 首屏即时反馈（感知速度）**
+- 当前是「全屏 spinner → 突然出图」，体验上显得慢
+- 改为：Sheet 打开瞬间即显示「凭证骨架屏」（深色渐变占位 + 6 位大数字 `claimCode` + 「凭证生成中…」文字 + QR 占位框），让用户立刻看到核心信息（领取码已经先到手），右下角小 spinner 表示高清图正在准备
+- 高清图 ready 后淡入替换骨架屏（200ms transition）
 
-1. **使用 `position: sticky` + `bottom: 0`**（非 `fixed`），挂在结果页内容容器内：
-   - 自动避开外层导航与安全区
-   - iOS / 安卓 / PC 全兼容，无双层滚动
-   - 用 Tailwind `sticky bottom-0 z-30` 即可
+**B5. 移除等待 150ms 的硬延迟**
+- 当前 `await new Promise(r => setTimeout(r, 150))` 是为了等离屏 DOM 渲染
+- 改用 `requestAnimationFrame` × 2（双 RAF）确保布局完成，比 setTimeout(150) 平均快 100ms+，且更稳
 
-2. **iOS 安全区适配**：`pb-[env(safe-area-inset-bottom)]`，避免被 Home 指示条遮挡
+**B6. JPEG 输出（如 generateCardBlob 已支持）**
+- 检查 `generateCardBlob` 是否已默认 JPEG（项目其它海报多为 JPEG）；若为 PNG，海报这种渐变图改 JPEG q=0.9，体积下降 60%，下载/长按保存更快
 
-3. **背景与可读性**：
-   - 半透明白底 + `backdrop-blur-md` + 顶部细分割阴影 `shadow-[0_-2px_12px_rgba(0,0,0,0.06)]`
-   - 主按钮高度 `h-12`，副文案 `text-[11px]`，整栏高度约 80px
+### C. 多端兼容性确认（不需新改动，仅复核）
 
-4. **滚动覆盖避免**：在结果页内容末尾加 `pb-24`，防止最后一段被 sticky 栏遮住
+| 端 | 关键风险 | 现状/方案 |
+|---|---|---|
+| 微信 H5 (iOS) | 跨域头像污染 canvas | B1 降级兜底 |
+| 微信 H5 (Android) | html2canvas 字体回退 | 已用 PingFang/YaHei 系统字体，OK |
+| 微信小程序 webview | 同 H5 | 同上 |
+| iOS Safari | safe-area + 长按保存 | Sheet 已 `pb-[safe-area]`，长按提示已有 |
+| 桌面浏览器 | 海报较大 | B2 缩到 1200px，下载按钮已有 |
+| 弱网 / 4G | 远程头像超时 | B1 1.5s 超时降级 |
 
-5. **智能隐藏（可选优化）**：
-   - 当用户滚到页面底部、原位的"动作按钮区"已露出时，sticky 栏自动淡出
-   - 用 IntersectionObserver 监听底部锚点，避免重复出现两个相同按钮
-   - 移动端 / 桌面端均生效
+### D. 不改动的部分（明确边界）
+- 不动 `useClaimCode.ts`（领取码生成逻辑）
+- 不动数据库 / RLS / edge function
+- 不动 `DynamicAssessmentResult.tsx` 主体（除非 B 中需要）
+- 不动女版（`women_competitiveness`）凭证流程
+- 不动训练营、支付、会员逻辑
 
-6. **桌面端适配**：sticky 栏仅在内容容器内吸底（不是整个 viewport），保留卡片式阅读体验，宽度跟随中央 max-w 容器
+## 涉及文件
 
-7. **不再需要原"动作按钮区"中的 PDF CTA**：因 sticky 栏已承担其角色，原区块改为只保留"分享/历史/重测"次级动作
+1. `src/components/dynamic-assessment/MaleVitalityPdfClaimCard.tsx` — 4 处文案替换
+2. `src/components/dynamic-assessment/MaleVitalityPdfClaimSheet.tsx` — 头像预加载兜底、缓存、骨架屏、双 RAF、scale 调整
+3.（可能）查阅 `src/utils/shareCardConfig.ts` 确认 `generateCardBlob` 的默认 mimeType / quality，若为 PNG 切到 JPEG
 
-#### 埋点
-- `pdf_claim_sticky_view`：sticky 栏首次进入视窗
-- `pdf_claim_sticky_clicked`：用户点击 sticky 主按钮
-- 与 `pdf_claim_sheet_opened` 串联评估转化路径
+## 预期收益
 
----
-
-### 仍保留 v1 方案中其他三项优化
-
-1. **文案去"运营化"** → 全链路替换为「EUGENE 顾问 / 私人顾问 / 24 小时 / 1v1 解读」
-2. **改善建议升级** → 男版按 `vitalityStatusPercent` 三档（≥60 / 40-59 / <40）的场景化「7 天有劲恢复行动」清单（参照女版 `bloomActions` 模式，今晚/本周可落地）
-3. **训练营卡保留** → 与 PDF CTA 分层（PDF 引流为主，训练营付费为辅）
-
----
-
-### 改动文件（仅 UI 层，零业务逻辑）
-
-1. **`src/components/dynamic-assessment/DynamicAssessmentResult.tsx`**
-   - 在 `isMaleMidlifeVitality && !isLiteMode` 分支末尾，渲染容器底部新增 `<StickyClaimBar />`
-   - 内容容器追加 `pb-24` 避免遮挡
-   - 移除原 1081-1099 行中重复的 PDF CTA（避免双按钮）
-   - 男版改善建议改为 `vitalityActions` 场景化清单（替换通用 tips 渲染）
-   - 文案统一切换为顾问语境
-
-2. **`src/components/dynamic-assessment/MaleVitalityClaimStickyBar.tsx`**（新建）
-   - sticky 底栏组件，含主 CTA + 副文案
-   - IntersectionObserver 智能隐藏
-   - 桌面/移动端响应式
-
-3. **`src/components/dynamic-assessment/MaleVitalityPdfClaimSheet.tsx`**
-   - SheetTitle、三步引导、按钮文案改为顾问语境
-   - "运营/运营企微/运营企业微信" → "EUGENE 顾问 / 私人顾问"
-
-4. **`src/components/dynamic-assessment/MaleVitalityPdfClaimCard.tsx`**
-   - 海报全部"运营"字样替换为"EUGENE 顾问"
-   - 保留视觉风格不变
-
-### 不改动
-- 数据库、领取码生成逻辑、useClaimCode、admin 后台
-- 女版 women_competitiveness 任何文案与逻辑
-- 训练营卡片定价与跳转
-
-### 验证清单
-- [ ] iPhone Safari / 微信 / 安卓微信 / Chrome Desktop 均无抖动、无遮挡、无双滚动
-- [ ] iOS Home 指示条不遮挡 sticky 按钮
-- [ ] 安卓输入法弹起时 sticky 栏行为正常
-- [ ] 滚动到底部，sticky 栏淡出，不与原次级动作区重复
-- [ ] 男版改善建议显示三档场景化清单
-- [ ] 全链路无"运营"字样
-- [ ] 女版完全不变
-- [ ] 长截图保存正常
-
-确认后开始实施。
+- 文案 100% 统一为「有劲」品牌，消除中年男性用户认知门槛
+- 首次生成时间：典型 4G 微信 H5 从 ~2.0s → ~0.7s（头像降级 + scale 降低 + 双 RAF）
+- 二次打开：从 ~2.0s → 即时（缓存命中）
+- 体感：骨架屏让用户「秒看到领取码」，等待感大幅下降
