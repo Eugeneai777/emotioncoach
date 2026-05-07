@@ -206,9 +206,29 @@ export default function DynamicAssessmentPage() {
     generateInsight(scoringResult, newResultId);
   };
 
+  const requireAuthOrStart = () => {
+    if (_requireAuth && !user) {
+      const returnUrl = window.location.pathname + window.location.search;
+      toast.info("请先登录后开始测评");
+      try { setPostAuthRedirect(returnUrl); } catch {}
+      navigate(`/auth?redirect=${encodeURIComponent(returnUrl)}`);
+      return;
+    }
+    setPhase("questions");
+  };
+
   const handleQuestionsComplete = (answers: Record<number, number>) => {
+    // 强制登录的测评：未登录不允许出结果，直接拦回登录
+    if (_requireAuth && !user) {
+      const returnUrl = window.location.pathname + window.location.search;
+      toast.info("请先登录后查看测评结果");
+      try { setPostAuthRedirect(returnUrl); } catch {}
+      navigate(`/auth?redirect=${encodeURIComponent(returnUrl)}`);
+      return;
+    }
+
     // Lite 模式: 未登录时把答案 + 时间戳缓存到 localStorage(24h 过期),登录回跳后自动恢复
-    if (!user && liteCacheKey) {
+    if (!user && isLiteMode && liteCacheKey) {
       try {
         const payload = JSON.stringify({ answers, savedAt: Date.now() });
         localStorage.setItem(liteCacheKey, payload);
@@ -225,8 +245,9 @@ export default function DynamicAssessmentPage() {
   };
 
   // 登录回跳后,若 localStorage 有未过期的 lite 答案,自动恢复结果并写入数据库
+  // 仅 Lite 模式测评适用，避免误恢复非 Lite 测评的旧缓存
   useEffect(() => {
-    if (!user || !liteCacheKey || result || !template || questions.length === 0) return;
+    if (!user || !liteCacheKey || !isLiteMode || result || !template || questions.length === 0) return;
     try {
       // 优先 localStorage(跨标签/跨会话有效),回退 sessionStorage(兼容旧数据)
       const raw = localStorage.getItem(liteCacheKey) || sessionStorage.getItem(liteCacheKey);
@@ -253,7 +274,7 @@ export default function DynamicAssessmentPage() {
       clearLiteCache();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, liteCacheKey, template?.id, questions.length]);
+  }, [user, liteCacheKey, template?.id, questions.length, isLiteMode]);
 
   const handleRetake = () => {
     setResult(null);
