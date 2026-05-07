@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { isWeChatBrowser } from '@/utils/platform';
-import { reportWechatShareDiagnostic } from '@/lib/ogHealthReporter';
+import { getWechatShareTraceId, reportWechatShareDiagnostic } from '@/lib/ogHealthReporter';
 
 interface WechatShareConfig {
   title: string;
@@ -247,7 +247,7 @@ async function getJssdkSignature(url: string): Promise<WxConfig> {
   });
 
   const { data, error } = await supabase.functions.invoke('wechat-jssdk-signature', {
-    body: { url },
+    body: { url, traceId: getWechatShareTraceId() },
   });
 
   if (error) {
