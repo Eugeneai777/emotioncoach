@@ -93,17 +93,22 @@ export default function AssessmentInsightsDetail() {
   const [patternFilter, setPatternFilter] = useState<string>("all");
   const [drawerRow, setDrawerRow] = useState<RespondentRow | null>(null);
 
+  const isMaleVitality = data?.template.assessmentKey === "male_midlife_vitality";
+
   const filtered = useMemo(() => {
     if (!data) return [];
     return data.respondents.filter((r) => {
       if (patternFilter !== "all" && r.primaryPattern !== patternFilter) return false;
       if (search) {
         const q = search.trim().toLowerCase();
+        const claimCodeNorm = (r.claimCode || "").toLowerCase().replace(/\s+/g, "");
+        const queryNorm = q.replace(/\s+/g, "");
         const hit =
           (r.displayName || "").toLowerCase().includes(q) ||
           (r.phone || "").includes(q) ||
           (r.adminNote || "").toLowerCase().includes(q) ||
-          (r.adminTags || []).some((t) => t.toLowerCase().includes(q));
+          (r.adminTags || []).some((t) => t.toLowerCase().includes(q)) ||
+          (claimCodeNorm && claimCodeNorm.includes(queryNorm));
         if (!hit) return false;
       }
       return true;
