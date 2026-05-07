@@ -110,7 +110,7 @@ export function AssessmentRespondentDrawer({ open, onOpenChange, row, template }
                   toast.message("已在新窗口打开报告，请按提示导出 PDF");
                 }}
               >
-                <FileDown className="w-3.5 h-3.5" /> 打开导出 PDF
+                <FileDown className="w-3.5 h-3.5" /> 下载 PDF 报告
               </Button>
             </div>
           )}
