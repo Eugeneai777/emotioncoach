@@ -1,34 +1,49 @@
-## 用户反馈
-1. 管理员后台「打开导出 PDF」需要先打开新页签，再手动点 PDF 按钮，太繁琐。
-2. 当前打开后高亮提示了「点这里保存 PDF ↓」，但用户实际没成功下载。
+## 问题根因
+当前后台点击「下载 PDF 报告」打开的是：
+`/assessment/male_midlife_vitality?recordId=小王子的结果ID&autoSave=pdf&adminPdf=1`
 
-## 根因
-`DynamicAssessmentResult.tsx:328` 的 `autoSavePdf=true` 只做了「滚动 + 高亮 + toast 提示」，**没有真正自动触发** `handleSaveAsPdf()`。所以仍需用户手动点击。
+但结果页里有两处仍然默认使用当前登录用户（管理员炯谦）的上下文：
 
-## 方案：一键直接下载（推荐）
+1. `DynamicAssessmentResult` 会用 `useAuth()` 的当前用户去查 `profiles`，所以 PDF 报告页眉姓名显示成管理员「炯谦」。
+2. 外跳加载历史记录时仍走 `calculateScore(scoringType, record.answers, allQuestions, ...)`，而「男人有劲状态」答题时题目会随机打乱；历史答案如果按当时题序保存，再用当前重新洗过的题序重算，就可能把分数/维度也算错，看起来像导出了当前管理员/当前页面的报告。
 
-保留新页签机制（PDF 生成必须在结果页 DOM 上下文里跑 html2canvas），但让其**自动完成**整个下载，无需任何手动操作。
+## 修复方案
 
-### 1. `src/components/dynamic-assessment/DynamicAssessmentResult.tsx`
-- 改造 `autoSavePdf` useEffect：
-  - 等待 ~1.8s 让报告卡片 DOM + 图标 / 字体渲染完成
-  - 直接 `await handleSaveAsPdf()` 自动触发下载
-  - 成功 toast：「PDF 已自动下载，可关闭此页面」
-  - 失败 toast 保留「请手动点击保存按钮」作为兜底
-- 管理员场景一定不在微信内，但保险起见：当 `autoSavePdf=true` 时，跳过 `isWeChatLike` 引导分支，强制走 `exportNodeToPdf`。
+### 1. 给管理员 PDF 链接带上被下载用户身份
+在 `AssessmentRespondentDrawer.tsx` 生成下载链接时追加只用于展示的参数：
+- `subjectUserId=row.userId`
+- `subjectName=row.displayName`
+- `subjectAvatar=row.avatarUrl`
 
-### 2. `src/components/admin/AssessmentRespondentDrawer.tsx`
-- 按钮文案改为「下载 PDF 报告」，更符合预期。
-- 仍用 `window.open(url, '_blank')` 打开新页签（保持当前安全/RLS 路径）。
+按钮 toast 改成「已打开报告并自动下载 PDF」。
 
-## 不改动
-- `?recordId=...&adminPdf=1` URL 协议、admin RLS 直查逻辑（已实现并通过）
-- 普通用户（无 `autoSave=pdf` 参数）的手动下载流程
-- 微信内引导（`isWeChatLike` 普通分支）
+### 2. 结果页区分“报告所属用户”和“当前登录用户”
+在 `DynamicAssessmentPage.tsx` 中解析上述参数，并传给 `DynamicAssessmentResult`。
 
-## 用户视角
-后台点击 → 新窗口打开 → 自动滚动到报告 → 自动下载 PDF → 提示「已下载，可关闭」。无需任何二次点击。
+在 `DynamicAssessmentResult.tsx` 中新增 `subjectProfile` 入参：
+- 分享卡、PDF 报告、领取卡优先使用 `subjectProfile`
+- 只有没有 `subjectProfile` 时，才回退到当前登录用户 `useAuth()` 的 profile
+
+这样管理员打开小王子报告时，PDF 页眉会显示小王子，而不是炯谦。
+
+### 3. 管理员/历史记录导出不再重新洗题重算
+`handleViewHistoryRecord(record)` 增加逻辑：
+- 如果数据库记录已有 `dimension_scores / total_score / primary_pattern`，优先直接用数据库保存的结果组装 `ScoringResult`
+- 只有旧记录缺少这些字段时，才回退到用答案重新计算
+
+这能避免随机题序造成的二次计算偏差，确保导出的就是该条 `recordId` 对应的原始测评报告。
+
+### 4. 自动下载只在目标记录加载完成后触发
+保留当前 `autoSave=pdf` 自动下载机制，但它会基于第 2、3 步后的正确 subject/profile/result 执行，避免抢在他人记录替换完成前导出当前用户数据。
 
 ## 涉及文件
+- `src/components/admin/AssessmentRespondentDrawer.tsx`
+- `src/pages/DynamicAssessmentPage.tsx`
 - `src/components/dynamic-assessment/DynamicAssessmentResult.tsx`
-- `src/components/admin/AssessmentRespondentDrawer.tsx`（仅文案）
+
+## 验收标准
+后台选择「小王子」这一行点击「下载 PDF 报告」后：
+- 新页面打开的是 `recordId=小王子结果ID`
+- 页面/导出 PDF 的姓名为「小王子」
+- 分数、主导类型、维度分数来自该条记录本身
+- 不会再导出当前管理员「炯谦」的报告

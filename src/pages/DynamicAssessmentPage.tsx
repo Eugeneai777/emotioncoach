@@ -279,15 +279,50 @@ export default function DynamicAssessmentPage() {
   const handleViewHistoryRecord = (record: any) => {
     if (!template) return;
     const storedAnswers = record.answers || {};
-    const scoringResult = calculateScore(scoringType, storedAnswers, allQuestions, dimensions, patterns);
+    // 优先使用数据库已保存的分数/维度/主导类型，避免随机题序导致的二次计算偏差
+    const hasStoredScores =
+      record.dimension_scores &&
+      typeof record.dimension_scores === 'object' &&
+      record.total_score !== undefined &&
+      record.total_score !== null;
+
+    let scoringResult: ScoringResult;
+    if (hasStoredScores) {
+      const dims = (template.dimensions || []) as any[];
+      const storedDims = record.dimension_scores as Record<string, number>;
+      const dimensionScores = dims.map((d: any) => ({
+        key: d.key,
+        label: d.label,
+        emoji: d.emoji,
+        maxScore: d.maxScore || 0,
+        score: Number(storedDims[d.key] ?? 0),
+      }));
+      const maxScore = dimensionScores.reduce((s, d) => s + (d.maxScore || 0), 0)
+        || (template as any).max_score || 0;
+      const total = Number(record.total_score) || 0;
+      const patterns = (template.result_patterns || []) as any[];
+      const matched =
+        patterns.find((p: any) => p.label === record.primary_pattern) ||
+        { label: record.primary_pattern, emoji: template.emoji };
+      scoringResult = {
+        totalScore: total,
+        maxScore,
+        percentage: maxScore > 0 ? (total / maxScore) * 100 : 0,
+        dimensionScores: dimensionScores as any,
+        primaryPattern: matched,
+      };
+    } else {
+      scoringResult = calculateScore(scoringType, storedAnswers, allQuestions, dimensions, patterns);
+    }
+
     setResult(scoringResult);
     setAiInsight(record.ai_insight || null);
     setInsightError(false);
     setSavedResultId(record.id);
     setPhase("result");
 
-    // Auto-backfill missing insight for historical records
-    if (!record.ai_insight) {
+    // Auto-backfill missing insight for historical records (仅本人，避免管理员代查时调用接口)
+    if (!record.ai_insight && user && record.user_id === user.id) {
       generateInsight(scoringResult, record.id);
     }
   };
@@ -295,6 +330,13 @@ export default function DynamicAssessmentPage() {
   // 浏览器外跳落地：?recordId=xxx → 直接打开该条历史记录的结果页
   // 管理员模式：?recordId=xxx&adminPdf=1 → 直查数据库（受 RLS 保护）
   const adminPdf = searchParams.get('adminPdf') === '1';
+  const subjectUserId = searchParams.get('subjectUserId');
+  const subjectName = searchParams.get('subjectName');
+  const subjectAvatar = searchParams.get('subjectAvatar');
+  const subjectProfile = subjectUserId
+    ? { userId: subjectUserId, displayName: subjectName || undefined, avatarUrl: subjectAvatar || undefined }
+    : undefined;
+
   useEffect(() => {
     if (!urlRecordId || !template || phase !== 'intro' || historyLoading) return;
     const rec = historyRecords.find((r: any) => r.id === urlRecordId);
@@ -313,7 +355,7 @@ export default function DynamicAssessmentPage() {
           toast.error('未找到该测评记录或无权访问');
           return;
         }
-        toast.message('管理员视图：正在查看他人报告');
+        toast.message(`管理员视图：正在查看 ${subjectName || '他人'} 的报告`);
         handleViewHistoryRecord(data as any);
       })();
     }
@@ -460,7 +502,8 @@ export default function DynamicAssessmentPage() {
           onShowHistory={() => setPhase("history")}
           hasHistory={historyRecords.length > 0}
           recordId={savedResultId}
-          autoSavePdf={autoSavePdf}
+          autoSavePdf={autoSavePdf && (!urlRecordId || savedResultId === urlRecordId)}
+          subjectProfile={subjectProfile}
           isLiteMode={isLiteMode}
           onLoginToUnlock={() => {
             // 商业漏斗关键节点：写双重锚（URL + localStorage）保证微信 OAuth roundtrip 后仍能回到结果页
