@@ -11,6 +11,7 @@ import { Loader2, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import PageHeader from "@/components/PageHeader";
+import { setPostAuthRedirect } from "@/lib/postAuthRedirect";
 
 import { DynamicAssessmentIntro } from "@/components/dynamic-assessment/DynamicAssessmentIntro";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
