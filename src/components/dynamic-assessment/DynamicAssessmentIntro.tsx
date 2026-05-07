@@ -452,15 +452,7 @@ export function DynamicAssessmentIntro({ template, onStart, onShowHistory, hasHi
         {/* CTA */}
         <motion.div {...fadeUp(enrichment ? 0.75 : 0.7)} className="pt-2">
           <Button
-            onClick={() => {
-              if (requireAuth && !user) {
-                toast.info("请先登录后开始测评");
-                setPostAuthRedirect(window.location.pathname + window.location.search);
-                navigate(`/auth?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`);
-                return;
-              }
-              needPay ? (onPayClick ?? onStart)() : onStart();
-            }}
+            onClick={handleStart}
             className={cn(
               "w-full h-13 text-base gap-2 shadow-lg active:scale-[0.98] transition-transform",
               !needPay && template.assessment_key === 'sbti_personality' && "bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 border-0"
