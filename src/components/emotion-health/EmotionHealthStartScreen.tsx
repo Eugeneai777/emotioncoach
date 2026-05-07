@@ -395,8 +395,12 @@ export function EmotionHealthStartScreen({
             {/* 三层诊断表格 - 使用 Accordion 折叠，与洋葱图联动 */}
             <Accordion 
               type="single" 
-              value={activeLayer} 
-              onValueChange={(val) => val && setActiveLayer(val as LayerType)} 
+              collapsible
+              value={openAccordion} 
+              onValueChange={(val) => {
+                setOpenAccordion(val || '');
+                if (val) setActiveLayer(val as LayerType);
+              }} 
               className="mt-4 space-y-3"
             >
               {/* 第一层：科学量表对照表 */}
