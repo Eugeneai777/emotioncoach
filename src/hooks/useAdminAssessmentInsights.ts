@@ -25,6 +25,7 @@ export interface AssessmentInsights {
     id: string;
     title: string;
     emoji: string | null;
+    assessmentKey: string | null;
     questionCount: number;
     maxScore: number;
     dimensions: any;
