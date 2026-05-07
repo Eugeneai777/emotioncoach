@@ -44,7 +44,7 @@ export default function DynamicAssessmentPage() {
   const tpl = template as any;
   const _requireAuth = tpl?.require_auth ?? true;
   // Lite mode: 未登录用户在指定测评下进入"半成品报告"模式,引导登录解锁
-  const LITE_MODE_KEYS = ['male_midlife_vitality'];
+  const LITE_MODE_KEYS: string[] = [];
   const isLiteMode = !user && (
     (template?.assessment_key && LITE_MODE_KEYS.includes(template.assessment_key)) ||
     (tpl?.scoring_type === 'sbti' || tpl?.scoring_logic?.scoring_type === 'sbti')
