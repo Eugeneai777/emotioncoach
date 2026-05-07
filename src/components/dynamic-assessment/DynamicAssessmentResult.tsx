@@ -207,10 +207,35 @@ export function DynamicAssessmentResult({
     fetchCamps();
   }, [recommendedCampTypes]);
 
-  // Fetch user profile for share card
+  // Fetch profile for share card / PDF report.
+  // 管理员代查（subjectProfile 存在）时，优先使用被查看用户身份，避免把管理员姓名/头像写进 PDF。
   useEffect(() => {
+    if (subjectProfile?.userId) {
+      (async () => {
+        setProfileData({
+          displayName: subjectProfile.displayName || '用户',
+          avatarUrl: getProxiedAvatarUrl(subjectProfile.avatarUrl),
+        });
+        try {
+          const sb = supabase as any;
+          const { data } = await sb
+            .from('profiles')
+            .select('avatar_url, display_name')
+            .eq('id', subjectProfile.userId)
+            .maybeSingle();
+          if (data) {
+            const rawName = data.display_name || subjectProfile.displayName;
+            setProfileData({
+              displayName: (rawName && !rawName.startsWith('phone_')) ? rawName : (subjectProfile.displayName || '用户'),
+              avatarUrl: getProxiedAvatarUrl(data.avatar_url || subjectProfile.avatarUrl),
+            });
+          }
+        } catch {}
+      })();
+      return;
+    }
     if (!user) return;
-    const fetchProfile = async () => {
+    (async () => {
       const sb = supabase as any;
       const { data } = await sb.from('profiles').select('avatar_url, display_name').eq('id', user.id).single();
       setProfileData({
@@ -220,9 +245,8 @@ export function DynamicAssessmentResult({
         })(),
         avatarUrl: getProxiedAvatarUrl(data?.avatar_url || user.user_metadata?.avatar_url),
       });
-    };
-    fetchProfile();
-  }, [user]);
+    })();
+  }, [user, subjectProfile?.userId]);
 
   const handleAICoach = () => {
     const targetRoute = coachRoute || "/assessment-coach";
