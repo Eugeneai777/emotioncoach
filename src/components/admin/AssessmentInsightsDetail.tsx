@@ -124,7 +124,7 @@ export default function AssessmentInsightsDetail() {
 
   const handleExport = () => {
     if (filtered.length === 0) return toast.error("无数据可导出");
-    const csv = toCsv(filtered);
+    const csv = toCsv(filtered, isMaleVitality);
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
