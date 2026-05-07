@@ -111,6 +111,7 @@ export function useAdminAssessmentInsights(templateId: string | undefined) {
           adminNote: n?.note || null,
           adminTags: Array.isArray(n?.tags) ? n.tags : [],
           adminNoteUpdatedAt: n?.updated_at || null,
+          claimCode: r.claim_code || null,
         };
       });
 
