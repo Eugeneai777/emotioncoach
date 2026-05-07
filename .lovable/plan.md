@@ -1,61 +1,34 @@
-## 根因
+## 问题根因
 
-数据库 `partner_assessment_results.dimension_scores` 实际存储为**数组**：
-```json
-[{ "key":"energy", "label":"精力续航", "emoji":"🔋", "maxScore":12, "score":12 }, ...]
-```
+数据库中 `male_midlife_vitality` 模板的 `require_auth = false`，所以前端把它当成免登录测评，未登录点击「限时免费开始评估」直接进入题目。
 
-但 `DynamicAssessmentPage.handleViewHistoryRecord`（管理员 PDF 入口走的就是这条路径）把它当成 `Record<string, number>` 来读：
+## 修改方案
+
+### 1. 数据库修正
+将 `partner_assessment_templates` 中 `male_midlife_vitality` 的 `require_auth` 从 `false` 改为 `true`。
+
+### 2. 前端保险（不影响其他测评）
+在 `src/pages/DynamicAssessmentPage.tsx` 中，`_requireAuth` 计算追加白名单：当 `assessment_key === 'male_midlife_vitality'` 时，无论数据库怎么配，前端一律强制登录。
 
 ```ts
-const storedDims = record.dimension_scores as Record<string, number>;
-score: Number(storedDims[d.key] ?? 0)   // 数组按 key 取永远是 undefined → 0
+const FORCE_AUTH_KEYS = ['male_midlife_vitality'];
+const _requireAuth = FORCE_AUTH_KEYS.includes(template?.assessment_key || '')
+  ? true
+  : (tpl?.require_auth ?? true);
 ```
 
-所以每个维度 `score=0`。男人有劲报告显示的是"翻转后的状态电量" = `maxScore - score` → 全部满分 100，且不同用户都被还原为 0，因此两个人六维明细完全一样。
+这样：
+- 顶部 CTA「限时免费开始评估」→ `handleStart` → 跳 `/auth?redirect=...`
+- 底部所有入口同样跳登录
+- 即使带 `?recordId=` 直链，未登录也无法触发答题（intro 阶段拦截）
+- 其他测评行为完全不变（仍走数据库 `require_auth` 配置）
 
-## 修复方案
+### 3. 兼容性确认
+- 老用户已登录 → 行为不变，仍可正常答题/查看历史
+- 微信内置浏览器 / 小程序 H5 / 普通浏览器 → 都走相同 `navigate('/auth?redirect=...')`，已验证流程
+- 分享链接 `?ref=share` → 跳登录后回跳保留参数（已用 `setPostAuthRedirect` + URL redirect 双锚）
+- 不影响其他测评、不影响 Lite 模式逻辑（`male_midlife_vitality` 不在 LITE_MODE_KEYS）
 
-### 1. `src/pages/DynamicAssessmentPage.tsx` — 修复 `handleViewHistoryRecord`
-兼容两种存储格式：
-- **数组**（线上实际格式）：直接以 `template.dimensions` 顺序为基准，按 `key` 在数组里找匹配项，取其 `score`、`maxScore`、`label`、`emoji`，缺失才回退 0/模板值。
-- **对象**（兜底兼容）：保留旧的 `Record<string, number>` 读法。
-
-伪代码：
-```ts
-const storedRaw = record.dimension_scores;
-const isArray = Array.isArray(storedRaw);
-const byKey: Record<string, any> = isArray
-  ? Object.fromEntries(storedRaw.map((d: any) => [d.key, d]))
-  : storedRaw || {};
-
-const dimensionScores = dims.map((d: any) => {
-  const item = byKey[d.key];
-  if (isArray) {
-    return {
-      key: d.key,
-      label: item?.label ?? d.label,
-      emoji: item?.emoji ?? d.emoji,
-      maxScore: Number(item?.maxScore ?? d.maxScore ?? 0),
-      score: Number(item?.score ?? 0),
-    };
-  }
-  return {
-    key: d.key, label: d.label, emoji: d.emoji,
-    maxScore: d.maxScore || 0,
-    score: Number(item ?? 0),
-  };
-});
-```
-
-`maxScore` 汇总也用每个维度真实值求和。
-
-### 2. `src/components/dynamic-assessment/DynamicAssessmentIntro.tsx` — 老用户快捷卡兜底
-`lastSummary` 已假设数组，无需改动；只在 `totalMax === 0` 时回退到 `template` 的总分，避免极端情况显示异常百分比。
-
-### 3. 验证
-读两个真实 recordId（不同用户），管理员链路打开 `?recordId=...&adminPdf=1&autoSave=pdf`，确认六维分数与数据库一致、两份报告内容不同。
-
-### 涉及文件
-- `src/pages/DynamicAssessmentPage.tsx`
-- `src/components/dynamic-assessment/DynamicAssessmentIntro.tsx`（小幅兜底，可选）
+## 涉及文件
+- `src/pages/DynamicAssessmentPage.tsx`（约 2 行）
+- 一次数据库迁移更新模板配置

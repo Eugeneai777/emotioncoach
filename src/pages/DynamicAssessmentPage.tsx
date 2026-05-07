@@ -43,7 +43,11 @@ export default function DynamicAssessmentPage() {
 
   // Cast template to access extended fields
   const tpl = template as any;
-  const _requireAuth = tpl?.require_auth ?? true;
+  // 强制登录白名单：无论数据库 require_auth 怎么配，这些测评都必须登录后才能答题
+  const FORCE_AUTH_KEYS = ['male_midlife_vitality'];
+  const _requireAuth = FORCE_AUTH_KEYS.includes(template?.assessment_key || '')
+    ? true
+    : (tpl?.require_auth ?? true);
   // Lite mode: 未登录用户在指定测评下进入"半成品报告"模式,引导登录解锁
   const LITE_MODE_KEYS: string[] = [];
   const isLiteMode = !user && (
