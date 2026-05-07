@@ -311,14 +311,33 @@ export default function DynamicAssessmentPage() {
     let scoringResult: ScoringResult;
     if (hasStoredScores) {
       const dims = (template.dimensions || []) as any[];
-      const storedDims = record.dimension_scores as Record<string, number>;
-      const dimensionScores = dims.map((d: any) => ({
-        key: d.key,
-        label: d.label,
-        emoji: d.emoji,
-        maxScore: d.maxScore || 0,
-        score: Number(storedDims[d.key] ?? 0),
-      }));
+      const storedRaw = record.dimension_scores as any;
+      const isArray = Array.isArray(storedRaw);
+      const byKey: Record<string, any> = isArray
+        ? Object.fromEntries(storedRaw.map((d: any) => [d.key, d]))
+        : (storedRaw || {});
+
+      const dimensionScores = dims.map((d: any) => {
+        const item = byKey[d.key];
+        if (isArray) {
+          return {
+            key: d.key,
+            label: item?.label ?? d.label,
+            emoji: item?.emoji ?? d.emoji,
+            maxScore: Number(item?.maxScore ?? d.maxScore ?? 0),
+            score: Number(item?.score ?? 0),
+          };
+        }
+        // 兜底：旧版对象格式 { key: number }
+        return {
+          key: d.key,
+          label: d.label,
+          emoji: d.emoji,
+          maxScore: Number(d.maxScore || 0),
+          score: Number(item ?? 0),
+        };
+      });
+
       const maxScore = dimensionScores.reduce((s, d) => s + (d.maxScore || 0), 0)
         || (template as any).max_score || 0;
       const total = Number(record.total_score) || 0;
