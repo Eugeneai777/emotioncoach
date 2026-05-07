@@ -105,9 +105,17 @@ export function AssessmentRespondentDrawer({ open, onOpenChange, row, template }
                 variant="outline"
                 className="h-8 gap-1.5"
                 onClick={() => {
-                  const url = `${window.location.origin}/assessment/male_midlife_vitality?recordId=${row.resultId}&autoSave=pdf&adminPdf=1`;
+                  const params = new URLSearchParams({
+                    recordId: row.resultId,
+                    autoSave: "pdf",
+                    adminPdf: "1",
+                    subjectUserId: row.userId,
+                  });
+                  if (row.displayName) params.set("subjectName", row.displayName);
+                  if (row.avatarUrl) params.set("subjectAvatar", row.avatarUrl);
+                  const url = `${window.location.origin}/assessment/male_midlife_vitality?${params.toString()}`;
                   window.open(url, "_blank");
-                  toast.message("已在新窗口打开报告，请按提示导出 PDF");
+                  toast.message(`已打开 ${row.displayName || "用户"} 的报告并自动下载 PDF`);
                 }}
               >
                 <FileDown className="w-3.5 h-3.5" /> 下载 PDF 报告
