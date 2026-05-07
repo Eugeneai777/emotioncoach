@@ -275,7 +275,7 @@ const MaleVitalityPdfClaimCard = forwardRef<HTMLDivElement, MaleVitalityPdfClaim
             marginBottom: 4,
           }}
         >
-          长按识别二维码 · 添加运营企业微信
+          扫码添加 · EUGENE 私人顾问
         </div>
         <div
           style={{
