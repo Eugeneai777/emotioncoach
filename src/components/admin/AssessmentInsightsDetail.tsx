@@ -287,13 +287,14 @@ export default function AssessmentInsightsDetail() {
                   <th className="text-left px-4 py-2 font-medium">手机号</th>
                   <th className="text-left px-4 py-2 font-medium">主导类型</th>
                   <th className="text-right px-4 py-2 font-medium">总分</th>
+                  {isMaleVitality && <th className="text-left px-4 py-2 font-medium">领取码</th>}
                   <th className="text-left px-4 py-2 font-medium">测评时间</th>
                   <th className="text-right px-4 py-2 font-medium">操作</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.length === 0 ? (
-                  <tr><td colSpan={6} className="text-center py-10 text-muted-foreground">暂无数据</td></tr>
+                  <tr><td colSpan={isMaleVitality ? 7 : 6} className="text-center py-10 text-muted-foreground">暂无数据</td></tr>
                 ) : (
                   filtered.map((r) => (
                     <tr key={r.resultId} className="border-t hover:bg-muted/20">
