@@ -349,7 +349,7 @@ export function useWechatShare(config: WechatShareConfig) {
         const wxDebugEnabled = new URLSearchParams(window.location.search).get('wxdebug') === '1';
 
         console.log('[WechatShare] Configuring share for URL:', currentUrl);
-        await reportWechatShareDiagnostic({
+        void reportWechatShareDiagnostic({
           stage: 'config_start',
           message: '开始配置微信分享',
           imageUrl: config.imgUrl,
