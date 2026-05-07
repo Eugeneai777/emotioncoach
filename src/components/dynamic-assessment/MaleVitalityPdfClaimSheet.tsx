@@ -126,7 +126,7 @@ export function MaleVitalityPdfClaimSheet({
             </li>
             <li className="flex gap-2">
               <span className="font-bold text-primary shrink-0">2.</span>
-              <span>长按识别二维码 · 添加 EUGENE 顾问微信</span>
+              <span>长按识别二维码 · 添加 有劲顾问 微信</span>
             </li>
             <li className="flex gap-2">
               <span className="font-bold text-primary shrink-0">3.</span>
