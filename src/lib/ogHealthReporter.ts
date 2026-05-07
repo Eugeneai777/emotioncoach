@@ -59,7 +59,7 @@ export async function reportOGHealth(report: OGHealthReport): Promise<void> {
 const wechatDiagnosticCache = new Map<string, number>();
 const WECHAT_DIAGNOSTIC_COOLDOWN_MS = 30 * 1000;
 
-function getWechatTraceId(): string {
+export function getWechatShareTraceId(): string {
   try {
     const key = 'wechat_share_trace_id';
     const existing = sessionStorage.getItem(key);
@@ -79,7 +79,7 @@ export async function reportWechatShareDiagnostic(report: {
   imageUrl?: string;
   extra?: Record<string, unknown>;
 }): Promise<void> {
-  const traceId = getWechatTraceId();
+  const traceId = getWechatShareTraceId();
   const cacheKey = `${traceId}:${report.stage}:${report.message}`;
   const last = wechatDiagnosticCache.get(cacheKey);
   if (last && Date.now() - last < WECHAT_DIAGNOSTIC_COOLDOWN_MS) return;
