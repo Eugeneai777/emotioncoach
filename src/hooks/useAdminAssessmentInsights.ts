@@ -17,6 +17,7 @@ export interface RespondentRow {
   adminNote: string | null;
   adminTags: string[];
   adminNoteUpdatedAt: string | null;
+  claimCode: string | null;
 }
 
 export interface AssessmentInsights {
