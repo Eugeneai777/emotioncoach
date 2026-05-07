@@ -14,6 +14,9 @@ export interface RespondentRow {
   answers: any;
   aiInsight: string | null;
   createdAt: string;
+  adminNote: string | null;
+  adminTags: string[];
+  adminNoteUpdatedAt: string | null;
 }
 
 export interface AssessmentInsights {
