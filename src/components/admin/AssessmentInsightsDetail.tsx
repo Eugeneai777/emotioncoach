@@ -48,6 +48,7 @@ import {
 } from "@/components/ui/select";
 import { useAdminAssessmentInsights, RespondentRow } from "@/hooks/useAdminAssessmentInsights";
 import { AssessmentRespondentDrawer } from "./AssessmentRespondentDrawer";
+import { formatClaimCode } from "@/utils/claimCodeUtils";
 
 const CHART_COLORS = [
   "hsl(var(--primary))",
@@ -64,10 +65,11 @@ function maskPhone(p: string | null) {
   return `${p.slice(0, 3)}****${p.slice(-4)}`;
 }
 
-function toCsv(rows: RespondentRow[]) {
+function toCsv(rows: RespondentRow[], includeClaimCode = false) {
   const header = ["昵称", "手机号", "国家码", "主导类型", "总分", "测评时间", "管理员备注", "标签"];
-  const lines = rows.map((r) =>
-    [
+  if (includeClaimCode) header.splice(5, 0, "领取码");
+  const lines = rows.map((r) => {
+    const cols = [
       r.displayName || "",
       r.phone || "",
       r.phoneCountryCode || "",
@@ -76,10 +78,10 @@ function toCsv(rows: RespondentRow[]) {
       format(new Date(r.createdAt), "yyyy-MM-dd HH:mm:ss"),
       r.adminNote || "",
       (r.adminTags || []).join("/"),
-    ]
-      .map((s) => `"${String(s).replace(/"/g, '""')}"`)
-      .join(",")
-  );
+    ];
+    if (includeClaimCode) cols.splice(5, 0, r.claimCode || "");
+    return cols.map((s) => `"${String(s).replace(/"/g, '""')}"`).join(",");
+  });
   return "\uFEFF" + [header.join(","), ...lines].join("\n");
 }
 
@@ -92,17 +94,22 @@ export default function AssessmentInsightsDetail() {
   const [patternFilter, setPatternFilter] = useState<string>("all");
   const [drawerRow, setDrawerRow] = useState<RespondentRow | null>(null);
 
+  const isMaleVitality = data?.template.assessmentKey === "male_midlife_vitality";
+
   const filtered = useMemo(() => {
     if (!data) return [];
     return data.respondents.filter((r) => {
       if (patternFilter !== "all" && r.primaryPattern !== patternFilter) return false;
       if (search) {
         const q = search.trim().toLowerCase();
+        const claimCodeNorm = (r.claimCode || "").toLowerCase().replace(/\s+/g, "");
+        const queryNorm = q.replace(/\s+/g, "");
         const hit =
           (r.displayName || "").toLowerCase().includes(q) ||
           (r.phone || "").includes(q) ||
           (r.adminNote || "").toLowerCase().includes(q) ||
-          (r.adminTags || []).some((t) => t.toLowerCase().includes(q));
+          (r.adminTags || []).some((t) => t.toLowerCase().includes(q)) ||
+          (claimCodeNorm && claimCodeNorm.includes(queryNorm));
         if (!hit) return false;
       }
       return true;
@@ -117,7 +124,7 @@ export default function AssessmentInsightsDetail() {
 
   const handleExport = () => {
     if (filtered.length === 0) return toast.error("无数据可导出");
-    const csv = toCsv(filtered);
+    const csv = toCsv(filtered, isMaleVitality);
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -251,10 +258,10 @@ export default function AssessmentInsightsDetail() {
               <div className="relative">
                 <Search className="w-4 h-4 absolute left-2.5 top-2.5 text-muted-foreground" />
                 <Input
-                  placeholder="搜索昵称/手机号"
+                  placeholder={isMaleVitality ? "搜索昵称/手机号/领取码" : "搜索昵称/手机号"}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="pl-8 h-9 w-48"
+                  className="pl-8 h-9 w-56"
                 />
               </div>
               <Select value={patternFilter} onValueChange={setPatternFilter}>
@@ -281,13 +288,14 @@ export default function AssessmentInsightsDetail() {
                   <th className="text-left px-4 py-2 font-medium">手机号</th>
                   <th className="text-left px-4 py-2 font-medium">主导类型</th>
                   <th className="text-right px-4 py-2 font-medium">总分</th>
+                  {isMaleVitality && <th className="text-left px-4 py-2 font-medium">领取码</th>}
                   <th className="text-left px-4 py-2 font-medium">测评时间</th>
                   <th className="text-right px-4 py-2 font-medium">操作</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.length === 0 ? (
-                  <tr><td colSpan={6} className="text-center py-10 text-muted-foreground">暂无数据</td></tr>
+                  <tr><td colSpan={isMaleVitality ? 7 : 6} className="text-center py-10 text-muted-foreground">暂无数据</td></tr>
                 ) : (
                   filtered.map((r) => (
                     <tr key={r.resultId} className="border-t hover:bg-muted/20">
@@ -328,6 +336,26 @@ export default function AssessmentInsightsDetail() {
                         {r.primaryPattern ? <Badge variant="secondary">{r.primaryPattern}</Badge> : "—"}
                       </td>
                       <td className="px-4 py-2 text-right font-medium">{r.totalScore}</td>
+                      {isMaleVitality && (
+                        <td className="px-4 py-2">
+                          {r.claimCode ? (
+                            <button
+                              type="button"
+                              className="font-mono text-xs px-1.5 py-0.5 rounded bg-muted/60 hover:bg-muted inline-flex items-center gap-1"
+                              onClick={() => {
+                                navigator.clipboard.writeText(r.claimCode!);
+                                toast.success(`已复制 ${r.claimCode}`);
+                              }}
+                              title="点击复制"
+                            >
+                              {formatClaimCode(r.claimCode)}
+                              <Copy className="w-3 h-3" />
+                            </button>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          )}
+                        </td>
+                      )}
                       <td className="px-4 py-2 text-muted-foreground text-xs">
                         {format(new Date(r.createdAt), "MM-dd HH:mm")}
                       </td>

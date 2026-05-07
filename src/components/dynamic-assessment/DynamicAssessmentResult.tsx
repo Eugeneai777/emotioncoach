@@ -17,6 +17,8 @@ import MaleVitalityReportCard from "./MaleVitalityReportCard";
 import WomenCompetitivenessShareCard from "./WomenCompetitivenessShareCard";
 import WomenCompetitivenessReportCard from "./WomenCompetitivenessReportCard";
 import { WeChatPdfGuideSheet } from "./WeChatPdfGuideSheet";
+import { MaleVitalityPdfClaimSheet } from "./MaleVitalityPdfClaimSheet";
+import { useClaimCode } from "@/hooks/useClaimCode";
 import ShareImagePreview from "@/components/ui/share-image-preview";
 import { executeOneClickShare } from "@/utils/oneClickShare";
 import { generateCardBlob } from "@/utils/shareCardConfig";
@@ -169,6 +171,8 @@ export function DynamicAssessmentResult({
   const [reportPreview, setReportPreview] = useState<{ url: string; isRemoteReady: boolean; isBlob: boolean } | null>(null);
   const [savingReport, setSavingReport] = useState(false);
   const [pulseSaveBtn, setPulseSaveBtn] = useState(false);
+  const [showClaimSheet, setShowClaimSheet] = useState(false);
+  const { claimCode, loading: loadingClaimCode } = useClaimCode(recordId);
 
   // Fetch coach route
   useEffect(() => {
@@ -931,22 +935,6 @@ export function DynamicAssessmentResult({
               </CardContent>
             </Card>
 
-            <Card className="border-border/40 bg-card/90 backdrop-blur-sm shadow-sm">
-              <CardContent className="p-4 space-y-3">
-                <div className="flex items-start gap-3">
-                  <div className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center text-xl shrink-0">🧭</div>
-                  <div className="min-w-0 flex-1">
-                    <h3 className="font-bold text-sm text-foreground">如果你累的不只是身体</h3>
-                    <p className="text-xs text-muted-foreground leading-relaxed mt-1">
-                      当责任、身份、自我价值感长期压在心里，可能需要更深一层的身份重建与人生节奏调整。
-                    </p>
-                  </div>
-                </div>
-                <Button variant="outline" className="w-full h-11 rounded-xl gap-2" onClick={() => navigate('/camp-intro/identity_bloom')}>
-                  看看身份绽放训练营 <ArrowRight className="w-4 h-4" />
-                </Button>
-              </CardContent>
-            </Card>
           </motion.div>
         )}
 
@@ -1090,7 +1078,26 @@ export function DynamicAssessmentResult({
 
         {/* Action Buttons */}
         <motion.div custom={8} variants={fadeUp} initial="hidden" animate="visible" className="space-y-3 mt-4">
-          {(isMaleMidlifeVitality || isWomenCompetitiveness) && aiInsight && !isLiteMode && (
+          {isMaleMidlifeVitality && !isLiteMode && (
+            <div ref={saveButtonRef}>
+              <Button
+                className={cn(
+                  "w-full gap-2 rounded-xl h-12 text-base font-semibold",
+                  pulseSaveBtn && "ring-4 ring-primary/40 animate-pulse"
+                )}
+                onClick={() => {
+                  try { (window as any).gtag?.('event', 'pdf_claim_sheet_opened'); } catch {}
+                  setShowClaimSheet(true);
+                }}
+              >
+                📩 加运营企微 · 免费领完整 PDF 报告
+              </Button>
+              <p className="text-center text-[11px] text-muted-foreground mt-1.5">
+                限时免费领 · 1 个工作日内收到完整 PDF
+              </p>
+            </div>
+          )}
+          {isWomenCompetitiveness && aiInsight && !isLiteMode && (
             <div ref={saveButtonRef}>
               <Button
                 className={cn(
@@ -1184,7 +1191,24 @@ export function DynamicAssessmentResult({
         />
       )}
 
-      {/* 私密报告预览（图片路径） */}
+      {/* 男版：领取码 PDF Sheet */}
+      {isMaleMidlifeVitality && (
+        <MaleVitalityPdfClaimSheet
+          open={showClaimSheet}
+          onOpenChange={setShowClaimSheet}
+          claimCode={claimCode}
+          loadingCode={loadingClaimCode}
+          displayName={profileData.displayName}
+          avatarUrl={profileData.avatarUrl}
+          statusPercent={vitalityStatusPercent}
+          statusLabel={
+            vitalityStatusPercent >= 80 ? "稳"
+              : vitalityStatusPercent >= 60 ? "可调整"
+              : vitalityStatusPercent >= 40 ? "需留意"
+              : "优先恢复"
+          }
+        />
+      )}
       <ShareImagePreview
         open={!!reportPreview}
         onClose={() => {

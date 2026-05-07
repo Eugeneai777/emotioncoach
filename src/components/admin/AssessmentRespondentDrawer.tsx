@@ -6,16 +6,18 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { Lock, Save, X } from "lucide-react";
+import { Lock, Save, X, Copy, FileDown } from "lucide-react";
 import { format } from "date-fns";
+import { toast } from "sonner";
 import type { RespondentRow } from "@/hooks/useAdminAssessmentInsights";
 import { useUpsertAdminUserNote } from "@/hooks/useAdminUserNote";
+import { formatClaimCode } from "@/utils/claimCodeUtils";
 
 interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   row: RespondentRow | null;
-  template: { questions: any; dimensions: any; maxScore: number } | null;
+  template: { questions: any; dimensions: any; maxScore: number; assessmentKey?: string | null } | null;
 }
 
 export function AssessmentRespondentDrawer({ open, onOpenChange, row, template }: Props) {
@@ -70,7 +72,48 @@ export function AssessmentRespondentDrawer({ open, onOpenChange, row, template }
           <div className="flex flex-wrap gap-2 mt-2">
             <Badge variant="default">{row.primaryPattern || "未分类"}</Badge>
             <Badge variant="outline">总分 {row.totalScore}</Badge>
+            {template?.assessmentKey === "male_midlife_vitality" && row.claimCode && (
+              <Badge
+                variant="secondary"
+                className="gap-1 font-mono cursor-pointer hover:bg-secondary/80"
+                onClick={() => {
+                  navigator.clipboard.writeText(row.claimCode!);
+                  toast.success(`领取码已复制：${row.claimCode}`);
+                }}
+              >
+                领取码 {formatClaimCode(row.claimCode)}
+                <Copy className="w-3 h-3" />
+              </Badge>
+            )}
           </div>
+          {template?.assessmentKey === "male_midlife_vitality" && row.claimCode && (
+            <div className="flex flex-wrap gap-2 mt-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 gap-1.5"
+                onClick={() => {
+                  const script = `您好，您的领取码是 ${row.claimCode}。\n附件为您本次「男人有劲状态测评」的完整 PDF 报告，请查收 ✅\n如有疑问随时回复。`;
+                  navigator.clipboard.writeText(script);
+                  toast.success("话术已复制");
+                }}
+              >
+                <Copy className="w-3.5 h-3.5" /> 复制发送话术
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 gap-1.5"
+                onClick={() => {
+                  const url = `${window.location.origin}/assessment/male_midlife_vitality?recordId=${row.resultId}&autoSave=pdf&adminPdf=1`;
+                  window.open(url, "_blank");
+                  toast.message("已在新窗口打开报告，请按提示导出 PDF");
+                }}
+              >
+                <FileDown className="w-3.5 h-3.5" /> 打开导出 PDF
+              </Button>
+            </div>
+          )}
         </SheetHeader>
 
         <ScrollArea className="flex-1">

@@ -17,6 +17,7 @@ export interface RespondentRow {
   adminNote: string | null;
   adminTags: string[];
   adminNoteUpdatedAt: string | null;
+  claimCode: string | null;
 }
 
 export interface AssessmentInsights {
@@ -24,6 +25,7 @@ export interface AssessmentInsights {
     id: string;
     title: string;
     emoji: string | null;
+    assessmentKey: string | null;
     questionCount: number;
     maxScore: number;
     dimensions: any;
@@ -52,7 +54,7 @@ export function useAdminAssessmentInsights(templateId: string | undefined) {
 
       const { data: tmpl, error: tErr } = await supabase
         .from("partner_assessment_templates" as any)
-        .select("id, title, emoji, question_count, max_score, dimensions, questions, result_patterns")
+        .select("id, title, emoji, assessment_key, question_count, max_score, dimensions, questions, result_patterns")
         .eq("id", templateId)
         .maybeSingle();
       if (tErr) throw tErr;
@@ -110,6 +112,7 @@ export function useAdminAssessmentInsights(templateId: string | undefined) {
           adminNote: n?.note || null,
           adminTags: Array.isArray(n?.tags) ? n.tags : [],
           adminNoteUpdatedAt: n?.updated_at || null,
+          claimCode: r.claim_code || null,
         };
       });
 
@@ -181,6 +184,7 @@ export function useAdminAssessmentInsights(templateId: string | undefined) {
           id: t.id,
           title: t.title,
           emoji: t.emoji,
+          assessmentKey: t.assessment_key || null,
           questionCount: t.question_count || 0,
           maxScore: maxS,
           dimensions: t.dimensions,
