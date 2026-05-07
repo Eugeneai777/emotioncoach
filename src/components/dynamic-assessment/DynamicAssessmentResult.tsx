@@ -827,7 +827,64 @@ export function DynamicAssessmentResult({
           );
         })()}
 
-        {/* SBTI Entertainment Disclaimer + Share CTA */}
+        {/* 35-55 男版：场景化「7 天有劲恢复行动」清单（替代通用 tips） */}
+        {isMaleMidlifeVitality && !isLiteMode && (() => {
+          const vitalityActions = vitalityStatusPercent >= 60
+            ? [
+                { emoji: '🔋', title: '把"再撑一下"换成"按时收工"', body: '今晚 11 点前关掉工作群，明天开会脑子更稳。' },
+                { emoji: '🛏️', title: '给睡眠加一道"防线"', body: '本周设个手机充电桩在客厅，睡前手机不进卧室。' },
+                { emoji: '☕', title: '留 15 分钟"无目的时间"', body: '通勤路上不听播客、不刷手机，让大脑放空一段。' },
+                { emoji: '🤝', title: '主动约一个老朋友', body: '不谈工作和家庭，只问一句"你最近怎么样"。' },
+              ]
+            : vitalityStatusPercent >= 40
+              ? [
+                  { emoji: '😮‍💨', title: '先承认"我现在低电量"', body: '不是矫情，是身体在报警。本周允许自己拒绝 1 个新承诺。' },
+                  { emoji: '📵', title: '设一个"22:30 数字宵禁"', body: '连续 7 天试试，是恢复有劲状态最便宜的杠杆。' },
+                  { emoji: '🚶', title: '每天走 20 分钟（不带手机）', body: '不为减肥、不为打卡，只为给大脑一个"呼吸窗口"。' },
+                  { emoji: '🗣️', title: '找一个能说真话的人', body: '老朋友、教练、AI 都行——把"最近不太对劲"说出口。' },
+                ]
+              : [
+                  { emoji: '🚨', title: '现在不是加油，是先停车', body: '本周不接任何新项目、新承诺。允许自己"什么都不做"也是行动。' },
+                  { emoji: '🩺', title: '本周做 1 件正经的自我照顾', body: '一次体检、一次按摩、一次睡到自然醒——选 1 件，今天就预约。' },
+                  { emoji: '🤐', title: '把"我没事"留给自己', body: '找 1 个人（伴侣、老朋友、教练）说出"我撑不太住了"。' },
+                  { emoji: '🎯', title: '把目标砍到 1/3', body: '不是你不行，是你同时背的太多。先卸下 2/3，剩下的才走得动。' },
+                ];
+          return (
+            <motion.div custom={4} variants={fadeUp} initial="hidden" animate="visible">
+              <Card className="border-amber-200/60 bg-gradient-to-br from-amber-50/80 via-card to-teal-50/60 dark:from-amber-950/20 dark:to-teal-950/20 shadow-sm overflow-hidden">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-amber-500 to-teal-700 flex items-center justify-center">
+                      <Lightbulb className="w-3.5 h-3.5 text-white" />
+                    </div>
+                    <h3 className="font-bold text-sm text-foreground">7 天有劲恢复行动 · 今晚就能开始</h3>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground mb-3 ml-8">
+                    专为 35-55 男性设计 · 今天 / 今晚 / 本周可落地
+                  </p>
+                  <ul className="space-y-2">
+                    {vitalityActions.map((a, i) => (
+                      <motion.li
+                        key={i}
+                        initial={{ opacity: 0, x: -8 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.5 + i * 0.08 }}
+                        className="flex items-start gap-2.5 p-2.5 rounded-lg bg-white/70 dark:bg-card/60 border border-amber-100/60"
+                      >
+                        <span className="text-base mt-0.5 shrink-0">{a.emoji}</span>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-sm font-semibold text-foreground leading-snug">{a.title}</div>
+                          <div className="text-xs text-muted-foreground leading-relaxed mt-0.5">{a.body}</div>
+                        </div>
+                      </motion.li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            </motion.div>
+          );
+        })()}
+
         {isSBTI && (
           <motion.div custom={4} variants={fadeUp} initial="hidden" animate="visible" className="space-y-3">
             <Button
