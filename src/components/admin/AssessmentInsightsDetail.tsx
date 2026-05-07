@@ -65,7 +65,7 @@ function maskPhone(p: string | null) {
 }
 
 function toCsv(rows: RespondentRow[]) {
-  const header = ["昵称", "手机号", "国家码", "主导类型", "总分", "测评时间"];
+  const header = ["昵称", "手机号", "国家码", "主导类型", "总分", "测评时间", "管理员备注", "标签"];
   const lines = rows.map((r) =>
     [
       r.displayName || "",
@@ -74,6 +74,8 @@ function toCsv(rows: RespondentRow[]) {
       r.primaryPattern || "",
       String(r.totalScore),
       format(new Date(r.createdAt), "yyyy-MM-dd HH:mm:ss"),
+      r.adminNote || "",
+      (r.adminTags || []).join("/"),
     ]
       .map((s) => `"${String(s).replace(/"/g, '""')}"`)
       .join(",")
