@@ -15,7 +15,7 @@ interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   row: RespondentRow | null;
-  template: { questions: any; dimensions: any; maxScore: number } | null;
+  template: { questions: any; dimensions: any; maxScore: number; assessmentKey?: string | null } | null;
 }
 
 export function AssessmentRespondentDrawer({ open, onOpenChange, row, template }: Props) {
