@@ -146,6 +146,16 @@ export function DynamicAssessmentIntro({ template, onStart, onShowHistory, hasHi
     return { pct, band, dateStr };
   })();
 
+  const handleStart = () => {
+    if (requireAuth && !user) {
+      toast.info("请先登录后开始测评");
+      setPostAuthRedirect(window.location.pathname + window.location.search);
+      navigate(`/auth?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`);
+      return;
+    }
+    needPay ? (onPayClick ?? onStart)() : onStart();
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Hero header */}
