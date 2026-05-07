@@ -54,7 +54,7 @@ export function useAdminAssessmentInsights(templateId: string | undefined) {
 
       const { data: tmpl, error: tErr } = await supabase
         .from("partner_assessment_templates" as any)
-        .select("id, title, emoji, question_count, max_score, dimensions, questions, result_patterns")
+        .select("id, title, emoji, assessment_key, question_count, max_score, dimensions, questions, result_patterns")
         .eq("id", templateId)
         .maybeSingle();
       if (tErr) throw tErr;
