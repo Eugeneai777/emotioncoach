@@ -244,6 +244,40 @@ export function EmotionHealthStartScreen({
         </div>
       </Card>
 
+      {/* ===== 顶部快捷 CTA ===== */}
+      <motion.div
+        initial={{ opacity: 0.01, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        style={{ transform: "translateZ(0)" }}
+      >
+        <Card className="bg-gradient-to-br from-violet-50 via-purple-50 to-indigo-50 dark:from-violet-900/20 dark:via-purple-900/20 dark:to-indigo-900/20 border-violet-300 dark:border-violet-800 shadow-md">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between gap-3 mb-3">
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-foreground">32题 · 约5分钟</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">基于国际权威心理量表 · AI深度解读</p>
+              </div>
+              {!hasPurchased && (
+                <div className="flex items-baseline gap-1 flex-shrink-0">
+                  <span className="text-2xl font-bold text-violet-600 dark:text-violet-400">¥{price}</span>
+                  <span className="text-[10px] text-amber-600 font-medium">限时</span>
+                </div>
+              )}
+            </div>
+            <Button
+              size="lg"
+              className="w-full h-12 bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-base"
+              onClick={handleButtonClick}
+              disabled={isLoading}
+            >
+              {isLoading ? "加载中..." : hasPurchased ? "立即开始测评" : `¥${price} 立即开始测评`}
+              <ArrowRight className="w-4 h-4 ml-1" />
+            </Button>
+          </CardContent>
+        </Card>
+      </motion.div>
+
       {/* ===== 模块2：痛点共鸣区 ===== */}
       <AnimatedSection>
         <Card>
