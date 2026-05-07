@@ -1,49 +1,35 @@
-## 问题根因
-当前后台点击「下载 PDF 报告」打开的是：
-`/assessment/male_midlife_vitality?recordId=小王子的结果ID&autoSave=pdf&adminPdf=1`
+## 问题定位
 
-但结果页里有两处仍然默认使用当前登录用户（管理员炯谦）的上下文：
+1. 当前入口只在底部 CTA 里做了登录判断，但页面主流程 `DynamicAssessmentPage` 传给 `DynamicAssessmentIntro` 的 `onStart={() => setPhase("questions")}` 没有二次校验；如果存在其它入口、旧缓存、或小程序环境触发了开始流程，就可能绕过登录进入答题。
+2. `DynamicAssessmentPage` 仍保留了 Lite 答案缓存/恢复逻辑；虽然 `LITE_MODE_KEYS` 已清空，但未登录完成答题缓存与恢复逻辑还在，容易继续造成“未登录可答题”的路径残留。
+3. 售前页 CTA 目前放在所有内容之后，确实需要滑到底部才能点击，首屏转化路径太长。
 
-1. `DynamicAssessmentResult` 会用 `useAuth()` 的当前用户去查 `profiles`，所以 PDF 报告页眉姓名显示成管理员「炯谦」。
-2. 外跳加载历史记录时仍走 `calculateScore(scoringType, record.answers, allQuestions, ...)`，而「男人有劲状态」答题时题目会随机打乱；历史答案如果按当时题序保存，再用当前重新洗过的题序重算，就可能把分数/维度也算错，看起来像导出了当前管理员/当前页面的报告。
+## 实施计划
 
-## 修复方案
+### 1. 在页面主流程增加硬登录闸门
+- 新增统一的 `handleStartAssessment`。
+- 当 `requireAuth=true` 且 `user` 不存在时：
+  - 提示“请先登录后开始测评”。
+  - 记录登录后回跳地址。
+  - 跳转 `/auth?redirect=当前测评页`。
+- 只有登录后才允许 `setPhase("questions")`。
+- `DynamicAssessmentIntro` 的 `onStart` 改为使用这个硬闸门，避免任何按钮或入口绕过。
 
-### 1. 给管理员 PDF 链接带上被下载用户身份
-在 `AssessmentRespondentDrawer.tsx` 生成下载链接时追加只用于展示的参数：
-- `subjectUserId=row.userId`
-- `subjectName=row.displayName`
-- `subjectAvatar=row.avatarUrl`
+### 2. 收紧男人有劲的 Lite 残留路径
+- 对 `male_midlife_vitality` 明确禁用未登录答题缓存与 Lite 恢复。
+- `handleQuestionsComplete` 在未登录且需要登录时直接跳登录，不再保存答案、不再生成结果。
+- 登录回跳恢复缓存逻辑只允许真正 Lite 测评使用，不覆盖男人有劲。
 
-按钮 toast 改成「已打开报告并自动下载 PDF」。
+### 3. 前置售前页 CTA
+- 在【男人有劲状态评估】售前页 Hero/核心信息之后，增加一个醒目的首屏 CTA。
+- 底部原 CTA 保留，作为用户看完整页后的第二次转化入口。
+- 新 CTA 与底部 CTA 复用同一套登录拦截逻辑，确保不会再出现未登录直接答题。
 
-### 2. 结果页区分“报告所属用户”和“当前登录用户”
-在 `DynamicAssessmentPage.tsx` 中解析上述参数，并传给 `DynamicAssessmentResult`。
+### 4. 优化按钮文案
+- 将按钮文案统一改正为“限时免费开始评估”（修正你截图里“现实免费开始评估”的错字/误识别问题）。
+- 不恢复底部“登录后可保存测评记录”小字。
 
-在 `DynamicAssessmentResult.tsx` 中新增 `subjectProfile` 入参：
-- 分享卡、PDF 报告、领取卡优先使用 `subjectProfile`
-- 只有没有 `subjectProfile` 时，才回退到当前登录用户 `useAuth()` 的 profile
+## 预计修改文件
 
-这样管理员打开小王子报告时，PDF 页眉会显示小王子，而不是炯谦。
-
-### 3. 管理员/历史记录导出不再重新洗题重算
-`handleViewHistoryRecord(record)` 增加逻辑：
-- 如果数据库记录已有 `dimension_scores / total_score / primary_pattern`，优先直接用数据库保存的结果组装 `ScoringResult`
-- 只有旧记录缺少这些字段时，才回退到用答案重新计算
-
-这能避免随机题序造成的二次计算偏差，确保导出的就是该条 `recordId` 对应的原始测评报告。
-
-### 4. 自动下载只在目标记录加载完成后触发
-保留当前 `autoSave=pdf` 自动下载机制，但它会基于第 2、3 步后的正确 subject/profile/result 执行，避免抢在他人记录替换完成前导出当前用户数据。
-
-## 涉及文件
-- `src/components/admin/AssessmentRespondentDrawer.tsx`
 - `src/pages/DynamicAssessmentPage.tsx`
-- `src/components/dynamic-assessment/DynamicAssessmentResult.tsx`
-
-## 验收标准
-后台选择「小王子」这一行点击「下载 PDF 报告」后：
-- 新页面打开的是 `recordId=小王子结果ID`
-- 页面/导出 PDF 的姓名为「小王子」
-- 分数、主导类型、维度分数来自该条记录本身
-- 不会再导出当前管理员「炯谦」的报告
+- `src/components/dynamic-assessment/DynamicAssessmentIntro.tsx`
