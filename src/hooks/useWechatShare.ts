@@ -239,13 +239,37 @@ function waitForWxJssdk(timeoutMs = 6000, intervalMs = 100): Promise<WxJssdkMeth
  * 获取 JS-SDK 签名
  */
 async function getJssdkSignature(url: string): Promise<WxConfig> {
+  const startedAt = Date.now();
+  await reportWechatShareDiagnostic({
+    stage: 'signature_request',
+    message: '开始请求微信 JSSDK 签名',
+    extra: { signedUrl: url },
+  });
+
   const { data, error } = await supabase.functions.invoke('wechat-jssdk-signature', {
     body: { url },
   });
 
   if (error) {
+    await reportWechatShareDiagnostic({
+      stage: 'signature_error',
+      severity: 'critical',
+      message: '微信 JSSDK 签名请求失败',
+      extra: { signedUrl: url, errorMessage: error.message, durationMs: Date.now() - startedAt },
+    });
     throw new Error(`Failed to get JSSDK signature: ${error.message}`);
   }
+
+  await reportWechatShareDiagnostic({
+    stage: 'signature_success',
+    message: '微信 JSSDK 签名请求成功',
+    extra: {
+      signedUrl: url,
+      appId: data?.appId,
+      timestamp: data?.timestamp,
+      durationMs: Date.now() - startedAt,
+    },
+  });
 
   return data;
 }
@@ -285,10 +309,21 @@ export function useWechatShare(config: WechatShareConfig) {
       if (cancelled) return;
       if (!wx) {
         console.warn('[WechatShare] wx JS-SDK not ready after waiting. Check if jweixin script is loaded in index.html');
+        reportWechatShareDiagnostic({
+          stage: 'sdk_missing',
+          severity: 'critical',
+          message: '微信 JS-SDK 未加载成功',
+          extra: { waitedMs: 6000, scriptHint: 'https://res.wx.qq.com/open/js/jweixin-1.6.0.js' },
+        });
         return;
       }
 
       console.log('[WechatShare] wx object found, proceeding with configuration');
+      reportWechatShareDiagnostic({
+        stage: 'sdk_ready',
+        message: '微信 JS-SDK 已加载',
+        extra: { hasConfig: typeof wx.config === 'function' },
+      });
 
       // 配置唯一标识（避免重复配置）
       const configKey = `${config.title}|${config.desc}|${config.link}|${config.imgUrl}`;
@@ -306,6 +341,18 @@ export function useWechatShare(config: WechatShareConfig) {
         const currentUrl = (window.__WECHAT_ENTRY_URL__ || window.location.href).split('#')[0];
 
         console.log('[WechatShare] Configuring share for URL:', currentUrl);
+        await reportWechatShareDiagnostic({
+          stage: 'config_start',
+          message: '开始配置微信分享',
+          imageUrl: config.imgUrl,
+          extra: {
+            signedUrl: currentUrl,
+            currentHref: window.location.href,
+            entryUrl: window.__WECHAT_ENTRY_URL__ || null,
+            shareLink: config.link,
+            shareTitle: config.title,
+          },
+        });
 
         // 获取签名（带本地缓存，减少首屏 race condition）
         const wxConfig = await getJssdkSignatureCached(currentUrl);
@@ -335,6 +382,17 @@ export function useWechatShare(config: WechatShareConfig) {
             ],
           });
           configuredUrlSet.add(currentUrl);
+          reportWechatShareDiagnostic({
+            stage: 'config_called',
+            message: 'wx.config 已调用',
+            imageUrl: config.imgUrl,
+            extra: {
+              signedUrl: currentUrl,
+              appId: wxConfig.appId,
+              timestamp: wxConfig.timestamp,
+              jsApiList: ['updateAppMessageShareData', 'updateTimelineShareData', 'onMenuShareAppMessage', 'onMenuShareTimeline'],
+            },
+          });
         }
 
         // 配置成功后设置分享内容
@@ -347,6 +405,19 @@ export function useWechatShare(config: WechatShareConfig) {
             shareLink: config.link,
             shareImg: config.imgUrl,
             shareTitle: config.title,
+          });
+          reportWechatShareDiagnostic({
+            stage: 'ready',
+            message: 'wx.ready 成功，开始写入分享卡片数据',
+            imageUrl: config.imgUrl,
+            extra: {
+              signedUrl: currentUrl,
+              currentHref: window.location.href,
+              entryUrl: window.__WECHAT_ENTRY_URL__ || null,
+              urlMatch: currentUrl === window.location.href.split('#')[0],
+              shareLink: config.link,
+              shareTitle: config.title,
+            },
           });
 
           const sdk = getWxJssdk();
@@ -370,10 +441,33 @@ export function useWechatShare(config: WechatShareConfig) {
             timestamp: wxConfig.timestamp,
           });
           console.error('[WechatShare] 常见原因: 1) invalid signature → URL与签名URL不一致(SPA路由变化) 2) JS接口安全域名未在公众号后台配置 wechat.eugenewe.net 3) appId不匹配 4) 签名过期(>2h)');
+          reportWechatShareDiagnostic({
+            stage: 'wx_error',
+            severity: 'critical',
+            message: `wx.config 失败：${res?.errMsg || 'unknown'}`,
+            imageUrl: config.imgUrl,
+            extra: {
+              errMsg: res?.errMsg,
+              signedUrl: currentUrl,
+              entryUrl: window.__WECHAT_ENTRY_URL__,
+              currentHref: window.location.href.split('#')[0],
+              urlMismatch: currentUrl !== window.location.href.split('#')[0],
+              appId: wxConfig.appId,
+              timestamp: wxConfig.timestamp,
+              shareLink: config.link,
+            },
+          });
         });
       } catch (error) {
         console.warn('[WechatShare] Failed to configure share:', error);
         console.warn('[WechatShare] This is non-blocking - sharing may still work with default OG tags');
+        reportWechatShareDiagnostic({
+          stage: 'config_exception',
+          severity: 'critical',
+          message: '微信分享配置过程异常',
+          imageUrl: config.imgUrl,
+          extra: { error: error instanceof Error ? error.message : String(error) },
+        });
       }
     }
 
