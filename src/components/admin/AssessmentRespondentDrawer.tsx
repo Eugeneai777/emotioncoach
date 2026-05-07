@@ -19,10 +19,36 @@ interface Props {
 }
 
 export function AssessmentRespondentDrawer({ open, onOpenChange, row, template }: Props) {
+  const [note, setNote] = useState("");
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState("");
+  const upsert = useUpsertAdminUserNote();
+
+  useEffect(() => {
+    if (row) {
+      setNote(row.adminNote || "");
+      setTags(row.adminTags || []);
+      setTagInput("");
+    }
+  }, [row?.userId]);
+
   if (!row) return null;
 
   const questions: any[] = Array.isArray(template?.questions) ? template!.questions : [];
   const answers = row.answers || {};
+
+  const addTag = () => {
+    const t = tagInput.trim();
+    if (!t || tags.includes(t)) return;
+    setTags([...tags, t]);
+    setTagInput("");
+  };
+
+  const handleSave = () => {
+    upsert.mutate({ userId: row.userId, note: note.trim(), tags });
+  };
+
+  const dirty = note !== (row.adminNote || "") || JSON.stringify(tags) !== JSON.stringify(row.adminTags || []);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
