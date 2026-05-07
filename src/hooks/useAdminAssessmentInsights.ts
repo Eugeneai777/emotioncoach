@@ -14,6 +14,9 @@ export interface RespondentRow {
   answers: any;
   aiInsight: string | null;
   createdAt: string;
+  adminNote: string | null;
+  adminTags: string[];
+  adminNoteUpdatedAt: string | null;
 }
 
 export interface AssessmentInsights {
@@ -77,8 +80,20 @@ export function useAdminAssessmentInsights(templateId: string | undefined) {
         });
       }
 
+      let noteMap: Record<string, any> = {};
+      if (userIds.length > 0) {
+        const { data: notes } = await supabase
+          .from("admin_user_notes" as any)
+          .select("user_id, note, tags, updated_at")
+          .in("user_id", userIds);
+        (notes || []).forEach((n: any) => {
+          noteMap[n.user_id] = n;
+        });
+      }
+
       const respondents: RespondentRow[] = rows.map((r) => {
         const p = profileMap[r.user_id] || {};
+        const n = noteMap[r.user_id] || null;
         return {
           resultId: r.id,
           userId: r.user_id,
@@ -92,6 +107,9 @@ export function useAdminAssessmentInsights(templateId: string | undefined) {
           answers: r.answers || null,
           aiInsight: r.ai_insight || null,
           createdAt: r.created_at,
+          adminNote: n?.note || null,
+          adminTags: Array.isArray(n?.tags) ? n.tags : [],
+          adminNoteUpdatedAt: n?.updated_at || null,
         };
       });
 

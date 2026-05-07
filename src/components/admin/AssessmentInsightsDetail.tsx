@@ -65,7 +65,7 @@ function maskPhone(p: string | null) {
 }
 
 function toCsv(rows: RespondentRow[]) {
-  const header = ["昵称", "手机号", "国家码", "主导类型", "总分", "测评时间"];
+  const header = ["昵称", "手机号", "国家码", "主导类型", "总分", "测评时间", "管理员备注", "标签"];
   const lines = rows.map((r) =>
     [
       r.displayName || "",
@@ -74,6 +74,8 @@ function toCsv(rows: RespondentRow[]) {
       r.primaryPattern || "",
       String(r.totalScore),
       format(new Date(r.createdAt), "yyyy-MM-dd HH:mm:ss"),
+      r.adminNote || "",
+      (r.adminTags || []).join("/"),
     ]
       .map((s) => `"${String(s).replace(/"/g, '""')}"`)
       .join(",")
@@ -98,7 +100,9 @@ export default function AssessmentInsightsDetail() {
         const q = search.trim().toLowerCase();
         const hit =
           (r.displayName || "").toLowerCase().includes(q) ||
-          (r.phone || "").includes(q);
+          (r.phone || "").includes(q) ||
+          (r.adminNote || "").toLowerCase().includes(q) ||
+          (r.adminTags || []).some((t) => t.toLowerCase().includes(q));
         if (!hit) return false;
       }
       return true;
@@ -293,7 +297,30 @@ export default function AssessmentInsightsDetail() {
                             <AvatarImage src={r.avatarUrl || undefined} />
                             <AvatarFallback className="text-xs">{(r.displayName || "U").slice(0, 1)}</AvatarFallback>
                           </Avatar>
-                          <span className="truncate max-w-[120px]">{r.displayName || "未命名"}</span>
+                          <div className="min-w-0">
+                            <div className="truncate max-w-[160px]">{r.displayName || "未命名"}</div>
+                            {(r.adminNote || (r.adminTags && r.adminTags.length > 0)) ? (
+                              <div className="flex items-center gap-1 mt-0.5 max-w-[200px]">
+                                {r.adminTags?.slice(0, 2).map((t) => (
+                                  <Badge key={t} variant="outline" className="text-[10px] px-1 py-0 h-4 border-amber-300 text-amber-700">
+                                    {t}
+                                  </Badge>
+                                ))}
+                                {r.adminNote && (
+                                  <span className="text-[11px] text-muted-foreground truncate">
+                                    📝 {r.adminNote}
+                                  </span>
+                                )}
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => setDrawerRow(r)}
+                                className="text-[11px] text-muted-foreground/60 hover:text-primary mt-0.5"
+                              >
+                                + 备注
+                              </button>
+                            )}
+                          </div>
                         </div>
                       </td>
                       <td className="px-4 py-2 font-mono text-xs">{maskPhone(r.phone)}</td>
