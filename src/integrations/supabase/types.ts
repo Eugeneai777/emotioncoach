@@ -7144,6 +7144,7 @@ export type Database = {
         Row: {
           ai_insight: string | null
           answers: Json
+          claim_code: string | null
           created_at: string
           dimension_scores: Json
           id: string
@@ -7155,6 +7156,7 @@ export type Database = {
         Insert: {
           ai_insight?: string | null
           answers?: Json
+          claim_code?: string | null
           created_at?: string
           dimension_scores?: Json
           id?: string
@@ -7166,6 +7168,7 @@ export type Database = {
         Update: {
           ai_insight?: string | null
           answers?: Json
+          claim_code?: string | null
           created_at?: string
           dimension_scores?: Json
           id?: string
@@ -12429,6 +12432,7 @@ export type Database = {
           remaining_quota: number
         }[]
       }
+      generate_assessment_claim_code: { Args: never; Returns: string }
       get_partner_id_for_user: { Args: { p_user_id: string }; Returns: string }
       get_user_permissions: {
         Args: { p_user_id: string }
