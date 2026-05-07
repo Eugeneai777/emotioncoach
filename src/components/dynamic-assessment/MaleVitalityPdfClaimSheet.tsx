@@ -31,8 +31,8 @@ export function MaleVitalityPdfClaimSheet({
   const cardRef = useRef<HTMLDivElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
-  const platform = detectPlatform();
-  const isWeChatLike = platform === "wechat" || platform === "wechat-mp";
+  const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
+  const isWeChatLike = /MicroMessenger/i.test(ua);
 
   // 自动生成预览图（开 Sheet + 拿到码后）
   useEffect(() => {
