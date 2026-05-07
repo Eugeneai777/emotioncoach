@@ -82,7 +82,7 @@ const MaleVitalityPdfClaimCard = forwardRef<HTMLDivElement, MaleVitalityPdfClaim
             ⚡ 男人有劲状态
           </div>
           <div style={{ fontSize: 14, color: "rgba(255,255,255,0.5)" }}>
-            EUGENE · 你的专属凭证
+            有劲 · 你的专属凭证
           </div>
         </div>
 
@@ -237,7 +237,7 @@ const MaleVitalityPdfClaimCard = forwardRef<HTMLDivElement, MaleVitalityPdfClaim
             marginBottom: 16,
           }}
         >
-          ↓ 长按识别二维码，添加你的 EUGENE 专属顾问 ↓
+          ↓ 长按识别二维码，添加你的「有劲顾问」 ↓
         </div>
 
         {/* 企微二维码 */}
@@ -275,7 +275,7 @@ const MaleVitalityPdfClaimCard = forwardRef<HTMLDivElement, MaleVitalityPdfClaim
             marginBottom: 4,
           }}
         >
-          扫码添加 · EUGENE 私人顾问
+          扫码添加 · 有劲私人顾问
         </div>
         <div
           style={{
@@ -286,7 +286,7 @@ const MaleVitalityPdfClaimCard = forwardRef<HTMLDivElement, MaleVitalityPdfClaim
             marginTop: 24,
           }}
         >
-          仅供本人使用，请勿外传 · EUGENE 出品
+          仅供本人使用，请勿外传 · 有劲出品
         </div>
       </div>
     );
