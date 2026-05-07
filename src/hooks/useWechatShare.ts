@@ -101,7 +101,14 @@ function writeCachedSignature(url: string, data: WxConfig) {
 
 async function getJssdkSignatureCached(url: string): Promise<WxConfig> {
   const cached = readCachedSignature(url);
-  if (cached) return cached;
+  if (cached) {
+    void reportWechatShareDiagnostic({
+      stage: 'signature_cache_hit',
+      message: '使用本地缓存的微信 JSSDK 签名',
+      extra: { signedUrl: url, appId: cached.appId, timestamp: cached.timestamp },
+    });
+    return cached;
+  }
 
   const existing = signaturePromiseCache.get(url);
   if (existing) return existing;
@@ -240,7 +247,7 @@ function waitForWxJssdk(timeoutMs = 6000, intervalMs = 100): Promise<WxJssdkMeth
  */
 async function getJssdkSignature(url: string): Promise<WxConfig> {
   const startedAt = Date.now();
-  await reportWechatShareDiagnostic({
+  void reportWechatShareDiagnostic({
     stage: 'signature_request',
     message: '开始请求微信 JSSDK 签名',
     extra: { signedUrl: url },
@@ -251,7 +258,7 @@ async function getJssdkSignature(url: string): Promise<WxConfig> {
   });
 
   if (error) {
-    await reportWechatShareDiagnostic({
+    void reportWechatShareDiagnostic({
       stage: 'signature_error',
       severity: 'critical',
       message: '微信 JSSDK 签名请求失败',
@@ -260,7 +267,7 @@ async function getJssdkSignature(url: string): Promise<WxConfig> {
     throw new Error(`Failed to get JSSDK signature: ${error.message}`);
   }
 
-  await reportWechatShareDiagnostic({
+  void reportWechatShareDiagnostic({
     stage: 'signature_success',
     message: '微信 JSSDK 签名请求成功',
     extra: {
