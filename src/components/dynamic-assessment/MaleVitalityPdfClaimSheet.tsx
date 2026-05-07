@@ -5,6 +5,7 @@ import { Copy, Loader2, Download as DownloadIcon } from "lucide-react";
 import { toast } from "sonner";
 import MaleVitalityPdfClaimCard from "./MaleVitalityPdfClaimCard";
 import { generateCardBlob } from "@/utils/shareCardConfig";
+import { formatClaimCode } from "@/utils/claimCodeUtils";
 
 
 interface MaleVitalityPdfClaimSheetProps {
@@ -17,6 +18,31 @@ interface MaleVitalityPdfClaimSheetProps {
   statusPercent: number;
   statusLabel: string;
 }
+
+/**
+ * 头像预解码 + 跨域降级，避免 html2canvas 阻塞
+ * 1.5s 超时直接返回 undefined，海报走「首字母彩色块」兜底
+ */
+async function safePreloadAvatar(url?: string): Promise<string | undefined> {
+  if (!url) return undefined;
+  return new Promise((resolve) => {
+    const img = new Image();
+    let done = false;
+    const finish = (ok: boolean) => {
+      if (done) return;
+      done = true;
+      resolve(ok ? url : undefined);
+    };
+    img.crossOrigin = "anonymous";
+    img.onload = () => finish(true);
+    img.onerror = () => finish(false);
+    img.src = url;
+    setTimeout(() => finish(false), 1500);
+  });
+}
+
+const nextFrame = () =>
+  new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())));
 
 export function MaleVitalityPdfClaimSheet({
   open,
@@ -31,24 +57,49 @@ export function MaleVitalityPdfClaimSheet({
   const cardRef = useRef<HTMLDivElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
+  const [safeAvatar, setSafeAvatar] = useState<string | undefined>(undefined);
+
+  // 缓存 { key, url } —— 同一 claimCode 二次打开瞬开
+  const cacheRef = useRef<{ key: string; url: string } | null>(null);
+
   const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
   const isWeChatLike = /MicroMessenger/i.test(ua);
 
-  // 自动生成预览图（开 Sheet + 拿到码后）
+  // 自动生成预览图
   useEffect(() => {
     if (!open || !claimCode) return;
+    const cacheKey = `${claimCode}::${statusPercent}`;
+
+    // 命中缓存：瞬开
+    if (cacheRef.current?.key === cacheKey) {
+      setPreviewUrl(cacheRef.current.url);
+      return;
+    }
+
     let cancelled = false;
-    let urlToRevoke: string | null = null;
     (async () => {
       setGenerating(true);
+      setPreviewUrl(null);
       try {
-        // 等卡片渲染完成
-        await new Promise((r) => setTimeout(r, 150));
-        const blob = await generateCardBlob(cardRef, { forceScale: 2 });
+        // 1) 头像预解码 + 1.5s 超时降级
+        const okAvatar = await safePreloadAvatar(avatarUrl);
+        if (cancelled) return;
+        setSafeAvatar(okAvatar);
+
+        // 2) 等离屏 DOM 完成布局（双 RAF，比 setTimeout 更准更快）
+        await nextFrame();
+        if (cancelled) return;
+
+        // 3) 截图：scale 1.6 平衡清晰度与速度（750 → 1200px）
+        const blob = await generateCardBlob(cardRef, { forceScale: 1.6 });
         if (cancelled) return;
         if (blob) {
           const url = URL.createObjectURL(blob);
-          urlToRevoke = url;
+          // 释放上一张缓存
+          if (cacheRef.current?.url) {
+            try { URL.revokeObjectURL(cacheRef.current.url); } catch {}
+          }
+          cacheRef.current = { key: cacheKey, url };
           setPreviewUrl(url);
         }
       } catch (e) {
@@ -59,9 +110,18 @@ export function MaleVitalityPdfClaimSheet({
     })();
     return () => {
       cancelled = true;
-      if (urlToRevoke) URL.revokeObjectURL(urlToRevoke);
     };
-  }, [open, claimCode]);
+  }, [open, claimCode, avatarUrl, statusPercent]);
+
+  // 卸载时统一释放
+  useEffect(() => {
+    return () => {
+      if (cacheRef.current?.url) {
+        try { URL.revokeObjectURL(cacheRef.current.url); } catch {}
+        cacheRef.current = null;
+      }
+    };
+  }, []);
 
   const handleCopyCode = async () => {
     if (!claimCode) return;
@@ -134,22 +194,20 @@ export function MaleVitalityPdfClaimSheet({
             </li>
           </ol>
 
-          {/* 凭证预览 */}
-          <div className="rounded-xl bg-muted/30 p-3">
-            {loadingCode || (generating && !previewUrl) ? (
-              <div className="aspect-[3/4] flex items-center justify-center">
-                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-              </div>
-            ) : previewUrl ? (
+          {/* 凭证预览 — 骨架屏即时反馈 */}
+          <div className="rounded-xl bg-muted/30 p-3 relative">
+            {previewUrl ? (
               <img
                 src={previewUrl}
                 alt="你的专属凭证"
-                className="w-full rounded-lg shadow-md"
+                className="w-full rounded-lg shadow-md transition-opacity duration-300"
               />
             ) : (
-              <div className="aspect-[3/4] flex items-center justify-center text-sm text-muted-foreground">
-                凭证生成失败，请重试
-              </div>
+              <ClaimSkeleton
+                claimCode={claimCode}
+                statusLabel={statusLabel}
+                loading={loadingCode || generating}
+              />
             )}
             {isWeChatLike && previewUrl && (
               <p className="text-center text-xs text-muted-foreground mt-2">
@@ -197,12 +255,48 @@ export function MaleVitalityPdfClaimSheet({
             ref={cardRef}
             claimCode={claimCode}
             displayName={displayName}
-            avatarUrl={avatarUrl}
+            avatarUrl={safeAvatar}
             statusPercent={statusPercent}
             statusLabel={statusLabel}
           />
         </div>
       </SheetContent>
     </Sheet>
+  );
+}
+
+/** 凭证骨架屏：瞬时显示领取码，等待高清图期间消除空白感 */
+function ClaimSkeleton({
+  claimCode,
+  statusLabel,
+  loading,
+}: {
+  claimCode?: string | null;
+  statusLabel: string;
+  loading: boolean;
+}) {
+  return (
+    <div
+      className="w-full aspect-[3/4] rounded-lg overflow-hidden flex flex-col items-center justify-center px-6 text-white relative"
+      style={{
+        background:
+          "linear-gradient(160deg, #0B1220 0%, #11192C 45%, #1A1030 100%)",
+      }}
+    >
+      <div className="text-amber-400 text-xs tracking-widest mb-2">⚡ 男人有劲状态</div>
+      <div className="text-[11px] text-white/60 mb-6">{statusLabel}</div>
+      <div className="text-[11px] text-white/70 mb-2 tracking-wider">━ 你的领取码 ━</div>
+      <div
+        className="font-mono font-extrabold text-white tracking-[0.3em] text-4xl mb-3"
+        style={{ textShadow: "0 2px 16px rgba(245,158,11,0.4)" }}
+      >
+        {formatClaimCode(claimCode) || "— —"}
+      </div>
+      <div className="text-amber-300 text-[11px]">🔒 仅限本人凭码领取 · 24 小时内送达</div>
+      <div className="absolute bottom-3 right-3 flex items-center gap-1 text-[10px] text-white/50">
+        {loading && <Loader2 className="w-3 h-3 animate-spin" />}
+        <span>高清凭证生成中…</span>
+      </div>
+    </div>
   );
 }
