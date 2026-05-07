@@ -48,6 +48,7 @@ import {
 } from "@/components/ui/select";
 import { useAdminAssessmentInsights, RespondentRow } from "@/hooks/useAdminAssessmentInsights";
 import { AssessmentRespondentDrawer } from "./AssessmentRespondentDrawer";
+import { formatClaimCode } from "@/utils/claimCodeUtils";
 
 const CHART_COLORS = [
   "hsl(var(--primary))",
