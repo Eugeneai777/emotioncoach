@@ -1,35 +1,61 @@
-## 问题定位
+## 根因
 
-1. 当前入口只在底部 CTA 里做了登录判断，但页面主流程 `DynamicAssessmentPage` 传给 `DynamicAssessmentIntro` 的 `onStart={() => setPhase("questions")}` 没有二次校验；如果存在其它入口、旧缓存、或小程序环境触发了开始流程，就可能绕过登录进入答题。
-2. `DynamicAssessmentPage` 仍保留了 Lite 答案缓存/恢复逻辑；虽然 `LITE_MODE_KEYS` 已清空，但未登录完成答题缓存与恢复逻辑还在，容易继续造成“未登录可答题”的路径残留。
-3. 售前页 CTA 目前放在所有内容之后，确实需要滑到底部才能点击，首屏转化路径太长。
+数据库 `partner_assessment_results.dimension_scores` 实际存储为**数组**：
+```json
+[{ "key":"energy", "label":"精力续航", "emoji":"🔋", "maxScore":12, "score":12 }, ...]
+```
 
-## 实施计划
+但 `DynamicAssessmentPage.handleViewHistoryRecord`（管理员 PDF 入口走的就是这条路径）把它当成 `Record<string, number>` 来读：
 
-### 1. 在页面主流程增加硬登录闸门
-- 新增统一的 `handleStartAssessment`。
-- 当 `requireAuth=true` 且 `user` 不存在时：
-  - 提示“请先登录后开始测评”。
-  - 记录登录后回跳地址。
-  - 跳转 `/auth?redirect=当前测评页`。
-- 只有登录后才允许 `setPhase("questions")`。
-- `DynamicAssessmentIntro` 的 `onStart` 改为使用这个硬闸门，避免任何按钮或入口绕过。
+```ts
+const storedDims = record.dimension_scores as Record<string, number>;
+score: Number(storedDims[d.key] ?? 0)   // 数组按 key 取永远是 undefined → 0
+```
 
-### 2. 收紧男人有劲的 Lite 残留路径
-- 对 `male_midlife_vitality` 明确禁用未登录答题缓存与 Lite 恢复。
-- `handleQuestionsComplete` 在未登录且需要登录时直接跳登录，不再保存答案、不再生成结果。
-- 登录回跳恢复缓存逻辑只允许真正 Lite 测评使用，不覆盖男人有劲。
+所以每个维度 `score=0`。男人有劲报告显示的是"翻转后的状态电量" = `maxScore - score` → 全部满分 100，且不同用户都被还原为 0，因此两个人六维明细完全一样。
 
-### 3. 前置售前页 CTA
-- 在【男人有劲状态评估】售前页 Hero/核心信息之后，增加一个醒目的首屏 CTA。
-- 底部原 CTA 保留，作为用户看完整页后的第二次转化入口。
-- 新 CTA 与底部 CTA 复用同一套登录拦截逻辑，确保不会再出现未登录直接答题。
+## 修复方案
 
-### 4. 优化按钮文案
-- 将按钮文案统一改正为“限时免费开始评估”（修正你截图里“现实免费开始评估”的错字/误识别问题）。
-- 不恢复底部“登录后可保存测评记录”小字。
+### 1. `src/pages/DynamicAssessmentPage.tsx` — 修复 `handleViewHistoryRecord`
+兼容两种存储格式：
+- **数组**（线上实际格式）：直接以 `template.dimensions` 顺序为基准，按 `key` 在数组里找匹配项，取其 `score`、`maxScore`、`label`、`emoji`，缺失才回退 0/模板值。
+- **对象**（兜底兼容）：保留旧的 `Record<string, number>` 读法。
 
-## 预计修改文件
+伪代码：
+```ts
+const storedRaw = record.dimension_scores;
+const isArray = Array.isArray(storedRaw);
+const byKey: Record<string, any> = isArray
+  ? Object.fromEntries(storedRaw.map((d: any) => [d.key, d]))
+  : storedRaw || {};
 
+const dimensionScores = dims.map((d: any) => {
+  const item = byKey[d.key];
+  if (isArray) {
+    return {
+      key: d.key,
+      label: item?.label ?? d.label,
+      emoji: item?.emoji ?? d.emoji,
+      maxScore: Number(item?.maxScore ?? d.maxScore ?? 0),
+      score: Number(item?.score ?? 0),
+    };
+  }
+  return {
+    key: d.key, label: d.label, emoji: d.emoji,
+    maxScore: d.maxScore || 0,
+    score: Number(item ?? 0),
+  };
+});
+```
+
+`maxScore` 汇总也用每个维度真实值求和。
+
+### 2. `src/components/dynamic-assessment/DynamicAssessmentIntro.tsx` — 老用户快捷卡兜底
+`lastSummary` 已假设数组，无需改动；只在 `totalMax === 0` 时回退到 `template` 的总分，避免极端情况显示异常百分比。
+
+### 3. 验证
+读两个真实 recordId（不同用户），管理员链路打开 `?recordId=...&adminPdf=1&autoSave=pdf`，确认六维分数与数据库一致、两份报告内容不同。
+
+### 涉及文件
 - `src/pages/DynamicAssessmentPage.tsx`
-- `src/components/dynamic-assessment/DynamicAssessmentIntro.tsx`
+- `src/components/dynamic-assessment/DynamicAssessmentIntro.tsx`（小幅兜底，可选）
