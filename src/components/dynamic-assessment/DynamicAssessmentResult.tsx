@@ -1078,7 +1078,26 @@ export function DynamicAssessmentResult({
 
         {/* Action Buttons */}
         <motion.div custom={8} variants={fadeUp} initial="hidden" animate="visible" className="space-y-3 mt-4">
-          {(isMaleMidlifeVitality || isWomenCompetitiveness) && aiInsight && !isLiteMode && (
+          {isMaleMidlifeVitality && !isLiteMode && (
+            <div ref={saveButtonRef}>
+              <Button
+                className={cn(
+                  "w-full gap-2 rounded-xl h-12 text-base font-semibold",
+                  pulseSaveBtn && "ring-4 ring-primary/40 animate-pulse"
+                )}
+                onClick={() => {
+                  try { (window as any).gtag?.('event', 'pdf_claim_sheet_opened'); } catch {}
+                  setShowClaimSheet(true);
+                }}
+              >
+                📩 加运营企微 · 免费领完整 PDF 报告
+              </Button>
+              <p className="text-center text-[11px] text-muted-foreground mt-1.5">
+                限时免费领 · 1 个工作日内收到完整 PDF
+              </p>
+            </div>
+          )}
+          {isWomenCompetitiveness && aiInsight && !isLiteMode && (
             <div ref={saveButtonRef}>
               <Button
                 className={cn(
