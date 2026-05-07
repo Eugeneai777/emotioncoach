@@ -65,10 +65,11 @@ function maskPhone(p: string | null) {
   return `${p.slice(0, 3)}****${p.slice(-4)}`;
 }
 
-function toCsv(rows: RespondentRow[]) {
+function toCsv(rows: RespondentRow[], includeClaimCode = false) {
   const header = ["昵称", "手机号", "国家码", "主导类型", "总分", "测评时间", "管理员备注", "标签"];
-  const lines = rows.map((r) =>
-    [
+  if (includeClaimCode) header.splice(5, 0, "领取码");
+  const lines = rows.map((r) => {
+    const cols = [
       r.displayName || "",
       r.phone || "",
       r.phoneCountryCode || "",
@@ -77,10 +78,10 @@ function toCsv(rows: RespondentRow[]) {
       format(new Date(r.createdAt), "yyyy-MM-dd HH:mm:ss"),
       r.adminNote || "",
       (r.adminTags || []).join("/"),
-    ]
-      .map((s) => `"${String(s).replace(/"/g, '""')}"`)
-      .join(",")
-  );
+    ];
+    if (includeClaimCode) cols.splice(5, 0, r.claimCode || "");
+    return cols.map((s) => `"${String(s).replace(/"/g, '""')}"`).join(",");
+  });
   return "\uFEFF" + [header.join(","), ...lines].join("\n");
 }
 
