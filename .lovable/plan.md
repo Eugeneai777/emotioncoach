@@ -1,49 +1,116 @@
-## 继续完成「男人有劲」领取码闭环
+## 方案 v2：底部 Sticky CTA（替代"中间滑动+上下固定"）
 
-数据库 + 海报组件 + 领取 Sheet 已就绪。本步骤完成**用户端集成**和**管理后台**两块收尾。
+### 您的诉求
+让【领取我的完整 PDF 诊断报告】始终可见，不被埋在长内容中。
 
-### 一、用户端 `DynamicAssessmentResult.tsx`
+### 商业架构师评估：为什么不建议"上下两端固定 + 中间滑动"
 
-仅对 `isMaleMidlifeVitality` 分支：
+技术上可行（CSS `position:fixed` + `overflow-y:auto`），但**强烈不推荐**，原因如下：
 
-1. **移除** ¥3980「身份绽放训练营」卡片，仅保留 ¥399「7天有劲训练营」
-2. **替换** 顶部「保存完整报告」按钮 → **「📩 加运营企微 · 免费领完整 PDF 报告」**
-   - 点击打开 `<MaleVitalityPdfClaimSheet />`
-   - 传入当前用户的 `claim_code`（通过 `useClaimCode(recordId)` 获取）
-   - 女性版 `isWomenCompetitiveness` 保持原"保存完整报告"逻辑不变
-3. **埋点**：`pdf_claim_sheet_opened` / `pdf_claim_code_copied` / `pdf_claim_card_saved`
+| 维度 | "上下固定 + 中间滑动" | 仅"底部 Sticky CTA" |
+|------|----------------------|-------------------|
+| iOS Safari 兼容性 | ❌ 顶/底 fixed 在 iOS 滚动时频繁抖动、地址栏伸缩导致高度跳变 | ✅ 原生支持 `position:sticky`，无抖动 |
+| 微信内置浏览器 | ❌ 微信 WebView 已知 fixed 元素回弹/键盘弹起遮挡 bug | ✅ 稳定 |
+| 安卓键盘弹起 | ❌ 中间滚动容器会被压缩到几乎不可见 | ✅ 仅底部按钮被键盘推高 |
+| 浏览器原生下拉刷新 | ❌ 双层滚动会拦截，体验割裂 | ✅ 保留原生体验 |
+| 分享截图/保存图片 | ❌ 内嵌滚动容器无法截全 | ✅ 长截图正常 |
+| 移动端历史滚动恢复 | ❌ 路由返回时滚动位置丢失 | ✅ 正常恢复 |
+| 桌面端阅读体验 | ⚠️ 双滚动条混乱，鼠标滚轮容易"穿透" | ✅ 单一滚动 |
+| 实施复杂度 | 高（需要测多端 + 处理键盘/地址栏事件） | 低 |
 
-### 二、新建 Hook `src/hooks/useClaimCode.ts`
+**结论：用「底部 Sticky CTA」可以达到 95% 的同等效果，且兼容性、稳定性远胜，强烈推荐采用此方案。**
 
-```ts
-useClaimCode(recordId) → { claimCode, loading }
+---
+
+### 推荐方案：底部 Sticky 双按钮栏
+
+```text
+─────────────────────────
+  正常滚动的结果页内容
+  （雷达图 / 状态 / 改善建议 / AI 解读 / 训练营 / ...）
+─────────────────────────
+┊  ↓ 滚动时这一栏固定在底部 ↓        ┊
+┊                                    ┊
+┊ [📋 领取我的完整诊断报告]   [🤖 AI] ┊  ← sticky bar
+┊  由 EUGENE 顾问 · 24 小时内送达     ┊  ← 副文案
+┊                                    ┊
+─────────────────────────
 ```
-- 从 `partner_assessment_results` 查 `claim_code`
-- 若历史记录意外为 NULL，调用 RPC `generate_assessment_claim_code()` 补写
 
-### 三、管理后台
+#### 技术实现要点
 
-#### `AssessmentRespondentDrawer.tsx`
-- 新增搜索框：「按领取码搜索」（仅当 `template_id = male_midlife_vitality` 时显示）
-- 表格新增 `claim_code` 列（等宽字体 + 复制按钮）
-- 行操作新增两个按钮：
-  - **「导出 PDF」**：复用 `MaleVitalityReportCard` + `html2canvas` + `jsPDF`，文件名 `有劲报告_{claim_code}_{nickname}.pdf`
-  - **「复制话术」**：预置模板「您好，您的领取码是 {code}，附件为完整 PDF 报告...」
+1. **使用 `position: sticky` + `bottom: 0`**（非 `fixed`），挂在结果页内容容器内：
+   - 自动避开外层导航与安全区
+   - iOS / 安卓 / PC 全兼容，无双层滚动
+   - 用 Tailwind `sticky bottom-0 z-30` 即可
 
-#### `AssessmentInsightsDetail.tsx`
-- 同上：搜索框 + `claim_code` 展示列
+2. **iOS 安全区适配**：`pb-[env(safe-area-inset-bottom)]`，避免被 Home 指示条遮挡
 
-### 四、技术实现要点
+3. **背景与可读性**：
+   - 半透明白底 + `backdrop-blur-md` + 顶部细分割阴影 `shadow-[0_-2px_12px_rgba(0,0,0,0.06)]`
+   - 主按钮高度 `h-12`，副文案 `text-[11px]`，整栏高度约 80px
 
-- PDF 导出用 `html2canvas` 将 `MaleVitalityReportCard` 渲染节点截图 → `jsPDF` A4 多页拼接
-- 搜索逻辑：`.eq('claim_code', code.toUpperCase().replace(/\s/g, ''))`
-- 领取码格式化展示：`M7K 9P2`（中间空格），复制时去空格
+4. **滚动覆盖避免**：在结果页内容末尾加 `pb-24`，防止最后一段被 sticky 栏遮住
+
+5. **智能隐藏（可选优化）**：
+   - 当用户滚到页面底部、原位的"动作按钮区"已露出时，sticky 栏自动淡出
+   - 用 IntersectionObserver 监听底部锚点，避免重复出现两个相同按钮
+   - 移动端 / 桌面端均生效
+
+6. **桌面端适配**：sticky 栏仅在内容容器内吸底（不是整个 viewport），保留卡片式阅读体验，宽度跟随中央 max-w 容器
+
+7. **不再需要原"动作按钮区"中的 PDF CTA**：因 sticky 栏已承担其角色，原区块改为只保留"分享/历史/重测"次级动作
+
+#### 埋点
+- `pdf_claim_sticky_view`：sticky 栏首次进入视窗
+- `pdf_claim_sticky_clicked`：用户点击 sticky 主按钮
+- 与 `pdf_claim_sheet_opened` 串联评估转化路径
+
+---
+
+### 仍保留 v1 方案中其他三项优化
+
+1. **文案去"运营化"** → 全链路替换为「EUGENE 顾问 / 私人顾问 / 24 小时 / 1v1 解读」
+2. **改善建议升级** → 男版按 `vitalityStatusPercent` 三档（≥60 / 40-59 / <40）的场景化「7 天有劲恢复行动」清单（参照女版 `bloomActions` 模式，今晚/本周可落地）
+3. **训练营卡保留** → 与 PDF CTA 分层（PDF 引流为主，训练营付费为辅）
+
+---
+
+### 改动文件（仅 UI 层，零业务逻辑）
+
+1. **`src/components/dynamic-assessment/DynamicAssessmentResult.tsx`**
+   - 在 `isMaleMidlifeVitality && !isLiteMode` 分支末尾，渲染容器底部新增 `<StickyClaimBar />`
+   - 内容容器追加 `pb-24` 避免遮挡
+   - 移除原 1081-1099 行中重复的 PDF CTA（避免双按钮）
+   - 男版改善建议改为 `vitalityActions` 场景化清单（替换通用 tips 渲染）
+   - 文案统一切换为顾问语境
+
+2. **`src/components/dynamic-assessment/MaleVitalityClaimStickyBar.tsx`**（新建）
+   - sticky 底栏组件，含主 CTA + 副文案
+   - IntersectionObserver 智能隐藏
+   - 桌面/移动端响应式
+
+3. **`src/components/dynamic-assessment/MaleVitalityPdfClaimSheet.tsx`**
+   - SheetTitle、三步引导、按钮文案改为顾问语境
+   - "运营/运营企微/运营企业微信" → "EUGENE 顾问 / 私人顾问"
+
+4. **`src/components/dynamic-assessment/MaleVitalityPdfClaimCard.tsx`**
+   - 海报全部"运营"字样替换为"EUGENE 顾问"
+   - 保留视觉风格不变
+
+### 不改动
+- 数据库、领取码生成逻辑、useClaimCode、admin 后台
+- 女版 women_competitiveness 任何文案与逻辑
+- 训练营卡片定价与跳转
 
 ### 验证清单
-
-- [ ] 老用户进入 `/assessment/male_midlife_vitality` 结果页能看到自己的 6 位领取码
-- [ ] 女性版 `women_competitiveness` 完全不变
-- [ ] 后台输入领取码可定位到该条记录
-- [ ] 后台导出 PDF 内容与用户端一致
+- [ ] iPhone Safari / 微信 / 安卓微信 / Chrome Desktop 均无抖动、无遮挡、无双滚动
+- [ ] iOS Home 指示条不遮挡 sticky 按钮
+- [ ] 安卓输入法弹起时 sticky 栏行为正常
+- [ ] 滚动到底部，sticky 栏淡出，不与原次级动作区重复
+- [ ] 男版改善建议显示三档场景化清单
+- [ ] 全链路无"运营"字样
+- [ ] 女版完全不变
+- [ ] 长截图保存正常
 
 确认后开始实施。

@@ -223,7 +223,7 @@ const MaleVitalityPdfClaimCard = forwardRef<HTMLDivElement, MaleVitalityPdfClaim
             {formatClaimCode(claimCode)}
           </div>
           <div style={{ fontSize: 14, color: "#FCD34D", fontWeight: 500 }}>
-            🔥 限时免费领 · 1 个工作日内送达
+            🔒 仅限本人凭码领取 · 24 小时内送达
           </div>
         </div>
 
@@ -237,7 +237,7 @@ const MaleVitalityPdfClaimCard = forwardRef<HTMLDivElement, MaleVitalityPdfClaim
             marginBottom: 16,
           }}
         >
-          ↓ 长按识别下方二维码加运营企微，把这串码发给运营 ↓
+          ↓ 长按识别二维码，添加你的 EUGENE 专属顾问 ↓
         </div>
 
         {/* 企微二维码 */}
@@ -259,7 +259,7 @@ const MaleVitalityPdfClaimCard = forwardRef<HTMLDivElement, MaleVitalityPdfClaim
           >
             <img
               src={qiweiQr}
-              alt="运营企业微信"
+              alt="EUGENE 顾问微信"
               crossOrigin="anonymous"
               style={{ width: 220, height: 220, display: "block" }}
             />
@@ -275,7 +275,7 @@ const MaleVitalityPdfClaimCard = forwardRef<HTMLDivElement, MaleVitalityPdfClaim
             marginBottom: 4,
           }}
         >
-          长按识别二维码 · 添加运营企业微信
+          扫码添加 · EUGENE 私人顾问
         </div>
         <div
           style={{

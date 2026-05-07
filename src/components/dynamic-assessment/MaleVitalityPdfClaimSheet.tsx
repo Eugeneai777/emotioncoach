@@ -112,7 +112,7 @@ export function MaleVitalityPdfClaimSheet({
         <div className="px-5 pt-5 pb-3">
           <SheetHeader>
             <SheetTitle className="text-left text-base">
-              📩 加运营企微 · 免费领完整 PDF
+              📋 领取你的专属诊断报告
             </SheetTitle>
           </SheetHeader>
         </div>
@@ -126,11 +126,11 @@ export function MaleVitalityPdfClaimSheet({
             </li>
             <li className="flex gap-2">
               <span className="font-bold text-primary shrink-0">2.</span>
-              <span>长按二维码添加运营企业微信</span>
+              <span>长按识别二维码 · 添加 EUGENE 顾问微信</span>
             </li>
             <li className="flex gap-2">
               <span className="font-bold text-primary shrink-0">3.</span>
-              <span>把"截图 + 领取码"发给运营，1 个工作日内收到完整 PDF</span>
+              <span>把「截图 + 领取码」发给顾问，<b>24 小时内</b>收到完整报告 + 1 次 1v1 解读建议</span>
             </li>
           </ol>
 
