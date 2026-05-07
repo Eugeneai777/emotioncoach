@@ -6,10 +6,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { Lock, Save, X } from "lucide-react";
+import { Lock, Save, X, Copy, FileDown } from "lucide-react";
 import { format } from "date-fns";
+import { toast } from "sonner";
 import type { RespondentRow } from "@/hooks/useAdminAssessmentInsights";
 import { useUpsertAdminUserNote } from "@/hooks/useAdminUserNote";
+import { formatClaimCode } from "@/utils/claimCodeUtils";
 
 interface Props {
   open: boolean;
