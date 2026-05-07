@@ -75,6 +75,65 @@ export function AssessmentRespondentDrawer({ open, onOpenChange, row, template }
 
         <ScrollArea className="flex-1">
           <div className="p-6 space-y-6">
+            <section className="rounded-lg border border-amber-200 bg-amber-50/50 dark:bg-amber-950/20 dark:border-amber-900 p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-semibold flex items-center gap-1.5">
+                  <Lock className="w-3.5 h-3.5 text-amber-600" />
+                  管理员备注
+                  <span className="text-xs font-normal text-muted-foreground">（仅后台可见）</span>
+                </h4>
+                {row.adminNoteUpdatedAt && (
+                  <span className="text-[11px] text-muted-foreground">
+                    更新于 {format(new Date(row.adminNoteUpdatedAt), "MM-dd HH:mm")}
+                  </span>
+                )}
+              </div>
+              <Textarea
+                placeholder="例如：施强渠道用户、已加企微、5月8日已发链接版测评……"
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                rows={3}
+                className="bg-background resize-none text-sm"
+              />
+              <div className="flex flex-wrap items-center gap-1.5">
+                {tags.map((t) => (
+                  <Badge key={t} variant="secondary" className="gap-1 pr-1">
+                    {t}
+                    <button
+                      type="button"
+                      onClick={() => setTags(tags.filter((x) => x !== t))}
+                      className="hover:bg-muted-foreground/20 rounded p-0.5"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </Badge>
+                ))}
+                <Input
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      addTag();
+                    }
+                  }}
+                  placeholder="加标签后回车"
+                  className="h-7 w-32 text-xs bg-background"
+                />
+              </div>
+              <div className="flex justify-end">
+                <Button
+                  size="sm"
+                  onClick={handleSave}
+                  disabled={!dirty || upsert.isPending}
+                  className="gap-1.5 h-8"
+                >
+                  <Save className="w-3.5 h-3.5" />
+                  {upsert.isPending ? "保存中..." : "保存备注"}
+                </Button>
+              </div>
+            </section>
+
             {row.dimensionScores && Object.keys(row.dimensionScores).length > 0 && (
               <section>
                 <h4 className="text-sm font-semibold mb-2">各维度分数</h4>
