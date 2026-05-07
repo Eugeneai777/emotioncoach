@@ -5,7 +5,7 @@ import { Copy, Loader2, Download as DownloadIcon } from "lucide-react";
 import { toast } from "sonner";
 import MaleVitalityPdfClaimCard from "./MaleVitalityPdfClaimCard";
 import { generateCardBlob } from "@/utils/shareCardConfig";
-import { detectPlatform } from "@/lib/platformDetector";
+
 
 interface MaleVitalityPdfClaimSheetProps {
   open: boolean;
