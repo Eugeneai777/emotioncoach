@@ -502,7 +502,8 @@ export default function DynamicAssessmentPage() {
           onShowHistory={() => setPhase("history")}
           hasHistory={historyRecords.length > 0}
           recordId={savedResultId}
-          autoSavePdf={autoSavePdf}
+          autoSavePdf={autoSavePdf && (!urlRecordId || savedResultId === urlRecordId)}
+          subjectProfile={subjectProfile}
           isLiteMode={isLiteMode}
           onLoginToUnlock={() => {
             // 商业漏斗关键节点：写双重锚（URL + localStorage）保证微信 OAuth roundtrip 后仍能回到结果页
