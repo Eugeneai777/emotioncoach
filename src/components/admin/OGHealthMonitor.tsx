@@ -29,6 +29,21 @@ const ISSUE_TYPE_CONFIG: Record<string, { label: string; icon: typeof ImageIcon;
   config_incomplete: { label: '配置不完整', icon: AlertTriangle, color: 'text-yellow-600' },
   image_url_invalid: { label: '图片URL无效', icon: Link2Off, color: 'text-destructive' },
   share_failed: { label: '分享失败', icon: Share2, color: 'text-red-500' },
+  wechat_jssdk_sdk_ready: { label: 'JSSDK已加载', icon: CheckCircle, color: 'text-emerald-500' },
+  wechat_jssdk_sdk_missing: { label: 'JSSDK未加载', icon: XCircle, color: 'text-destructive' },
+  wechat_jssdk_signature_request: { label: '签名请求', icon: Share2, color: 'text-blue-500' },
+  wechat_jssdk_signature_cache_hit: { label: '签名缓存命中', icon: CheckCircle, color: 'text-emerald-500' },
+  wechat_jssdk_signature_success: { label: '签名成功', icon: CheckCircle, color: 'text-emerald-500' },
+  wechat_jssdk_signature_error: { label: '签名失败', icon: XCircle, color: 'text-destructive' },
+  wechat_jssdk_config_start: { label: '开始配置', icon: Share2, color: 'text-blue-500' },
+  wechat_jssdk_config_called: { label: 'wx.config已调用', icon: Share2, color: 'text-blue-500' },
+  wechat_jssdk_ready: { label: 'wx.ready成功', icon: CheckCircle, color: 'text-emerald-500' },
+  wechat_jssdk_wx_error: { label: 'wx.error失败', icon: XCircle, color: 'text-destructive' },
+  wechat_jssdk_share_data_set: { label: '卡片数据已写入', icon: CheckCircle, color: 'text-emerald-500' },
+  wechat_jssdk_share_data_error: { label: '卡片数据写入失败', icon: XCircle, color: 'text-destructive' },
+  wechat_jssdk_legacy_share_data_set: { label: '旧接口已写入', icon: CheckCircle, color: 'text-emerald-500' },
+  wechat_jssdk_legacy_share_data_error: { label: '旧接口失败', icon: XCircle, color: 'text-destructive' },
+  wechat_jssdk_config_exception: { label: '配置异常', icon: AlertTriangle, color: 'text-destructive' },
 };
 
 const SEVERITY_BADGE: Record<string, { label: string; variant: 'destructive' | 'secondary' | 'outline' }> = {
@@ -139,15 +154,9 @@ export default function OGHealthMonitor() {
     refetchInterval: 30000,
   });
 
-  const stats = {
-    share_action: records.filter((r: any) => r.issue_type === 'share_action').length,
-    native_share_landed: records.filter((r: any) => r.issue_type === 'native_share_landed').length,
-    image_load_failed: records.filter((r: any) => r.issue_type === 'image_load_failed').length,
-    config_missing: records.filter((r: any) => r.issue_type === 'config_missing').length,
-    config_incomplete: records.filter((r: any) => r.issue_type === 'config_incomplete').length,
-    image_url_invalid: records.filter((r: any) => r.issue_type === 'image_url_invalid').length,
-    share_failed: records.filter((r: any) => r.issue_type === 'share_failed').length,
-  };
+  const stats = Object.fromEntries(
+    Object.keys(ISSUE_TYPE_CONFIG).map((key) => [key, records.filter((r: any) => r.issue_type === key).length])
+  );
 
   const criticalCount = records.filter((r: any) => r.severity === 'critical').length;
   const resolvedCount = records.filter((r: any) => r.status === 'resolved').length;
@@ -226,7 +235,7 @@ export default function OGHealthMonitor() {
       />
 
       {/* 统计卡片 */}
-      <div className="grid gap-3 grid-cols-2 md:grid-cols-7">
+      <div className="grid gap-3 grid-cols-2 md:grid-cols-4 xl:grid-cols-7">
         {Object.entries(ISSUE_TYPE_CONFIG).map(([key, cfg]) => {
           const Icon = cfg.icon;
           const count = stats[key as keyof typeof stats] || 0;
@@ -370,10 +379,11 @@ export default function OGHealthMonitor() {
           ) : (
             <div className="space-y-3 max-h-[600px] overflow-y-auto">
               {filtered.map((r: any) => {
-                const cfg = ISSUE_TYPE_CONFIG[r.issue_type] || { label: r.issue_type, icon: AlertTriangle, color: 'text-muted-foreground' };
+                 const cfg = ISSUE_TYPE_CONFIG[r.issue_type] || { label: r.issue_type, icon: AlertTriangle, color: 'text-muted-foreground' };
                 const Icon = cfg.icon;
                 const sev = SEVERITY_BADGE[r.severity] || SEVERITY_BADGE.info;
                 const isResolved = r.status === 'resolved';
+                 const traceId = r.extra?.traceId;
                 return (
                   <div
                     key={r.id}
@@ -386,6 +396,7 @@ export default function OGHealthMonitor() {
                         <Badge variant={sev.variant} className="text-[10px]">{sev.label}</Badge>
                         <Badge variant="outline" className="text-[10px]">{cfg.label}</Badge>
                         <Badge variant="outline" className="text-[10px]">{getPlatformLabel(r.platform)}</Badge>
+                        {traceId && <Badge variant="outline" className="text-[10px]">{traceId}</Badge>}
                         {isResolved && (
                           <Badge variant="outline" className="text-[10px] text-emerald-600 border-emerald-300">
                             <CheckCircle className="h-2.5 w-2.5 mr-0.5" />已解决
