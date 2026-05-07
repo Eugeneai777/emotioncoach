@@ -339,6 +339,7 @@ export function useWechatShare(config: WechatShareConfig) {
         // 微信 iOS 客户端会用「用户最初进入 SPA 时的完整 URL」做签名校验，
         // 不能用 React 路由切换后的 URL；入口 URL 由 index.html 在应用启动前记录。
         const currentUrl = (window.__WECHAT_ENTRY_URL__ || window.location.href).split('#')[0];
+        const wxDebugEnabled = new URLSearchParams(window.location.search).get('wxdebug') === '1';
 
         console.log('[WechatShare] Configuring share for URL:', currentUrl);
         await reportWechatShareDiagnostic({
@@ -369,7 +370,7 @@ export function useWechatShare(config: WechatShareConfig) {
         // 配置 JS-SDK（同一 URL 只配置一次，避免重复 config 影响稳定性）
         if (!configuredUrlSet.has(currentUrl)) {
           wxSdk.config({
-            debug: false,
+            debug: wxDebugEnabled,
             appId: wxConfig.appId,
             timestamp: wxConfig.timestamp,
             nonceStr: wxConfig.nonceStr,
@@ -390,6 +391,7 @@ export function useWechatShare(config: WechatShareConfig) {
               signedUrl: currentUrl,
               appId: wxConfig.appId,
               timestamp: wxConfig.timestamp,
+              wxDebugEnabled,
               jsApiList: ['updateAppMessageShareData', 'updateTimelineShareData', 'onMenuShareAppMessage', 'onMenuShareTimeline'],
             },
           });
