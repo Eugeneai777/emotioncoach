@@ -1,34 +1,21 @@
-## 问题根因
+## 问题
+情绪健康测评 `/emotion-health` 售前页（`EmotionHealthStartScreen`）的【开始测评】CTA 按钮位于页面最底部（模块8），用户需滚动经过 7 个模块才能看到。
 
-数据库中 `male_midlife_vitality` 模板的 `require_auth = false`，所以前端把它当成免登录测评，未登录点击「限时免费开始评估」直接进入题目。
+## 优化方案
 
-## 修改方案
+### 1. 顶部增加快捷 CTA
+在 Hero 区（品牌+痛点开场，line ~244）下方直接增加一个醒目的「开始测评」卡片按钮，让用户进入页面即可一键开始，无需下滑。
 
-### 1. 数据库修正
-将 `partner_assessment_templates` 中 `male_midlife_vitality` 的 `require_auth` 从 `false` 改为 `true`。
+### 2. 精简中间内容，减少滚动距离
+将三层洋葱模型（模块6）中的 3 个 Accordion 表格默认保持折叠收起状态，避免展开后占用过多纵向空间。
 
-### 2. 前端保险（不影响其他测评）
-在 `src/pages/DynamicAssessmentPage.tsx` 中，`_requireAuth` 计算追加白名单：当 `assessment_key === 'male_midlife_vitality'` 时，无论数据库怎么配，前端一律强制登录。
+### 3. 保留底部 CTA
+底部的定价模块和 CTA 按钮保持不变，作为看完所有内容后的补充转化入口。
 
-```ts
-const FORCE_AUTH_KEYS = ['male_midlife_vitality'];
-const _requireAuth = FORCE_AUTH_KEYS.includes(template?.assessment_key || '')
-  ? true
-  : (tpl?.require_auth ?? true);
-```
+## 技术细节
+- 修改文件：`src/components/emotion-health/EmotionHealthStartScreen.tsx` 1 处
+- 复用现有的 `handleButtonClick` 回调，无需改动 `EmotionHealthPage.tsx`
+- 保持所有 props 接口不变，兼容现有调用方
 
-这样：
-- 顶部 CTA「限时免费开始评估」→ `handleStart` → 跳 `/auth?redirect=...`
-- 底部所有入口同样跳登录
-- 即使带 `?recordId=` 直链，未登录也无法触发答题（intro 阶段拦截）
-- 其他测评行为完全不变（仍走数据库 `require_auth` 配置）
-
-### 3. 兼容性确认
-- 老用户已登录 → 行为不变，仍可正常答题/查看历史
-- 微信内置浏览器 / 小程序 H5 / 普通浏览器 → 都走相同 `navigate('/auth?redirect=...')`，已验证流程
-- 分享链接 `?ref=share` → 跳登录后回跳保留参数（已用 `setPostAuthRedirect` + URL redirect 双锚）
-- 不影响其他测评、不影响 Lite 模式逻辑（`male_midlife_vitality` 不在 LITE_MODE_KEYS）
-
-## 涉及文件
-- `src/pages/DynamicAssessmentPage.tsx`（约 2 行）
-- 一次数据库迁移更新模板配置
+## 预期效果
+用户进入页面后，首屏即可看到「开始测评」按钮；下滑可了解详情；底部仍有 CTA 兜底。
