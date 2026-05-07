@@ -56,6 +56,65 @@ export async function reportOGHealth(report: OGHealthReport): Promise<void> {
   }
 }
 
+const wechatDiagnosticCache = new Map<string, number>();
+const WECHAT_DIAGNOSTIC_COOLDOWN_MS = 30 * 1000;
+
+function getWechatTraceId(): string {
+  try {
+    const key = 'wechat_share_trace_id';
+    const existing = sessionStorage.getItem(key);
+    if (existing) return existing;
+    const generated = `wxshare_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+    sessionStorage.setItem(key, generated);
+    return generated;
+  } catch {
+    return `wxshare_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+  }
+}
+
+export async function reportWechatShareDiagnostic(report: {
+  stage: string;
+  severity?: 'critical' | 'warning' | 'info';
+  message: string;
+  imageUrl?: string;
+  extra?: Record<string, unknown>;
+}): Promise<void> {
+  const traceId = getWechatTraceId();
+  const cacheKey = `${traceId}:${report.stage}:${report.message}`;
+  const last = wechatDiagnosticCache.get(cacheKey);
+  if (last && Date.now() - last < WECHAT_DIAGNOSTIC_COOLDOWN_MS) return;
+  wechatDiagnosticCache.set(cacheKey, Date.now());
+
+  try {
+    const { data: userData } = await supabase.auth.getUser();
+    await (supabase as any)
+      .from('monitor_og_health')
+      .insert({
+        page_key: 'wechat_share',
+        page_path: `${window.location.pathname}${window.location.search || ''}`,
+        issue_type: `wechat_jssdk_${report.stage}`,
+        severity: report.severity || 'info',
+        message: report.message,
+        image_url: report.imageUrl,
+        user_id: userData?.user?.id || null,
+        user_agent: navigator.userAgent,
+        platform: detectPlatform(),
+        extra: {
+          traceId,
+          stage: report.stage,
+          href: window.location.href,
+          entryUrl: (window as any).__WECHAT_ENTRY_URL__ || null,
+          referrer: document.referrer || null,
+          visibilityState: document.visibilityState,
+          wxExists: !!(window as any).wx,
+          ...report.extra,
+        },
+      });
+  } catch (e) {
+    console.warn('[WechatShareDiagnostic] Report failed:', e);
+  }
+}
+
 /**
  * 检查 OG 图片是否可加载
  */
