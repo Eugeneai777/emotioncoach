@@ -335,6 +335,26 @@ export default function AssessmentInsightsDetail() {
                         {r.primaryPattern ? <Badge variant="secondary">{r.primaryPattern}</Badge> : "—"}
                       </td>
                       <td className="px-4 py-2 text-right font-medium">{r.totalScore}</td>
+                      {isMaleVitality && (
+                        <td className="px-4 py-2">
+                          {r.claimCode ? (
+                            <button
+                              type="button"
+                              className="font-mono text-xs px-1.5 py-0.5 rounded bg-muted/60 hover:bg-muted inline-flex items-center gap-1"
+                              onClick={() => {
+                                navigator.clipboard.writeText(r.claimCode!);
+                                toast.success(`已复制 ${r.claimCode}`);
+                              }}
+                              title="点击复制"
+                            >
+                              {formatClaimCode(r.claimCode)}
+                              <Copy className="w-3 h-3" />
+                            </button>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          )}
+                        </td>
+                      )}
                       <td className="px-4 py-2 text-muted-foreground text-xs">
                         {format(new Date(r.createdAt), "MM-dd HH:mm")}
                       </td>
