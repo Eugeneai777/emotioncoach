@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { isWeChatBrowser } from '@/utils/platform';
+import { reportWechatShareDiagnostic } from '@/lib/ogHealthReporter';
 
 interface WechatShareConfig {
   title: string;
@@ -129,8 +130,21 @@ function setWechatShareData(wx: WxJssdkMethods, config: WechatShareConfig) {
       imgUrl: config.imgUrl,
       success: () => console.log('[WechatShare] updateAppMessageShareData success'),
     });
+    reportWechatShareDiagnostic({
+      stage: 'share_data_set',
+      message: 'updateAppMessageShareData 已调用',
+      imageUrl: config.imgUrl,
+      extra: { api: 'updateAppMessageShareData', title: config.title, link: config.link },
+    });
   } catch (e) {
     console.warn('[WechatShare] updateAppMessageShareData failed (non-blocking):', e);
+    reportWechatShareDiagnostic({
+      stage: 'share_data_error',
+      severity: 'warning',
+      message: 'updateAppMessageShareData 调用失败',
+      imageUrl: config.imgUrl,
+      extra: { api: 'updateAppMessageShareData', error: e instanceof Error ? e.message : String(e) },
+    });
   }
 
   try {
@@ -140,8 +154,21 @@ function setWechatShareData(wx: WxJssdkMethods, config: WechatShareConfig) {
       imgUrl: config.imgUrl,
       success: () => console.log('[WechatShare] updateTimelineShareData success'),
     });
+    reportWechatShareDiagnostic({
+      stage: 'share_data_set',
+      message: 'updateTimelineShareData 已调用',
+      imageUrl: config.imgUrl,
+      extra: { api: 'updateTimelineShareData', title: config.title, link: config.link },
+    });
   } catch (e) {
     console.warn('[WechatShare] updateTimelineShareData failed (non-blocking):', e);
+    reportWechatShareDiagnostic({
+      stage: 'share_data_error',
+      severity: 'warning',
+      message: 'updateTimelineShareData 调用失败',
+      imageUrl: config.imgUrl,
+      extra: { api: 'updateTimelineShareData', error: e instanceof Error ? e.message : String(e) },
+    });
   }
 
   // 再补一层兼容老接口（提升“首次点击分享”稳定性）
@@ -157,8 +184,21 @@ function setWechatShareData(wx: WxJssdkMethods, config: WechatShareConfig) {
       link: config.link,
       imgUrl: config.imgUrl,
     });
+    reportWechatShareDiagnostic({
+      stage: 'legacy_share_data_set',
+      message: '旧版 onMenuShare 接口已调用',
+      imageUrl: config.imgUrl,
+      extra: { title: config.title, link: config.link, hasAppMessage: !!wx.onMenuShareAppMessage, hasTimeline: !!wx.onMenuShareTimeline },
+    });
   } catch (e) {
     console.warn('[WechatShare] onMenuShare* failed (non-blocking):', e);
+    reportWechatShareDiagnostic({
+      stage: 'legacy_share_data_error',
+      severity: 'warning',
+      message: '旧版 onMenuShare 接口调用失败',
+      imageUrl: config.imgUrl,
+      extra: { error: e instanceof Error ? e.message : String(e) },
+    });
   }
 }
 
