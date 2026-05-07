@@ -16,6 +16,12 @@ interface WxConfig {
   signature: string;
 }
 
+declare global {
+  interface Window {
+    __WECHAT_ENTRY_URL__?: string;
+  }
+}
+
 // 扩展 window.wx 类型以包含 JS-SDK 方法
 interface WxJssdkMethods {
   config: (config: {
@@ -255,9 +261,9 @@ export function useWechatShare(config: WechatShareConfig) {
 
     async function configWechatShare() {
       try {
-        // 微信 iOS 客户端会用「用户最初打开页面时的完整 URL」做签名校验，
-        // 因此这里**保留** query (含 ref / utm_*)，只去掉 #hash，且不再改写地址栏。
-        const currentUrl = window.location.href.split('#')[0];
+        // 微信 iOS 客户端会用「用户最初进入 SPA 时的完整 URL」做签名校验，
+        // 不能用 React 路由切换后的 URL；入口 URL 由 index.html 在应用启动前记录。
+        const currentUrl = (window.__WECHAT_ENTRY_URL__ || window.location.href).split('#')[0];
 
         console.log('[WechatShare] Configuring share for URL:', currentUrl);
 
@@ -295,6 +301,7 @@ export function useWechatShare(config: WechatShareConfig) {
         wxSdk.ready(() => {
           console.log('[WechatShare] ✅ wx.ready - setting share data', {
             signedUrl: currentUrl,
+            entryUrl: window.__WECHAT_ENTRY_URL__,
             currentHref: window.location.href,
             urlMatch: currentUrl === window.location.href.split('#')[0],
             shareLink: config.link,
@@ -316,6 +323,7 @@ export function useWechatShare(config: WechatShareConfig) {
           console.error('[WechatShare] ❌ wx.error full:', JSON.stringify(res));
           console.error('[WechatShare] Diagnostic:', {
             signedUrl: currentUrl,
+            entryUrl: window.__WECHAT_ENTRY_URL__,
             currentHref: window.location.href.split('#')[0],
             urlMismatch: currentUrl !== window.location.href.split('#')[0],
             appId: wxConfig.appId,

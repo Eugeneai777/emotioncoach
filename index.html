@@ -23,6 +23,10 @@
     
     <meta name="twitter:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/JukvuwxihfbuZ2LtJ7jHKgUbP3K3/social-images/social-1770184149023-ChatGPT Image Jan 9, 2026 at 06_53_19 AM.png">
     
+    <!-- 微信 SPA 签名：iOS 微信校验的是首次进入页面的 URL，必须在 React 路由改写前记录 -->
+    <script>
+      window.__WECHAT_ENTRY_URL__ = window.location.href.split('#')[0];
+    </script>
     <!-- 微信 JS-SDK: 立即同步加载，确保进入页面就能 wx.config，避免首次分享退化为普通链接 -->
     <script src="https://res.wx.qq.com/open/js/jweixin-1.6.0.js"></script>
   <meta property="og:title" content="有劲AI生活教练">
