@@ -935,22 +935,6 @@ export function DynamicAssessmentResult({
               </CardContent>
             </Card>
 
-            <Card className="border-border/40 bg-card/90 backdrop-blur-sm shadow-sm">
-              <CardContent className="p-4 space-y-3">
-                <div className="flex items-start gap-3">
-                  <div className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center text-xl shrink-0">🧭</div>
-                  <div className="min-w-0 flex-1">
-                    <h3 className="font-bold text-sm text-foreground">如果你累的不只是身体</h3>
-                    <p className="text-xs text-muted-foreground leading-relaxed mt-1">
-                      当责任、身份、自我价值感长期压在心里，可能需要更深一层的身份重建与人生节奏调整。
-                    </p>
-                  </div>
-                </div>
-                <Button variant="outline" className="w-full h-11 rounded-xl gap-2" onClick={() => navigate('/camp-intro/identity_bloom')}>
-                  看看身份绽放训练营 <ArrowRight className="w-4 h-4" />
-                </Button>
-              </CardContent>
-            </Card>
           </motion.div>
         )}
 
