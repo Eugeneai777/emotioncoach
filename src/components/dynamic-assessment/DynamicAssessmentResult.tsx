@@ -1191,7 +1191,24 @@ export function DynamicAssessmentResult({
         />
       )}
 
-      {/* 私密报告预览（图片路径） */}
+      {/* 男版：领取码 PDF Sheet */}
+      {isMaleMidlifeVitality && (
+        <MaleVitalityPdfClaimSheet
+          open={showClaimSheet}
+          onOpenChange={setShowClaimSheet}
+          claimCode={claimCode}
+          loadingCode={loadingClaimCode}
+          displayName={profileData.displayName}
+          avatarUrl={profileData.avatarUrl}
+          statusPercent={vitalityStatusPercent}
+          statusLabel={
+            vitalityStatusPercent >= 80 ? "稳"
+              : vitalityStatusPercent >= 60 ? "可调整"
+              : vitalityStatusPercent >= 40 ? "需留意"
+              : "优先恢复"
+          }
+        />
+      )}
       <ShareImagePreview
         open={!!reportPreview}
         onClose={() => {
