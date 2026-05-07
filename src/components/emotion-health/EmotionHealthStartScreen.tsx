@@ -179,7 +179,8 @@ export function EmotionHealthStartScreen({
   isLoading,
   price = 9.9
 }: EmotionHealthStartScreenProps) {
-  const [activeLayer, setActiveLayer] = useState<LayerType | ''>('');
+  const [activeLayer, setActiveLayer] = useState<LayerType>('layer1');
+  const [openAccordion, setOpenAccordion] = useState<string>('');
   const countdown = useCountdown();
   const liveCount = useLiveCount();
 
