@@ -100,7 +100,9 @@ export default function AssessmentInsightsDetail() {
         const q = search.trim().toLowerCase();
         const hit =
           (r.displayName || "").toLowerCase().includes(q) ||
-          (r.phone || "").includes(q);
+          (r.phone || "").includes(q) ||
+          (r.adminNote || "").toLowerCase().includes(q) ||
+          (r.adminTags || []).some((t) => t.toLowerCase().includes(q));
         if (!hit) return false;
       }
       return true;
