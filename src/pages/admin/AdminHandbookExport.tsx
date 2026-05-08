@@ -78,6 +78,15 @@ export default function AdminHandbookExport() {
     };
   }, [recordId, handbookType, isAdmin]);
 
+  const filename = useMemo(() => {
+    if (!data || !recordId) return "";
+    const namePart = data.displayName.replace(/[\s\\/:*?"<>|]/g, "").slice(0, 12) || "用户";
+    const idPart = recordId.replace(/-/g, "").slice(0, 8);
+    const dateStr = format(new Date(), "yyyyMMdd");
+    const typeName = handbookType === "male_vitality" ? "男人有劲" : "情绪健康";
+    return `${typeName}_${namePart}_${idPart}_${dateStr}`;
+  }, [data, recordId, handbookType]);
+
   if (roleLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -87,15 +96,6 @@ export default function AdminHandbookExport() {
   }
   if (!isAdmin) return <Navigate to="/admin" replace />;
   if (!recordId) return <div className="p-8 text-destructive">缺少 recordId 参数</div>;
-
-  const filename = useMemo(() => {
-    if (!data) return "";
-    const namePart = data.displayName.replace(/[\s\\/:*?"<>|]/g, "").slice(0, 12) || "用户";
-    const idPart = recordId.replace(/-/g, "").slice(0, 8);
-    const dateStr = format(new Date(), "yyyyMMdd");
-    const typeName = handbookType === "male_vitality" ? "男人有劲" : "情绪健康";
-    return `${typeName}_${namePart}_${idPart}_${dateStr}`;
-  }, [data, recordId, handbookType]);
 
   const handleDownload = async () => {
     if (!data || !containerRef.current || downloading) return;
