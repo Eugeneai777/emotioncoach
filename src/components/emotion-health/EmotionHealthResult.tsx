@@ -107,7 +107,7 @@ export function EmotionHealthResult({ result, onShare, onRetake, assessmentId, a
   const openClaim = () => setClaimSheetOpen(true);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" ref={reportRootRef}>
       {/* ★ 顶部：「她」专属能量报告（含领取码） */}
       <EmotionHealthClaimReportCard
         energyIndex={result.energyIndex}
