@@ -1,128 +1,103 @@
 
-# 7 天伴随手册 PDF · 留白与价值感优化方案
+# 7 天伴随手册 PDF 排版优化方案
 
-**商业架构师视角的核心结论**：手册留白问题的本质不是"缺图"，而是某些页"信息密度低、用户拿走的工具感不够强"。直接塞插画会让手册"更像营销册、更不像工具书"，且引入 PDF 不稳定因素。**最佳策略 = 价值感增量 + 极简视觉装饰**，而不是大幅塞图。
-
----
-
-## 一、价值感诊断（按页判断留白是否真的需要图）
-
-| 页 | 当前内容 | 留白评分 | 真正缺的 | 推荐方向 |
-|---|---|---|---|---|
-| P1 封面 | 标题 + 引语 + 4 步导读 | 中 | OK，已加导读 | 仅加 1 枚极简印章 SVG |
-| P2 测评全景（新） | 雷达图 + 6 维条 + AI 解读 | 低 | 信息已饱满 | 不动 |
-| P3 生活切面 | 4 张场景卡 | 低 | 不动 | 不动 |
-| **P4 优势** | 通常仅 2 个 list 项 | **高** | **缺：每天怎么用这一块的"用法卡"** | 加微动作卡 + 1 枚日出 SVG |
-| **P5 风险** | 通常仅 2 个红条 | **高** | **缺：信号出现时的 3 步应急** | 加 SOS 三步流程图 |
-| P6/P7/P8 Day 卡 | 每页 2 天，每天 早/午/晚 + 安抚句 | 中-高 | **缺：今日打卡格 + 心情温度计** | 加每日 mini check-in 模块 |
-| P9 第 8 天邀请 | QR + 训练营介绍 | 低 | OK | 不动 |
-| P10 长期陪伴 | 4 卡 + 免责声明 | 中 | 加一句推荐者签名/承诺 | 加 1 行手写体引言 |
+针对您指出的 5 个问题，作为商业架构师从"用户阅读舒适度 + 手写打卡可用性 + 内容完整性"三个维度统一优化。
 
 ---
 
-## 二、为什么不推荐"加插画"
+## 1. 第一章·测评全景 AI 解读与页脚撞车（图1）
 
-1. **PDF 体积**：每张高清插画 200-500KB，9 张 → 4MB+，企微/微信传输/iOS 预览体验下降。
-2. **html2canvas 风险**：跨域图、字体替换、雷达图重绘已经是稳定性大头，再叠图会增加截断/白页概率。
-3. **审美错位**：手册定位是"理性陪伴 + 情感共鸣"，AI 生成插画大多偏卡通或泛 SaaS 感，会稀释专业度。
-4. **用户反馈结构**：用户说"留白多"，潜台词通常是"这一页我不知道要做什么"——是任务感不足，不是装饰不足。
+**问题**：`P2AssessmentOverview` 下半部分的"AI 完整解读"卡片没有限高，AI 文字 300–500 字时直接压到页脚的"7 天伴随手册 / 档案编号 / 2 / 10"上。
 
----
-
-## 三、推荐方案：价值感优先 + 克制视觉
-
-### A. 内联 SVG 装饰（零体积、零跨域、无图床依赖）
-
-定一套统一的"克制视觉语言"，仅 5 个 SVG 元素，可复用：
-
-```text
-1. seal-stamp     一枚印章风圆章（P1 + P10 用，标识"专属档案"）
-2. sun-rise       极简日出线条（P4 优势，象征"还稳"）
-3. waning-moon    简笔月相（P5 风险，象征"夜里要修"）
-4. drop           一滴水（Day 卡角落点缀，象征"今日一点点"）
-5. arc-divider    极细弧线分隔（封底 + 章末）
-```
-
-每个 SVG 控制在 60×60–120×120，单色 `hsl(var(--primary) / 0.15)`，作为**背景水印或角落点缀**，不抢主内容。
-
-### B. 价值感增量模块（关键，这才是用户真正想要的）
-
-#### B1. P4 优势页 → "今日如何用它"
-在每条 strength 下方加一行小字 + 微动作 chip，例如：
-- 「精力续航」还撑得住 → `今日用法：把这点精力留给一件最值得的事，别均摊。`
-
-#### B2. P5 风险页 → "信号出现时怎么办" 3 步卡
-新增统一底部 SOS 模块：
-```text
-[ 看见 ] 写下来：今天什么时候出现这个信号
-[ 暂停 ] 90 秒不做反应（3 次深呼吸）
-[ 选择 ] 我现在能做的最小一步是什么
-```
-这是真正的工具，用户会反复翻看。
-
-#### B3. P6/P7/P8 Day 卡 → 每日 mini 打卡格
-每个 Day 卡尾部增加：
-```text
-□ 早做了    □ 午做了    □ 晚做了
-今日身体感觉：1 ── 5 ── 10
-今日一句话：__________________
-```
-让手册从"被动读"变"主动写"——价值感数倍提升，留白同时被填满。
-
-#### B4. P10 长期陪伴 → 一行手写体承诺
-底部增加引用区块：
-> "这本手册不是治疗，是一个朋友在你旁边坐了 7 天。
->  之后我们也还在。 — 有劲 AI 团队"
-（用 ZCOOL XiaoWei 或 Ma Shan Zheng 一类毛笔字体，1 行，左对齐留白）
+**解决**：
+- 给 AI 解读卡片加 `maxHeight: 380px` + `overflow: hidden`，并在底部留 `marginBottom: 88px` 安全区（页脚高度 64px + 缓冲 24px）。
+- 文字超出时末尾用淡淡的渐变遮罩提示"详见后续章节"，避免硬截断。
+- AI 解读字号从 13px → 13px 行高从 1.85 → 1.78，更紧凑且不破阅读节奏。
+- 顶部段落与雷达图区域之间间距从 18px → 14px，给下方让出空间。
 
 ---
 
-## 四、技术实现与稳定性保障
+## 2. 第三章「这些地方，你还撑得住」两条卡片之间空、下方留白多（图2）
 
-- 全部用**内联 React SVG 组件**，零 HTTP 请求，html2canvas 100% 可截。
-- 不引入新 npm 包；checkbox 用 `□` Unicode 字符或 SVG 描边。
-- 1 行手写体改用 Google Fonts `ZCOOL XiaoWei`，**通过 `<link>` 在 index.html 异步加载**，导出时 `document.fonts.ready` 已会等。
-- A4 容器仍 `overflow:hidden`，新增模块全部 `breakInside:avoid`。
-- 不动 PDF 切片逻辑、不动边缘函数、不动总页数（仍 10 页）。
+**问题**：`P3Strengths` 两个卡片 `marginBottom: 14px`，挨太近；页面下方一大块空白。
 
-### 改动文件清单
-
-```text
-新增  src/components/admin/handbook/shared/HandbookMotifs.tsx   （5 个 SVG 装饰组件）
-新增  src/components/admin/handbook/shared/DailyCheckBox.tsx    （Day 卡打卡格）
-新增  src/components/admin/handbook/shared/SOSCard.tsx          （P5 三步卡）
-改    src/components/admin/handbook/pages/P3Strengths.tsx       （加用法 chip + sun SVG）
-改    src/components/admin/handbook/pages/P4Risks.tsx           （加 SOS 卡 + moon SVG）
-改    src/components/admin/handbook/pages/HandbookDayPage.tsx   （加 mini check-in）
-改    src/components/admin/handbook/pages/P1Cover.tsx           （加印章 SVG）
-改    src/components/admin/handbook/pages/P9Companion.tsx       （加手写体承诺）
-改    index.html                                                （加 ZCOOL XiaoWei link）
-```
+**解决**（`P3Strengths.tsx`）：
+- 卡片间距 `marginBottom: 14px → 28px`。
+- 卡片内部 padding `16px 18px → 20px 22px`，"今日用法"与上面正文之间 `marginTop: 8px → 12px`。
+- 在两条卡片下方加一段轻量"温柔总结句"小卡（不是新内容、是空间过渡），例如：
+  > "把还稳的部分先用起来——这就是这 7 天最聪明的策略。"
+- `SunRise` 装饰从右下 `bottom: 100px` 上移到 `bottom: 130px`，避免和新底部文案打架。
 
 ---
 
-## 五、价值感对比
+## 3. 第四章「这些信号别再忽略」三步缓冲挨太紧（图3）
 
-| 维度 | 加插画方案 | 推荐方案（价值感增量） |
-|---|---|---|
-| 用户感知 | "好看一点" | "拿到了真工具" |
-| 留作纪念率 | 中 | 高（写过的东西舍不得丢） |
-| 复阅率 | 1 次 | 7 次（每天打卡） |
-| 转化训练营 | 弱 | 强（用户 7 天都在 review） |
-| PDF 大小 | +3-5MB | +0KB（全 SVG/字体） |
-| 渲染稳定性 | 中（图片跨域风险） | 高 |
-| 制作成本 | 高（要一致风格的 9 张图） | 中 |
+**问题**：`SOSCard` 三个 STEP 列之间 gap 太小，整体看起来"墙"，下方仍有空白。
+
+**解决**（`SOSCard.tsx` + `P4Risks.tsx`）：
+- 风险红色条目 `marginBottom: 14px → 20px`。
+- `SOSCard` 三列 `gap` 加大；每个 STEP 内部 padding 增加，行高从默认 → 1.75；STEP 标题与正文之间间距加大。
+- `SOSCard` 整体 `marginTop` 加大（与上方风险列表拉开呼吸），并把 `WaningMoon` 装饰下移避免遮挡。
 
 ---
 
-## 六、验收标准
+## 4. Day 1-2 / 3-4 / 5-6 卡片排版 +「今日一句话」太挤（图4）
 
-1. P4/P5 不再出现"只有 2 行内容、半页空白"。
-2. 每个 Day 卡都有可勾选/可写的 mini 模块。
-3. PDF 文件大小相比当前增量 < 200KB。
-4. 全部 10 页渲染稳定，无新白页 / 文字截断。
-5. 用户拿到后的核心反馈预期从"页数挺多"→"我可以每天写一页"。
+**问题**（`HandbookDayPage.tsx` + `DailyCheckBox.tsx`）：
+- 两个 Day 卡片之间 `marginBottom: 18px`，偏挤。
+- "今日一句话"行紧跟在"早做了/午做了/晚做了"勾选行下面，纸质打印时手写空间不足。
+
+**解决**：
+- Day 卡片之间 `marginBottom: 18px → 26px`。
+- `DailyCheckBox`：
+  - 勾选行与"今日一句话"之间 `rowGap: 8px → 16px`。
+  - "今日一句话"右侧手写横线高度 `height: 16px → 22px`，并在下方再加一条同样的虚线（即两行手写空间），符合纸质手账习惯。
+  - 勾选框尺寸 12×12 → 14×14，更易识别。
 
 ---
 
-> **如果你坚持要"明确的图"**：我建议只在 P1 封面右下角放一枚 100×100 的极简插画（一只手 + 一片叶，复用 `src/assets/audience/midlife-vitality-scene-clean.jpg` 局部裁切或新生成 1 张 PNG），其余页全部用 SVG 方案。这样既有"开篇有画"的仪式感，又不引入 9 张图的稳定性风险。是否要加这一张，请你二选一定夺。
+## 5. Day 5-6 之后没有 Day 7，直接跳到第 8 天（图4）
+
+**问题**：`HandbookContainer.tsx` 把 7 天分成 `slice(0,2) / slice(2,4) / slice(4,6)`，**第 7 天的内容被丢弃**，下一页直接是"第 8 天 · 下一步"。这是硬伤。
+
+**解决**（核心结构变更）：
+- 在 Day 5-6 页之后**新增一页 Day 7**，使用同一个 `HandbookDayPage` 组件，传 `slice(6, 7)`，标题改为「Day 7 · 回头看，向前走」。
+- Day 7 页面下方多一块"7 天回顾"小卡（用 `day7Reflection` 的简短版），承上启下到第 8 天页面。
+- 总页数 `HANDBOOK_TOTAL_PAGES` 从 10 → 11；P8Day7Invite / P9Companion 的 `pageNumber` 顺延（10 / 11）；P1 封面、所有页脚的"X / 11"自动更新。
+- 为防止 Day 7 单卡片导致页面下方空，给单 Day 卡片场景加一段"7 天小结"半页内容（仍在 A4 高度内）。
+
+---
+
+## 技术细节（给开发者）
+
+### 涉及文件
+| 文件 | 改动 |
+| --- | --- |
+| `src/components/admin/handbook/HandbookContainer.tsx` | `HANDBOOK_TOTAL_PAGES` 10→11；新增 Day 7 `HandbookDayPage` 实例；P8/P9 页码顺延 |
+| `src/components/admin/handbook/pages/P2AssessmentOverview.tsx` | AI 卡片 `maxHeight + overflow + marginBottom` 安全区 |
+| `src/components/admin/handbook/pages/P3Strengths.tsx` | 卡片间距 28px；底部加温柔总结小卡；装饰位移 |
+| `src/components/admin/handbook/pages/P4Risks.tsx` | 风险条间距 20px；SOSCard `marginTop` 加大；装饰位移 |
+| `src/components/admin/handbook/shared/SOSCard.tsx` | 三列 gap 加大、内 padding 加大、行高 1.75 |
+| `src/components/admin/handbook/pages/HandbookDayPage.tsx` | Day 卡间距 26px；新支持单 Day（Day 7）下方"7 天小结"模块 |
+| `src/components/admin/handbook/shared/DailyCheckBox.tsx` | 勾选与"今日一句话"行距 16px；横线 22px；新增第二条横线；勾选框 14px |
+| `src/components/admin/handbook/pages/P1Cover.tsx` | "共 X 页"从 10 → 11 |
+| `src/pages/admin/AdminHandbookExport.tsx` | 预览高度提示从"9 页"统一为常量 `HANDBOOK_TOTAL_PAGES` |
+
+### 不涉及
+- 不改 `exportReportToPdf.ts`（仍按 `[data-page]` 逐页截图，新增第 7 页天然兼容）。
+- 不改 `handbookStyles.ts`（A4 尺寸不变）。
+- 不动数据装配 / AI 调用（`MALE_SEVEN_DAYS` / `FEMALE_SEVEN_DAYS` 已经是 7 元素数组，目前是被切丢了）。
+- 不影响管理员下载稳定性，整体仍是同一管线。
+
+### 风险与回滚
+- 总页数从 10 → 11，PDF 文件大小 +约 100KB，可忽略。
+- 若第 7 天数组缺失，自动回退展示 `day7Reflection` 文案，不会白页。
+
+---
+
+## 预期效果
+
+1. P2 AI 解读不再压页脚，长文优雅截断。
+2. P3/P4/Day 页面卡片之间有清晰呼吸感，页面下方留白显著减少。
+3. 打卡行有足够手写空间，纸质使用真正可用。
+4. 第 7 天补齐，整本手册 7 天闭环完整，第 8 天承接逻辑自然。
