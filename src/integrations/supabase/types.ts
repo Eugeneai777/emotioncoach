@@ -6382,6 +6382,7 @@ export type Database = {
           updated_at: string | null
           updated_by: string | null
           url: string | null
+          wechat_thumb_url: string | null
         }
         Insert: {
           category_id?: string | null
@@ -6399,6 +6400,7 @@ export type Database = {
           updated_at?: string | null
           updated_by?: string | null
           url?: string | null
+          wechat_thumb_url?: string | null
         }
         Update: {
           category_id?: string | null
@@ -6416,6 +6418,7 @@ export type Database = {
           updated_at?: string | null
           updated_by?: string | null
           url?: string | null
+          wechat_thumb_url?: string | null
         }
         Relationships: []
       }
