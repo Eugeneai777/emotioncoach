@@ -1,114 +1,119 @@
 
-# 7 天伴随手册 PDF 优化方案
+# 7 天伴随手册 PDF · 二次优化方案
 
-整体方向：**只动手册渲染层（src/components/admin/handbook/** 与 **AdminHandbookExport** 数据装配函数），不改业务逻辑、不改边缘函数、不改下载链路。** 保证管理员现有"下载 PDF"按钮、AI 心声调用与日志写入完全不受影响。
-
----
-
-## 一、文案与品牌（问题 1、2）
-
-1. **页眉**：`HandbookHeader` 把右侧 `EugeneAI · 7 天伴随手册` 改为 `有劲 AI · 7 天伴随手册`。
-2. **页脚**：`HandbookFooter` 中间的 `#e6c6d06d` 是给客服查档用的"档案编号"，但裸 hash 让用户困惑。改成 `档案编号 · A6C6D06D`（去掉 `#`，加中文前缀，字母大写更像编号），并把字号从 11px 提到 12px。
-3. **第二章标题**：把 `不按题号看，按场景看` 改成用户语言：`你最近的几个生活切面`，副标题改为 `我们把你这次答的题，按发生在哪一刻整理给你看`。
+只动手册渲染层 + 抽屉按钮，不改边缘函数 / 不改测评结果页业务逻辑。
 
 ---
 
-## 二、首页留白（问题 3）
+## 一、问题 1：P2 场景卡 insight 文案重复（截图 image-450）
 
-`P1Cover` 当前主标题 38px、下方一句话 + 一段 60px margin-top 的引语，导致下半页空。调整：
+**根因**：`buildMaleData` 里每个 cluster 的 `insight` 都用 `MALE_FALLBACK_BY_SCORE[Math.round(avgScore)]`，当 AI 心声没回／所有簇平均分相近时，3 张卡都印同一句"这一格还在你手里，先别急着动它"。
 
-- 主标题 38 → **44px**，副标题 15 → **17px**。
-- "这本手册写给：" 卡片 marginTop 从 80 → **56px**。
-- 底部引语 marginTop 从 60 → **40px**，并在引语下方增加一段 **3 行的"这本手册怎么看"小指引**（"先看场景 → 再看优势/信号 → 跟着 7 天走 → 第 8 天选择下一步"），自然填充剩余空间，并对全本起到导读作用。
+**修复**（不改 fallback 表，避免影响别处）：
 
----
-
-## 三、文字截断（问题 4，截图 image-446）
-
-根因：`P2ScenarioBreakdown` 卡片用了 `c.items.slice(0, 4)` 但每条问答用 `q.slice(0, 40) → a` 单行渲染，长问句在 794px 宽里仍可能折到第 3 行；同时 A4 单页放 4-5 个卡片（每个含 4 条问答 + insight）超出 1123px，造成 html2canvas 切片时把卡片正文劈到第二页。
-
-修复：
-
-- **场景卡限高 + 内部紧凑**：每个场景卡问答从最多 4 条减到 **3 条**；问答行 `display: grid` 改成 `auto 1fr`，列宽自适应；问句 `slice(0, 28)`，答案 `slice(0, 20)`，超出加 `…`。
-- **场景数量限制**：第二章一页最多渲染 **4 个场景卡**，多余的合并到末尾"其它"卡。
-- **分页保护**：在 `HANDBOOK_PAGE_STYLE` 增加 `overflow: hidden`，并把 P2/P5/P6/P7 页面里的卡片容器加 `breakInside: 'avoid'`（html2canvas 切片时配合下一条更可靠）。
-- **PDF 切片优化**：`exportNodeToPdf` 当前按固定像素高度切，会从卡片中间切。改为：先在 DOM 里给每个 `data-page` 节点单独 render → 单独 `html2canvas` → 一页一图加入 PDF。这样每页与设计页 1:1 对齐，**彻底消除截断**。是本次最关键的稳定性改动。
+- 在 `AdminHandbookExport.tsx` 的 cluster 装配里，**当 AI insight 缺失** 或 **与上一张卡相同** 时，按 `cluster.key` 从一张本地 6 句的"暖心文案池"中取一句，保证 4 张卡 4 个语气：
+  - 白天电量类 → `白天能撑到现在，已经是你在硬扛。先别急着证明什么。`
+  - 夜里修复类 → `夜里这一格在悄悄替你修。今晚少做一件事，比多做一件更值钱。`
+  - 关键时刻类 → `大场面里你没崩，是你在用旧方法救自己。这一周我们换一种。`
+  - 关系/情绪类 → `这一格还连着你最在意的人。先把自己接住，再去接别人。`
+  - 信心/自我类 → `你不是没力气，是力气一直在替别人花。这 7 天先留一点给自己。`
+  - 兜底 → `这一格暂时不用动它。看到，就已经是改变的开始。`
+- 同时 P3 优势卡也加同样的"上下两句不重复"校验（避免 strengths[0]/strengths[1] 撞文案）。
 
 ---
 
-## 四、优势页文案乱码（问题 5，截图 image-447）
+## 二、问题 2：合并"下载 PDF 报告"到"7 天伴随手册 PDF"
 
-根因：`buildMaleData` 里 `dims` 的键可能是数字索引（`"0"`、`"1"`），而 `MALE_LABEL` 只覆盖 `energy/sleep/...`，导致渲染出 `0 还稳着，是你接下来 7 天能借力的格`。
+### 2.1 当前两个按钮做的事
 
-修复：
+| 按钮 | 行为 |
+|---|---|
+| **下载 PDF 报告**（旧） | 在新窗打开 `/assessment/male_midlife_vitality?adminPdf=1` 或 `/emotion-health?...`，触发用户结果页里的 `DimensionRadarChart` + AI 完整解读 + autoSave PDF |
+| **下载 7 天伴随手册 PDF**（新） | 打开 `/admin/handbook/male/{id}`，渲染 9 页 A4 手册，含场景簇 / 优势 / 风险 / 7 天脚本 / 第 8 天邀请 |
 
-- 在 `buildMaleData` 内增加键名归一化：若 `dims` key 不在 `MALE_LABEL` 里，按位置映射到 `[energy, sleep, stress, confidence, relationship, recovery]`。
-- 文案改写为更友好版本：`「精力续航」目前还撑得住，是你这 7 天可以倚靠的部分。` 同时 P3 头部说明文案改成：`这一页是你目前还稳的部分。优先用它接住自己，别一上来就挑最难的格硬扛。`
+### 2.2 合并方案：手册第 0/1 页前插入"测评全景"
 
----
-
-## 五、风险页 [object Object]（问题 6，截图 image-448）
-
-根因：`row.dimension_scores` 的 value 在新版本里是对象 `{score, level}`，所以 `${v}` 渲染成 `[object Object]`。
-
-修复：
-
-- 在 `buildMaleData` 的 risks 生成处，统一通过 `const num = typeof v === 'number' ? v : (v?.score ?? v?.value ?? 0)` 取分值。
-- 同时给 `buildEmotionData` 的 `indices` 做相同兜底（`row.energy_index` 等若为对象同样处理）。
-- 文案改成用户语言：`「{label}」目前 {num} 分，已经在亮黄/红灯，这 7 天先别再加压。`
-
----
-
-## 六、Day 卡片重复"安抚语"（问题 7）
-
-根因：`MALE_SEVEN_DAYS` / `FEMALE_SEVEN_DAYS` 每日 `reassure` 字段全部用同一个 `COMMON_REASSURE` 常量，14 张卡都印同一句话。
-
-修复（不改 config 数据来源，避免影响其它依赖）：
-
-- 在 `HandbookDayPage` 渲染 reassure 时，**按 day 编号轮换 6 句不同的安抚短语**（在组件内本地定义数组），让用户每天看到的鼓励都不同：
-  - Day 1 — `没做到也行。第一天的目标只有一个：知道自己存在。`
-  - Day 2 — `今天动一点点，比完美的明天更值钱。`
-  - Day 3 — `卡住很正常，记下来比硬撑更重要。`
-  - Day 4 — `让一个人知道你在调，比独自扛更快好起来。`
-  - Day 5 — `身体在还债，对自己宽一点，不是放弃。`
-  - Day 6 — `走到这一天，你已经比 70% 的人多撑了 5 天。`
-  - Day 7 — `今天回头看：你没回到原点，你在向前走。`
-
----
-
-## 七、PDF 下载稳定性兜底（贯穿）
-
-- 字体加载等待已存在（`document.fonts?.ready`），保留。
-- 新增：导出前对 `containerRef.current` 做 `scrollIntoView({ block: 'nearest' })` + `await new Promise(r => requestAnimationFrame(r))` 双 RAF，避免首次点击时 layout 尚未稳定。
-- 切片改为"按 `[data-page]` 节点逐张截图"后，PDF 始终是 9 页，与设计稿一致；不会因 DPI / 字体宽度变化出现内容塌方。
-- 文件名 `filename` 已经在 `useMemo` 里前置（之前已修），保持不动。
-
----
-
-## 技术清单（本次会改的文件）
+新增 1 页 → 手册从 9 页变 **10 页**，结构：
 
 ```text
-src/components/admin/handbook/shared/HandbookHeader.tsx      文案 EugeneAI → 有劲 AI
-src/components/admin/handbook/shared/HandbookFooter.tsx      档案编号文案 + 字号
-src/components/admin/handbook/handbookStyles.ts              overflow: hidden
-src/components/admin/handbook/pages/P1Cover.tsx              字号、留白、加 3 行导读
-src/components/admin/handbook/pages/P2ScenarioBreakdown.tsx  标题/副标题/卡片限高/3 条
-src/components/admin/handbook/pages/P3Strengths.tsx          说明文案优化
-src/components/admin/handbook/pages/P4Risks.tsx              （仅文案微调，主要在 build 函数）
-src/components/admin/handbook/pages/HandbookDayPage.tsx      按 day 轮换 reassure 文案
-src/pages/admin/AdminHandbookExport.tsx                      dims key 归一化、风险 v 兜底
-src/utils/exportReportToPdf.ts                               切片改为按 [data-page] 节点逐页
+P1 封面
+P2 测评全景（新）  ← 雷达图 + 6 维分数 + AI 完整解读
+P3 你的生活切面（原 P2）
+P4 优势
+P5 风险
+P6/7/8 7 天脚本
+P9 第 7 天复盘
+P10 第 8 天邀请
 ```
 
-不动：边缘函数 `generate-handbook-insights`、`reportAIInsight.ts` 缓存、迁移、抽屉里的下载按钮、路由。
+**P2 测评全景**（新 `P2AssessmentOverview.tsx`）：
+
+- 左侧：复用 `DimensionRadarChart`（已有组件，男版传 `vitalityStatusScores`，女版传 `dimensionScores`）。固定宽 320px，背景白，避免 html2canvas 截不到 SVG。
+- 右侧：6 维（男）/ 4 模式（女）的横向条形 + 分数 + 中文标签（用 `MALE_LABEL` / `FEMALE_PATTERN_LABEL`）。
+- 下方：**AI 完整解读**（300-500 字）。来源：
+  - 男版：`partner_assessment_results.ai_insights` 字段（已存在，结果页直接用）；
+  - 女版：`emotion_health_assessments.ai_analysis` 字段；
+  - 取不到时回退到 `coverNote` + 风险 + 优势的拼接。
+- 加 `breakInside: 'avoid'`、`overflow: hidden`，与其它页同样的 A4 容器规格。
+
+> 雷达图用 recharts SVG，html2canvas 已能截。验证点：导出前 `await new Promise(r=>setTimeout(r,300))` 给 recharts animation 收尾，否则会截到半张。
+
+### 2.3 数据装配补丁
+
+`buildMaleData` / `buildEmotionData` 各加一段：
+
+```ts
+const aiInsightsFull = String(row.ai_insights || row.ai_analysis || "").trim();
+return { ..., aiInsightsFull, dims };  // dims 已有
+```
+
+`HandbookData` 类型加 `aiInsightsFull?: string; dims?: Record<string, number>`。
+
+### 2.4 删除"下载 PDF 报告"按钮
+
+`src/components/admin/AssessmentRespondentDrawer.tsx`：
+
+- 删掉 lines 112–131（男版"下载 PDF 报告"按钮）
+- 删掉 lines 159–178（女版"下载 PDF 报告"按钮）
+- 保留"复制发送话术" + "下载 7 天伴随手册 PDF" 两个按钮
+- 把"下载 7 天伴随手册 PDF" 的 toast 文案改成 `已打开 7 天伴随手册导出页（含完整测评雷达图与 AI 解读），生成约 15-25 秒`
+
+> 旧路径 `/assessment/...?adminPdf=1` 和 `/emotion-health?adminPdf=1` 仍保留，普通用户结果页一直在用，不删。
+
+### 2.5 PageNumber/Footer 同步
+
+- `HandbookFooter` 里 `totalPages` 写死 9 → 改成 **10**
+- `HandbookContainer` 渲染顺序新增 `<P2AssessmentOverview pageNumber={2} />`，原 P2-P9 全部 +1
+- `exportNodeToPdf` 已是按 `[data-page]` 节点逐张截图，自动适配新页数，无需改
 
 ---
 
-## 验收标准
+## 三、改动清单
 
-1. 9 页全部 1 页 1 屏，**无任何文字被切到下一页**。
-2. 页眉/页脚无英文品牌词、无裸 hash。
-3. P1 视觉重心在中部，无大块空白。
-4. P3/P4 全部使用中文标签 + 数字，无 `[object Object]` / `0 还稳着`。
-5. P5/P6/P7 每天的安抚语都不同。
-6. 管理员从抽屉点击"下载 7 天伴随手册 PDF"→ 新窗 → 点击"下载 PDF" → 10-15 秒内得到 9 页 A4 PDF，文件名格式不变，日志正常写入 `pdf_generation_logs`。
+```text
+新增  src/components/admin/handbook/pages/P2AssessmentOverview.tsx
+新增  src/components/admin/handbook/clusterCopy.ts                （6 句暖心文案池 + 去重函数）
+改    src/components/admin/handbook/HandbookContainer.tsx         （插入新页 + 类型扩展）
+改    src/components/admin/handbook/shared/HandbookFooter.tsx     （totalPages 9→10）
+改    src/components/admin/handbook/pages/P2ScenarioBreakdown.tsx (页码 2→3，data-page=3)
+改    src/components/admin/handbook/pages/P3Strengths.tsx         （页码 +1，去重 strengths）
+改    src/components/admin/handbook/pages/P4Risks.tsx             （页码 +1）
+改    src/components/admin/handbook/pages/HandbookDayPage.tsx     （pageNumber prop 已动态，无需改逻辑）
+改    src/components/admin/handbook/pages/P8Day7Invite.tsx        （页码 +1）
+改    src/components/admin/handbook/pages/P9Companion.tsx         （页码 +1）
+改    src/pages/admin/AdminHandbookExport.tsx                     （装配 aiInsightsFull / dims，cluster 去重 fallback）
+改    src/components/admin/AssessmentRespondentDrawer.tsx         （删除两处旧按钮 + toast 文案）
+```
+
+不动：边缘函数、`reportAIInsight.ts`、`exportReportToPdf.ts`、迁移、用户端结果页。
+
+---
+
+## 四、验收标准
+
+1. 第二章 4 张场景卡的 insight 文案两两不同，至少 4 种语气。
+2. 抽屉里只剩 2 个按钮：复制话术、下载 7 天伴随手册 PDF。
+3. 下载得到 **10 页 A4 PDF**，第 2 页有清晰的雷达图 + 6 维分数 + AI 完整解读。
+4. 雷达图无截断 / 无空白，分数标签为中文。
+5. 页脚正确显示 `n / 10`，档案编号无 `#`。
+6. `pdf_generation_logs` 写入正常，文件名格式不变。
