@@ -1,6 +1,7 @@
 import { HANDBOOK_PAGE_STYLE } from "../handbookStyles";
 import { HandbookHeader } from "../shared/HandbookHeader";
 import { HandbookFooter } from "../shared/HandbookFooter";
+import { DailyCheckBox } from "../shared/DailyCheckBox";
 
 export interface DayCard {
   day: number;
@@ -83,6 +84,8 @@ export function HandbookDayPage({ recordIdTail, pageNumber, totalPages = 10, pag
           >
             {REASSURE_BY_DAY[d.day] || d.reassure}
           </div>
+
+          <DailyCheckBox />
         </div>
       ))}
 

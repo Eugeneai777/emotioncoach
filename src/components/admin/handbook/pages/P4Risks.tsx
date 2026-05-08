@@ -1,6 +1,8 @@
 import { HANDBOOK_PAGE_STYLE } from "../handbookStyles";
 import { HandbookHeader } from "../shared/HandbookHeader";
 import { HandbookFooter } from "../shared/HandbookFooter";
+import { SOSCard } from "../shared/SOSCard";
+import { WaningMoon } from "../shared/HandbookMotifs";
 
 interface Props {
   recordIdTail: string;
@@ -50,6 +52,12 @@ export function P4Risks({ recordIdTail, risks, pageNumber = 5, totalPages = 10 }
           ))}
         </div>
       )}
+
+      <SOSCard />
+
+      <div style={{ position: "absolute", right: "48px", bottom: "96px", opacity: 0.85 }}>
+        <WaningMoon size={72} />
+      </div>
 
       <HandbookFooter pageNumber={pageNumber} totalPages={totalPages} recordIdTail={recordIdTail} />
     </div>
