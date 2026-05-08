@@ -1,26 +1,13 @@
-## 继续执行：完成 150 条小红书文案 + Excel + PDF 交付
+## 完成最终交付
 
-### 现状
-- 脚本 `/tmp/build_xhs_deliverables.py` 已带断点续跑（`/tmp/xhs_ckpt.json`）
-- NotoSansSC 中文字体已就绪
-- 上轮因单次 600s 超时中断，已生成部分批次
+150 条文案已生成（`/tmp/xhs_posts.jsonl`）。本轮收尾：
 
-### 本轮动作（按顺序，全部 code--exec）
-1. **查看断点**：读取 `/tmp/xhs_ckpt.json`，确认已完成批次数 / 剩余条数
-2. **分段续跑**：每次 code--exec 跑 ≤4 个批次（约 24 条，~3 分钟），多次调用直到 150 条齐全，避免再次超时
-   - 每批 6 条，gemini-3-flash-preview，1.2s 延迟
-   - 写入 `/tmp/xhs_posts.jsonl`
-3. **渲染 Excel** `/mnt/documents/xhs_30day_plan.xlsx`：4 个 Sheet（内容日历150行 / 数据回收 / AB看板 / 胜出钩子库），openpyxl wrap_text + 列宽
-4. **公式重算 + 错误扫描**：`recalculate_formulas.py`，零错误才放行
-5. **渲染 PDF** `/mnt/documents/xhs_30day_strategy.pdf`：7 章可落地策略，reportlab + NotoSansSC
-6. **QA**：
-   - `pdftoppm` 转图，逐页核查截断/溢出/字体方块
-   - 抽样 10 条文案核对完整性、CTA ref 参数、合规词
-7. **交付**：用 `<lov-artifact>` 输出两个文件
-
-### 不做
-- 不动代码 / 数据库 / 产品页 / SKU
-- 不引入新依赖
-
-### 预计耗时
-续跑 6-10 分钟 + 渲染 QA 3 分钟
+1. **渲染 Excel** `/mnt/documents/xhs_30day_plan.xlsx`
+   - Sheet1「内容日历」150 行 × 14 列，wrap_text，列宽优化
+   - Sheet2「数据回收模板」预填日期/受众/AB/URL + ROI 公式
+   - Sheet3「AB对比看板」按周聚合公式 + 阈值标红
+   - Sheet4「胜出钩子库」表头预设
+2. **公式重算**：`recalculate_formulas.py` 验证零错误
+3. **渲染 PDF** `/mnt/documents/xhs_30day_strategy.pdf`：7 章可落地策略，reportlab + NotoSansSC，含具体数字/SOP/红线词表
+4. **QA**：pdftoppm 转图逐页核查（无截断/无方块/无溢出）；Excel 抽样 10 条核对完整性 + ref 参数
+5. **交付**：`<lov-artifact>` 输出 xlsx + pdf
