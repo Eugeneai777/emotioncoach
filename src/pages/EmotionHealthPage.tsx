@@ -407,21 +407,26 @@ export default function EmotionHealthPage() {
         )}
         
         {step === 'result' && result && (
-          !user ? (
+          (!user && !adminPdf) ? (
             <ResultLoginGate onLogin={redirectToAuth} />
           ) : (
             <>
               <EmotionHealthResult
                 result={result}
-                onShare={handleShare}
-                onRetake={handleRetake}
+                onShare={adminPdf ? undefined : handleShare}
+                onRetake={adminPdf ? undefined : handleRetake}
                 assessmentId={assessmentId}
+                autoSavePdf={autoSavePdf && adminPdf}
+                overrideDisplayName={subjectName}
+                overrideAvatarUrl={subjectAvatar}
               />
-              <EmotionHealthShareDialog
-                open={shareDialogOpen}
-                onOpenChange={setShareDialogOpen}
-                result={result}
-              />
+              {!adminPdf && (
+                <EmotionHealthShareDialog
+                  open={shareDialogOpen}
+                  onOpenChange={setShareDialogOpen}
+                  result={result}
+                />
+              )}
             </>
           )
         )}
