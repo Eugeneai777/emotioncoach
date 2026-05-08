@@ -129,6 +129,17 @@ export function AssessmentRespondentDrawer({ open, onOpenChange, row, template }
               >
                 <FileDown className="w-3.5 h-3.5" /> 下载 PDF 报告
               </Button>
+              <Button
+                size="sm"
+                variant="default"
+                className="h-8 gap-1.5"
+                onClick={() => {
+                  window.open(`/admin/handbook/male/${row.resultId}`, "_blank");
+                  toast.message("已打开 7 天伴随手册导出页，生成约需 10–20 秒");
+                }}
+              >
+                <FileDown className="w-3.5 h-3.5" /> 下载 7 天伴随手册 PDF
+              </Button>
             </div>
           )}
           {isEmotionHealth && row.claimCode && (
@@ -164,6 +175,17 @@ export function AssessmentRespondentDrawer({ open, onOpenChange, row, template }
                 }}
               >
                 <FileDown className="w-3.5 h-3.5" /> 下载 PDF 报告
+              </Button>
+              <Button
+                size="sm"
+                variant="default"
+                className="h-8 gap-1.5"
+                onClick={() => {
+                  window.open(`/admin/handbook/emotion/${row.resultId}`, "_blank");
+                  toast.message("已打开 7 天伴随手册导出页，生成约需 10–20 秒");
+                }}
+              >
+                <FileDown className="w-3.5 h-3.5" /> 下载 7 天伴随手册 PDF
               </Button>
             </div>
           )}
