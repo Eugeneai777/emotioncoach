@@ -114,6 +114,54 @@ export default function EmotionHealthPage() {
     setSearchParams(next, { replace: true });
   }, [searchParams, user, hasPurchased, setSearchParams]);
 
+  // 管理员模式：?recordId=xxx&adminPdf=1&autoSave=pdf → 直接加载已有记录并自动下载 PDF
+  const adminRecordId = searchParams.get('recordId');
+  const adminPdf = searchParams.get('adminPdf') === '1';
+  const autoSavePdf = searchParams.get('autoSave') === 'pdf';
+  const subjectName = searchParams.get('subjectName') || undefined;
+  const subjectAvatar = searchParams.get('subjectAvatar') || undefined;
+  const adminLoadedRef = useRef(false);
+
+  useEffect(() => {
+    if (!adminRecordId || !adminPdf) return;
+    if (adminLoadedRef.current) return;
+    adminLoadedRef.current = true;
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from('emotion_health_assessments')
+          .select('*')
+          .eq('id', adminRecordId)
+          .maybeSingle();
+        if (error) throw error;
+        if (!data) {
+          toast.error('未找到该测评记录');
+          return;
+        }
+        const r: EmotionHealthResultType = {
+          energyIndex: data.energy_index,
+          anxietyIndex: data.anxiety_index,
+          stressIndex: data.stress_index,
+          exhaustionScore: data.exhaustion_score,
+          tensionScore: data.tension_score,
+          suppressionScore: data.suppression_score,
+          avoidanceScore: data.avoidance_score,
+          primaryPattern: data.primary_pattern as any,
+          secondaryPattern: data.secondary_pattern as any,
+          blockedDimension: data.blocked_dimension as any,
+          recommendedPath: data.recommended_path || '',
+        };
+        setResult(r);
+        setAssessmentId(data.id);
+        setAnswers((data.answers as Record<number, number>) || {});
+        setStep('result');
+      } catch (e: any) {
+        console.error('[EH-Admin] load record failed', e);
+        toast.error(e?.message || '加载测评记录失败');
+      }
+    })();
+  }, [adminRecordId, adminPdf]);
+
   // 恢复进度
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -359,21 +407,26 @@ export default function EmotionHealthPage() {
         )}
         
         {step === 'result' && result && (
-          !user ? (
+          (!user && !adminPdf) ? (
             <ResultLoginGate onLogin={redirectToAuth} />
           ) : (
             <>
               <EmotionHealthResult
                 result={result}
-                onShare={handleShare}
-                onRetake={handleRetake}
+                onShare={adminPdf ? undefined : handleShare}
+                onRetake={adminPdf ? undefined : handleRetake}
                 assessmentId={assessmentId}
+                autoSavePdf={autoSavePdf && adminPdf}
+                overrideDisplayName={subjectName}
+                overrideAvatarUrl={subjectAvatar}
               />
-              <EmotionHealthShareDialog
-                open={shareDialogOpen}
-                onOpenChange={setShareDialogOpen}
-                result={result}
-              />
+              {!adminPdf && (
+                <EmotionHealthShareDialog
+                  open={shareDialogOpen}
+                  onOpenChange={setShareDialogOpen}
+                  result={result}
+                />
+              )}
             </>
           )
         )}

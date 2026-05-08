@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -6,14 +6,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { Lock, Save, X, Copy, FileDown, Loader2 } from "lucide-react";
+import { Lock, Save, X, Copy, FileDown } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import type { RespondentRow } from "@/hooks/useAdminAssessmentInsights";
 import { useUpsertAdminUserNote } from "@/hooks/useAdminUserNote";
 import { formatClaimCode } from "@/utils/claimCodeUtils";
-import EmotionHealthPdfClaimCard from "@/components/emotion-health/EmotionHealthPdfClaimCard";
-import { generateCardBlob } from "@/utils/shareCardConfig";
 
 interface Props {
   open: boolean;
@@ -34,38 +32,8 @@ export function AssessmentRespondentDrawer({ open, onOpenChange, row, template }
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
   const upsert = useUpsertAdminUserNote();
-  const ehCardRef = useRef<HTMLDivElement>(null);
-  const [ehDownloading, setEhDownloading] = useState(false);
 
   const isEmotionHealth = template?.assessmentKey === "emotion_health";
-
-  const handleDownloadEhCard = async () => {
-    if (!row || !row.claimCode) {
-      toast.error("该用户暂无领取码");
-      return;
-    }
-    setEhDownloading(true);
-    try {
-      // 等待离屏卡片渲染
-      await new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())));
-      const blob = await generateCardBlob(ehCardRef, { forceScale: 1.6 });
-      if (!blob) throw new Error("生成失败");
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `情绪健康专属凭证_${row.displayName || "user"}_${row.claimCode}.png`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-      toast.success(`已下载 ${row.displayName || "用户"} 的专属凭证`);
-    } catch (e: any) {
-      console.error("[EH-AdminDrawer] download failed", e);
-      toast.error(e?.message || "下载失败，请重试");
-    } finally {
-      setEhDownloading(false);
-    }
-  };
 
   useEffect(() => {
     if (row) {
@@ -170,7 +138,7 @@ export function AssessmentRespondentDrawer({ open, onOpenChange, row, template }
                 variant="outline"
                 className="h-8 gap-1.5"
                 onClick={() => {
-                  const script = `亲爱的${row.displayName || ""}，你的领取码是 ${row.claimCode}。\n附件为你本次「情绪健康测评」专属凭证 + 完整 PDF 报告，请查收 🌸\n24 小时内 助教 将与你 1v1 解读，记得回复哦~`;
+                  const script = `亲爱的${row.displayName || ""}，你的领取码是 ${row.claimCode}。\n附件为你本次「情绪健康测评」完整 PDF 报告，请查收 🌸\n24 小时内 助教 将与你 1v1 解读，记得回复哦~`;
                   navigator.clipboard.writeText(script);
                   toast.success("话术已复制");
                 }}
@@ -181,36 +149,25 @@ export function AssessmentRespondentDrawer({ open, onOpenChange, row, template }
                 size="sm"
                 variant="outline"
                 className="h-8 gap-1.5"
-                onClick={handleDownloadEhCard}
-                disabled={ehDownloading}
+                onClick={() => {
+                  const params = new URLSearchParams({
+                    recordId: row.resultId,
+                    autoSave: "pdf",
+                    adminPdf: "1",
+                    subjectUserId: row.userId,
+                  });
+                  if (row.displayName) params.set("subjectName", row.displayName);
+                  if (row.avatarUrl) params.set("subjectAvatar", row.avatarUrl);
+                  const url = `${window.location.origin}/emotion-health?${params.toString()}`;
+                  window.open(url, "_blank");
+                  toast.message(`已打开 ${row.displayName || "用户"} 的报告并自动下载 PDF`);
+                }}
               >
-                {ehDownloading ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                ) : (
-                  <FileDown className="w-3.5 h-3.5" />
-                )}
-                下载专属凭证
+                <FileDown className="w-3.5 h-3.5" /> 下载 PDF 报告
               </Button>
             </div>
           )}
         </SheetHeader>
-
-        {isEmotionHealth && (
-          <div style={{ position: "fixed", left: -99999, top: 0, pointerEvents: "none" }} aria-hidden>
-            <EmotionHealthPdfClaimCard
-              ref={ehCardRef}
-              claimCode={row.claimCode}
-              displayName={row.displayName || undefined}
-              avatarUrl={row.avatarUrl || undefined}
-              battery={row.battery ?? 0}
-              energyIndex={row.energyIndex ?? row.dimensionScores?.["精力指数"] ?? 0}
-              anxietyIndex={row.anxietyIndex ?? row.dimensionScores?.["焦虑指数"] ?? 0}
-              stressIndex={row.stressIndex ?? row.dimensionScores?.["压力指数"] ?? 0}
-              patternName={row.primaryPattern || undefined}
-              blockedName={row.blockedDimension || undefined}
-            />
-          </div>
-        )}
 
         <ScrollArea className="flex-1">
           <div className="p-6 space-y-6">

@@ -1,4 +1,6 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { exportNodeToPdf } from "@/utils/exportReportToPdf";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -37,9 +39,15 @@ interface EmotionHealthResultProps {
   onRetake?: () => void;
   /** 测评写库后的 id，用于换取领取码 */
   assessmentId?: string | null;
+  /** 管理员模式：自动触发 PDF 下载 */
+  autoSavePdf?: boolean;
+  /** 管理员模式：覆盖显示用户名 */
+  overrideDisplayName?: string;
+  /** 管理员模式：覆盖头像 */
+  overrideAvatarUrl?: string;
 }
 
-export function EmotionHealthResult({ result, onShare, onRetake, assessmentId }: EmotionHealthResultProps) {
+export function EmotionHealthResult({ result, onShare, onRetake, assessmentId, autoSavePdf, overrideDisplayName, overrideAvatarUrl }: EmotionHealthResultProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { profile } = useProfileCompletion();
@@ -62,8 +70,29 @@ export function EmotionHealthResult({ result, onShare, onRetake, assessmentId }:
     return Math.max(0, Math.min(100, Math.round((100 - fatigueAvg) * 0.6 + result.energyIndex * 0.4)));
   }, [result.energyIndex, result.anxietyIndex, result.stressIndex]);
 
-  const displayName = profile?.display_name || user?.user_metadata?.name || undefined;
-  const avatarUrl = getProxiedAvatarUrl(profile?.avatar_url || user?.user_metadata?.avatar_url);
+  const displayName = overrideDisplayName || profile?.display_name || user?.user_metadata?.name || undefined;
+  const avatarUrl = overrideAvatarUrl || getProxiedAvatarUrl(profile?.avatar_url || user?.user_metadata?.avatar_url);
+
+  const reportRootRef = useRef<HTMLDivElement>(null);
+  const autoTriggeredRef = useRef(false);
+
+  useEffect(() => {
+    if (!autoSavePdf) return;
+    if (autoTriggeredRef.current) return;
+    autoTriggeredRef.current = true;
+    const t = setTimeout(async () => {
+      if (!reportRootRef.current) return;
+      try {
+        const fileBase = `情绪健康报告_${displayName || "user"}_${new Date().toISOString().slice(0, 10)}`;
+        await exportNodeToPdf(reportRootRef.current, { filename: fileBase });
+        toast.success("PDF 已自动下载，可关闭此页面");
+      } catch (e) {
+        console.error("[EH-AutoPdf] failed", e);
+        toast.error("PDF 生成失败");
+      }
+    }, 1500);
+    return () => clearTimeout(t);
+  }, [autoSavePdf, displayName]);
 
   const handleStartCoach = () => {
     navigate('/assessment-coach', { 
@@ -78,7 +107,7 @@ export function EmotionHealthResult({ result, onShare, onRetake, assessmentId }:
   const openClaim = () => setClaimSheetOpen(true);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" ref={reportRootRef}>
       {/* ★ 顶部：「她」专属能量报告（含领取码） */}
       <EmotionHealthClaimReportCard
         energyIndex={result.energyIndex}
