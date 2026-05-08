@@ -41,6 +41,7 @@ import CommunityPostsManagement from "./CommunityPostsManagement";
 import ContentAdminDashboard from "./ContentAdminDashboard";
 import AssessmentsManagement from "./AssessmentsManagement";
 import AssessmentInsightsDetail from "./AssessmentInsightsDetail";
+import EmotionHealthInsightsDetail from "./EmotionHealthInsightsDetail";
 import FlywheelDashboard from "./flywheel/FlywheelDashboard";
 import FlywheelCampaigns from "./flywheel/FlywheelCampaigns";
 import FlywheelFunnel from "./flywheel/FlywheelFunnel";
@@ -145,6 +146,7 @@ export function AdminLayout({ userRole }: AdminLayoutProps) {
                   <Route path="camps" element={<CampTemplatesManagement />} />
                   <Route path="assessments" element={<AssessmentsManagement />} />
                   <Route path="assessments/:templateId/insights" element={<AssessmentInsightsDetail />} />
+                  <Route path="assessments/builtin/emotion-health/insights" element={<EmotionHealthInsightsDetail />} />
                   <Route path="human-coaches" element={<HumanCoachesManagement />} />
                   <Route path="videos" element={<VideoCoursesManagement />} />
                   <Route path="knowledge" element={<KnowledgeBaseManagement />} />

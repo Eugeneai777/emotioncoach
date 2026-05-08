@@ -158,7 +158,7 @@ export default function AssessmentsManagement() {
                       variant="default"
                       size="sm"
                       className="gap-1.5 text-xs"
-                      onClick={() => navigate('/admin/users-and-orders?source=emotion_health')}
+                      onClick={() => navigate('/admin/assessments/builtin/emotion-health/insights')}
                     >
                       <BarChart3 className="w-3.5 h-3.5" />
                       数据洞察
