@@ -126,7 +126,7 @@ export function P1Cover({
         <SealStamp size={96} />
       </div>
 
-      <HandbookFooter pageNumber={1} totalPages={10} recordIdTail={recordIdTail} />
+      <HandbookFooter pageNumber={1} totalPages={11} recordIdTail={recordIdTail} />
     </div>
   );
 }

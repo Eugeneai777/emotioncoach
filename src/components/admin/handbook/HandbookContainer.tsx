@@ -8,7 +8,7 @@ import { HandbookDayPage, type DayCard } from "./pages/HandbookDayPage";
 import { P8Day7Invite } from "./pages/P8Day7Invite";
 import { P9Companion } from "./pages/P9Companion";
 
-export const HANDBOOK_TOTAL_PAGES = 10;
+export const HANDBOOK_TOTAL_PAGES = 11;
 
 const MALE_LABEL: Record<string, string> = {
   energy: "精力续航",
@@ -97,9 +97,17 @@ export const HandbookContainer = forwardRef<HTMLDivElement, { data: HandbookData
         <HandbookDayPage recordIdTail={tail} pageNumber={6} totalPages={HANDBOOK_TOTAL_PAGES} pageTitle="Day 1-2 · 先看见" days={d.slice(0, 2)} />
         <HandbookDayPage recordIdTail={tail} pageNumber={7} totalPages={HANDBOOK_TOTAL_PAGES} pageTitle="Day 3-4 · 动一点点" days={d.slice(2, 4)} />
         <HandbookDayPage recordIdTail={tail} pageNumber={8} totalPages={HANDBOOK_TOTAL_PAGES} pageTitle="Day 5-6 · 让一个人靠近" days={d.slice(4, 6)} />
-        <P8Day7Invite
+        <HandbookDayPage
           recordIdTail={tail}
           pageNumber={9}
+          totalPages={HANDBOOK_TOTAL_PAGES}
+          pageTitle="Day 7 · 回头看，向前走"
+          days={d.slice(6, 7)}
+          summary={data.day7Reflection}
+        />
+        <P8Day7Invite
+          recordIdTail={tail}
+          pageNumber={10}
           totalPages={HANDBOOK_TOTAL_PAGES}
           campName={data.campName}
           intro={data.campIntro}
@@ -108,7 +116,7 @@ export const HandbookContainer = forwardRef<HTMLDivElement, { data: HandbookData
           ctaHint={data.ctaHint}
           day7Reflection={data.day7Reflection}
         />
-        <P9Companion recordIdTail={tail} pageNumber={10} totalPages={HANDBOOK_TOTAL_PAGES} />
+        <P9Companion recordIdTail={tail} pageNumber={11} totalPages={HANDBOOK_TOTAL_PAGES} />
       </div>
     );
   },
