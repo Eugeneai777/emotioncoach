@@ -272,17 +272,28 @@ async function buildMaleData(recordId: string): Promise<HandbookData> {
     const ai = insights.clusterInsights[c.key];
     if (ai) c.insight = ai;
   }
+  // 去重 + 兜底，保证 4 张卡 4 种语气
+  const deduped = dedupeClusterInsights(
+    clusters.map((c) => ({ key: c.key, insight: c.insight })),
+  );
+  deduped.forEach((d, i) => {
+    clusters[i].insight = d.insight;
+  });
 
   const dayScripts = MALE_SEVEN_DAYS[weakestKey] || MALE_SEVEN_DAYS.energy;
 
   // 优势 / 风险（用归一化后的 dims）
   const sortedDims = Object.entries(dims).sort((a, b) => a[1] - b[1]);
-  const strengths = sortedDims.slice(0, 2).map(
-    ([k]) => `「${MALE_LABEL[k] || k}」目前还撑得住，是你这 7 天可以倚靠的部分。`,
-  );
-  const risks = sortedDims
+  const strengthVariants = [
+    (label: string) => `「${label}」目前还撑得住，是你这 7 天可以倚靠的部分。`,
+    (label: string) => `「${label}」还在你手里。先用它接住自己，不要急着挑最难的硬扛。`,
+  ];
+  const strengths = sortedDims
     .slice(-2)
     .reverse()
+    .map(([k], i) => strengthVariants[i % 2](MALE_LABEL[k] || k));
+  const risks = sortedDims
+    .slice(0, 2)
     .map(([k, v]) => `「${MALE_LABEL[k] || k}」目前 ${v} 分，已经在亮黄/红灯，这 7 天先别再加压。`);
 
   return {
@@ -303,6 +314,8 @@ async function buildMaleData(recordId: string): Promise<HandbookData> {
     ctaHint: MALE_CAMP_INVITE.ctaHint,
     coverNote: insights.coverNote,
     day7Reflection: insights.day7Reflection,
+    dims,
+    aiInsightsFull: String(row.ai_insight || "").trim(),
   };
 }
 
