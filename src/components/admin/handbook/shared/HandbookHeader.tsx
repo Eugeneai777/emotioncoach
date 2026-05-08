@@ -16,7 +16,7 @@ export function HandbookHeader({ title }: Props) {
       }}
     >
       <span style={{ fontWeight: 500 }}>{title}</span>
-      <span>EugeneAI · 7 天伴随手册</span>
+      <span>有劲 AI · 7 天伴随手册</span>
     </div>
   );
 }

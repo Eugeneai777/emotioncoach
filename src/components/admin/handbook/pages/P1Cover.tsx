@@ -30,34 +30,36 @@ export function P1Cover({
   return (
     <div style={HANDBOOK_PAGE_STYLE} data-page="1">
       <HandbookHeader title="封面" />
-      <div style={{ marginTop: "100px" }}>
+      <div style={{ marginTop: "72px" }}>
         <div
           style={{
             fontSize: "13px",
             color: "hsl(var(--muted-foreground))",
             letterSpacing: "0.2em",
-            marginBottom: "16px",
+            marginBottom: "18px",
           }}
         >
           PERSONAL · 7 DAYS
         </div>
         <h1
           style={{
-            fontSize: "38px",
+            fontSize: "44px",
             fontWeight: 700,
             color: "hsl(var(--foreground))",
-            margin: "0 0 16px 0",
+            margin: "0 0 18px 0",
             lineHeight: 1.3,
           }}
         >
           {title}
         </h1>
-        <p style={{ fontSize: "15px", color: "hsl(var(--muted-foreground))", margin: 0 }}>{sub}</p>
+        <p style={{ fontSize: "17px", color: "hsl(var(--muted-foreground))", margin: 0, lineHeight: 1.7 }}>
+          {sub}
+        </p>
       </div>
 
       <div
         style={{
-          marginTop: "80px",
+          marginTop: "56px",
           padding: "24px",
           borderRadius: "12px",
           background: "hsl(var(--muted) / 0.4)",
@@ -88,15 +90,35 @@ export function P1Cover({
 
       <div
         style={{
-          marginTop: "60px",
+          marginTop: "40px",
           padding: "20px 24px",
           borderLeft: "3px solid hsl(var(--primary))",
           fontSize: "15px",
           color: "hsl(var(--foreground))",
-          lineHeight: 1.8,
+          lineHeight: 1.85,
         }}
       >
         {coverNote}
+      </div>
+
+      <div
+        style={{
+          marginTop: "32px",
+          padding: "20px 24px",
+          borderRadius: "10px",
+          background: "hsl(var(--card))",
+          border: "1px solid hsl(var(--border))",
+        }}
+      >
+        <div style={{ fontSize: "13px", fontWeight: 600, marginBottom: "12px", color: "hsl(var(--foreground))" }}>
+          这本手册怎么看
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", rowGap: "10px", columnGap: "20px", fontSize: "13px", color: "hsl(var(--muted-foreground))", lineHeight: 1.7 }}>
+          <div>① 看你最近的几个生活切面</div>
+          <div>② 看你还稳的部分 / 该歇的部分</div>
+          <div>③ 跟着 7 天，每天 5 分钟</div>
+          <div>④ 第 8 天，再决定下一步去哪</div>
+        </div>
       </div>
 
       <HandbookFooter pageNumber={1} totalPages={9} recordIdTail={recordIdTail} />

@@ -10,10 +10,10 @@ interface Props {
 export function P3Strengths({ recordIdTail, strengths }: Props) {
   return (
     <div style={HANDBOOK_PAGE_STYLE} data-page="3">
-      <HandbookHeader title="第三章 · 你的优势" />
-      <h2 style={{ fontSize: "24px", fontWeight: 700, margin: "0 0 8px 0" }}>这些块还在你手里</h2>
-      <p style={{ color: "hsl(var(--muted-foreground))", margin: "0 0 28px 0", fontSize: "13px" }}>
-        别只看跌的格，先确认还稳的那几格。这是你接下来 7 天能借力的地方。
+      <HandbookHeader title="第三章 · 你目前还稳的部分" />
+      <h2 style={{ fontSize: "24px", fontWeight: 700, margin: "0 0 8px 0" }}>这些地方，你还撑得住</h2>
+      <p style={{ color: "hsl(var(--muted-foreground))", margin: "0 0 28px 0", fontSize: "13px", lineHeight: 1.7 }}>
+        这一页是你目前还稳的部分。优先用它接住自己，别一上来就挑最难的硬扛。
       </p>
 
       {strengths.length === 0 ? (
