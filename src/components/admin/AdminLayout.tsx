@@ -148,6 +148,7 @@ export function AdminLayout({ userRole }: AdminLayoutProps) {
                   <Route path="assessments" element={<AssessmentsManagement />} />
                   <Route path="assessments/:templateId/insights" element={<AssessmentInsightsDetail />} />
                   <Route path="assessments/builtin/emotion-health/insights" element={<EmotionHealthInsightsDetail />} />
+                  <Route path="handbook/:type/:recordId" element={<AdminHandbookExport />} />
                   <Route path="human-coaches" element={<HumanCoachesManagement />} />
                   <Route path="videos" element={<VideoCoursesManagement />} />
                   <Route path="knowledge" element={<KnowledgeBaseManagement />} />
