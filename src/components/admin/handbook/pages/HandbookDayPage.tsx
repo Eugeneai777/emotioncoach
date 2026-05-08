@@ -18,6 +18,8 @@ interface Props {
   totalPages?: number;
   pageTitle: string;
   days: DayCard[];
+  /** 单日（如 Day 7）下方的回顾小结，避免下方留白 */
+  summary?: string;
 }
 
 const REASSURE_BY_DAY: Record<number, string> = {
@@ -30,7 +32,7 @@ const REASSURE_BY_DAY: Record<number, string> = {
   7: "今天回头看：你没回到原点，你在向前走。",
 };
 
-export function HandbookDayPage({ recordIdTail, pageNumber, totalPages = 10, pageTitle, days }: Props) {
+export function HandbookDayPage({ recordIdTail, pageNumber, totalPages = 11, pageTitle, days, summary }: Props) {
   return (
     <div style={HANDBOOK_PAGE_STYLE} data-page={pageNumber}>
       <HandbookHeader title={pageTitle} />
@@ -40,15 +42,15 @@ export function HandbookDayPage({ recordIdTail, pageNumber, totalPages = 10, pag
         <div
           key={d.day}
           style={{
-            marginBottom: "18px",
-            padding: "16px 18px",
+            marginBottom: "26px",
+            padding: "18px 20px",
             borderRadius: "10px",
             background: "hsl(var(--card))",
             border: "1px solid hsl(var(--border))",
             breakInside: "avoid",
           }}
         >
-          <div style={{ display: "flex", alignItems: "baseline", gap: "12px", marginBottom: "10px" }}>
+          <div style={{ display: "flex", alignItems: "baseline", gap: "12px", marginBottom: "12px" }}>
             <span
               style={{
                 fontSize: "12px",
@@ -62,7 +64,7 @@ export function HandbookDayPage({ recordIdTail, pageNumber, totalPages = 10, pag
             <span style={{ fontSize: "16px", fontWeight: 600 }}>{d.title}</span>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "44px 1fr", rowGap: "6px", fontSize: "13px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "44px 1fr", rowGap: "7px", fontSize: "13px" }}>
             <div style={{ color: "hsl(var(--muted-foreground))" }}>早</div>
             <div>{d.morning}</div>
             <div style={{ color: "hsl(var(--muted-foreground))" }}>午</div>
@@ -73,8 +75,8 @@ export function HandbookDayPage({ recordIdTail, pageNumber, totalPages = 10, pag
 
           <div
             style={{
-              marginTop: "10px",
-              paddingTop: "8px",
+              marginTop: "12px",
+              paddingTop: "10px",
               borderTop: "1px dashed hsl(var(--border))",
               fontSize: "12px",
               color: "hsl(var(--muted-foreground))",
@@ -88,6 +90,60 @@ export function HandbookDayPage({ recordIdTail, pageNumber, totalPages = 10, pag
           <DailyCheckBox />
         </div>
       ))}
+
+      {summary && (
+        <div
+          style={{
+            marginTop: "8px",
+            padding: "20px 22px",
+            borderRadius: "10px",
+            background: "hsl(var(--primary) / 0.06)",
+            border: "1px solid hsl(var(--primary) / 0.25)",
+            breakInside: "avoid",
+          }}
+        >
+          <div
+            style={{
+              fontSize: "12px",
+              color: "hsl(var(--primary))",
+              letterSpacing: "0.1em",
+              fontWeight: 600,
+              marginBottom: "10px",
+            }}
+          >
+            7 天小结 · 写给走到这里的你
+          </div>
+          <div style={{ fontSize: "13px", lineHeight: 1.85, color: "hsl(var(--foreground))" }}>
+            {summary}
+          </div>
+          <div
+            style={{
+              marginTop: "14px",
+              paddingTop: "10px",
+              borderTop: "1px dashed hsl(var(--border))",
+              fontSize: "12px",
+              color: "hsl(var(--muted-foreground))",
+              lineHeight: 1.85,
+            }}
+          >
+            <div style={{ marginBottom: "6px" }}>这 7 天，最让我意外的一件事是：</div>
+            <div
+              style={{
+                borderBottom: "1px dotted hsl(var(--muted-foreground) / 0.4)",
+                height: "22px",
+                marginBottom: "10px",
+              }}
+            />
+            <div style={{ marginBottom: "6px" }}>第 8 天，我想先做的一小步是：</div>
+            <div
+              style={{
+                borderBottom: "1px dotted hsl(var(--muted-foreground) / 0.4)",
+                height: "22px",
+              }}
+            />
+          </div>
+        </div>
+      )}
 
       <HandbookFooter pageNumber={pageNumber} totalPages={totalPages} recordIdTail={recordIdTail} />
     </div>

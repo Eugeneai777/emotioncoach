@@ -38,13 +38,13 @@ export function P4Risks({ recordIdTail, risks, pageNumber = 5, totalPages = 10 }
             <div
               key={i}
               style={{
-                marginBottom: "14px",
-                padding: "16px 18px",
+                marginBottom: "20px",
+                padding: "18px 20px",
                 borderRadius: "8px",
                 background: "hsl(var(--destructive) / 0.06)",
                 borderLeft: "3px solid hsl(var(--destructive))",
                 fontSize: "14px",
-                lineHeight: 1.7,
+                lineHeight: 1.75,
               }}
             >
               {r}
@@ -55,8 +55,8 @@ export function P4Risks({ recordIdTail, risks, pageNumber = 5, totalPages = 10 }
 
       <SOSCard />
 
-      <div style={{ position: "absolute", right: "48px", bottom: "96px", opacity: 0.85 }}>
-        <WaningMoon size={72} />
+      <div style={{ position: "absolute", right: "48px", bottom: "60px", opacity: 0.85 }}>
+        <WaningMoon size={64} />
       </div>
 
       <HandbookFooter pageNumber={pageNumber} totalPages={totalPages} recordIdTail={recordIdTail} />

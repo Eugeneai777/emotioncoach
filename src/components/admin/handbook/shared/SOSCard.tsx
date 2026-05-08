@@ -12,8 +12,8 @@ export function SOSCard() {
   return (
     <div
       style={{
-        marginTop: "28px",
-        padding: "20px 22px",
+        marginTop: "32px",
+        padding: "22px 24px",
         borderRadius: "10px",
         background: "hsl(var(--muted) / 0.35)",
         border: "1px solid hsl(var(--border))",
@@ -25,7 +25,7 @@ export function SOSCard() {
           fontSize: "13px",
           fontWeight: 600,
           color: "hsl(var(--foreground))",
-          marginBottom: "4px",
+          marginBottom: "6px",
           letterSpacing: "0.05em",
         }}
       >
@@ -35,19 +35,19 @@ export function SOSCard() {
         style={{
           fontSize: "12px",
           color: "hsl(var(--muted-foreground))",
-          marginBottom: "14px",
-          lineHeight: 1.65,
+          marginBottom: "18px",
+          lineHeight: 1.7,
         }}
       >
         不是修好它，是先不让自己滑下去。这三步顺序很重要。
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "20px" }}>
         {STEPS.map((s, i) => (
           <div
             key={i}
             style={{
-              padding: "12px 14px",
+              padding: "16px 16px",
               borderRadius: "8px",
               background: "hsl(var(--background))",
               border: "1px solid hsl(var(--border))",
@@ -58,13 +58,13 @@ export function SOSCard() {
                 fontSize: "11px",
                 color: "hsl(var(--primary))",
                 letterSpacing: "0.15em",
-                marginBottom: "6px",
+                marginBottom: "10px",
                 fontWeight: 600,
               }}
             >
               STEP {i + 1} · {s.tag}
             </div>
-            <div style={{ fontSize: "12px", lineHeight: 1.7, color: "hsl(var(--foreground))" }}>{s.body}</div>
+            <div style={{ fontSize: "12px", lineHeight: 1.85, color: "hsl(var(--foreground))" }}>{s.body}</div>
           </div>
         ))}
       </div>
