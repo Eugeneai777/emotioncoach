@@ -55,6 +55,7 @@ import DramaScriptGenerator from "./DramaScriptGenerator";
 import { AdminLayoutDebugToggle } from "./AdminLayoutDebugToggle";
 import { AdminCommandPalette } from "./AdminCommandPalette";
 import AdminImpersonation from "./AdminImpersonation";
+import AdminHandbookExport from "@/pages/admin/AdminHandbookExport";
 export type AdminRole = 'admin' | 'content_admin' | 'partner_admin';
 
 interface AdminLayoutProps {
