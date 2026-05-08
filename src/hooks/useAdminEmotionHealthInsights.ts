@@ -26,7 +26,7 @@ export interface EmotionHealthInsights {
   scoreDistribution: { range: string; count: number }[];
   dimensionAverages: { name: string; value: number }[];
   dailyTrend: { date: string; count: number }[];
-  respondents: (RespondentRow & { isPaid: boolean })[];
+  respondents: (RespondentRow & { isPaid: boolean; blockedDimension: string | null; battery: number; energyIndex: number; anxietyIndex: number; stressIndex: number })[];
 }
 
 /**
@@ -69,6 +69,11 @@ export function useAdminEmotionHealthInsights() {
       const respondents = rows.map((r) => {
         const p = profileMap[r.user_id] || {};
         const n = noteMap[r.user_id] || null;
+        const energyIndex = r.energy_index || 0;
+        const anxietyIndex = r.anxiety_index || 0;
+        const stressIndex = r.stress_index || 0;
+        const fatigueAvg = (anxietyIndex + stressIndex) / 2;
+        const battery = Math.max(0, Math.min(100, Math.round((100 - fatigueAvg) * 0.6 + energyIndex * 0.4)));
         return {
           resultId: r.id,
           userId: r.user_id,
@@ -76,12 +81,12 @@ export function useAdminEmotionHealthInsights() {
           avatarUrl: p.avatar_url || null,
           phone: p.phone || null,
           phoneCountryCode: p.phone_country_code || null,
-          totalScore: r.energy_index || 0,
+          totalScore: energyIndex,
           primaryPattern: r.primary_pattern || null,
           dimensionScores: {
-            精力指数: r.energy_index || 0,
-            焦虑指数: r.anxiety_index || 0,
-            压力指数: r.stress_index || 0,
+            精力指数: energyIndex,
+            焦虑指数: anxietyIndex,
+            压力指数: stressIndex,
             耗竭分: r.exhaustion_score || 0,
             紧张分: r.tension_score || 0,
             压抑分: r.suppression_score || 0,
@@ -95,6 +100,11 @@ export function useAdminEmotionHealthInsights() {
           adminNoteUpdatedAt: n?.updated_at || null,
           claimCode: r.claim_code || null,
           isPaid: !!r.is_paid,
+          blockedDimension: r.blocked_dimension || null,
+          battery,
+          energyIndex,
+          anxietyIndex,
+          stressIndex,
         };
       });
 
