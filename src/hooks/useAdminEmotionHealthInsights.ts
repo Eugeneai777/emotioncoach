@@ -26,7 +26,7 @@ export interface EmotionHealthInsights {
   scoreDistribution: { range: string; count: number }[];
   dimensionAverages: { name: string; value: number }[];
   dailyTrend: { date: string; count: number }[];
-  respondents: (RespondentRow & { isPaid: boolean })[];
+  respondents: (RespondentRow & { isPaid: boolean; blockedDimension: string | null; battery: number; energyIndex: number; anxietyIndex: number; stressIndex: number })[];
 }
 
 /**
