@@ -87,12 +87,20 @@ export function DynamicOGMeta({ pageKey, overrides }: DynamicOGMetaProps) {
     return DEFAULT_OG_CONFIG.image;
   }, [finalConfig.image]);
 
+  // 微信卡片缩图：优先 wechat_thumb_url（小尺寸正方形 JPG，<128KB），
+  // 缺失时降级到横版 og:image（可能因过大或比例问题导致微信丢图）
+  const wechatShareImage = useMemo(() => {
+    const thumb = ogConfig.wechatThumbUrl;
+    if (thumb && /^https:\/\//i.test(thumb)) return thumb;
+    return safeShareImage;
+  }, [ogConfig.wechatThumbUrl, safeShareImage]);
+
   // 微信 JS-SDK 分享配置（H5 / 微信浏览器内）
   useWechatShare({
     title: finalConfig.ogTitle,
     desc: finalConfig.description,
     link: shareUrl,
-    imgUrl: safeShareImage,
+    imgUrl: wechatShareImage,
   });
 
   // 小程序 web-view 分享桥接：把分享配置同步给小程序壳层
@@ -100,11 +108,11 @@ export function DynamicOGMeta({ pageKey, overrides }: DynamicOGMetaProps) {
     () => ({
       title: finalConfig.ogTitle,
       desc: finalConfig.description,
-      imageUrl: safeShareImage,
+      imageUrl: wechatShareImage,
       h5Url: shareUrl,
       routeKey: `${pageKey}|${location.pathname}${location.search}${location.hash}`,
     }),
-    [finalConfig.ogTitle, finalConfig.description, safeShareImage, shareUrl, pageKey, location.pathname, location.search, location.hash]
+    [finalConfig.ogTitle, finalConfig.description, wechatShareImage, shareUrl, pageKey, location.pathname, location.search, location.hash]
   );
   useMiniProgramShareBridge(bridgeConfig);
 
