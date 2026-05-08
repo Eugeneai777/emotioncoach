@@ -34,6 +34,38 @@ export function AssessmentRespondentDrawer({ open, onOpenChange, row, template }
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
   const upsert = useUpsertAdminUserNote();
+  const ehCardRef = useRef<HTMLDivElement>(null);
+  const [ehDownloading, setEhDownloading] = useState(false);
+
+  const isEmotionHealth = template?.assessmentKey === "emotion_health";
+
+  const handleDownloadEhCard = async () => {
+    if (!row || !row.claimCode) {
+      toast.error("该用户暂无领取码");
+      return;
+    }
+    setEhDownloading(true);
+    try {
+      // 等待离屏卡片渲染
+      await new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())));
+      const blob = await generateCardBlob(ehCardRef, { forceScale: 1.6 });
+      if (!blob) throw new Error("生成失败");
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `情绪健康专属凭证_${row.displayName || "user"}_${row.claimCode}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      toast.success(`已下载 ${row.displayName || "用户"} 的专属凭证`);
+    } catch (e: any) {
+      console.error("[EH-AdminDrawer] download failed", e);
+      toast.error(e?.message || "下载失败，请重试");
+    } finally {
+      setEhDownloading(false);
+    }
+  };
 
   useEffect(() => {
     if (row) {
