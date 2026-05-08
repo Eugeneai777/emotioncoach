@@ -138,31 +138,11 @@ export function AssessmentRespondentDrawer({ open, onOpenChange, row, template }
               </Button>
               <Button
                 size="sm"
-                variant="outline"
-                className="h-8 gap-1.5"
-                onClick={() => {
-                  const params = new URLSearchParams({
-                    recordId: row.resultId,
-                    autoSave: "pdf",
-                    adminPdf: "1",
-                    subjectUserId: row.userId,
-                  });
-                  if (row.displayName) params.set("subjectName", row.displayName);
-                  if (row.avatarUrl) params.set("subjectAvatar", row.avatarUrl);
-                  const url = `${window.location.origin}/emotion-health?${params.toString()}`;
-                  window.open(url, "_blank");
-                  toast.message(`已打开 ${row.displayName || "用户"} 的报告并自动下载 PDF`);
-                }}
-              >
-                <FileDown className="w-3.5 h-3.5" /> 下载 PDF 报告
-              </Button>
-              <Button
-                size="sm"
                 variant="default"
                 className="h-8 gap-1.5"
                 onClick={() => {
                   window.open(`/admin/handbook/emotion/${row.resultId}`, "_blank");
-                  toast.message("已打开 7 天伴随手册导出页，生成约需 10–20 秒");
+                  toast.message("已打开 7 天伴随手册导出页（含完整测评雷达图与 AI 解读），生成约 15-25 秒");
                 }}
               >
                 <FileDown className="w-3.5 h-3.5" /> 下载 7 天伴随手册 PDF
