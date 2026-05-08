@@ -213,9 +213,19 @@ async function buildMaleData(recordId: string): Promise<HandbookData> {
   const questions: any[] = Array.isArray(tpl?.questions) ? (tpl!.questions as any[]) : [];
   const answers: Record<string, any> = (row.answers as any) || {};
 
-  const dims = (row.dimension_scores as Record<string, number>) || {};
+  const rawDims = (row.dimension_scores as Record<string, any>) || {};
+  // 归一化：若 key 不在 MALE_LABEL，按位置映射到标准 6 维
+  const STANDARD_KEYS = ["energy", "sleep", "stress", "confidence", "relationship", "recovery"];
+  const dims: Record<string, number> = {};
+  const rawEntries = Object.entries(rawDims);
+  rawEntries.forEach(([k, v], i) => {
+    const num = typeof v === "number" ? v : Number(v?.score ?? v?.value ?? 0) || 0;
+    const normKey = MALE_LABEL[k] ? k : STANDARD_KEYS[i] || k;
+    dims[normKey] = num;
+  });
+
   const weakestKey =
-    Object.entries(dims).sort((a, b) => (b[1] as number) - (a[1] as number))[0]?.[0] || "energy";
+    Object.entries(dims).sort((a, b) => b[1] - a[1])[0]?.[0] || "energy";
   const weakestLabel = MALE_LABEL[weakestKey] || weakestKey;
 
   const clusters = MALE_CLUSTERS.map((c) => {
@@ -263,13 +273,15 @@ async function buildMaleData(recordId: string): Promise<HandbookData> {
 
   const dayScripts = MALE_SEVEN_DAYS[weakestKey] || MALE_SEVEN_DAYS.energy;
 
-  // 优势 / 风险
-  const sortedDims = Object.entries(dims).sort((a, b) => (a[1] as number) - (b[1] as number));
-  const strengths = sortedDims.slice(0, 2).map(([k]) => `${MALE_LABEL[k] || k} 还稳着，是你接下来 7 天能借力的格。`);
+  // 优势 / 风险（用归一化后的 dims）
+  const sortedDims = Object.entries(dims).sort((a, b) => a[1] - b[1]);
+  const strengths = sortedDims.slice(0, 2).map(
+    ([k]) => `「${MALE_LABEL[k] || k}」目前还撑得住，是你这 7 天可以倚靠的部分。`,
+  );
   const risks = sortedDims
     .slice(-2)
     .reverse()
-    .map(([k, v]) => `${MALE_LABEL[k] || k}（${v}）已经在亮黄/红灯，先别再压。`);
+    .map(([k, v]) => `「${MALE_LABEL[k] || k}」目前 ${v} 分，已经在亮黄/红灯，这 7 天先别再加压。`);
 
   return {
     type: "male_vitality",
@@ -357,13 +369,14 @@ async function buildEmotionData(recordId: string): Promise<HandbookData> {
 
   const dayScripts = (FEMALE_SEVEN_DAYS as any)[pattern] || FEMALE_SEVEN_DAYS.exhaustion;
 
+  const num = (v: any) => (typeof v === "number" ? v : Number(v?.score ?? v?.value ?? 0) || 0);
   const indices = [
-    { k: "energy_index", label: "精力指数", v: row.energy_index },
-    { k: "anxiety_index", label: "焦虑指数", v: row.anxiety_index },
-    { k: "stress_index", label: "压力指数", v: row.stress_index },
+    { k: "energy_index", label: "精力指数", v: num(row.energy_index) },
+    { k: "anxiety_index", label: "焦虑指数", v: num(row.anxiety_index) },
+    { k: "stress_index", label: "压力指数", v: num(row.stress_index) },
   ];
-  const strengths = indices.filter((x) => x.v >= 60).map((x) => `${x.label} 还在 ${x.v} 分，是你接下来能借力的地方。`);
-  const risks = indices.filter((x) => x.v < 40).map((x) => `${x.label} 仅 ${x.v} 分，是身体在小声求救。`);
+  const strengths = indices.filter((x) => x.v >= 60).map((x) => `「${x.label}」还在 ${x.v} 分，是你这 7 天可以倚靠的部分。`);
+  const risks = indices.filter((x) => x.v < 40).map((x) => `「${x.label}」仅 ${x.v} 分，是身体在小声求救，这 7 天先别再加压。`);
 
   return {
     type: "emotion_health",

@@ -17,46 +17,56 @@ interface Props {
   clusters: ScenarioCardData[];
 }
 
+function clip(s: string, n: number) {
+  if (!s) return "";
+  return s.length > n ? s.slice(0, n) + "…" : s;
+}
+
 export function P2ScenarioBreakdown({ recordIdTail, clusters }: Props) {
+  // 限制最多 4 个场景卡，避免溢出
+  const shown = clusters.slice(0, 4);
+
   return (
     <div style={HANDBOOK_PAGE_STYLE} data-page="2">
-      <HandbookHeader title="第二章 · 你的生活场景" />
-      <h2 style={{ fontSize: "24px", fontWeight: 700, margin: "0 0 8px 0" }}>不按题号看，按场景看</h2>
-      <p style={{ color: "hsl(var(--muted-foreground))", margin: "0 0 28px 0", fontSize: "13px" }}>
-        我们把答题重新组织成 4-5 个生活切片，让你看到"在哪一刻最难"。
+      <HandbookHeader title="第二章 · 你的生活切面" />
+      <h2 style={{ fontSize: "24px", fontWeight: 700, margin: "0 0 8px 0" }}>你最近的几个生活切面</h2>
+      <p style={{ color: "hsl(var(--muted-foreground))", margin: "0 0 22px 0", fontSize: "13px" }}>
+        我们把你这次答的题，按发生在哪一刻整理给你看。
       </p>
 
-      {clusters.map((c) => (
+      {shown.map((c) => (
         <div
           key={c.key}
           style={{
-            marginBottom: "20px",
-            padding: "18px 20px",
+            marginBottom: "14px",
+            padding: "14px 16px",
             borderRadius: "10px",
             background: "hsl(var(--card))",
             border: "1px solid hsl(var(--border))",
+            breakInside: "avoid",
           }}
         >
-          <div style={{ display: "flex", alignItems: "baseline", gap: "12px", marginBottom: "10px" }}>
-            <span style={{ fontSize: "16px", fontWeight: 600, color: "hsl(var(--foreground))" }}>
+          <div style={{ display: "flex", alignItems: "baseline", gap: "10px", marginBottom: "8px" }}>
+            <span style={{ fontSize: "15px", fontWeight: 600, color: "hsl(var(--foreground))" }}>
               {c.title}
             </span>
             <span style={{ fontSize: "12px", color: "hsl(var(--muted-foreground))" }}>{c.subtitle}</span>
           </div>
 
-          <div style={{ marginBottom: "12px" }}>
-            {c.items.slice(0, 4).map((it, i) => (
+          <div style={{ marginBottom: "10px" }}>
+            {c.items.slice(0, 3).map((it, i) => (
               <div
                 key={i}
                 style={{
                   fontSize: "12px",
                   color: "hsl(var(--muted-foreground))",
-                  paddingLeft: "12px",
+                  paddingLeft: "10px",
                   borderLeft: "2px solid hsl(var(--muted))",
-                  marginBottom: "6px",
+                  marginBottom: "5px",
+                  lineHeight: 1.6,
                 }}
               >
-                {it.q} <span style={{ color: "hsl(var(--foreground))" }}>→ {it.a}</span>
+                {clip(it.q, 26)} <span style={{ color: "hsl(var(--foreground))" }}>→ {clip(it.a, 18)}</span>
               </div>
             ))}
           </div>
@@ -66,9 +76,9 @@ export function P2ScenarioBreakdown({ recordIdTail, clusters }: Props) {
               fontSize: "13px",
               color: "hsl(var(--foreground))",
               background: "hsl(var(--muted) / 0.4)",
-              padding: "10px 12px",
+              padding: "9px 12px",
               borderRadius: "6px",
-              lineHeight: 1.7,
+              lineHeight: 1.65,
             }}
           >
             {c.insight}

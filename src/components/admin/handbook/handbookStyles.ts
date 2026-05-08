@@ -2,7 +2,7 @@
 
 export const HANDBOOK_PAGE_STYLE: React.CSSProperties = {
   width: "794px",
-  minHeight: "1123px",
+  height: "1123px",
   padding: "56px 56px 72px 56px",
   background: "hsl(var(--background))",
   color: "hsl(var(--foreground))",
@@ -15,4 +15,5 @@ export const HANDBOOK_PAGE_STYLE: React.CSSProperties = {
   position: "relative",
   pageBreakAfter: "always",
   boxSizing: "border-box",
+  overflow: "hidden",
 };
