@@ -20,6 +20,8 @@ export interface DynamicOGConfig extends OGConfig {
   imageHeight: number;
   locale: string;
   twitterCard: 'summary' | 'summary_large_image';
+  /** 微信分享专用小尺寸正方形封面（≤128KB），用于 wx.updateAppMessageShareData */
+  wechatThumbUrl?: string;
 }
 
 /**
