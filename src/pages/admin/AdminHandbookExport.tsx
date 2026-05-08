@@ -12,7 +12,6 @@ import {
   type HandbookData,
 } from "@/components/admin/handbook/HandbookContainer";
 import {
-  MALE_QUESTION_DIMENSIONS,
   MALE_CLUSTERS,
   MALE_FALLBACK_BY_SCORE,
   MALE_SEVEN_DAYS,
@@ -25,6 +24,7 @@ import {
   FEMALE_CAMP_INVITE,
 } from "@/config/emotionHealthHandbook";
 import { useMarketingPoolAdminStatus } from "@/hooks/useMarketingPools";
+import { dedupeClusterInsights } from "@/components/admin/handbook/clusterCopy";
 
 const MALE_LABEL: Record<string, string> = {
   energy: "精力续航",
@@ -102,6 +102,8 @@ export default function AdminHandbookExport() {
     setDownloading(true);
     try {
       await document.fonts?.ready;
+      // 给 recharts 雷达图绘制完成留时间
+      await new Promise((r) => setTimeout(r, 400));
       await exportNodeToPdf(containerRef.current, { filename, scale: 2 });
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
@@ -191,7 +193,7 @@ export default function AdminHandbookExport() {
 async function buildMaleData(recordId: string): Promise<HandbookData> {
   const { data: row, error } = await supabase
     .from("partner_assessment_results")
-    .select("id, user_id, answers, dimension_scores, total_score, primary_pattern, created_at, template_id")
+    .select("id, user_id, answers, dimension_scores, total_score, primary_pattern, created_at, template_id, ai_insight")
     .eq("id", recordId)
     .maybeSingle();
   if (error || !row) throw new Error("加载测评结果失败");
