@@ -46,8 +46,8 @@ export function P3Strengths({ recordIdTail, strengths, pageNumber = 4, totalPage
               style={{
                 display: "flex",
                 gap: "14px",
-                marginBottom: "14px",
-                padding: "16px 18px",
+                marginBottom: "28px",
+                padding: "20px 22px",
                 borderRadius: "8px",
                 background: "hsl(var(--card))",
                 border: "1px solid hsl(var(--border))",
@@ -74,7 +74,7 @@ export function P3Strengths({ recordIdTail, strengths, pageNumber = 4, totalPage
                 <div style={{ fontSize: "14px", lineHeight: 1.7 }}>{s}</div>
                 <div
                   style={{
-                    marginTop: "8px",
+                    marginTop: "12px",
                     fontSize: "12px",
                     color: "hsl(var(--primary))",
                     background: "hsl(var(--primary) / 0.08)",
@@ -88,10 +88,26 @@ export function P3Strengths({ recordIdTail, strengths, pageNumber = 4, totalPage
               </div>
             </div>
           ))}
+
+          <div
+            style={{
+              marginTop: "8px",
+              padding: "16px 20px",
+              borderRadius: "8px",
+              background: "hsl(var(--primary) / 0.05)",
+              borderLeft: "3px solid hsl(var(--primary))",
+              fontSize: "13px",
+              lineHeight: 1.8,
+              color: "hsl(var(--foreground))",
+              fontStyle: "italic",
+            }}
+          >
+            把还稳的部分先用起来——这就是你这 7 天最聪明的策略。先稳住一格，再去碰最难的那格。
+          </div>
         </div>
       )}
 
-      <div style={{ position: "absolute", right: "48px", bottom: "100px", opacity: 0.9 }}>
+      <div style={{ position: "absolute", right: "48px", bottom: "130px", opacity: 0.9 }}>
         <SunRise size={120} />
       </div>
 

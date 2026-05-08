@@ -7,12 +7,12 @@ import { Drop } from "./HandbookMotifs";
 export function DailyCheckBox() {
   const box = {
     display: "inline-block",
-    width: "12px",
-    height: "12px",
+    width: "14px",
+    height: "14px",
     border: "1px solid hsl(var(--muted-foreground) / 0.5)",
     borderRadius: "2px",
     marginRight: "6px",
-    verticalAlign: "-2px",
+    verticalAlign: "-3px",
   } as React.CSSProperties;
 
   const ticks = (count: number) => (
@@ -31,15 +31,21 @@ export function DailyCheckBox() {
     </span>
   );
 
+  const writingLine = {
+    flex: 1,
+    borderBottom: "1px dotted hsl(var(--muted-foreground) / 0.4)",
+    height: "22px",
+  } as React.CSSProperties;
+
   return (
     <div
       style={{
-        marginTop: "12px",
-        paddingTop: "10px",
+        marginTop: "14px",
+        paddingTop: "12px",
         borderTop: "1px dashed hsl(var(--border))",
         display: "grid",
         gridTemplateColumns: "1fr 1fr",
-        rowGap: "8px",
+        rowGap: "16px",
         columnGap: "16px",
         fontSize: "12px",
         color: "hsl(var(--muted-foreground))",
@@ -54,18 +60,16 @@ export function DailyCheckBox() {
       <div style={{ textAlign: "right" }}>
         身体感觉 1 {ticks(9)} 10
       </div>
-      <div style={{ gridColumn: "1 / -1", display: "flex", alignItems: "center", gap: "8px" }}>
+      <div style={{ gridColumn: "1 / -1", display: "flex", alignItems: "center", gap: "8px", marginTop: "6px" }}>
         <span style={{ flexShrink: 0 }}>今日一句话：</span>
-        <span
-          style={{
-            flex: 1,
-            borderBottom: "1px dotted hsl(var(--muted-foreground) / 0.4)",
-            height: "16px",
-          }}
-        />
+        <span style={writingLine} />
         <span style={{ opacity: 0.5 }}>
           <Drop size={14} />
         </span>
+      </div>
+      <div style={{ gridColumn: "1 / -1", display: "flex", alignItems: "center", gap: "8px" }}>
+        <span style={{ flexShrink: 0, opacity: 0 }}>今日一句话：</span>
+        <span style={writingLine} />
       </div>
     </div>
   );

@@ -66,7 +66,7 @@ export function P2AssessmentOverview({
           display: "grid",
           gridTemplateColumns: "320px 1fr",
           gap: "20px",
-          marginBottom: "16px",
+          marginBottom: "14px",
           breakInside: "avoid",
         }}
       >
@@ -153,15 +153,19 @@ export function P2AssessmentOverview({
       {/* 下半：AI 完整解读 */}
       <div
         style={{
+          position: "relative",
           padding: "14px 16px",
           borderRadius: "10px",
           background: "hsl(var(--muted) / 0.4)",
           border: "1px solid hsl(var(--border))",
           fontSize: "13px",
-          lineHeight: 1.85,
+          lineHeight: 1.78,
           color: "hsl(var(--foreground))",
           whiteSpace: "pre-wrap",
           breakInside: "avoid",
+          maxHeight: "560px",
+          overflow: "hidden",
+          marginBottom: "88px",
         }}
       >
         <div
@@ -175,6 +179,18 @@ export function P2AssessmentOverview({
           AI 完整解读
         </div>
         {insight}
+        <div
+          style={{
+            position: "absolute",
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: "48px",
+            background:
+              "linear-gradient(to bottom, transparent, hsl(var(--background)) 90%)",
+            pointerEvents: "none",
+          }}
+        />
       </div>
 
       <HandbookFooter pageNumber={2} totalPages={totalPages} recordIdTail={recordIdTail} />
