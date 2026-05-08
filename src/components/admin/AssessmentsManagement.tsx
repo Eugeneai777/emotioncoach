@@ -84,8 +84,96 @@ export default function AssessmentsManagement() {
     return <AssessmentEditor assessment={editing} onBack={() => setEditing(null)} />;
   }
 
+  const BUILT_IN_ASSESSMENTS = [
+    {
+      id: 'builtin-emotion-health',
+      title: '情绪健康测评',
+      emoji: '💚',
+      description: '28 题三层诊断 + AI 教练解读 + 专属 PDF 领取码，专为 35+ 女性优化',
+      question_count: 28,
+      path: '/emotion-health',
+    },
+  ];
+  const getBuiltInUrl = (path: string) => `https://wechat.eugenewe.net${path}`;
+  const handleCopyBuiltIn = (id: string, path: string) => {
+    navigator.clipboard.writeText(getBuiltInUrl(path)).then(() => {
+      setCopiedId(id);
+      toast.success('外部链接已复制');
+      setTimeout(() => setCopiedId(null), 2000);
+    });
+  };
+
   return (
     <AdminPageLayout title="测评管理" description="管理所有合伙人创建的测评模板，确保使用统一引擎">
+      {/* 内置测评（硬编码页面，不可编辑） */}
+      <div className="mb-6">
+        <h3 className="text-sm font-semibold text-muted-foreground mb-2 px-1">
+          内置测评（硬编码页面，不可编辑）
+        </h3>
+        <div className="space-y-3">
+          {BUILT_IN_ASSESSMENTS.map((a) => (
+            <Card key={a.id} className="overflow-hidden border-emerald-200/60 dark:border-emerald-900/40 bg-emerald-50/30 dark:bg-emerald-950/10">
+              <CardContent className="p-4">
+                <div className="flex items-start gap-3">
+                  <div className="text-3xl">{a.emoji}</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <h4 className="font-semibold truncate">{a.title}</h4>
+                      <Badge variant="default" className="text-xs">已上线</Badge>
+                      <Badge variant="outline" className="text-xs border-emerald-400 text-emerald-700 dark:text-emerald-300">
+                        内置 · 硬编码
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground line-clamp-2">{a.description}</p>
+                    <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground">
+                      <span>{a.question_count} 题</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 mt-2">
+                      <code className="text-[11px] bg-muted/60 px-2 py-0.5 rounded text-muted-foreground truncate max-w-[280px]">
+                        {getBuiltInUrl(a.path)}
+                      </code>
+                      <button
+                        onClick={() => handleCopyBuiltIn(a.id, a.path)}
+                        className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors shrink-0"
+                      >
+                        {copiedId === a.id ? (
+                          <><Check className="w-3 h-3" /> 已复制</>
+                        ) : (
+                          <><Link className="w-3 h-3" /> 复制</>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => window.open(getBuiltInUrl(a.path), '_blank')}
+                      title="在外部打开"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="gap-1.5 text-xs"
+                      onClick={() => navigate('/admin/users-and-orders?source=emotion_health')}
+                    >
+                      <BarChart3 className="w-3.5 h-3.5" />
+                      数据洞察
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+
+      <h3 className="text-sm font-semibold text-muted-foreground mb-2 px-1">
+        合伙人模板（统一引擎）
+      </h3>
       {isLoading ? (
         <div className="space-y-3">
           {[1, 2, 3].map(i => <Skeleton key={i} className="h-20 w-full rounded-lg" />)}
