@@ -93,6 +93,8 @@ export function EmotionHealthResult({ result, onShare, onRetake, assessmentId, a
     }, 1500);
     return () => clearTimeout(t);
   }, [autoSavePdf, displayName]);
+
+  const handleStartCoach = () => {
     navigate('/assessment-coach', { 
       state: { 
         pattern: result.primaryPattern,
