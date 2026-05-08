@@ -39,9 +39,15 @@ interface EmotionHealthResultProps {
   onRetake?: () => void;
   /** 测评写库后的 id，用于换取领取码 */
   assessmentId?: string | null;
+  /** 管理员模式：自动触发 PDF 下载 */
+  autoSavePdf?: boolean;
+  /** 管理员模式：覆盖显示用户名 */
+  overrideDisplayName?: string;
+  /** 管理员模式：覆盖头像 */
+  overrideAvatarUrl?: string;
 }
 
-export function EmotionHealthResult({ result, onShare, onRetake, assessmentId }: EmotionHealthResultProps) {
+export function EmotionHealthResult({ result, onShare, onRetake, assessmentId, autoSavePdf, overrideDisplayName, overrideAvatarUrl }: EmotionHealthResultProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { profile } = useProfileCompletion();
