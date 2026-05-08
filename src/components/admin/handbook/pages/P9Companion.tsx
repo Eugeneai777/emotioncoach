@@ -1,6 +1,7 @@
 import { HANDBOOK_PAGE_STYLE } from "../handbookStyles";
 import { HandbookHeader } from "../shared/HandbookHeader";
 import { HandbookFooter } from "../shared/HandbookFooter";
+import { ArcDivider } from "../shared/HandbookMotifs";
 
 interface Props {
   recordIdTail: string;
@@ -41,11 +42,48 @@ export function P9Companion({ recordIdTail, pageNumber = 10, totalPages = 10 }: 
 
       <div
         style={{
-          marginTop: "40px",
-          padding: "24px",
+          marginTop: "32px",
+          padding: "22px 24px",
+          borderLeft: "3px solid hsl(var(--primary))",
+          background: "hsl(var(--primary) / 0.04)",
+          borderRadius: "0 8px 8px 0",
+        }}
+      >
+        <div
+          style={{
+            fontFamily: '"ZCOOL XiaoWei", "Ma Shan Zheng", "PingFang SC", serif',
+            fontSize: "17px",
+            color: "hsl(var(--foreground))",
+            lineHeight: 1.85,
+          }}
+        >
+          这本手册不是治疗，是一个朋友在你旁边坐了 7 天。
+          <br />
+          之后我们也还在。
+        </div>
+        <div
+          style={{
+            marginTop: "10px",
+            fontSize: "12px",
+            color: "hsl(var(--muted-foreground))",
+            textAlign: "right",
+          }}
+        >
+          — 有劲 AI 团队
+        </div>
+      </div>
+
+      <div style={{ marginTop: "20px", display: "flex", justifyContent: "center", opacity: 0.7 }}>
+        <ArcDivider width={200} />
+      </div>
+
+      <div
+        style={{
+          marginTop: "20px",
+          padding: "18px 22px",
           borderRadius: "10px",
           background: "hsl(var(--muted) / 0.4)",
-          fontSize: "13px",
+          fontSize: "12px",
           color: "hsl(var(--muted-foreground))",
           textAlign: "center",
           lineHeight: 1.8,

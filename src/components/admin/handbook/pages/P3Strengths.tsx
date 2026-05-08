@@ -1,6 +1,14 @@
 import { HANDBOOK_PAGE_STYLE } from "../handbookStyles";
 import { HandbookHeader } from "../shared/HandbookHeader";
 import { HandbookFooter } from "../shared/HandbookFooter";
+import { SunRise } from "../shared/HandbookMotifs";
+
+const USAGE_TIPS = [
+  "今日用法：把这点稳定，留给一件最值得的事，别均摊。",
+  "今日用法：今天遇到难选的事，先用这一格做判断。",
+  "今日用法：把它讲给一个人听，被看见会让它更稳。",
+  "今日用法：写下来。能稳的东西，写下来才不会丢。",
+];
 
 interface Props {
   recordIdTail: string;
@@ -62,11 +70,30 @@ export function P3Strengths({ recordIdTail, strengths, pageNumber = 4, totalPage
               >
                 {i + 1}
               </div>
-              <div style={{ fontSize: "14px", lineHeight: 1.7 }}>{s}</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: "14px", lineHeight: 1.7 }}>{s}</div>
+                <div
+                  style={{
+                    marginTop: "8px",
+                    fontSize: "12px",
+                    color: "hsl(var(--primary))",
+                    background: "hsl(var(--primary) / 0.08)",
+                    padding: "6px 10px",
+                    borderRadius: "6px",
+                    display: "inline-block",
+                  }}
+                >
+                  {USAGE_TIPS[i % USAGE_TIPS.length]}
+                </div>
+              </div>
             </div>
           ))}
         </div>
       )}
+
+      <div style={{ position: "absolute", right: "48px", bottom: "100px", opacity: 0.9 }}>
+        <SunRise size={120} />
+      </div>
 
       <HandbookFooter pageNumber={pageNumber} totalPages={totalPages} recordIdTail={recordIdTail} />
     </div>

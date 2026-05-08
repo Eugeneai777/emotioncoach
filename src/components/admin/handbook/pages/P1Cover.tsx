@@ -1,6 +1,7 @@
 import { HANDBOOK_PAGE_STYLE } from "../handbookStyles";
 import { HandbookHeader } from "../shared/HandbookHeader";
 import { HandbookFooter } from "../shared/HandbookFooter";
+import { SealStamp } from "../shared/HandbookMotifs";
 
 interface Props {
   type: "male_vitality" | "emotion_health";
@@ -121,7 +122,11 @@ export function P1Cover({
         </div>
       </div>
 
-      <HandbookFooter pageNumber={1} totalPages={9} recordIdTail={recordIdTail} />
+      <div style={{ position: "absolute", right: "56px", bottom: "110px", opacity: 0.95 }}>
+        <SealStamp size={96} />
+      </div>
+
+      <HandbookFooter pageNumber={1} totalPages={10} recordIdTail={recordIdTail} />
     </div>
   );
 }
