@@ -113,7 +113,7 @@ export function AssessmentRespondentDrawer({ open, onOpenChange, row, template }
           <div className="flex flex-wrap gap-2 mt-2">
             <Badge variant="default">{row.primaryPattern || "未分类"}</Badge>
             <Badge variant="outline">总分 {row.totalScore}</Badge>
-            {template?.assessmentKey === "male_midlife_vitality" && row.claimCode && (
+            {(template?.assessmentKey === "male_midlife_vitality" || isEmotionHealth) && row.claimCode && (
               <Badge
                 variant="secondary"
                 className="gap-1 font-mono cursor-pointer hover:bg-secondary/80"
