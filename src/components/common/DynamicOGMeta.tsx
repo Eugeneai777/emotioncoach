@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef } from "react";
 import { Helmet } from "react-helmet";
 import { useLocation } from "react-router-dom";
 import { usePageOG } from "@/hooks/usePageOG";
-import { DEFAULT_OG_CONFIG, OG_BASE_URL } from "@/config/ogConfig";
+import { DEFAULT_OG_CONFIG, OG_BASE_URL, OG_CACHE_VERSION } from "@/config/ogConfig";
 import { useWechatShare } from "@/hooks/useWechatShare";
 import { useMiniProgramShareBridge } from "@/hooks/useMiniProgramShareBridge";
 import { getPromotionDomain } from "@/utils/partnerQRUtils";
@@ -75,6 +75,9 @@ export function DynamicOGMeta({ pageKey, overrides }: DynamicOGMetaProps) {
     const params = new URLSearchParams(currentSearch);
     if (params.get('ref') !== 'share') {
       params.set('ref', 'share');
+    }
+    if (params.get('wxcard') !== OG_CACHE_VERSION) {
+      params.set('wxcard', OG_CACHE_VERSION);
     }
     const search = params.toString();
     return `${baseDomain}${location.pathname}${search ? `?${search}` : ''}${currentHash}`;
