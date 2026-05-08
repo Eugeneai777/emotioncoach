@@ -1,11 +1,32 @@
 import { forwardRef } from "react";
 import { P1Cover } from "./pages/P1Cover";
+import { P2AssessmentOverview } from "./pages/P2AssessmentOverview";
 import { P2ScenarioBreakdown, type ScenarioCardData } from "./pages/P2ScenarioBreakdown";
 import { P3Strengths } from "./pages/P3Strengths";
 import { P4Risks } from "./pages/P4Risks";
 import { HandbookDayPage, type DayCard } from "./pages/HandbookDayPage";
 import { P8Day7Invite } from "./pages/P8Day7Invite";
 import { P9Companion } from "./pages/P9Companion";
+
+export const HANDBOOK_TOTAL_PAGES = 10;
+
+const MALE_LABEL: Record<string, string> = {
+  energy: "精力续航",
+  sleep: "睡眠修复",
+  stress: "压力内耗",
+  confidence: "信心",
+  relationship: "关系温度",
+  recovery: "恢复阻力",
+};
+const FEMALE_PATTERN_LABEL: Record<string, string> = {
+  exhaustion: "情绪耗竭",
+  tension: "紧绷绷紧",
+  suppression: "压抑收回",
+  avoidance: "回避卡住",
+  energy_index: "精力指数",
+  anxiety_index: "焦虑指数",
+  stress_index: "压力指数",
+};
 
 export interface HandbookData {
   type: "male_vitality" | "emotion_health";
@@ -17,7 +38,7 @@ export interface HandbookData {
   clusters: ScenarioCardData[];
   strengths: string[];
   risks: string[];
-  /** 7 天，分到 P5/P6/P7：Day1-2 / Day3-4 / Day5-6，Day7 单独放 P8 头部 */
+  /** 7 天，分到 P6/P7/P8：Day1-2 / Day3-4 / Day5-6，Day7 单独放 P9 头部 */
   days: DayCard[];
   campName: string;
   campIntro: string;
@@ -26,12 +47,22 @@ export interface HandbookData {
   ctaHint: string;
   coverNote: string;
   day7Reflection: string;
+  /** 已归一化的维度分（key → 0-100） */
+  dims?: Record<string, number>;
+  /** 完整 AI 解读（取自 ai_insight / ai_analysis） */
+  aiInsightsFull?: string;
 }
 
 export const HandbookContainer = forwardRef<HTMLDivElement, { data: HandbookData }>(
   function HandbookContainer({ data }, ref) {
     const tail = data.recordId.replace(/-/g, "").slice(-8);
     const d = data.days;
+    const labelMap = data.type === "male_vitality" ? MALE_LABEL : FEMALE_PATTERN_LABEL;
+    const dims = data.dims || {};
+    const fallback =
+      [data.coverNote, ...data.risks, ...data.strengths]
+        .filter(Boolean)
+        .join("\n\n") || "本次答题已完整记录，AI 解读将在下次刷新后写回。";
     return (
       <div
         ref={ref}
@@ -52,14 +83,24 @@ export const HandbookContainer = forwardRef<HTMLDivElement, { data: HandbookData
           weakestLabel={data.weakestLabel}
           totalScore={data.totalScore}
         />
-        <P2ScenarioBreakdown recordIdTail={tail} clusters={data.clusters} />
-        <P3Strengths recordIdTail={tail} strengths={data.strengths} />
-        <P4Risks recordIdTail={tail} risks={data.risks} />
-        <HandbookDayPage recordIdTail={tail} pageNumber={5} pageTitle="Day 1-2 · 先看见" days={d.slice(0, 2)} />
-        <HandbookDayPage recordIdTail={tail} pageNumber={6} pageTitle="Day 3-4 · 动一点点" days={d.slice(2, 4)} />
-        <HandbookDayPage recordIdTail={tail} pageNumber={7} pageTitle="Day 5-6 · 让一个人靠近" days={d.slice(4, 6)} />
+        <P2AssessmentOverview
+          recordIdTail={tail}
+          totalPages={HANDBOOK_TOTAL_PAGES}
+          dims={dims}
+          labelMap={labelMap}
+          aiInsightsFull={data.aiInsightsFull || ""}
+          fallbackText={fallback}
+        />
+        <P2ScenarioBreakdown recordIdTail={tail} clusters={data.clusters} pageNumber={3} totalPages={HANDBOOK_TOTAL_PAGES} />
+        <P3Strengths recordIdTail={tail} strengths={data.strengths} pageNumber={4} totalPages={HANDBOOK_TOTAL_PAGES} />
+        <P4Risks recordIdTail={tail} risks={data.risks} pageNumber={5} totalPages={HANDBOOK_TOTAL_PAGES} />
+        <HandbookDayPage recordIdTail={tail} pageNumber={6} totalPages={HANDBOOK_TOTAL_PAGES} pageTitle="Day 1-2 · 先看见" days={d.slice(0, 2)} />
+        <HandbookDayPage recordIdTail={tail} pageNumber={7} totalPages={HANDBOOK_TOTAL_PAGES} pageTitle="Day 3-4 · 动一点点" days={d.slice(2, 4)} />
+        <HandbookDayPage recordIdTail={tail} pageNumber={8} totalPages={HANDBOOK_TOTAL_PAGES} pageTitle="Day 5-6 · 让一个人靠近" days={d.slice(4, 6)} />
         <P8Day7Invite
           recordIdTail={tail}
+          pageNumber={9}
+          totalPages={HANDBOOK_TOTAL_PAGES}
           campName={data.campName}
           intro={data.campIntro}
           values={data.campValues}
@@ -67,7 +108,7 @@ export const HandbookContainer = forwardRef<HTMLDivElement, { data: HandbookData
           ctaHint={data.ctaHint}
           day7Reflection={data.day7Reflection}
         />
-        <P9Companion recordIdTail={tail} />
+        <P9Companion recordIdTail={tail} pageNumber={10} totalPages={HANDBOOK_TOTAL_PAGES} />
       </div>
     );
   },

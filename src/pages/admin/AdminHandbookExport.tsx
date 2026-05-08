@@ -12,7 +12,6 @@ import {
   type HandbookData,
 } from "@/components/admin/handbook/HandbookContainer";
 import {
-  MALE_QUESTION_DIMENSIONS,
   MALE_CLUSTERS,
   MALE_FALLBACK_BY_SCORE,
   MALE_SEVEN_DAYS,
@@ -25,6 +24,7 @@ import {
   FEMALE_CAMP_INVITE,
 } from "@/config/emotionHealthHandbook";
 import { useMarketingPoolAdminStatus } from "@/hooks/useMarketingPools";
+import { dedupeClusterInsights } from "@/components/admin/handbook/clusterCopy";
 
 const MALE_LABEL: Record<string, string> = {
   energy: "精力续航",
@@ -102,6 +102,8 @@ export default function AdminHandbookExport() {
     setDownloading(true);
     try {
       await document.fonts?.ready;
+      // 给 recharts 雷达图绘制完成留时间
+      await new Promise((r) => setTimeout(r, 400));
       await exportNodeToPdf(containerRef.current, { filename, scale: 2 });
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
@@ -191,7 +193,7 @@ export default function AdminHandbookExport() {
 async function buildMaleData(recordId: string): Promise<HandbookData> {
   const { data: row, error } = await supabase
     .from("partner_assessment_results")
-    .select("id, user_id, answers, dimension_scores, total_score, primary_pattern, created_at, template_id")
+    .select("id, user_id, answers, dimension_scores, total_score, primary_pattern, created_at, template_id, ai_insight")
     .eq("id", recordId)
     .maybeSingle();
   if (error || !row) throw new Error("加载测评结果失败");
@@ -270,17 +272,28 @@ async function buildMaleData(recordId: string): Promise<HandbookData> {
     const ai = insights.clusterInsights[c.key];
     if (ai) c.insight = ai;
   }
+  // 去重 + 兜底，保证 4 张卡 4 种语气
+  const deduped = dedupeClusterInsights(
+    clusters.map((c) => ({ key: c.key, insight: c.insight })),
+  );
+  deduped.forEach((d, i) => {
+    clusters[i].insight = d.insight;
+  });
 
   const dayScripts = MALE_SEVEN_DAYS[weakestKey] || MALE_SEVEN_DAYS.energy;
 
   // 优势 / 风险（用归一化后的 dims）
   const sortedDims = Object.entries(dims).sort((a, b) => a[1] - b[1]);
-  const strengths = sortedDims.slice(0, 2).map(
-    ([k]) => `「${MALE_LABEL[k] || k}」目前还撑得住，是你这 7 天可以倚靠的部分。`,
-  );
-  const risks = sortedDims
+  const strengthVariants = [
+    (label: string) => `「${label}」目前还撑得住，是你这 7 天可以倚靠的部分。`,
+    (label: string) => `「${label}」还在你手里。先用它接住自己，不要急着挑最难的硬扛。`,
+  ];
+  const strengths = sortedDims
     .slice(-2)
     .reverse()
+    .map(([k], i) => strengthVariants[i % 2](MALE_LABEL[k] || k));
+  const risks = sortedDims
+    .slice(0, 2)
     .map(([k, v]) => `「${MALE_LABEL[k] || k}」目前 ${v} 分，已经在亮黄/红灯，这 7 天先别再加压。`);
 
   return {
@@ -301,6 +314,8 @@ async function buildMaleData(recordId: string): Promise<HandbookData> {
     ctaHint: MALE_CAMP_INVITE.ctaHint,
     coverNote: insights.coverNote,
     day7Reflection: insights.day7Reflection,
+    dims,
+    aiInsightsFull: String(row.ai_insight || "").trim(),
   };
 }
 
@@ -366,6 +381,13 @@ async function buildEmotionData(recordId: string): Promise<HandbookData> {
     const ai = insights.clusterInsights[c.key];
     if (ai) c.insight = ai;
   }
+  // 去重 + 兜底
+  const deduped = dedupeClusterInsights(
+    clusters.map((c) => ({ key: c.key, insight: c.insight })),
+  );
+  deduped.forEach((d, i) => {
+    clusters[i].insight = d.insight;
+  });
 
   const dayScripts = (FEMALE_SEVEN_DAYS as any)[pattern] || FEMALE_SEVEN_DAYS.exhaustion;
 
@@ -377,6 +399,24 @@ async function buildEmotionData(recordId: string): Promise<HandbookData> {
   ];
   const strengths = indices.filter((x) => x.v >= 60).map((x) => `「${x.label}」还在 ${x.v} 分，是你这 7 天可以倚靠的部分。`);
   const risks = indices.filter((x) => x.v < 40).map((x) => `「${x.label}」仅 ${x.v} 分，是身体在小声求救，这 7 天先别再加压。`);
+
+  // 雷达图 dims（女版用三大指数）
+  const dims: Record<string, number> = {
+    energy_index: num(row.energy_index),
+    anxiety_index: num(row.anxiety_index),
+    stress_index: num(row.stress_index),
+  };
+
+  // 提取完整 AI 解读
+  const ai = (row as any).ai_analysis;
+  let aiInsightsFull = "";
+  if (typeof ai === "string") aiInsightsFull = ai;
+  else if (ai && typeof ai === "object") {
+    aiInsightsFull = String(ai.summary || ai.overview || ai.analysis || ai.text || "").trim();
+    if (!aiInsightsFull) {
+      try { aiInsightsFull = JSON.stringify(ai, null, 2).slice(0, 800); } catch { aiInsightsFull = ""; }
+    }
+  }
 
   return {
     type: "emotion_health",
@@ -396,5 +436,7 @@ async function buildEmotionData(recordId: string): Promise<HandbookData> {
     ctaHint: FEMALE_CAMP_INVITE.ctaHint,
     coverNote: insights.coverNote,
     day7Reflection: insights.day7Reflection,
+    dims,
+    aiInsightsFull: aiInsightsFull.trim(),
   };
 }

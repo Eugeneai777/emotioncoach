@@ -5,11 +5,13 @@ import { HandbookFooter } from "../shared/HandbookFooter";
 interface Props {
   recordIdTail: string;
   strengths: string[];
+  pageNumber?: number;
+  totalPages?: number;
 }
 
-export function P3Strengths({ recordIdTail, strengths }: Props) {
+export function P3Strengths({ recordIdTail, strengths, pageNumber = 4, totalPages = 10 }: Props) {
   return (
-    <div style={HANDBOOK_PAGE_STYLE} data-page="3">
+    <div style={HANDBOOK_PAGE_STYLE} data-page={pageNumber}>
       <HandbookHeader title="第三章 · 你目前还稳的部分" />
       <h2 style={{ fontSize: "24px", fontWeight: 700, margin: "0 0 8px 0" }}>这些地方，你还撑得住</h2>
       <p style={{ color: "hsl(var(--muted-foreground))", margin: "0 0 28px 0", fontSize: "13px", lineHeight: 1.7 }}>
@@ -66,7 +68,7 @@ export function P3Strengths({ recordIdTail, strengths }: Props) {
         </div>
       )}
 
-      <HandbookFooter pageNumber={3} totalPages={9} recordIdTail={recordIdTail} />
+      <HandbookFooter pageNumber={pageNumber} totalPages={totalPages} recordIdTail={recordIdTail} />
     </div>
   );
 }

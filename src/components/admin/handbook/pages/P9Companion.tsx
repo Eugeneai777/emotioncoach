@@ -4,11 +4,13 @@ import { HandbookFooter } from "../shared/HandbookFooter";
 
 interface Props {
   recordIdTail: string;
+  pageNumber?: number;
+  totalPages?: number;
 }
 
-export function P9Companion({ recordIdTail }: Props) {
+export function P9Companion({ recordIdTail, pageNumber = 10, totalPages = 10 }: Props) {
   return (
-    <div style={HANDBOOK_PAGE_STYLE} data-page="9">
+    <div style={HANDBOOK_PAGE_STYLE} data-page={pageNumber}>
       <HandbookHeader title="长期陪伴" />
       <h2 style={{ fontSize: "24px", fontWeight: 700, margin: "0 0 12px 0" }}>这本手册不是终点</h2>
       <p style={{ color: "hsl(var(--muted-foreground))", margin: "0 0 24px 0", fontSize: "14px", lineHeight: 1.8 }}>
@@ -53,7 +55,7 @@ export function P9Companion({ recordIdTail }: Props) {
         如出现持续胸痛、自伤念头等紧急情况，请立即就医或拨打 12320。
       </div>
 
-      <HandbookFooter pageNumber={9} totalPages={9} recordIdTail={recordIdTail} />
+      <HandbookFooter pageNumber={pageNumber} totalPages={totalPages} recordIdTail={recordIdTail} />
     </div>
   );
 }
