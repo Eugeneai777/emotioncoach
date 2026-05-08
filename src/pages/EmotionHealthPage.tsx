@@ -241,6 +241,7 @@ export default function EmotionHealthPage() {
   const handleRetake = () => {
     setAnswers({});
     setResult(null);
+    setAssessmentId(null);
     setStep('start');
     localStorage.removeItem(STORAGE_KEY);
   };
@@ -261,6 +262,7 @@ export default function EmotionHealthPage() {
       recommendedPath: record.recommended_path || '',
     };
     setResult(resultFromHistory);
+    setAssessmentId(record.id);
     setAnswers(record.answers as Record<number, number>);
     setStep('result');
     setActiveTab('assessment');
@@ -365,6 +367,7 @@ export default function EmotionHealthPage() {
                 result={result}
                 onShare={handleShare}
                 onRetake={handleRetake}
+                assessmentId={assessmentId}
               />
               <EmotionHealthShareDialog
                 open={shareDialogOpen}
