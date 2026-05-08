@@ -1,3 +1,4 @@
+import { useMemo, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -7,8 +8,15 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { MessageCircle, Sparkles, ChevronRight, Share2, RotateCcw, AlertTriangle, Target, Compass, Search, Brain, Bot } from "lucide-react";
+import { MessageCircle, Sparkles, ChevronRight, Share2, RotateCcw, AlertTriangle, Target, Compass, Search, Brain, Bot, Gift } from "lucide-react";
 import { AssistantQRCard } from "./AssistantQRCard";
+import { EmotionHealthClaimReportCard } from "./EmotionHealthClaimReportCard";
+import { EmotionHealthClaimStickyBar } from "./EmotionHealthClaimStickyBar";
+import { EmotionHealthPdfClaimSheet } from "./EmotionHealthPdfClaimSheet";
+import { useEmotionHealthClaimCode } from "@/hooks/useEmotionHealthClaimCode";
+import { useAuth } from "@/hooks/useAuth";
+import { useProfileCompletion } from "@/hooks/useProfileCompletion";
+import { getProxiedAvatarUrl } from "@/utils/avatarUtils";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
@@ -27,18 +35,35 @@ interface EmotionHealthResultProps {
   result: EmotionHealthResultType;
   onShare?: () => void;
   onRetake?: () => void;
+  /** 测评写库后的 id，用于换取领取码 */
+  assessmentId?: string | null;
 }
 
-export function EmotionHealthResult({ result, onShare, onRetake }: EmotionHealthResultProps) {
+export function EmotionHealthResult({ result, onShare, onRetake, assessmentId }: EmotionHealthResultProps) {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { profile } = useProfileCompletion();
   const primaryPattern = patternConfig[result.primaryPattern];
   const secondaryPattern = result.secondaryPattern ? patternConfig[result.secondaryPattern] : null;
   const blockedDim = blockedDimensionConfig[result.blockedDimension];
+  
+  const [claimSheetOpen, setClaimSheetOpen] = useState(false);
+  const stickyHideAnchorRef = useRef<HTMLDivElement>(null);
+  const { claimCode, loading: loadingCode } = useEmotionHealthClaimCode(assessmentId);
 
   // 计算整体风险等级
   const avgIndex = Math.round((result.energyIndex + result.anxietyIndex + result.stressIndex) / 3);
   const overallLevel = getIndexLevel(avgIndex);
   const overallRisk = overallLevel === 'high' ? '需要关注' : overallLevel === 'medium' ? '适度留意' : '状态良好';
+
+  // 「能量电量」: 与 PDF 卡保持一致
+  const battery = useMemo(() => {
+    const fatigueAvg = (result.anxietyIndex + result.stressIndex) / 2;
+    return Math.max(0, Math.min(100, Math.round((100 - fatigueAvg) * 0.6 + result.energyIndex * 0.4)));
+  }, [result.energyIndex, result.anxietyIndex, result.stressIndex]);
+
+  const displayName = profile?.display_name || user?.user_metadata?.name || undefined;
+  const avatarUrl = getProxiedAvatarUrl(profile?.avatar_url || user?.user_metadata?.avatar_url);
 
   const handleStartCoach = () => {
     navigate('/assessment-coach', { 
@@ -50,8 +75,21 @@ export function EmotionHealthResult({ result, onShare, onRetake }: EmotionHealth
     });
   };
 
+  const openClaim = () => setClaimSheetOpen(true);
+
   return (
     <div className="space-y-4">
+      {/* ★ 顶部：「她」专属能量报告（含领取码） */}
+      <EmotionHealthClaimReportCard
+        energyIndex={result.energyIndex}
+        anxietyIndex={result.anxietyIndex}
+        stressIndex={result.stressIndex}
+        displayName={displayName}
+        claimCode={claimCode}
+        loadingCode={loadingCode}
+        onClickClaim={assessmentId ? openClaim : undefined}
+      />
+
       {/* 模块1：状态概览仪表盘 */}
       <Card className="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
         <CardHeader className="pb-2">
@@ -106,7 +144,6 @@ export function EmotionHealthResult({ result, onShare, onRetake }: EmotionHealth
           </div>
 
           <Accordion type="single" collapsible className="w-full">
-            {/* 典型表现 */}
             <AccordionItem value="symptoms" className="border-b-0">
               <AccordionTrigger className="text-sm py-2 hover:no-underline">
                 <span className="flex items-center gap-2">
@@ -126,7 +163,6 @@ export function EmotionHealthResult({ result, onShare, onRetake }: EmotionHealth
               </AccordionContent>
             </AccordionItem>
 
-            {/* 内在机制 */}
             <AccordionItem value="mechanism" className="border-b-0">
               <AccordionTrigger className="text-sm py-2 hover:no-underline">
                 <span className="flex items-center gap-2">
@@ -168,7 +204,6 @@ export function EmotionHealthResult({ result, onShare, onRetake }: EmotionHealth
             </div>
           </div>
 
-          {/* 推荐路径 */}
           <div className="flex items-center gap-2 text-xs p-2 rounded bg-primary/5">
             <ChevronRight className="w-3.5 h-3.5 text-primary" />
             <span className="text-muted-foreground">推荐路径：</span>
@@ -220,47 +255,76 @@ export function EmotionHealthResult({ result, onShare, onRetake }: EmotionHealth
             <CardTitle className="text-sm">{resultPageSectionTitles.firstStep.title}</CardTitle>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-3">
           <div className="p-3 rounded-lg bg-white/60 dark:bg-black/20">
             <h4 className="font-medium text-sm">{primaryPattern.firstStepTitle}</h4>
             <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
               {primaryPattern.firstStepDescription}
             </p>
           </div>
+          {assessmentId && (
+            <button
+              onClick={openClaim}
+              className="w-full text-xs text-emerald-700 dark:text-emerald-400 hover:underline text-left flex items-center gap-1"
+            >
+              想要 7 天系统方案？
+              <span className="font-semibold">添加助教领取专属 PDF</span>
+              <ChevronRight className="w-3 h-3" />
+            </button>
+          )}
         </CardContent>
       </Card>
 
-      {/* 模块5：统一承接区 */}
-      <Card className="bg-gradient-to-br from-primary/5 via-purple-500/5 to-rose-500/5 border-primary/20">
+      {/* 模块5：统一承接区 — 主 CTA 改为「领取 PDF 报告」 */}
+      <Card className="bg-gradient-to-br from-pink-50 via-rose-50 to-fuchsia-50 dark:from-pink-950/20 dark:via-rose-950/20 dark:to-fuchsia-950/20 border-pink-200 dark:border-pink-900">
         <CardContent className="p-5 text-center space-y-4">
           <div className="space-y-2">
-            <p className="text-sm text-foreground leading-relaxed">
-              {resultPageFooterConfig.message}
+            <p className="text-sm text-foreground leading-relaxed font-medium">
+              你的专属 PDF 深度报告已就绪 🎁
             </p>
-            <p className="text-sm text-muted-foreground">
-              {resultPageFooterConfig.subMessage}
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              加助教企微 · 凭领取码兑换 · 含 32 题逐题解读 + 7 天恢复路径 + 1v1 解答
             </p>
           </div>
-          <div className="space-y-2">
-            <Button 
-              size="lg" 
-              className="w-full h-12 text-base bg-gradient-to-r from-rose-500 to-purple-500 hover:from-rose-600 hover:to-purple-600"
+          <div className="space-y-2" ref={stickyHideAnchorRef}>
+            <Button
+              size="lg"
+              className="w-full h-12 text-base bg-gradient-to-r from-pink-500 to-fuchsia-600 hover:from-pink-600 hover:to-fuchsia-700"
+              onClick={openClaim}
+              disabled={!assessmentId}
+            >
+              <Gift className="w-5 h-5 mr-2" />
+              领取我的专属 PDF 报告
+            </Button>
+            {!assessmentId && (
+              <p className="text-[11px] text-muted-foreground">
+                登录后系统会为你生成专属领取码
+              </p>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full text-xs text-muted-foreground hover:text-foreground"
               onClick={handleStartCoach}
             >
-              <MessageCircle className="w-5 h-5 mr-2" />
-              {resultPageFooterConfig.ctaText}
+              <MessageCircle className="w-3.5 h-3.5 mr-1.5" />
+              或先与 AI 教练即时对话
             </Button>
-            <p className="text-xs text-muted-foreground">
-              {resultPageSectionTitles.cta.primarySubtext}
-            </p>
           </div>
         </CardContent>
       </Card>
 
       {/* 助教企微 - 私域沉淀 */}
-      <AssistantQRCard />
+      <AssistantQRCard
+        defaultOpen={!!claimCode}
+        title={
+          claimCode
+            ? `添加助教企微，回复领取码 ${claimCode}，立即领取你的专属 PDF 深度报告`
+            : "添加助教企微，获取你的个性化情绪疏导方案"
+        }
+      />
 
-      {/* 延伸测评推荐 - 付费转化 */}
+      {/* 延伸测评推荐 */}
       <div className="space-y-3">
         <h3 className="text-sm font-semibold text-foreground px-1">你可能还需要的深度测评</h3>
 
@@ -301,9 +365,8 @@ export function EmotionHealthResult({ result, onShare, onRetake }: EmotionHealth
         </button>
       </div>
 
-      {/* 其他操作按钮 */}
-      <div className="space-y-3 pb-[calc(20px+env(safe-area-inset-bottom))]">
-
+      {/* 其他操作 */}
+      <div className="space-y-3 pb-2">
         <div className="flex gap-3 pt-2">
           {onShare && (
             <Button variant="ghost" size="sm" onClick={onShare} className="flex-1">
@@ -324,6 +387,30 @@ export function EmotionHealthResult({ result, onShare, onRetake }: EmotionHealth
       <p className="text-[10px] text-muted-foreground text-center px-4 py-3 border-t">
         {resultPageSectionTitles.compliance}
       </p>
+
+      {/* ★ 底部 Sticky CTA */}
+      {assessmentId && (
+        <EmotionHealthClaimStickyBar
+          onClick={openClaim}
+          hideOnAnchorRef={stickyHideAnchorRef}
+        />
+      )}
+
+      {/* 领取浮层 */}
+      <EmotionHealthPdfClaimSheet
+        open={claimSheetOpen}
+        onOpenChange={setClaimSheetOpen}
+        claimCode={claimCode}
+        loadingCode={loadingCode}
+        displayName={displayName}
+        avatarUrl={avatarUrl}
+        battery={battery}
+        energyIndex={result.energyIndex}
+        anxietyIndex={result.anxietyIndex}
+        stressIndex={result.stressIndex}
+        patternName={primaryPattern.name}
+        blockedName={blockedDim.blockPointName}
+      />
     </div>
   );
 }

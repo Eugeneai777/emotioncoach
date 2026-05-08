@@ -4565,6 +4565,7 @@ export type Database = {
           anxiety_index: number
           avoidance_score: number
           blocked_dimension: string
+          claim_code: string | null
           created_at: string | null
           energy_index: number
           exhaustion_score: number
@@ -4587,6 +4588,7 @@ export type Database = {
           anxiety_index: number
           avoidance_score: number
           blocked_dimension: string
+          claim_code?: string | null
           created_at?: string | null
           energy_index: number
           exhaustion_score: number
@@ -4609,6 +4611,7 @@ export type Database = {
           anxiety_index?: number
           avoidance_score?: number
           blocked_dimension?: string
+          claim_code?: string | null
           created_at?: string | null
           energy_index?: number
           exhaustion_score?: number
@@ -12436,6 +12439,7 @@ export type Database = {
         }[]
       }
       generate_assessment_claim_code: { Args: never; Returns: string }
+      generate_emotion_health_claim_code: { Args: never; Returns: string }
       get_partner_id_for_user: { Args: { p_user_id: string }; Returns: string }
       get_user_permissions: {
         Args: { p_user_id: string }
