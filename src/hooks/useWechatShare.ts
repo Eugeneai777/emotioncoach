@@ -8,6 +8,7 @@ interface WechatShareConfig {
   desc: string;
   link: string;
   imgUrl: string;
+  enabled?: boolean;
 }
 
 interface WxConfig {
@@ -293,6 +294,11 @@ export function useWechatShare(config: WechatShareConfig) {
   const lastConfigRef = useRef<string>('');
 
   useEffect(() => {
+    if (config.enabled === false) {
+      console.log('[WechatShare] Skipping - share config not ready');
+      return;
+    }
+
     // 详细环境检测日志
     const isWeChat = isWeChatBrowser();
     console.log('[WechatShare] Hook triggered', {
@@ -483,7 +489,7 @@ export function useWechatShare(config: WechatShareConfig) {
     return () => {
       cancelled = true;
     };
-  }, [config.title, config.desc, config.link, config.imgUrl]);
+  }, [config.title, config.desc, config.link, config.imgUrl, config.enabled]);
 }
 
 export default useWechatShare;
