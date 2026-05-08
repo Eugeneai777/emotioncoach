@@ -1,59 +1,48 @@
-## 背景
+# 后台情绪健康测评 - 增加 PDF 凭证下载
 
-后台「测评管理」(`src/components/admin/AssessmentsManagement.tsx`) 只读取 `partner_assessment_templates` 表 —— 那是统一引擎 DynamicAssessmentPage 的模板库。而「情绪健康测评」(28 题三层诊断 + AI 教练 + 刚加的领取码 PDF) 是老硬编码页面 `EmotionHealthPage` (`/emotion-health`)，从未注册到该表，所以列表里没有。
+## 现状
 
-截图里的「情绪健康快速筛查」是另一份 16 题 PHQ-9+GAD-7 模板 (`emotion_health_screening`)，跟你正在投放的不是同一个测评。
+- `AssessmentRespondentDrawer` 已经支持「男人有劲」(`male_midlife_vitality`) 的「下载 PDF 报告」「复制发送话术」按钮
+- 情绪健康测评 (`emotion_health`) 走的是独立表 `emotion_health_assessments`，前端用 `EmotionHealthPdfClaimSheet` + `EmotionHealthPdfClaimCard` 生成「她能量报告·专属凭证」PNG
+- 管理员当前点开测评者抽屉，能看到领取码（如 `9MY EJQ`），但没有下载凭证图 / 复制话术的入口，只能让用户自己生成
 
-按你的选择：**不入库，仅在后台加快捷入口**，投放链接为 `/emotion-health`。
+## 目标
 
-## 改动
+让管理员在后台抽屉里：
+1. 一键复制发送话术（含领取码）
+2. 一键下载该用户的「专属凭证 PNG」（与用户端完全一致），便于 助教 直接发给用户
 
-### 1. AssessmentsManagement.tsx 顶部新增「内置测评」区块
+## 改动范围（仅 UI / 前端）
 
-在动态加载的合伙人模板卡片列表上方，加入一个写死的卡片数组(目前一项)：
+### 1. `AssessmentRespondentDrawer.tsx`
+- 新增对 `template?.assessmentKey === "emotion_health"` 的分支，渲染两个按钮：
+  - **复制发送话术**：拷贝 `您好，您的领取码是 ${claimCode}……` 文案
+  - **下载凭证图片**：直接调用 `EmotionHealthPdfClaimCard` + `generateCardBlob` 在抽屉内离屏渲染并下载 PNG（不开新窗口）
+- 离屏渲染需要传入 `battery / energyIndex / anxietyIndex / stressIndex / patternName / blockedName`，这些可从 `row.dimensionScores` 取（hook 已写入）
 
-- **情绪健康测评** 💚 — 内置 / 28 题 / 三层诊断
-- 链接：`https://wechat.eugenewe.net/emotion-health`
-- 复制链接按钮(复用现有 `handleCopy` 逻辑)
-- 「在外部打开」按钮
-- 「数据洞察」按钮 → 暂时跳转 `/admin/users-and-orders` 或显示 toast「数据洞察规划中」(取决于是否已有专门看板)
-- 不显示「编辑」「上下线开关」(因为是硬编码)
-- 用一个区分性的 Badge 「内置 · 硬编码」，与「统一引擎」区分
+### 2. `useAdminEmotionHealthInsights.ts`
+- 在 `respondents` 中追加 `blockedDimension`（目前只存了 `primaryPattern`），便于凭证卡显示「卡点维度」
+- 不动数据库、不动 RLS
 
-### 2. 视觉与代码组织
+### 3. （可选）小图标
+- 顶部领取码 Badge 旁边沿用现有复制行为，不变
 
-- 新建本地常量 `BUILT_IN_ASSESSMENTS`，方便后续追加(如 SCL90 旧版、家长测评 Lite 等)
-- 抽一个轻量的 `BuiltInAssessmentCard` 内部子组件复用卡片样式，避免和动态卡片代码耦合
-- 加一行小标题分隔：`「内置测评(硬编码页面，不可编辑)」` 与 `「合伙人模板(统一引擎)」`
+## 不改动
 
-### 3. 不动的部分
-
-- 不向 `partner_assessment_templates` 写任何数据
-- 不动 `EmotionHealthPage` 的题目/算分逻辑
-- 不动路由
-- 不动 `assessment_key=emotion_health_screening` 那条快速筛查记录
+- 数据库 / RLS / 触发器
+- `emotion_health_assessments` 表结构
+- 用户端 `EmotionHealthPdfClaimSheet` 的逻辑
+- `male_midlife_vitality` 现有「打开新窗口下载 PDF」流程
 
 ## 技术细节
 
-```ts
-const BUILT_IN_ASSESSMENTS = [
-  {
-    id: 'builtin-emotion-health',
-    title: '情绪健康测评',
-    emoji: '💚',
-    description: '28 题三层诊断 + AI 教练解读 + 专属 PDF 领取码，专为 35+ 女性优化',
-    question_count: 28,
-    path: '/emotion-health',
-  },
-];
-
-const getBuiltInUrl = (path: string) => `https://wechat.eugenewe.net${path}`;
-```
-
-「数据洞察」入口先指向已有的 `/admin/users-and-orders` 并附带 `?source=emotion_health` query(若该页未支持也无妨，后续再做)；如果你希望直接 disabled 也可以，只需告诉我偏好。
+- 复用现有 `generateCardBlob(cardRef, { forceScale: 1.6 })`，输出 PNG
+- 头像走 `safePreloadAvatar`（已在 Sheet 中实现，复制相同逻辑到 Drawer 中的本地子组件）
+- 下载文件名：`情绪健康专属凭证_{displayName}_{claimCode}.png`
+- 状态管理：`generating` / `previewUrl`，缓存按 `claimCode` 维度
 
 ## 验证
 
-- 后台「测评管理」页顶部出现「情绪健康测评」卡片，可复制 `wechat.eugenewe.net/emotion-health`、外部打开
-- 现有合伙人模板列表渲染不受影响
-- 没有数据库迁移
+- 后台 `/admin/assessments/builtin/emotion-health/insights` → 点测评者 → 抽屉底部出现「复制话术」「下载凭证图片」按钮
+- 下载得到的 PNG 与用户端 `/emotion-health` PdfClaimSheet 输出完全一致
+- 「男人有劲」抽屉无回归
