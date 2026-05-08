@@ -1,119 +1,128 @@
 
-# 7 天伴随手册 PDF · 二次优化方案
+# 7 天伴随手册 PDF · 留白与价值感优化方案
 
-只动手册渲染层 + 抽屉按钮，不改边缘函数 / 不改测评结果页业务逻辑。
-
----
-
-## 一、问题 1：P2 场景卡 insight 文案重复（截图 image-450）
-
-**根因**：`buildMaleData` 里每个 cluster 的 `insight` 都用 `MALE_FALLBACK_BY_SCORE[Math.round(avgScore)]`，当 AI 心声没回／所有簇平均分相近时，3 张卡都印同一句"这一格还在你手里，先别急着动它"。
-
-**修复**（不改 fallback 表，避免影响别处）：
-
-- 在 `AdminHandbookExport.tsx` 的 cluster 装配里，**当 AI insight 缺失** 或 **与上一张卡相同** 时，按 `cluster.key` 从一张本地 6 句的"暖心文案池"中取一句，保证 4 张卡 4 个语气：
-  - 白天电量类 → `白天能撑到现在，已经是你在硬扛。先别急着证明什么。`
-  - 夜里修复类 → `夜里这一格在悄悄替你修。今晚少做一件事，比多做一件更值钱。`
-  - 关键时刻类 → `大场面里你没崩，是你在用旧方法救自己。这一周我们换一种。`
-  - 关系/情绪类 → `这一格还连着你最在意的人。先把自己接住，再去接别人。`
-  - 信心/自我类 → `你不是没力气，是力气一直在替别人花。这 7 天先留一点给自己。`
-  - 兜底 → `这一格暂时不用动它。看到，就已经是改变的开始。`
-- 同时 P3 优势卡也加同样的"上下两句不重复"校验（避免 strengths[0]/strengths[1] 撞文案）。
+**商业架构师视角的核心结论**：手册留白问题的本质不是"缺图"，而是某些页"信息密度低、用户拿走的工具感不够强"。直接塞插画会让手册"更像营销册、更不像工具书"，且引入 PDF 不稳定因素。**最佳策略 = 价值感增量 + 极简视觉装饰**，而不是大幅塞图。
 
 ---
 
-## 二、问题 2：合并"下载 PDF 报告"到"7 天伴随手册 PDF"
+## 一、价值感诊断（按页判断留白是否真的需要图）
 
-### 2.1 当前两个按钮做的事
+| 页 | 当前内容 | 留白评分 | 真正缺的 | 推荐方向 |
+|---|---|---|---|---|
+| P1 封面 | 标题 + 引语 + 4 步导读 | 中 | OK，已加导读 | 仅加 1 枚极简印章 SVG |
+| P2 测评全景（新） | 雷达图 + 6 维条 + AI 解读 | 低 | 信息已饱满 | 不动 |
+| P3 生活切面 | 4 张场景卡 | 低 | 不动 | 不动 |
+| **P4 优势** | 通常仅 2 个 list 项 | **高** | **缺：每天怎么用这一块的"用法卡"** | 加微动作卡 + 1 枚日出 SVG |
+| **P5 风险** | 通常仅 2 个红条 | **高** | **缺：信号出现时的 3 步应急** | 加 SOS 三步流程图 |
+| P6/P7/P8 Day 卡 | 每页 2 天，每天 早/午/晚 + 安抚句 | 中-高 | **缺：今日打卡格 + 心情温度计** | 加每日 mini check-in 模块 |
+| P9 第 8 天邀请 | QR + 训练营介绍 | 低 | OK | 不动 |
+| P10 长期陪伴 | 4 卡 + 免责声明 | 中 | 加一句推荐者签名/承诺 | 加 1 行手写体引言 |
 
-| 按钮 | 行为 |
-|---|---|
-| **下载 PDF 报告**（旧） | 在新窗打开 `/assessment/male_midlife_vitality?adminPdf=1` 或 `/emotion-health?...`，触发用户结果页里的 `DimensionRadarChart` + AI 完整解读 + autoSave PDF |
-| **下载 7 天伴随手册 PDF**（新） | 打开 `/admin/handbook/male/{id}`，渲染 9 页 A4 手册，含场景簇 / 优势 / 风险 / 7 天脚本 / 第 8 天邀请 |
+---
 
-### 2.2 合并方案：手册第 0/1 页前插入"测评全景"
+## 二、为什么不推荐"加插画"
 
-新增 1 页 → 手册从 9 页变 **10 页**，结构：
+1. **PDF 体积**：每张高清插画 200-500KB，9 张 → 4MB+，企微/微信传输/iOS 预览体验下降。
+2. **html2canvas 风险**：跨域图、字体替换、雷达图重绘已经是稳定性大头，再叠图会增加截断/白页概率。
+3. **审美错位**：手册定位是"理性陪伴 + 情感共鸣"，AI 生成插画大多偏卡通或泛 SaaS 感，会稀释专业度。
+4. **用户反馈结构**：用户说"留白多"，潜台词通常是"这一页我不知道要做什么"——是任务感不足，不是装饰不足。
+
+---
+
+## 三、推荐方案：价值感优先 + 克制视觉
+
+### A. 内联 SVG 装饰（零体积、零跨域、无图床依赖）
+
+定一套统一的"克制视觉语言"，仅 5 个 SVG 元素，可复用：
 
 ```text
-P1 封面
-P2 测评全景（新）  ← 雷达图 + 6 维分数 + AI 完整解读
-P3 你的生活切面（原 P2）
-P4 优势
-P5 风险
-P6/7/8 7 天脚本
-P9 第 7 天复盘
-P10 第 8 天邀请
+1. seal-stamp     一枚印章风圆章（P1 + P10 用，标识"专属档案"）
+2. sun-rise       极简日出线条（P4 优势，象征"还稳"）
+3. waning-moon    简笔月相（P5 风险，象征"夜里要修"）
+4. drop           一滴水（Day 卡角落点缀，象征"今日一点点"）
+5. arc-divider    极细弧线分隔（封底 + 章末）
 ```
 
-**P2 测评全景**（新 `P2AssessmentOverview.tsx`）：
+每个 SVG 控制在 60×60–120×120，单色 `hsl(var(--primary) / 0.15)`，作为**背景水印或角落点缀**，不抢主内容。
 
-- 左侧：复用 `DimensionRadarChart`（已有组件，男版传 `vitalityStatusScores`，女版传 `dimensionScores`）。固定宽 320px，背景白，避免 html2canvas 截不到 SVG。
-- 右侧：6 维（男）/ 4 模式（女）的横向条形 + 分数 + 中文标签（用 `MALE_LABEL` / `FEMALE_PATTERN_LABEL`）。
-- 下方：**AI 完整解读**（300-500 字）。来源：
-  - 男版：`partner_assessment_results.ai_insights` 字段（已存在，结果页直接用）；
-  - 女版：`emotion_health_assessments.ai_analysis` 字段；
-  - 取不到时回退到 `coverNote` + 风险 + 优势的拼接。
-- 加 `breakInside: 'avoid'`、`overflow: hidden`，与其它页同样的 A4 容器规格。
+### B. 价值感增量模块（关键，这才是用户真正想要的）
 
-> 雷达图用 recharts SVG，html2canvas 已能截。验证点：导出前 `await new Promise(r=>setTimeout(r,300))` 给 recharts animation 收尾，否则会截到半张。
+#### B1. P4 优势页 → "今日如何用它"
+在每条 strength 下方加一行小字 + 微动作 chip，例如：
+- 「精力续航」还撑得住 → `今日用法：把这点精力留给一件最值得的事，别均摊。`
 
-### 2.3 数据装配补丁
-
-`buildMaleData` / `buildEmotionData` 各加一段：
-
-```ts
-const aiInsightsFull = String(row.ai_insights || row.ai_analysis || "").trim();
-return { ..., aiInsightsFull, dims };  // dims 已有
+#### B2. P5 风险页 → "信号出现时怎么办" 3 步卡
+新增统一底部 SOS 模块：
+```text
+[ 看见 ] 写下来：今天什么时候出现这个信号
+[ 暂停 ] 90 秒不做反应（3 次深呼吸）
+[ 选择 ] 我现在能做的最小一步是什么
 ```
+这是真正的工具，用户会反复翻看。
 
-`HandbookData` 类型加 `aiInsightsFull?: string; dims?: Record<string, number>`。
+#### B3. P6/P7/P8 Day 卡 → 每日 mini 打卡格
+每个 Day 卡尾部增加：
+```text
+□ 早做了    □ 午做了    □ 晚做了
+今日身体感觉：1 ── 5 ── 10
+今日一句话：__________________
+```
+让手册从"被动读"变"主动写"——价值感数倍提升，留白同时被填满。
 
-### 2.4 删除"下载 PDF 报告"按钮
-
-`src/components/admin/AssessmentRespondentDrawer.tsx`：
-
-- 删掉 lines 112–131（男版"下载 PDF 报告"按钮）
-- 删掉 lines 159–178（女版"下载 PDF 报告"按钮）
-- 保留"复制发送话术" + "下载 7 天伴随手册 PDF" 两个按钮
-- 把"下载 7 天伴随手册 PDF" 的 toast 文案改成 `已打开 7 天伴随手册导出页（含完整测评雷达图与 AI 解读），生成约 15-25 秒`
-
-> 旧路径 `/assessment/...?adminPdf=1` 和 `/emotion-health?adminPdf=1` 仍保留，普通用户结果页一直在用，不删。
-
-### 2.5 PageNumber/Footer 同步
-
-- `HandbookFooter` 里 `totalPages` 写死 9 → 改成 **10**
-- `HandbookContainer` 渲染顺序新增 `<P2AssessmentOverview pageNumber={2} />`，原 P2-P9 全部 +1
-- `exportNodeToPdf` 已是按 `[data-page]` 节点逐张截图，自动适配新页数，无需改
+#### B4. P10 长期陪伴 → 一行手写体承诺
+底部增加引用区块：
+> "这本手册不是治疗，是一个朋友在你旁边坐了 7 天。
+>  之后我们也还在。 — 有劲 AI 团队"
+（用 ZCOOL XiaoWei 或 Ma Shan Zheng 一类毛笔字体，1 行，左对齐留白）
 
 ---
 
-## 三、改动清单
+## 四、技术实现与稳定性保障
+
+- 全部用**内联 React SVG 组件**，零 HTTP 请求，html2canvas 100% 可截。
+- 不引入新 npm 包；checkbox 用 `□` Unicode 字符或 SVG 描边。
+- 1 行手写体改用 Google Fonts `ZCOOL XiaoWei`，**通过 `<link>` 在 index.html 异步加载**，导出时 `document.fonts.ready` 已会等。
+- A4 容器仍 `overflow:hidden`，新增模块全部 `breakInside:avoid`。
+- 不动 PDF 切片逻辑、不动边缘函数、不动总页数（仍 10 页）。
+
+### 改动文件清单
 
 ```text
-新增  src/components/admin/handbook/pages/P2AssessmentOverview.tsx
-新增  src/components/admin/handbook/clusterCopy.ts                （6 句暖心文案池 + 去重函数）
-改    src/components/admin/handbook/HandbookContainer.tsx         （插入新页 + 类型扩展）
-改    src/components/admin/handbook/shared/HandbookFooter.tsx     （totalPages 9→10）
-改    src/components/admin/handbook/pages/P2ScenarioBreakdown.tsx (页码 2→3，data-page=3)
-改    src/components/admin/handbook/pages/P3Strengths.tsx         （页码 +1，去重 strengths）
-改    src/components/admin/handbook/pages/P4Risks.tsx             （页码 +1）
-改    src/components/admin/handbook/pages/HandbookDayPage.tsx     （pageNumber prop 已动态，无需改逻辑）
-改    src/components/admin/handbook/pages/P8Day7Invite.tsx        （页码 +1）
-改    src/components/admin/handbook/pages/P9Companion.tsx         （页码 +1）
-改    src/pages/admin/AdminHandbookExport.tsx                     （装配 aiInsightsFull / dims，cluster 去重 fallback）
-改    src/components/admin/AssessmentRespondentDrawer.tsx         （删除两处旧按钮 + toast 文案）
+新增  src/components/admin/handbook/shared/HandbookMotifs.tsx   （5 个 SVG 装饰组件）
+新增  src/components/admin/handbook/shared/DailyCheckBox.tsx    （Day 卡打卡格）
+新增  src/components/admin/handbook/shared/SOSCard.tsx          （P5 三步卡）
+改    src/components/admin/handbook/pages/P3Strengths.tsx       （加用法 chip + sun SVG）
+改    src/components/admin/handbook/pages/P4Risks.tsx           （加 SOS 卡 + moon SVG）
+改    src/components/admin/handbook/pages/HandbookDayPage.tsx   （加 mini check-in）
+改    src/components/admin/handbook/pages/P1Cover.tsx           （加印章 SVG）
+改    src/components/admin/handbook/pages/P9Companion.tsx       （加手写体承诺）
+改    index.html                                                （加 ZCOOL XiaoWei link）
 ```
-
-不动：边缘函数、`reportAIInsight.ts`、`exportReportToPdf.ts`、迁移、用户端结果页。
 
 ---
 
-## 四、验收标准
+## 五、价值感对比
 
-1. 第二章 4 张场景卡的 insight 文案两两不同，至少 4 种语气。
-2. 抽屉里只剩 2 个按钮：复制话术、下载 7 天伴随手册 PDF。
-3. 下载得到 **10 页 A4 PDF**，第 2 页有清晰的雷达图 + 6 维分数 + AI 完整解读。
-4. 雷达图无截断 / 无空白，分数标签为中文。
-5. 页脚正确显示 `n / 10`，档案编号无 `#`。
-6. `pdf_generation_logs` 写入正常，文件名格式不变。
+| 维度 | 加插画方案 | 推荐方案（价值感增量） |
+|---|---|---|
+| 用户感知 | "好看一点" | "拿到了真工具" |
+| 留作纪念率 | 中 | 高（写过的东西舍不得丢） |
+| 复阅率 | 1 次 | 7 次（每天打卡） |
+| 转化训练营 | 弱 | 强（用户 7 天都在 review） |
+| PDF 大小 | +3-5MB | +0KB（全 SVG/字体） |
+| 渲染稳定性 | 中（图片跨域风险） | 高 |
+| 制作成本 | 高（要一致风格的 9 张图） | 中 |
+
+---
+
+## 六、验收标准
+
+1. P4/P5 不再出现"只有 2 行内容、半页空白"。
+2. 每个 Day 卡都有可勾选/可写的 mini 模块。
+3. PDF 文件大小相比当前增量 < 200KB。
+4. 全部 10 页渲染稳定，无新白页 / 文字截断。
+5. 用户拿到后的核心反馈预期从"页数挺多"→"我可以每天写一页"。
+
+---
+
+> **如果你坚持要"明确的图"**：我建议只在 P1 封面右下角放一枚 100×100 的极简插画（一只手 + 一片叶，复用 `src/assets/audience/midlife-vitality-scene-clean.jpg` 局部裁切或新生成 1 张 PNG），其余页全部用 SVG 方案。这样既有"开篇有画"的仪式感，又不引入 9 张图的稳定性风险。是否要加这一张，请你二选一定夺。
