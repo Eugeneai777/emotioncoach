@@ -45,7 +45,7 @@ export function usePageOG(pageKey: string): {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("og_configurations")
-        .select("title, og_title, description, image_url, url, site_name, is_active")
+        .select("title, og_title, description, image_url, url, site_name, is_active, wechat_thumb_url")
         .eq("page_key", pageKey)
         .eq("is_active", true)
         .maybeSingle();
@@ -77,6 +77,7 @@ export function usePageOG(pageKey: string): {
     imageHeight: (customConfig as any)?.image_height || defaultConfig.imageHeight || DEFAULT_IMAGE_HEIGHT,
     locale: defaultConfig.locale || 'zh_CN',
     twitterCard: defaultConfig.twitterCard || 'summary_large_image',
+    wechatThumbUrl: rewriteStorageUrl((customConfig as any)?.wechat_thumb_url),
   };
 
   return { ogConfig, isLoading };
