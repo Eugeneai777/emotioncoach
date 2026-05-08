@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import { useWealthCampAnalytics } from './useWealthCampAnalytics';
+import { isWeChatBrowser, isWeChatMiniProgram } from '@/utils/platform';
 
 /**
  * 自动为页面 URL 注入 ref=share 参数
@@ -15,6 +16,11 @@ const useAutoShareRef = () => {
 
   useEffect(() => {
     if (hasInjected.current) return;
+
+    // 微信 JS-SDK（尤其 iOS）签名必须使用用户首次进入页面的 URL。
+    // 如果页面加载后用 history.replaceState 自动追加 ref，会导致当前 URL 和签名 URL 不一致，
+    // 右上角菜单分享可能退化成普通链接；微信内分享参数由 useWechatShare 的 link 字段负责。
+    if (isWeChatBrowser() || isWeChatMiniProgram()) return;
     
     // 如果已有 ref 参数（合伙人链接等），不覆盖
     if (searchParams.has('ref')) return;
