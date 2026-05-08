@@ -1,0 +1,1 @@
+ALTER TABLE public.og_configurations ADD COLUMN IF NOT EXISTS wechat_thumb_url text;
