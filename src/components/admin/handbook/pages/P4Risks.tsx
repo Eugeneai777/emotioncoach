@@ -5,11 +5,13 @@ import { HandbookFooter } from "../shared/HandbookFooter";
 interface Props {
   recordIdTail: string;
   risks: string[];
+  pageNumber?: number;
+  totalPages?: number;
 }
 
-export function P4Risks({ recordIdTail, risks }: Props) {
+export function P4Risks({ recordIdTail, risks, pageNumber = 5, totalPages = 10 }: Props) {
   return (
-    <div style={HANDBOOK_PAGE_STYLE} data-page="4">
+    <div style={HANDBOOK_PAGE_STYLE} data-page={pageNumber}>
       <HandbookHeader title="第四章 · 风险预警" />
       <h2 style={{ fontSize: "24px", fontWeight: 700, margin: "0 0 8px 0" }}>这些信号别再忽略</h2>
       <p style={{ color: "hsl(var(--muted-foreground))", margin: "0 0 28px 0", fontSize: "13px" }}>
@@ -49,7 +51,7 @@ export function P4Risks({ recordIdTail, risks }: Props) {
         </div>
       )}
 
-      <HandbookFooter pageNumber={4} totalPages={9} recordIdTail={recordIdTail} />
+      <HandbookFooter pageNumber={pageNumber} totalPages={totalPages} recordIdTail={recordIdTail} />
     </div>
   );
 }

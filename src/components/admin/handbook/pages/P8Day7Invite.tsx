@@ -5,6 +5,8 @@ import qiweiQr from "@/assets/qiwei-assistant-qr.jpg";
 
 interface Props {
   recordIdTail: string;
+  pageNumber?: number;
+  totalPages?: number;
   campName: string;
   intro: string;
   values: string[];
@@ -15,6 +17,8 @@ interface Props {
 
 export function P8Day7Invite({
   recordIdTail,
+  pageNumber = 9,
+  totalPages = 10,
   campName,
   intro,
   values,
@@ -23,7 +27,7 @@ export function P8Day7Invite({
   day7Reflection,
 }: Props) {
   return (
-    <div style={HANDBOOK_PAGE_STYLE} data-page="8">
+    <div style={HANDBOOK_PAGE_STYLE} data-page={pageNumber}>
       <HandbookHeader title="第 8 天 · 下一步" />
       <h2 style={{ fontSize: "24px", fontWeight: 700, margin: "0 0 8px 0" }}>第 8 天，你想去哪？</h2>
       <p style={{ color: "hsl(var(--muted-foreground))", margin: "0 0 24px 0", fontSize: "13px", lineHeight: 1.7 }}>
@@ -114,7 +118,7 @@ export function P8Day7Invite({
         </div>
       </div>
 
-      <HandbookFooter pageNumber={8} totalPages={9} recordIdTail={recordIdTail} />
+      <HandbookFooter pageNumber={pageNumber} totalPages={totalPages} recordIdTail={recordIdTail} />
     </div>
   );
 }

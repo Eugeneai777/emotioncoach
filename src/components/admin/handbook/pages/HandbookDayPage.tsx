@@ -14,6 +14,7 @@ export interface DayCard {
 interface Props {
   recordIdTail: string;
   pageNumber: number;
+  totalPages?: number;
   pageTitle: string;
   days: DayCard[];
 }
@@ -28,7 +29,7 @@ const REASSURE_BY_DAY: Record<number, string> = {
   7: "今天回头看：你没回到原点，你在向前走。",
 };
 
-export function HandbookDayPage({ recordIdTail, pageNumber, pageTitle, days }: Props) {
+export function HandbookDayPage({ recordIdTail, pageNumber, totalPages = 10, pageTitle, days }: Props) {
   return (
     <div style={HANDBOOK_PAGE_STYLE} data-page={pageNumber}>
       <HandbookHeader title={pageTitle} />
@@ -85,7 +86,7 @@ export function HandbookDayPage({ recordIdTail, pageNumber, pageTitle, days }: P
         </div>
       ))}
 
-      <HandbookFooter pageNumber={pageNumber} totalPages={9} recordIdTail={recordIdTail} />
+      <HandbookFooter pageNumber={pageNumber} totalPages={totalPages} recordIdTail={recordIdTail} />
     </div>
   );
 }

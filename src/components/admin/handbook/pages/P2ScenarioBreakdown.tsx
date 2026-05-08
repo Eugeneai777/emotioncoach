@@ -15,6 +15,8 @@ export interface ScenarioCardData {
 interface Props {
   recordIdTail: string;
   clusters: ScenarioCardData[];
+  pageNumber?: number;
+  totalPages?: number;
 }
 
 function clip(s: string, n: number) {
@@ -22,12 +24,12 @@ function clip(s: string, n: number) {
   return s.length > n ? s.slice(0, n) + "…" : s;
 }
 
-export function P2ScenarioBreakdown({ recordIdTail, clusters }: Props) {
+export function P2ScenarioBreakdown({ recordIdTail, clusters, pageNumber = 3, totalPages = 10 }: Props) {
   // 限制最多 4 个场景卡，避免溢出
   const shown = clusters.slice(0, 4);
 
   return (
-    <div style={HANDBOOK_PAGE_STYLE} data-page="2">
+    <div style={HANDBOOK_PAGE_STYLE} data-page={pageNumber}>
       <HandbookHeader title="第二章 · 你的生活切面" />
       <h2 style={{ fontSize: "24px", fontWeight: 700, margin: "0 0 8px 0" }}>你最近的几个生活切面</h2>
       <p style={{ color: "hsl(var(--muted-foreground))", margin: "0 0 22px 0", fontSize: "13px" }}>
@@ -86,7 +88,7 @@ export function P2ScenarioBreakdown({ recordIdTail, clusters }: Props) {
         </div>
       ))}
 
-      <HandbookFooter pageNumber={2} totalPages={9} recordIdTail={recordIdTail} />
+      <HandbookFooter pageNumber={pageNumber} totalPages={totalPages} recordIdTail={recordIdTail} />
     </div>
   );
 }
