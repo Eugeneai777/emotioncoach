@@ -1,49 +1,63 @@
-# 修正：让管理员真正下载情绪健康测评的 PDF 报告
+# 30天小红书AB推广计划 · 生成方案
 
-## 问题诊断
+## 一、最终锁定的产品矩阵
 
-- 我上一版加的是「下载专属凭证 PNG」（其实是给用户加企微换 PDF 用的领取码图），不是 PDF 报告
-- 真正的 PDF 导出能力只有「男人有劲」实现了：
-  - `DynamicAssessmentPage` 支持 `?recordId=xxx&autoSave=pdf&adminPdf=1`
-  - `DynamicAssessmentResult` 用 `exportNodeToPdf(reportCardRef)` 多页 A4 导出
-- 情绪健康测评 (`EmotionHealthPage` + `EmotionHealthResult`) **当前根本没有 PDF 导出按钮**，所以管理员也没法触发
+| 受众 | 占比 | A方案（付费 ¥9.9） | B方案（免费引流） |
+|------|------|------------------|------------------|
+| 中年男性 | 50% | **中场觉醒力测评** ¥9.9 | 男人有劲状态评估（免费） |
+| 35+女性 | 50% | **35+女性竞争力测评** ¥9.9（钩子重新包装：「你还剩多少自己？」） | 情绪健康测评（已免费） |
 
-## 解决思路（对齐男人有劲）
+- 青少年家长方向暂不推广
+- AB 变量纯净：A = 直推 9.9 测评卡；B = 免费钩子 → 后端 399 训练营漏斗
 
-### 1. `EmotionHealthResult.tsx` - 加上「保存为 PDF」能力
-- 给整张报告 wrap 一个 `reportCardRef`（含三层诊断 + 维度卡 + AI 建议等已有内容）
-- 新增 `autoSavePdf?: boolean` props：true 时自动触发 `exportNodeToPdf(reportCardRef.current, { filename: ... })`
-- 保留现有的「领取专属 PDF（加企微）」CTA 不变，PDF 自动下载是叠加能力，不取代
+## 二、内容产出规格
 
-### 2. `EmotionHealthPage.tsx` - 支持管理员模式加载任意记录
-- 读 URL `recordId / autoSave / adminPdf / subjectName / subjectAvatar`
-- 当 `recordId` 有值：直接 `select * from emotion_health_assessments where id = recordId`（admin RLS 已开启），把数据反序列化成 `EmotionHealthResultType`，跳过 start/questions 直接进 result step
-- 把 `autoSavePdf` 透传给 `EmotionHealthResult`
+- **节奏**：5 条/天 × 30 天 = **150 条**
+  - 中年男性：A 1.5 条 + B 1 条/天（隔天对调）
+  - 35+女性：A 1.5 条 + B 1 条/天（隔天对调）
+- **每条字段**：日期 / 受众 / AB方案 / 落地产品 / 钩子标题(≤20字) / 正文(≤200字) / 标签(3-5) / 配图建议 / CTA话术 / 落地URL(带ref) / 痛点场景对应（图1/图2）
+- **追踪参数**：`?ref=xhs_d{1-30}_{a|b}_{m|f}`（m=男, f=女）
+- **男性 A 文案占比再细分**：60% 身体/精力/性力痛点（图2类），40% 财富/职业焦虑（财富卡点测评作为第二落点轮播）
+- **女性 A 钩子重新包装方向**：从"职场段位测评" → "35+女性内核+精力体检"，绑定图1多角色透支场景
+- **30天节奏**：
+  - 第1-2周（D1-14）：6种钩子矩阵广撒网，找爆款
+  - 第3周（D15-21）：复刻Top3钩子 × 变体
+  - 第4周（D22-30）：固化胜出方案 + 收割转化
 
-### 3. `AssessmentRespondentDrawer.tsx` - 改按钮行为
-- 把上一版的「下载专属凭证」改回「下载 PDF 报告」
-- 点击 = 打开新窗口 `${origin}/emotion-health?recordId=${row.resultId}&autoSave=pdf&adminPdf=1&subjectUserId=${userId}&subjectName=...`
-- 新窗口加载 → 自动渲染报告 → 自动下载 PDF
-- 移除 EH 离屏 `EmotionHealthPdfClaimCard` 渲染（不再需要）
-- 「复制发送话术」按钮保留
+## 三、交付物
 
-### 4. （可选小优化）
-- 文件名：`情绪健康报告_{displayName}_{yyyy-mm-dd}.pdf`
+### 1. Excel（`xhs_30day_plan.xlsx`）
+- Sheet1「内容日历」：150 行完整文案
+- Sheet2「数据回收模板」：每条预留 UV / 测评完成 / 9.9订单 / 加企微 / 399订单 / ROI 列
+- Sheet3「AB对比看板」：按周聚合 A vs B 转化漏斗公式
+- Sheet4「胜出钩子库」：D15 后人工填写
 
-## 不动
+### 2. PDF（`xhs_30day_strategy.pdf`）7章
+1. 商业目标与漏斗模型（测评→399→3980）
+2. 受众画像 × 痛点场景（嵌入图1图2要点）
+3. 产品矩阵决策依据（说明为何换中场觉醒力）
+4. 30天甘特图与节奏
+5. AB 实验设计与成功指标
+6. 数据复盘机制（周会模板）
+7. 风险与应对（小红书审核红线、词表）
 
-- 数据库 / RLS / 表结构（admin SELECT 已生效）
-- 用户端原有「加企微换 PDF」流程 + 凭证图（仍然作为引流入口存在）
-- `male_midlife_vitality` 现有逻辑
+## 四、技术路径
 
-## 验证
+- **AI Gateway**（`google/gemini-3-flash-preview`）批量生成 150 条文案，按受众×AB×日期循环，system prompt 注入图1图2痛点关键词、平台合规词表、CTA规则
+- **Excel**：`openpyxl`，公式驱动 ROI 计算
+- **PDF**：`reportlab`，中文字体内嵌
+- **QA**：PDF 转图逐页核查；Excel `recalculate_formulas.py` 校验公式
+- 输出到 `/mnt/documents/`，用 `<lov-artifact>` 交付
 
-1. 后台抽屉点「下载 PDF 报告」→ 新窗口 → 自动下载多页 A4 PDF
-2. 普通用户访问 `/emotion-health` 流程不受影响
-3. 管理员模式不写入新数据、不修改记录
+## 五、不做
 
-## 技术细节
+- 不动代码、不动数据库、不动现有产品页
+- 不做青少年家长方向（已确认下线）
+- 不创建新付费 SKU
+- ref 跟踪参数复用现有 `GlobalRefTracker`，无需改前端
 
-- 复用现成 `exportNodeToPdf(node, { filename, scale: 2 })`
-- 管理员模式下隐藏「重新测试 / 分享 / 加企微」等会写状态的交互按钮，避免误触
-- 加载失败给出 toast，不白屏
+## 六、预计耗时
+
+- AI 生成 150 条：约 4-6 分钟（含 1s 限速）
+- Excel + PDF 渲染 + QA：约 3 分钟
+- 总计 ~10 分钟内交付
