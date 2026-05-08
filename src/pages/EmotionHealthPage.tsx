@@ -65,6 +65,7 @@ export default function EmotionHealthPage() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('assessment');
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [result, setResult] = useState<EmotionHealthResultType | null>(null);
+  const [assessmentId, setAssessmentId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   
@@ -193,7 +194,7 @@ export default function EmotionHealthPage() {
     // 保存到数据库
     setIsSaving(true);
     try {
-      const { error } = await supabase
+      const { data: inserted, error } = await supabase
         .from('emotion_health_assessments')
         .insert({
           user_id: user.id,
@@ -211,9 +212,12 @@ export default function EmotionHealthPage() {
           answers: answers,
           is_paid: true,
           order_id: purchaseRecord?.id || null,
-        });
+        })
+        .select('id')
+        .single();
 
       if (error) throw error;
+      setAssessmentId(inserted?.id ?? null);
       
       // 清除本地进度
       localStorage.removeItem(STORAGE_KEY);
