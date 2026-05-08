@@ -8396,6 +8396,39 @@ export type Database = {
         }
         Relationships: []
       }
+      pdf_generation_logs: {
+        Row: {
+          admin_id: string
+          created_at: string
+          error_message: string | null
+          filename: string
+          handbook_type: string
+          id: string
+          record_id: string
+          status: string
+        }
+        Insert: {
+          admin_id: string
+          created_at?: string
+          error_message?: string | null
+          filename: string
+          handbook_type: string
+          id?: string
+          record_id: string
+          status?: string
+        }
+        Update: {
+          admin_id?: string
+          created_at?: string
+          error_message?: string | null
+          filename?: string
+          handbook_type?: string
+          id?: string
+          record_id?: string
+          status?: string
+        }
+        Relationships: []
+      }
       post_comments: {
         Row: {
           content: string
