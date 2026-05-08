@@ -70,10 +70,29 @@ export function EmotionHealthResult({ result, onShare, onRetake, assessmentId, a
     return Math.max(0, Math.min(100, Math.round((100 - fatigueAvg) * 0.6 + result.energyIndex * 0.4)));
   }, [result.energyIndex, result.anxietyIndex, result.stressIndex]);
 
-  const displayName = profile?.display_name || user?.user_metadata?.name || undefined;
-  const avatarUrl = getProxiedAvatarUrl(profile?.avatar_url || user?.user_metadata?.avatar_url);
+  const displayName = overrideDisplayName || profile?.display_name || user?.user_metadata?.name || undefined;
+  const avatarUrl = overrideAvatarUrl || getProxiedAvatarUrl(profile?.avatar_url || user?.user_metadata?.avatar_url);
 
-  const handleStartCoach = () => {
+  const reportRootRef = useRef<HTMLDivElement>(null);
+  const autoTriggeredRef = useRef(false);
+
+  useEffect(() => {
+    if (!autoSavePdf) return;
+    if (autoTriggeredRef.current) return;
+    autoTriggeredRef.current = true;
+    const t = setTimeout(async () => {
+      if (!reportRootRef.current) return;
+      try {
+        const fileBase = `情绪健康报告_${displayName || "user"}_${new Date().toISOString().slice(0, 10)}`;
+        await exportNodeToPdf(reportRootRef.current, { filename: fileBase });
+        toast.success("PDF 已自动下载，可关闭此页面");
+      } catch (e) {
+        console.error("[EH-AutoPdf] failed", e);
+        toast.error("PDF 生成失败");
+      }
+    }, 1500);
+    return () => clearTimeout(t);
+  }, [autoSavePdf, displayName]);
     navigate('/assessment-coach', { 
       state: { 
         pattern: result.primaryPattern,
