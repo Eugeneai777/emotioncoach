@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -6,14 +6,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { Lock, Save, X, Copy, FileDown, Loader2 } from "lucide-react";
+import { Lock, Save, X, Copy, FileDown } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import type { RespondentRow } from "@/hooks/useAdminAssessmentInsights";
 import { useUpsertAdminUserNote } from "@/hooks/useAdminUserNote";
 import { formatClaimCode } from "@/utils/claimCodeUtils";
-import EmotionHealthPdfClaimCard from "@/components/emotion-health/EmotionHealthPdfClaimCard";
-import { generateCardBlob } from "@/utils/shareCardConfig";
 
 interface Props {
   open: boolean;
