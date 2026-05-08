@@ -170,7 +170,7 @@ export function AssessmentRespondentDrawer({ open, onOpenChange, row, template }
                 variant="outline"
                 className="h-8 gap-1.5"
                 onClick={() => {
-                  const script = `亲爱的${row.displayName || ""}，你的领取码是 ${row.claimCode}。\n附件为你本次「情绪健康测评」专属凭证 + 完整 PDF 报告，请查收 🌸\n24 小时内 助教 将与你 1v1 解读，记得回复哦~`;
+                  const script = `亲爱的${row.displayName || ""}，你的领取码是 ${row.claimCode}。\n附件为你本次「情绪健康测评」完整 PDF 报告，请查收 🌸\n24 小时内 助教 将与你 1v1 解读，记得回复哦~`;
                   navigator.clipboard.writeText(script);
                   toast.success("话术已复制");
                 }}
@@ -181,36 +181,25 @@ export function AssessmentRespondentDrawer({ open, onOpenChange, row, template }
                 size="sm"
                 variant="outline"
                 className="h-8 gap-1.5"
-                onClick={handleDownloadEhCard}
-                disabled={ehDownloading}
+                onClick={() => {
+                  const params = new URLSearchParams({
+                    recordId: row.resultId,
+                    autoSave: "pdf",
+                    adminPdf: "1",
+                    subjectUserId: row.userId,
+                  });
+                  if (row.displayName) params.set("subjectName", row.displayName);
+                  if (row.avatarUrl) params.set("subjectAvatar", row.avatarUrl);
+                  const url = `${window.location.origin}/emotion-health?${params.toString()}`;
+                  window.open(url, "_blank");
+                  toast.message(`已打开 ${row.displayName || "用户"} 的报告并自动下载 PDF`);
+                }}
               >
-                {ehDownloading ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                ) : (
-                  <FileDown className="w-3.5 h-3.5" />
-                )}
-                下载专属凭证
+                <FileDown className="w-3.5 h-3.5" /> 下载 PDF 报告
               </Button>
             </div>
           )}
         </SheetHeader>
-
-        {isEmotionHealth && (
-          <div style={{ position: "fixed", left: -99999, top: 0, pointerEvents: "none" }} aria-hidden>
-            <EmotionHealthPdfClaimCard
-              ref={ehCardRef}
-              claimCode={row.claimCode}
-              displayName={row.displayName || undefined}
-              avatarUrl={row.avatarUrl || undefined}
-              battery={row.battery ?? 0}
-              energyIndex={row.energyIndex ?? row.dimensionScores?.["精力指数"] ?? 0}
-              anxietyIndex={row.anxietyIndex ?? row.dimensionScores?.["焦虑指数"] ?? 0}
-              stressIndex={row.stressIndex ?? row.dimensionScores?.["压力指数"] ?? 0}
-              patternName={row.primaryPattern || undefined}
-              blockedName={row.blockedDimension || undefined}
-            />
-          </div>
-        )}
 
         <ScrollArea className="flex-1">
           <div className="p-6 space-y-6">
