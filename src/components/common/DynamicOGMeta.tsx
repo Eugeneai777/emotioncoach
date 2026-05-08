@@ -101,6 +101,7 @@ export function DynamicOGMeta({ pageKey, overrides }: DynamicOGMetaProps) {
     desc: finalConfig.description,
     link: shareUrl,
     imgUrl: wechatShareImage,
+    enabled: !isLoading,
   });
 
   // 小程序 web-view 分享桥接：把分享配置同步给小程序壳层
@@ -114,7 +115,7 @@ export function DynamicOGMeta({ pageKey, overrides }: DynamicOGMetaProps) {
     }),
     [finalConfig.ogTitle, finalConfig.description, wechatShareImage, shareUrl, pageKey, location.pathname, location.search, location.hash]
   );
-  useMiniProgramShareBridge(bridgeConfig);
+  useMiniProgramShareBridge(isLoading ? null : bridgeConfig);
 
   // OG 健康检查 - 仅在配置加载完成后执行一次
   const healthChecked = useRef(false);
