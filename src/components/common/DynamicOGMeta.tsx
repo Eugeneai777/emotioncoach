@@ -83,6 +83,24 @@ export function DynamicOGMeta({ pageKey, overrides }: DynamicOGMetaProps) {
     return `${baseDomain}${location.pathname}${search ? `?${search}` : ''}${currentHash}`;
   }, [baseDomain, location.pathname, location.search, location.hash]);
 
+  // 微信菜单分享要求被分享的 link 也必须在 JS 接口安全域名下，且 iOS 对入口 URL 极敏感。
+  // 因此用当前页面完整 URL 作为基底，只做域名归一化和必要参数追加，避免签名 URL/当前 URL/分享 URL 三者漂移。
+  const wechatShareUrl = useMemo(() => {
+    if (typeof window === 'undefined') return shareUrl;
+
+    try {
+      const currentUrl = new URL(window.location.href.split('#')[0]);
+      const domainUrl = new URL(baseDomain);
+      currentUrl.protocol = domainUrl.protocol;
+      currentUrl.host = domainUrl.host;
+      currentUrl.searchParams.set('ref', 'share');
+      currentUrl.searchParams.set('wxcard', OG_CACHE_VERSION);
+      return currentUrl.toString();
+    } catch {
+      return shareUrl;
+    }
+  }, [baseDomain, shareUrl]);
+
   // 分享封面降级：缺失/非 https 时退回默认封面，避免微信/小程序卡片图裂
   const safeShareImage = useMemo(() => {
     const img = finalConfig.image;
@@ -102,7 +120,7 @@ export function DynamicOGMeta({ pageKey, overrides }: DynamicOGMetaProps) {
   useWechatShare({
     title: finalConfig.ogTitle,
     desc: finalConfig.description,
-    link: shareUrl,
+    link: wechatShareUrl,
     imgUrl: wechatShareImage,
     enabled: !isLoading,
   });
