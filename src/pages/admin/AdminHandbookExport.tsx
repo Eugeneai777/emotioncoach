@@ -381,6 +381,13 @@ async function buildEmotionData(recordId: string): Promise<HandbookData> {
     const ai = insights.clusterInsights[c.key];
     if (ai) c.insight = ai;
   }
+  // 去重 + 兜底
+  const deduped = dedupeClusterInsights(
+    clusters.map((c) => ({ key: c.key, insight: c.insight })),
+  );
+  deduped.forEach((d, i) => {
+    clusters[i].insight = d.insight;
+  });
 
   const dayScripts = (FEMALE_SEVEN_DAYS as any)[pattern] || FEMALE_SEVEN_DAYS.exhaustion;
 
@@ -392,6 +399,24 @@ async function buildEmotionData(recordId: string): Promise<HandbookData> {
   ];
   const strengths = indices.filter((x) => x.v >= 60).map((x) => `「${x.label}」还在 ${x.v} 分，是你这 7 天可以倚靠的部分。`);
   const risks = indices.filter((x) => x.v < 40).map((x) => `「${x.label}」仅 ${x.v} 分，是身体在小声求救，这 7 天先别再加压。`);
+
+  // 雷达图 dims（女版用三大指数）
+  const dims: Record<string, number> = {
+    energy_index: num(row.energy_index),
+    anxiety_index: num(row.anxiety_index),
+    stress_index: num(row.stress_index),
+  };
+
+  // 提取完整 AI 解读
+  const ai = (row as any).ai_analysis;
+  let aiInsightsFull = "";
+  if (typeof ai === "string") aiInsightsFull = ai;
+  else if (ai && typeof ai === "object") {
+    aiInsightsFull = String(ai.summary || ai.overview || ai.analysis || ai.text || "").trim();
+    if (!aiInsightsFull) {
+      try { aiInsightsFull = JSON.stringify(ai, null, 2).slice(0, 800); } catch { aiInsightsFull = ""; }
+    }
+  }
 
   return {
     type: "emotion_health",
@@ -411,5 +436,7 @@ async function buildEmotionData(recordId: string): Promise<HandbookData> {
     ctaHint: FEMALE_CAMP_INVITE.ctaHint,
     coverNote: insights.coverNote,
     day7Reflection: insights.day7Reflection,
+    dims,
+    aiInsightsFull: aiInsightsFull.trim(),
   };
 }
