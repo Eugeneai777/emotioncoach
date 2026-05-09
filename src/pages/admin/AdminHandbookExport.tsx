@@ -315,7 +315,7 @@ async function buildMaleData(recordId: string): Promise<HandbookData> {
     coverNote: insights.coverNote,
     day7Reflection: insights.day7Reflection,
     dims,
-    aiInsightsFull: String(row.ai_insight || "").trim(),
+    aiInsightsFull: (insights.fullReading || String(row.ai_insight || "").trim() || insights.coverNote || "").trim(),
   };
 }
 
@@ -397,8 +397,8 @@ async function buildEmotionData(recordId: string): Promise<HandbookData> {
     { k: "anxiety_index", label: "焦虑指数", v: num(row.anxiety_index) },
     { k: "stress_index", label: "压力指数", v: num(row.stress_index) },
   ];
-  const strengths = indices.filter((x) => x.v >= 60).map((x) => `「${x.label}」还在 ${x.v} 分，是你这 7 天可以倚靠的部分。`);
-  const risks = indices.filter((x) => x.v < 40).map((x) => `「${x.label}」仅 ${x.v} 分，是身体在小声求救，这 7 天先别再加压。`);
+  const strengths = indices.filter((x) => x.v >= 60).map((x) => `「${x.label}」还在 ${x.v} 分，说明你心里那根弦其实一直绷着——也是它在提醒你，别再继续把自己放最后。`);
+  const risks = indices.filter((x) => x.v < 40).map((x) => `「${x.label}」只剩 ${x.v} 分，是身体在用最小声的方式说：撑不住了。这 7 天，先允许自己'今天就这样'。`);
 
   // 雷达图 dims（女版用三大指数）
   const dims: Record<string, number> = {
@@ -407,16 +407,17 @@ async function buildEmotionData(recordId: string): Promise<HandbookData> {
     stress_index: num(row.stress_index),
   };
 
-  // 提取完整 AI 解读
+  // 提取完整 AI 解读：优先用 fullReading（300-450 字深度解读），其次原 ai_analysis，最后 coverNote
   const ai = (row as any).ai_analysis;
-  let aiInsightsFull = "";
-  if (typeof ai === "string") aiInsightsFull = ai;
+  let aiAnalysisText = "";
+  if (typeof ai === "string") aiAnalysisText = ai;
   else if (ai && typeof ai === "object") {
-    aiInsightsFull = String(ai.summary || ai.overview || ai.analysis || ai.text || "").trim();
-    if (!aiInsightsFull) {
-      try { aiInsightsFull = JSON.stringify(ai, null, 2).slice(0, 800); } catch { aiInsightsFull = ""; }
+    aiAnalysisText = String(ai.summary || ai.overview || ai.analysis || ai.text || "").trim();
+    if (!aiAnalysisText) {
+      try { aiAnalysisText = JSON.stringify(ai, null, 2).slice(0, 800); } catch { aiAnalysisText = ""; }
     }
   }
+  const aiInsightsFull = (insights.fullReading || aiAnalysisText || insights.coverNote || "").trim();
 
   return {
     type: "emotion_health",
@@ -437,6 +438,6 @@ async function buildEmotionData(recordId: string): Promise<HandbookData> {
     coverNote: insights.coverNote,
     day7Reflection: insights.day7Reflection,
     dims,
-    aiInsightsFull: aiInsightsFull.trim(),
+    aiInsightsFull,
   };
 }
