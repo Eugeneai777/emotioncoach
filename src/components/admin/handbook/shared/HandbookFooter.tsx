@@ -1,3 +1,21 @@
+import { createContext, useContext, type ReactNode } from "react";
+
+type HandbookVariant = "male_vitality" | "emotion_health";
+
+const HandbookVariantContext = createContext<HandbookVariant | undefined>(undefined);
+
+export function HandbookVariantProvider({
+  variant,
+  children,
+}: {
+  variant: HandbookVariant;
+  children: ReactNode;
+}) {
+  return (
+    <HandbookVariantContext.Provider value={variant}>{children}</HandbookVariantContext.Provider>
+  );
+}
+
 interface Props {
   pageNumber: number;
   totalPages: number;
@@ -5,6 +23,10 @@ interface Props {
 }
 
 export function HandbookFooter({ pageNumber, totalPages, recordIdTail }: Props) {
+  const variant = useContext(HandbookVariantContext);
+  const leftText =
+    variant === "emotion_health" ? "7 天伴随手册 · 给此刻的你" : "7 天伴随手册 · 个人专属";
+
   return (
     <div
       style={{
@@ -21,7 +43,7 @@ export function HandbookFooter({ pageNumber, totalPages, recordIdTail }: Props) 
         paddingTop: "10px",
       }}
     >
-      <span>7 天伴随手册 · 个人专属</span>
+      <span>{leftText}</span>
       <span>档案编号 · {recordIdTail.toUpperCase()}</span>
       <span>
         {pageNumber} / {totalPages}
