@@ -407,16 +407,17 @@ async function buildEmotionData(recordId: string): Promise<HandbookData> {
     stress_index: num(row.stress_index),
   };
 
-  // 提取完整 AI 解读
+  // 提取完整 AI 解读：优先用 fullReading（300-450 字深度解读），其次原 ai_analysis，最后 coverNote
   const ai = (row as any).ai_analysis;
-  let aiInsightsFull = "";
-  if (typeof ai === "string") aiInsightsFull = ai;
+  let aiAnalysisText = "";
+  if (typeof ai === "string") aiAnalysisText = ai;
   else if (ai && typeof ai === "object") {
-    aiInsightsFull = String(ai.summary || ai.overview || ai.analysis || ai.text || "").trim();
-    if (!aiInsightsFull) {
-      try { aiInsightsFull = JSON.stringify(ai, null, 2).slice(0, 800); } catch { aiInsightsFull = ""; }
+    aiAnalysisText = String(ai.summary || ai.overview || ai.analysis || ai.text || "").trim();
+    if (!aiAnalysisText) {
+      try { aiAnalysisText = JSON.stringify(ai, null, 2).slice(0, 800); } catch { aiAnalysisText = ""; }
     }
   }
+  const aiInsightsFull = (insights.fullReading || aiAnalysisText || insights.coverNote || "").trim();
 
   return {
     type: "emotion_health",
@@ -437,6 +438,6 @@ async function buildEmotionData(recordId: string): Promise<HandbookData> {
     coverNote: insights.coverNote,
     day7Reflection: insights.day7Reflection,
     dims,
-    aiInsightsFull: aiInsightsFull.trim(),
+    aiInsightsFull,
   };
 }
