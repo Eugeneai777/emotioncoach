@@ -25,8 +25,8 @@ export function P1Cover({
   const title = type === "male_vitality" ? "男人有劲 · 7 天伴随手册" : "情绪健康 · 7 天伴随手册";
   const sub =
     type === "male_vitality"
-      ? "不打鸡血，不讲道理。让你看清电量，再决定下一步。"
-      : "不催决定，不堆术语。让你被自己温柔地接住。";
+      ? "不灌鸡汤，先陪你看清自己卡在哪。"
+      : "不催你成为更好的你，先陪你回到自己。";
 
   return (
     <div style={HANDBOOK_PAGE_STYLE} data-page="1">
