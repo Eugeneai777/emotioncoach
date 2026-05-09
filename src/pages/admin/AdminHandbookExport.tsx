@@ -397,8 +397,8 @@ async function buildEmotionData(recordId: string): Promise<HandbookData> {
     { k: "anxiety_index", label: "焦虑指数", v: num(row.anxiety_index) },
     { k: "stress_index", label: "压力指数", v: num(row.stress_index) },
   ];
-  const strengths = indices.filter((x) => x.v >= 60).map((x) => `「${x.label}」还在 ${x.v} 分，是你这 7 天可以倚靠的部分。`);
-  const risks = indices.filter((x) => x.v < 40).map((x) => `「${x.label}」仅 ${x.v} 分，是身体在小声求救，这 7 天先别再加压。`);
+  const strengths = indices.filter((x) => x.v >= 60).map((x) => `「${x.label}」还在 ${x.v} 分，说明你心里那根弦其实一直绷着——也是它在提醒你，别再继续把自己放最后。`);
+  const risks = indices.filter((x) => x.v < 40).map((x) => `「${x.label}」只剩 ${x.v} 分，是身体在用最小声的方式说：撑不住了。这 7 天，先允许自己'今天就这样'。`);
 
   // 雷达图 dims（女版用三大指数）
   const dims: Record<string, number> = {
