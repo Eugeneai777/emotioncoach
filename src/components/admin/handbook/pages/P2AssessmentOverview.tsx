@@ -156,19 +156,16 @@ export function P2AssessmentOverview({
       {/* 下半：AI 完整解读 */}
       <div
         style={{
-          position: "relative",
-          padding: "14px 16px",
+          padding: "16px 18px",
           borderRadius: "10px",
           background: "hsl(var(--muted) / 0.4)",
           border: "1px solid hsl(var(--border))",
-          fontSize: "13px",
-          lineHeight: 1.78,
+          fontSize: "13.5px",
+          lineHeight: 1.85,
           color: "hsl(var(--foreground))",
           whiteSpace: "pre-wrap",
           breakInside: "avoid",
-          maxHeight: "560px",
-          overflow: "hidden",
-          marginBottom: "88px",
+          marginBottom: "72px",
         }}
       >
         <div
@@ -176,24 +173,16 @@ export function P2AssessmentOverview({
             fontSize: "11px",
             color: "hsl(var(--muted-foreground))",
             letterSpacing: "0.1em",
-            marginBottom: "8px",
+            marginBottom: "10px",
           }}
         >
-          AI 完整解读
+          {type === "emotion_health"
+            ? "姐姐想对你说的几句"
+            : type === "male_vitality"
+              ? "哥们想对你说的几句"
+              : "AI 完整解读"}
         </div>
         {insight}
-        <div
-          style={{
-            position: "absolute",
-            left: 0,
-            right: 0,
-            bottom: 0,
-            height: "48px",
-            background:
-              "linear-gradient(to bottom, transparent, hsl(var(--background)) 90%)",
-            pointerEvents: "none",
-          }}
-        />
       </div>
 
       <HandbookFooter pageNumber={2} totalPages={totalPages} recordIdTail={recordIdTail} />
