@@ -36,16 +36,29 @@ export interface HandbookInsightRequest {
 
 const cache = new Map<string, Promise<HandbookInsights>>();
 
+const FALLBACK_FULL_READING_MALE =
+  "你现在不是不行，只是太久没让自己真正歇过。雷达上的几个分数说的是同一件事——你已经把'撑住'练成了本能，连自己累不累都懒得问了。" +
+  "凌晨醒来盯天花板，电话振动那一秒肩膀先收紧，应酬完开车回家在地库里能多坐十分钟才上楼。你以为这只是这阵子忙，其实是身体在用最小声的方式提醒你：" +
+  "再这么扛下去，赢的不是你。这 7 天，不用你立刻改变什么，先把'我必须再扛一下'这句话放下来一格。先看清自己卡在哪，再决定下一步要不要继续一个人走。";
+
+const FALLBACK_FULL_READING_FEMALE =
+  "你不是矫情，也不是太敏感。雷达上的这几个分数，说的是同一件事——你已经太久把自己放在最后一个被照顾的人。" +
+  "清晨睁眼第一口气是叹的，深夜手机亮屏才有几分钟属于自己，家人需要你的时候你才像'在'，对着镜子说'我没事'已经成了肌肉记忆。" +
+  "你把所有疲惫都翻译成了'还行'，把所有委屈都收进了'算了'。这 7 天，不催你做任何决定，也不让你立刻变好。" +
+  "只是先让你被自己温柔地接住——允许有一刻不必先安顿别人，允许把'应该'放下一格。先回到自己，再谈下一步。";
+
 const FALLBACK_BY_TYPE: Record<HandbookType, HandbookInsights> = {
   male_vitality: {
     coverNote: "这 7 天，先不解决问题，先让你看清自己卡在哪。",
     clusterInsights: {},
     day7Reflection: "回头看 7 天前的你，再决定下一步——可以一个人继续，也可以让顾问陪你走下一程。",
+    fullReading: FALLBACK_FULL_READING_MALE,
   },
   emotion_health: {
     coverNote: "这 7 天，先不催你做任何决定，先让你被自己温柔地接住。",
     clusterInsights: {},
     day7Reflection: "你已经走过 7 天了。下一程，不必一个人扛。",
+    fullReading: FALLBACK_FULL_READING_FEMALE,
   },
 };
 
@@ -62,6 +75,7 @@ function sanitizeInsights(ins: HandbookInsights): HandbookInsights {
   return {
     coverNote: sanitizeHandbookText(ins.coverNote),
     day7Reflection: sanitizeHandbookText(ins.day7Reflection),
+    fullReading: sanitizeHandbookText(ins.fullReading),
     clusterInsights: Object.fromEntries(
       Object.entries(ins.clusterInsights || {}).map(([k, v]) => [k, sanitizeHandbookText(v)]),
     ),
