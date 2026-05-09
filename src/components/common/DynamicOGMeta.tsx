@@ -93,9 +93,9 @@ export function DynamicOGMeta({ pageKey, overrides }: DynamicOGMetaProps) {
 
   // 微信菜单分享要求被分享的 link 也必须在 JS 接口安全域名下，且 iOS 对入口 URL 极敏感。
   // 因此用当前页面完整 URL 作为基底，只做域名归一化和必要参数追加，避免签名 URL/当前 URL/分享 URL 三者漂移。
+  // 注意：财富教练页面虽然有静态 landing 页用于爬虫兜底，但 JS-SDK 分享 link 必须与当前页一致，
+  // 否则微信 Android 会因路径不匹配丢弃 SDK 设定，回退为纯链接。
   const wechatShareUrl = useMemo(() => {
-    if (isWealthCoachShare) return shareUrl;
-
     if (typeof window === 'undefined') return shareUrl;
 
     try {
