@@ -315,7 +315,7 @@ async function buildMaleData(recordId: string): Promise<HandbookData> {
     coverNote: insights.coverNote,
     day7Reflection: insights.day7Reflection,
     dims,
-    aiInsightsFull: String(row.ai_insight || "").trim(),
+    aiInsightsFull: (insights.fullReading || String(row.ai_insight || "").trim() || insights.coverNote || "").trim(),
   };
 }
 
