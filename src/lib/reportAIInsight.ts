@@ -21,6 +21,7 @@ export interface HandbookInsights {
   coverNote: string;
   clusterInsights: Record<string, string>;
   day7Reflection: string;
+  fullReading: string;
 }
 
 export interface HandbookInsightRequest {
