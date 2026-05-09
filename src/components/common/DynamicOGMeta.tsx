@@ -69,15 +69,7 @@ export function DynamicOGMeta({ pageKey, overrides }: DynamicOGMetaProps) {
   const canonicalUrl = (finalConfig.url || fallbackUrl).split('?')[0].split('#')[0];
 
   // 分享 URL：基于当前页面真实 path + query + hash，并附加 ref=share，确保深链可还原子状态
-  const isWealthCoachShare = pageKey === 'coach_wealth_coach_4_questions';
   const shareUrl = useMemo(() => {
-    if (isWealthCoachShare) {
-      const params = new URLSearchParams();
-      params.set('ref', 'share');
-      params.set('wxcard', OG_CACHE_VERSION);
-      return `${baseDomain}/share/wealth-coach.html?${params.toString()}`;
-    }
-
     const currentSearch = location.search || '';
     const currentHash = location.hash || '';
     const params = new URLSearchParams(currentSearch);
@@ -89,7 +81,7 @@ export function DynamicOGMeta({ pageKey, overrides }: DynamicOGMetaProps) {
     }
     const search = params.toString();
     return `${baseDomain}${location.pathname}${search ? `?${search}` : ''}${currentHash}`;
-  }, [baseDomain, isWealthCoachShare, location.pathname, location.search, location.hash]);
+  }, [baseDomain, location.pathname, location.search, location.hash]);
 
   // 微信菜单分享要求被分享的 link 也必须在 JS 接口安全域名下，且 iOS 对入口 URL 极敏感。
   // 因此用当前页面完整 URL 作为基底，只做域名归一化和必要参数追加，避免签名 URL/当前 URL/分享 URL 三者漂移。
@@ -109,7 +101,7 @@ export function DynamicOGMeta({ pageKey, overrides }: DynamicOGMetaProps) {
     } catch {
       return shareUrl;
     }
-  }, [baseDomain, isWealthCoachShare, shareUrl]);
+  }, [baseDomain, shareUrl]);
 
   // 分享封面降级：缺失/非 https 时退回默认封面，避免微信/小程序卡片图裂
   const safeShareImage = useMemo(() => {
