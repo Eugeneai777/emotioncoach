@@ -1,6 +1,7 @@
 import { forwardRef } from "react";
 import { P1Cover } from "./pages/P1Cover";
 import { P2AssessmentOverview } from "./pages/P2AssessmentOverview";
+import { HandbookVariantProvider } from "./shared/HandbookFooter";
 import { P2ScenarioBreakdown, type ScenarioCardData } from "./pages/P2ScenarioBreakdown";
 import { P3Strengths } from "./pages/P3Strengths";
 import { P4Risks } from "./pages/P4Risks";
