@@ -117,6 +117,7 @@ export async function fetchHandbookInsights(
         clusterInsights: insights.clusterInsights || {},
         day7Reflection:
           insights.day7Reflection || FALLBACK_BY_TYPE[req.type].day7Reflection,
+        fullReading: insights.fullReading || FALLBACK_BY_TYPE[req.type].fullReading,
       });
     } catch (e) {
       // 校验错误必须抛出（可能是错串），其他网络错误则降级
