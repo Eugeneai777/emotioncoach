@@ -106,13 +106,21 @@ serve(async (req) => {
       ? "你是一个 38 岁中年男性的同龄朋友，话糙理不糙，不端不装，不讲道理只讲场景。"
       : "你是 35+ 女性的姐姐，温柔但不哄，戳得到却不戳痛。说人话，不堆专业术语。";
 
+  const vocabularyAnchors =
+    body.type === "male_vitality"
+      ? "可借用的男性日常画面（不要堆砌，挑 1-2 个就好）：凌晨醒来盯天花板、电话振动那一秒肩膀收紧、应酬完在地库里多坐十分钟才上楼、孩子叫'爸爸'时心里那一下、肩颈/腰、'再扛一下'、'撑住就是赢'。"
+      : "可借用的 35+ 女性日常画面（不要堆砌，挑 1-2 个就好）：清晨睁眼第一口气是叹的、深夜手机亮屏的几分钟属于自己、家人需要你时你才像'在'、对镜子说'我没事'、把疲惫翻译成'还行'、'先把所有人安顿好'、月经周期/更年期身体的变化、自我消失感。";
+
   const systemPrompt = `${tonePrompt}
-你正在为一份 7 天伴随手册写"心里话"片段。要求：
-- 不超过 60 字一段，像在跟朋友说话
-- 不喊口号、不写"加油"、"你可以的"
-- 不要 emoji
-- 不要列条目，写连贯的一句话或两句话
-返回严格的 JSON：{"coverNote": string, "clusterInsights": {<clusterKey>: string}, "day7Reflection": string}`;
+你正在为一份 7 天伴随手册写文字。要求：
+- coverNote / clusterInsights / day7Reflection：每段不超过 60 字，像在跟朋友说话
+- fullReading（这是重头戏）：300-450 字一段，分 3 个层次：
+  ① 看见此刻——结合 TA 的雷达分数，说回 TA 的某个日常画面，让 TA 感觉"这写的就是我"
+  ② 命名困住 TA 的那条隐形规则（例如"必须先把所有人安顿好"或"撑住就是赢"），把它说出来
+  ③ 递一句不催促的下一步，自然过渡到"这 7 天先做什么"，不喊口号、不'你可以的/加油'
+- 整体禁用：emoji、列条目、专业术语堆砌、空洞励志语
+${vocabularyAnchors}
+返回严格的 JSON：{"coverNote": string, "clusterInsights": {<clusterKey>: string}, "day7Reflection": string, "fullReading": string}`;
 
   const userPrompt = `用户：${body.displayName || "TA"}
 最弱维度：${body.weakestLabel || body.weakestKey || "未知"}
@@ -120,10 +128,11 @@ serve(async (req) => {
 场景簇答题摘要：
 ${clusters.map((c) => `- [${c.key}] ${c.title}：${c.summary}`).join("\n")}
 
-请：
-1. coverNote：1 段开场白，让 TA 感觉"被看见"
-2. clusterInsights：对每个簇 key 写 1 段心里话
-3. day7Reflection：1 段第 7 天的话，自然过渡到"下一步可以让顾问陪你走"`;
+请输出：
+1. coverNote：1 段开场白（≤60 字），让 TA 感觉"被看见"
+2. clusterInsights：对每个簇 key 写 1 段心里话（≤60 字）
+3. day7Reflection：1 段第 7 天的话（≤60 字），自然过渡到"下一步可以让顾问陪 TA 走"
+4. fullReading：300-450 字的完整心里话（按上面 3 个层次写）`;
 
   try {
     const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
