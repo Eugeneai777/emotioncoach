@@ -180,6 +180,8 @@ ${clusters.map((c) => `- [${c.key}] ${c.title}：${c.summary}`).join("\n")}
       ),
       day7Reflection:
         sanitize(parsed.day7Reflection) || FALLBACK(body.type).day7Reflection,
+      fullReading:
+        sanitize(parsed.fullReading) || FALLBACK(body.type).fullReading,
     };
 
     return new Response(
