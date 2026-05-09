@@ -131,6 +131,7 @@ export const HandbookContainer = forwardRef<HTMLDivElement, { data: HandbookData
           day7Reflection={data.day7Reflection}
         />
         <P9Companion recordIdTail={tail} pageNumber={11} totalPages={HANDBOOK_TOTAL_PAGES} />
+        </HandbookVariantProvider>
       </div>
     );
   },
