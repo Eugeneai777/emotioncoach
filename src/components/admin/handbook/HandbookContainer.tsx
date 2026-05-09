@@ -75,6 +75,7 @@ export const HandbookContainer = forwardRef<HTMLDivElement, { data: HandbookData
           background: "hsl(var(--background))",
         }}
       >
+        <HandbookVariantProvider variant={data.type}>
         <P1Cover
           type={data.type}
           displayName={data.displayName}
