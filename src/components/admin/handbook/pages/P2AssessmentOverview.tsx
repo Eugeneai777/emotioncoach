@@ -17,10 +17,12 @@ interface Props {
   dims: Record<string, number>;
   /** key → 中文标签 */
   labelMap: Record<string, string>;
-  /** 完整 AI 解读（300-500 字） */
+  /** 完整 AI 解读（300-450 字） */
   aiInsightsFull: string;
   /** 兜底文案，用在 AI 解读为空时 */
   fallbackText: string;
+  /** 手册类型，控制小标题口吻 */
+  type?: "male_vitality" | "emotion_health";
 }
 
 function clamp(n: number, min = 0, max = 100) {
@@ -35,6 +37,7 @@ export function P2AssessmentOverview({
   labelMap,
   aiInsightsFull,
   fallbackText,
+  type,
 }: Props) {
   const entries = Object.entries(dims);
   const radarData = entries.map(([k, v]) => ({
