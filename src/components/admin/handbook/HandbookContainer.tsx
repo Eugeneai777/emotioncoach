@@ -28,9 +28,24 @@ const FEMALE_PATTERN_LABEL: Record<string, string> = {
   anxiety_index: "焦虑指数",
   stress_index: "压力指数",
 };
+const WOMEN_COMP_LABEL: Record<string, string> = {
+  career: "职场生命力",
+  brand: "个人品牌力",
+  resilience: "情绪韧性",
+  finance: "财务掌控力",
+  relationship: "关系资本",
+};
+const MIDLIFE_LABEL: Record<string, string> = {
+  internalFriction: "内耗循环",
+  selfWorth: "价值松动",
+  actionStagnation: "行动停滞",
+  supportSystem: "支持系统",
+  regretRisk: "后悔风险",
+  missionClarity: "使命清晰",
+};
 
 export interface HandbookData {
-  type: "male_vitality" | "emotion_health";
+  type: "male_vitality" | "emotion_health" | "women_competitiveness" | "midlife_awakening";
   recordId: string;
   displayName: string;
   assessmentDate: string;
