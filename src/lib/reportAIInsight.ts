@@ -84,7 +84,7 @@ const FALLBACK_BY_TYPE: Record<HandbookType, HandbookInsights> = {
     fullReading: FALLBACK_FULL_READING_WOMEN_COMP,
   },
   midlife_awakening: {
-    coverNote: "这 7 天，不喊口号，先把"再来一次"缩到今晚就能做完的 5 分钟。",
+    coverNote: "这 7 天，不喊口号，先把'再来一次'缩到今晚就能做完的 5 分钟。",
     clusterInsights: {},
     day7Reflection: "你已经做完 7 天的小动作。下半场，不必一个人扛。",
     fullReading: FALLBACK_FULL_READING_MIDLIFE,
