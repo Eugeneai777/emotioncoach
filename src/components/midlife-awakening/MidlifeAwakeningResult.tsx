@@ -22,6 +22,12 @@ import {
   type MidlifeDimension,
 } from "./midlifeAwakeningData";
 import { MidlifeAIAnalysis, type MidlifeAIAnalysisData } from "./MidlifeAIAnalysis";
+import { MidlifeAwakeningClaimReportCard } from "./MidlifeAwakeningClaimReportCard";
+import { MidlifeAwakeningPdfClaimSheet } from "./MidlifeAwakeningPdfClaimSheet";
+import { useMidlifeAwakeningClaimCode } from "@/hooks/useMidlifeAwakeningClaimCode";
+import { useAuth } from "@/hooks/useAuth";
+import { useProfileCompletion } from "@/hooks/useProfileCompletion";
+import { getProxiedAvatarUrl } from "@/utils/avatarUtils";
 
 interface MidlifeAwakeningResultProps {
   result: MidlifeResult;
@@ -31,6 +37,7 @@ interface MidlifeAwakeningResultProps {
   aiAnalysis?: MidlifeAIAnalysisData | null;
   aiAnalysisLoading?: boolean;
   aiAnalysisError?: string | null;
+  assessmentId?: string | null;
 }
 
 // === 核心指标配置（含目标值） ===
@@ -194,9 +201,15 @@ const dimensionNames: Record<MidlifeDimension, string> = {
   missionClarity: '使命方向',
 };
 
-export function MidlifeAwakeningResult({ result, onShare, onRetake, onViewHistory, aiAnalysis, aiAnalysisLoading = false, aiAnalysisError }: MidlifeAwakeningResultProps) {
+export function MidlifeAwakeningResult({ result, onShare, onRetake, onViewHistory, aiAnalysis, aiAnalysisLoading = false, aiAnalysisError, assessmentId }: MidlifeAwakeningResultProps) {
   const navigate = useNavigate();
   const personality = personalityTypeConfig[result.personalityType];
+  const { user } = useAuth();
+  const { profile } = useProfileCompletion();
+  const { claimCode, loading: loadingCode } = useMidlifeAwakeningClaimCode(assessmentId || null);
+  const [claimSheetOpen, setClaimSheetOpen] = useState(false);
+  const claimDisplayName = profile?.display_name || user?.user_metadata?.name || user?.user_metadata?.display_name || undefined;
+  const claimAvatarUrl = getProxiedAvatarUrl(profile?.avatar_url || user?.user_metadata?.avatar_url);
 
   // === 雷达图数据：语义翻转为"觉醒度" ===
   const awakenedData = result.dimensions.map(d => ({
@@ -256,6 +269,19 @@ export function MidlifeAwakeningResult({ result, onShare, onRetake, onViewHistor
           </div>
         </CardContent>
       </Card>
+
+      {/* 🎁 「7天伴随手册」专属领取卡（对标男人有劲） */}
+      <MidlifeAwakeningClaimReportCard
+        personalityType={result.personalityType}
+        internalFrictionRisk={result.internalFrictionRisk}
+        actionPower={result.actionPower}
+        missionClarity={result.missionClarity}
+        displayName={claimDisplayName}
+        claimCode={claimCode}
+        loadingCode={loadingCode}
+        onClickClaim={() => setClaimSheetOpen(true)}
+        weakestDimensionLabel={lowestDim ? dimensionConfig[lowestDim].name : undefined}
+      />
 
       {/* 2. 核心指标 + 目标值 */}
       <Card className="animate-fade-in" style={{ animationDelay: '0.1s', animationFillMode: 'both' }}>
@@ -470,6 +496,22 @@ export function MidlifeAwakeningResult({ result, onShare, onRetake, onViewHistor
           </Button>
         </div>
       </div>
+
+      {/* 🎁 PDF 领取底部 Sheet */}
+      <MidlifeAwakeningPdfClaimSheet
+        open={claimSheetOpen}
+        onOpenChange={setClaimSheetOpen}
+        claimCode={claimCode}
+        loadingCode={loadingCode}
+        displayName={claimDisplayName}
+        avatarUrl={claimAvatarUrl}
+        personalityType={result.personalityType}
+        dimensions={result.dimensions}
+        internalFrictionRisk={result.internalFrictionRisk}
+        actionPower={result.actionPower}
+        missionClarity={result.missionClarity}
+        weakestDimensionLabel={lowestDim ? dimensionConfig[lowestDim].name : undefined}
+      />
     </div>
   );
 }

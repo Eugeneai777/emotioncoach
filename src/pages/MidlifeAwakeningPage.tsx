@@ -62,6 +62,7 @@ export default function MidlifeAwakeningPage() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('assessment');
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [result, setResult] = useState<MidlifeResult | null>(null);
+  const [assessmentId, setAssessmentId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [showPayDialog, setShowPayDialog] = useState(false);
@@ -204,6 +205,7 @@ export default function MidlifeAwakeningPage() {
         .single();
       if (error) throw error;
       savedAssessmentId = insertData?.id;
+      setAssessmentId(savedAssessmentId || null);
       localStorage.removeItem(STORAGE_KEY);
       setStep('result');
       // 异步触发 AI 分析，不阻塞结果展示
@@ -215,7 +217,7 @@ export default function MidlifeAwakeningPage() {
   };
 
   const handleBack = () => { step === 'questions' ? setStep('start') : navigate(-1); };
-  const handleRetake = () => { setAnswers({}); setResult(null); setAiAnalysis(null); setAiAnalysisError(null); setStep('start'); localStorage.removeItem(STORAGE_KEY); };
+  const handleRetake = () => { setAnswers({}); setResult(null); setAssessmentId(null); setAiAnalysis(null); setAiAnalysisError(null); setStep('start'); localStorage.removeItem(STORAGE_KEY); };
 
   const handleViewHistoryResult = (record: MidlifeHistoryRecord) => {
     const dims = (record.dimensions as any) || [];
@@ -230,6 +232,7 @@ export default function MidlifeAwakeningPage() {
     };
     setResult(r);
     setAnswers((record.answers as Record<number, number>) || {});
+    setAssessmentId((record as any).id || null);
     setStep('result');
     setActiveTab('assessment');
   };
@@ -281,7 +284,7 @@ export default function MidlifeAwakeningPage() {
 
         {step === 'result' && result && (
           <>
-            <MidlifeAwakeningResult result={result} onShare={() => setShareDialogOpen(true)} onRetake={handleRetake} onViewHistory={() => { setStep('start'); setActiveTab('history'); }} aiAnalysis={aiAnalysis} aiAnalysisLoading={aiAnalysisLoading} aiAnalysisError={aiAnalysisError} />
+            <MidlifeAwakeningResult result={result} onShare={() => setShareDialogOpen(true)} onRetake={handleRetake} onViewHistory={() => { setStep('start'); setActiveTab('history'); }} aiAnalysis={aiAnalysis} aiAnalysisLoading={aiAnalysisLoading} aiAnalysisError={aiAnalysisError} assessmentId={assessmentId} />
             <MidlifeAwakeningShareDialog open={shareDialogOpen} onOpenChange={setShareDialogOpen} result={result} />
           </>
         )}

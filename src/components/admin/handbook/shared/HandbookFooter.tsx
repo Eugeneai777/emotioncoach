@@ -1,6 +1,6 @@
 import { createContext, useContext, type ReactNode } from "react";
 
-type HandbookVariant = "male_vitality" | "emotion_health";
+type HandbookVariant = "male_vitality" | "emotion_health" | "women_competitiveness" | "midlife_awakening";
 
 const HandbookVariantContext = createContext<HandbookVariant | undefined>(undefined);
 

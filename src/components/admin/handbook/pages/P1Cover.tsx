@@ -4,7 +4,7 @@ import { HandbookFooter } from "../shared/HandbookFooter";
 import { SealStamp } from "../shared/HandbookMotifs";
 
 interface Props {
-  type: "male_vitality" | "emotion_health";
+  type: "male_vitality" | "emotion_health" | "women_competitiveness" | "midlife_awakening";
   displayName: string;
   assessmentDate: string;
   recordIdTail: string;
