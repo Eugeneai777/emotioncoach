@@ -73,7 +73,14 @@ export const HandbookContainer = forwardRef<HTMLDivElement, { data: HandbookData
   function HandbookContainer({ data }, ref) {
     const tail = data.recordId.replace(/-/g, "").slice(-8);
     const d = data.days;
-    const labelMap = data.type === "male_vitality" ? MALE_LABEL : FEMALE_PATTERN_LABEL;
+    const labelMap =
+      data.type === "male_vitality"
+        ? MALE_LABEL
+        : data.type === "emotion_health"
+          ? FEMALE_PATTERN_LABEL
+          : data.type === "women_competitiveness"
+            ? WOMEN_COMP_LABEL
+            : MIDLIFE_LABEL;
     const dims = data.dims || {};
     const fallback =
       [data.coverNote, ...data.risks, ...data.strengths]
