@@ -23,6 +23,24 @@ import {
   FEMALE_SEVEN_DAYS,
   FEMALE_CAMP_INVITE,
 } from "@/config/emotionHealthHandbook";
+import {
+  WOMEN_CLUSTERS,
+  WOMEN_FALLBACK_BY_SCORE,
+  WOMEN_SEVEN_DAYS,
+  WOMEN_CAMP_INVITE,
+} from "@/config/womenCompetitivenessHandbook";
+import {
+  MIDLIFE_CLUSTERS,
+  MIDLIFE_FALLBACK_BY_SCORE,
+  MIDLIFE_SEVEN_DAYS,
+  MIDLIFE_CAMP_INVITE,
+  MIDLIFE_DIM_LABEL,
+} from "@/config/midlifeAwakeningHandbook";
+import {
+  questions as competitivenessQuestions,
+  categoryInfo as competitivenessCategoryInfo,
+  type CompetitivenessCategory,
+} from "@/components/women-competitiveness/competitivenessData";
 import { useMarketingPoolAdminStatus } from "@/hooks/useMarketingPools";
 import { dedupeClusterInsights } from "@/components/admin/handbook/clusterCopy";
 
@@ -39,6 +57,13 @@ const FEMALE_PATTERN_LABEL: Record<string, string> = {
   tension: "紧绷绷紧",
   suppression: "压抑收回",
   avoidance: "回避卡住",
+};
+const WOMEN_COMP_LABEL: Record<CompetitivenessCategory, string> = {
+  career: "职场生命力",
+  brand: "个人品牌力",
+  resilience: "情绪韧性",
+  finance: "财务掌控力",
+  relationship: "关系资本",
 };
 
 export default function AdminHandbookExport() {
