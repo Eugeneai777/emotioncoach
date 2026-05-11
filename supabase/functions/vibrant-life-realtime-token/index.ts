@@ -52,7 +52,14 @@ const commonTools = [
       properties: {
         destination: {
           type: "string",
-          enum: ["emotion_button", "emotion_coach", "parent_coach", "communication_coach", "story_coach", "gratitude_coach", "training_camp", "community", "packages", "meditation", "history", "profile", "mini_app", "health_store", "youjin_chat", "assessments", "daily_tools"],
+          enum: [
+            "emotion_button", "emotion_coach", "parent_coach", "communication_coach",
+            "story_coach", "gratitude_coach", "training_camp", "stress_camp_7",
+            "community", "packages", "meditation", "history", "profile", "mini_app",
+            "health_store", "youjin_chat", "assessments", "daily_tools",
+            "women_zone", "midlife_zone", "elder_zone", "teen_zone", "workplace_zone",
+            "customer_support", "voice_coach", "partner_program"
+          ],
           description: "目标页面"
         }
       },
