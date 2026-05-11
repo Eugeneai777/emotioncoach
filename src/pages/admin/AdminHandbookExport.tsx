@@ -480,3 +480,240 @@ async function buildEmotionData(recordId: string): Promise<HandbookData> {
     aiInsightsFull,
   };
 }
+
+// ============= 35+ 女性竞争力 =============
+
+async function buildWomenData(recordId: string): Promise<HandbookData> {
+  const { data: row, error } = await supabase
+    .from("competitiveness_assessments")
+    .select("*")
+    .eq("id", recordId)
+    .maybeSingle();
+  if (error || !row) throw new Error("加载测评结果失败");
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("display_name, phone")
+    .eq("id", row.user_id)
+    .maybeSingle();
+  const displayName =
+    profile?.display_name?.trim() ||
+    (profile?.phone ? `用户_${String(profile.phone).slice(-4)}` : "用户");
+
+  const answers: Record<number, number> = (row.answers as any) || {};
+  const categoryScores = (row.category_scores as Record<string, number>) || {};
+  const weakestKey = (row.weakest_category as CompetitivenessCategory) || "career";
+  const weakestLabel = WOMEN_COMP_LABEL[weakestKey] || weakestKey;
+
+  const clusters = WOMEN_CLUSTERS.map((c) => {
+    const items = c.questionIds
+      .map((id) => {
+        const q = competitivenessQuestions.find((x) => x.id === id);
+        if (!q) return null;
+        const ans = answers[id];
+        return {
+          q: String(q.text).slice(0, 40),
+          a: typeof ans === "number" ? `选项 ${ans}` : "未答",
+        };
+      })
+      .filter(Boolean) as Array<{ q: string; a: string }>;
+    const avg =
+      c.questionIds.reduce((s, id) => s + (typeof answers[id] === "number" ? answers[id] : 0), 0) /
+      Math.max(c.questionIds.length, 1);
+    const bucket = Math.max(0, Math.min(3, Math.round(avg) - 1));
+    return {
+      key: c.key,
+      title: c.title,
+      subtitle: c.subtitle,
+      items,
+      insight: WOMEN_FALLBACK_BY_SCORE[bucket] || WOMEN_FALLBACK_BY_SCORE[1],
+      _summary: items.map((i) => `${i.q}=${i.a}`).join("；"),
+    };
+  });
+
+  const insights = await fetchHandbookInsights({
+    recordId,
+    type: "women_competitiveness",
+    weakestKey,
+    weakestLabel,
+    displayName,
+    totalScore: row.total_score,
+    clusters: clusters.map((c) => ({ key: c.key, title: c.title, summary: c._summary })),
+  });
+  for (const c of clusters) {
+    const ai = insights.clusterInsights[c.key];
+    if (ai) c.insight = ai;
+  }
+  const deduped = dedupeClusterInsights(clusters.map((c) => ({ key: c.key, insight: c.insight })));
+  deduped.forEach((d, i) => {
+    clusters[i].insight = d.insight;
+  });
+
+  const dayScripts = WOMEN_SEVEN_DAYS[weakestKey] || WOMEN_SEVEN_DAYS.career;
+
+  const dims: Record<string, number> = {
+    career: Number(categoryScores.career || 0),
+    brand: Number(categoryScores.brand || 0),
+    resilience: Number(categoryScores.resilience || 0),
+    finance: Number(categoryScores.finance || 0),
+    relationship: Number(categoryScores.relationship || 0),
+  };
+  const sortedDims = Object.entries(dims).sort((a, b) => a[1] - b[1]);
+  const strengths = sortedDims
+    .slice(-2)
+    .reverse()
+    .map(([k, v]) => `「${WOMEN_COMP_LABEL[k as CompetitivenessCategory]}」目前 ${v} 分，是你 35 岁后真正长出来的肌肉，先别让别的事来抢它。`);
+  const risks = sortedDims
+    .slice(0, 2)
+    .map(([k, v]) => `「${WOMEN_COMP_LABEL[k as CompetitivenessCategory]}」目前 ${v} 分，已经在松动，这 7 天先把它的筹码摆出来。`);
+
+  const aiAnalysisText = String(row.ai_analysis || "").trim();
+  const aiInsightsFull = (insights.fullReading || aiAnalysisText || insights.coverNote || "").trim();
+
+  return {
+    type: "women_competitiveness",
+    recordId,
+    displayName,
+    assessmentDate: format(new Date(row.created_at || Date.now()), "yyyy-MM-dd"),
+    weakestLabel,
+    totalScore: row.total_score,
+    clusters: clusters.map(({ _summary, ...rest }) => rest),
+    strengths,
+    risks,
+    days: dayScripts,
+    campName: WOMEN_CAMP_INVITE.campName,
+    campIntro: WOMEN_CAMP_INVITE.intro,
+    campValues: WOMEN_CAMP_INVITE.values,
+    whyNotAlone: WOMEN_CAMP_INVITE.whyNotAlone,
+    ctaHint: WOMEN_CAMP_INVITE.ctaHint,
+    coverNote: insights.coverNote,
+    day7Reflection: insights.day7Reflection,
+    dims,
+    aiInsightsFull,
+  };
+}
+
+// ============= 中场觉醒力 =============
+
+async function buildMidlifeData(recordId: string): Promise<HandbookData> {
+  const { data: row, error } = await supabase
+    .from("midlife_awakening_assessments")
+    .select("*")
+    .eq("id", recordId)
+    .maybeSingle();
+  if (error || !row) throw new Error("加载测评结果失败");
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("display_name, phone")
+    .eq("id", row.user_id)
+    .maybeSingle();
+  const displayName =
+    profile?.display_name?.trim() ||
+    (profile?.phone ? `用户_${String(profile.phone).slice(-4)}` : "用户");
+
+  const { midlifeQuestions } = await import("@/components/midlife-awakening/midlifeAwakeningData");
+  const answers: Record<number, number> = (row.answers as any) || {};
+  const dimsArr = (row.dimensions as Array<{ dimension: string; score: number }>) || [];
+  const dimMap: Record<string, number> = {};
+  dimsArr.forEach((d) => {
+    dimMap[d.dimension] = Number(d.score) || 0;
+  });
+
+  // 高分=问题严重的维度（5/6 个），missionClarity 高分=不清晰也是负向
+  // 取分数最高的作为 weakest
+  const sortedHighFirst = Object.entries(dimMap).sort((a, b) => b[1] - a[1]);
+  const weakestKey = (sortedHighFirst[0]?.[0] as keyof typeof MIDLIFE_DIM_LABEL) || "internalFriction";
+  const weakestLabel = MIDLIFE_DIM_LABEL[weakestKey] || String(weakestKey);
+
+  const clusters = MIDLIFE_CLUSTERS.map((c) => {
+    const items = c.questionIds
+      .map((id) => {
+        const q = midlifeQuestions.find((x) => x.id === id);
+        if (!q) return null;
+        const ans = answers[id];
+        return {
+          q: String(q.text).slice(0, 40),
+          a: typeof ans === "number" ? `选项 ${ans}` : "未答",
+        };
+      })
+      .filter(Boolean) as Array<{ q: string; a: string }>;
+    const avg =
+      c.questionIds.reduce((s, id) => s + (typeof answers[id] === "number" ? answers[id] : 0), 0) /
+      Math.max(c.questionIds.length, 1);
+    const bucket = Math.max(0, Math.min(3, Math.round(avg) - 1));
+    return {
+      key: c.key,
+      title: c.title,
+      subtitle: c.subtitle,
+      items,
+      insight: MIDLIFE_FALLBACK_BY_SCORE[bucket] || MIDLIFE_FALLBACK_BY_SCORE[1],
+      _summary: items.map((i) => `${i.q}=${i.a}`).join("；"),
+    };
+  });
+
+  const insights = await fetchHandbookInsights({
+    recordId,
+    type: "midlife_awakening",
+    weakestKey: String(weakestKey),
+    weakestLabel,
+    displayName,
+    totalScore: Number(row.action_power) || null,
+    clusters: clusters.map((c) => ({ key: c.key, title: c.title, summary: c._summary })),
+  });
+  for (const c of clusters) {
+    const ai = insights.clusterInsights[c.key];
+    if (ai) c.insight = ai;
+  }
+  const deduped = dedupeClusterInsights(clusters.map((c) => ({ key: c.key, insight: c.insight })));
+  deduped.forEach((d, i) => {
+    clusters[i].insight = d.insight;
+  });
+
+  const dayScripts = MIDLIFE_SEVEN_DAYS[weakestKey] || MIDLIFE_SEVEN_DAYS.internalFriction;
+
+  // 雷达图 6 维
+  const dims: Record<string, number> = {};
+  (Object.keys(MIDLIFE_DIM_LABEL) as Array<keyof typeof MIDLIFE_DIM_LABEL>).forEach((k) => {
+    dims[k] = dimMap[k] || 0;
+  });
+
+  // 优势：分数最低（最不严重）；风险：分数最高（最严重）
+  const sortedLowFirst = Object.entries(dimMap).sort((a, b) => a[1] - b[1]);
+  const strengths = sortedLowFirst.slice(0, 2).map(([k, v]) =>
+    `「${MIDLIFE_DIM_LABEL[k as keyof typeof MIDLIFE_DIM_LABEL] || k}」${v} 分，目前还稳，是你这些年攒下的底，先别让别的事悄悄抢走。`,
+  );
+  const risks = sortedHighFirst.slice(0, 2).map(([k, v]) =>
+    `「${MIDLIFE_DIM_LABEL[k as keyof typeof MIDLIFE_DIM_LABEL] || k}」${v} 分，已经在亮红灯，这 7 天先把"再来一次"缩到 5 分钟。`,
+  );
+
+  const ai = (row as any).ai_analysis;
+  let aiAnalysisText = "";
+  if (typeof ai === "string") aiAnalysisText = ai;
+  else if (ai && typeof ai === "object") {
+    aiAnalysisText = String(ai.summary || ai.overview || ai.analysis || ai.text || "").trim();
+  }
+  const aiInsightsFull = (insights.fullReading || aiAnalysisText || insights.coverNote || "").trim();
+
+  return {
+    type: "midlife_awakening",
+    recordId,
+    displayName,
+    assessmentDate: format(new Date(row.created_at || Date.now()), "yyyy-MM-dd"),
+    weakestLabel,
+    totalScore: Number(row.action_power) || null,
+    clusters: clusters.map(({ _summary, ...rest }) => rest),
+    strengths,
+    risks,
+    days: dayScripts,
+    campName: MIDLIFE_CAMP_INVITE.campName,
+    campIntro: MIDLIFE_CAMP_INVITE.intro,
+    campValues: MIDLIFE_CAMP_INVITE.values,
+    whyNotAlone: MIDLIFE_CAMP_INVITE.whyNotAlone,
+    ctaHint: MIDLIFE_CAMP_INVITE.ctaHint,
+    coverNote: insights.coverNote,
+    day7Reflection: insights.day7Reflection,
+    dims,
+    aiInsightsFull,
+  };
+}
