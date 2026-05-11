@@ -67,7 +67,10 @@ const WOMEN_COMP_LABEL: Record<CompetitivenessCategory, string> = {
 };
 
 export default function AdminHandbookExport() {
-  const { type, recordId } = useParams<{ type: "male" | "emotion"; recordId: string }>();
+  const { type, recordId } = useParams<{
+    type: "male" | "emotion" | "women" | "midlife";
+    recordId: string;
+  }>();
   const { isAdmin, isLoading: roleLoading } = useMarketingPoolAdminStatus();
   const [data, setData] = useState<HandbookData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -76,7 +79,20 @@ export default function AdminHandbookExport() {
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   const handbookType: HandbookType =
-    type === "emotion" ? "emotion_health" : "male_vitality";
+    type === "emotion"
+      ? "emotion_health"
+      : type === "women"
+        ? "women_competitiveness"
+        : type === "midlife"
+          ? "midlife_awakening"
+          : "male_vitality";
+
+  const TYPE_NAME: Record<HandbookType, string> = {
+    male_vitality: "男人有劲",
+    emotion_health: "情绪健康",
+    women_competitiveness: "35+ 女性竞争力",
+    midlife_awakening: "中场觉醒力",
+  };
 
   useEffect(() => {
     if (!recordId || !isAdmin) return;
@@ -86,11 +102,10 @@ export default function AdminHandbookExport() {
       setError(null);
       try {
         let built: HandbookData;
-        if (handbookType === "male_vitality") {
-          built = await buildMaleData(recordId);
-        } else {
-          built = await buildEmotionData(recordId);
-        }
+        if (handbookType === "male_vitality") built = await buildMaleData(recordId);
+        else if (handbookType === "emotion_health") built = await buildEmotionData(recordId);
+        else if (handbookType === "women_competitiveness") built = await buildWomenData(recordId);
+        else built = await buildMidlifeData(recordId);
         if (!cancelled) setData(built);
       } catch (e: any) {
         if (!cancelled) setError(e?.message || "加载失败");
@@ -108,8 +123,7 @@ export default function AdminHandbookExport() {
     const namePart = data.displayName.replace(/[\s\\/:*?"<>|]/g, "").slice(0, 12) || "用户";
     const idPart = recordId.replace(/-/g, "").slice(0, 8);
     const dateStr = format(new Date(), "yyyyMMdd");
-    const typeName = handbookType === "male_vitality" ? "男人有劲" : "情绪健康";
-    return `${typeName}_${namePart}_${idPart}_${dateStr}`;
+    return `${TYPE_NAME[handbookType]}_${namePart}_${idPart}_${dateStr}`;
   }, [data, recordId, handbookType]);
 
   if (roleLoading) {
