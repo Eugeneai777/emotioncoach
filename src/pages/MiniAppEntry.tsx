@@ -723,7 +723,7 @@ const MiniAppEntry = () => {
                 key={c.topic}
                 type="button"
                 onPointerDown={() => preloadRouteOnIntent(`/life-coach-voice?topic=${c.topic}`)}
-                onClick={() => navigate(`/life-coach-voice?topic=${c.topic}`)}
+                onClick={() => handleUseCaseClick(c.topic)}
                 initial={reduceMotion ? false : { opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 + i * 0.04, duration: 0.25 }}
