@@ -375,6 +375,25 @@ const PromoBanner: React.FC<{
 const MiniAppEntry = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { startVoice } = useGlobalVoice();
+
+  const handleUseCaseClick = useCallback((topic: string) => {
+    if (!user) {
+      navigate(`/auth?redirect=/life-coach-voice?topic=${topic}`);
+      return;
+    }
+    startVoice({
+      coachEmoji: "❤️",
+      coachTitle: "有劲AI生活教练",
+      primaryColor: "rose",
+      tokenEndpoint: "vibrant-life-realtime-token",
+      userId: user.id,
+      mode: "general",
+      featureKey: "realtime_voice",
+      voiceType: getSavedVoiceType(),
+      scenario: TOPIC_TO_SCENARIO_KEY[topic],
+    });
+  }, [user, navigate, startVoice]);
   const { greeting, isLoading } = usePersonalizedGreeting();
   const [isExpanded, setIsExpanded] = useState(false);
   const [pickerAssessments, setPickerAssessments] = useState<AssessmentOption[]>([]);
