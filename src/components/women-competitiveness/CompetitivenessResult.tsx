@@ -290,6 +290,19 @@ export function CompetitivenessResult({ result, answers, followUpInsights, onBac
           </Card>
         </motion.div>
 
+        {/* 🎁 「7天伴随手册」专属领取卡（对标情绪健康） */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05, duration: 0.4 }}>
+          <CompetitivenessClaimReportCard
+            totalScore={result.totalScore}
+            categoryScores={result.categoryScores}
+            weakestCategory={result.weakestCategory}
+            displayName={claimDisplayName}
+            claimCode={claimCode}
+            loadingCode={loadingCode}
+            onClickClaim={() => setClaimSheetOpen(true)}
+          />
+        </motion.div>
+
         {/* 四阶段全览 */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.4 }}>
           <Card className="border-rose-200 bg-white/90">
