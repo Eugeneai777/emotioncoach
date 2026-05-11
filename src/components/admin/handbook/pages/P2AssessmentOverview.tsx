@@ -22,7 +22,7 @@ interface Props {
   /** 兜底文案，用在 AI 解读为空时 */
   fallbackText: string;
   /** 手册类型，控制小标题口吻 */
-  type?: "male_vitality" | "emotion_health";
+  type?: "male_vitality" | "emotion_health" | "women_competitiveness" | "midlife_awakening";
 }
 
 function clamp(n: number, min = 0, max = 100) {
