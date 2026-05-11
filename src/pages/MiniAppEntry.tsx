@@ -22,6 +22,20 @@ import AssessmentPickerSheet, { type AssessmentOption } from "@/components/mini-
 import { usePackagesPurchased } from "@/hooks/usePackagePurchased";
 import { useQuery } from "@tanstack/react-query";
 import { preloadRouteOnIntent, scheduleRoutePreload } from "@/utils/preloadRoutes";
+import { useGlobalVoice } from "@/components/voice/GlobalVoiceProvider";
+import { getSavedVoiceType } from "@/config/voiceTypeConfig";
+
+// topic → SCENARIO_CONFIGS key（与 LifeCoachVoice.tsx 保持一致）
+const TOPIC_TO_SCENARIO_KEY: Record<string, string> = {
+  anxiety: "深夜焦虑",
+  career: "职场迷茫",
+  relationship: "关系困扰",
+  wealth: "财富卡点",
+  sleep: "睡不着觉",
+  meltdown: "情绪崩溃",
+  exam: "考试焦虑",
+  social: "社交困扰",
+};
 
 interface AudienceBadge {
   text: string;
@@ -361,6 +375,25 @@ const PromoBanner: React.FC<{
 const MiniAppEntry = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { startVoice } = useGlobalVoice();
+
+  const handleUseCaseClick = useCallback((topic: string) => {
+    if (!user) {
+      navigate(`/auth?redirect=/life-coach-voice?topic=${topic}`);
+      return;
+    }
+    startVoice({
+      coachEmoji: "❤️",
+      coachTitle: "有劲AI生活教练",
+      primaryColor: "rose",
+      tokenEndpoint: "vibrant-life-realtime-token",
+      userId: user.id,
+      mode: "general",
+      featureKey: "realtime_voice",
+      voiceType: getSavedVoiceType(),
+      scenario: TOPIC_TO_SCENARIO_KEY[topic],
+    });
+  }, [user, navigate, startVoice]);
   const { greeting, isLoading } = usePersonalizedGreeting();
   const [isExpanded, setIsExpanded] = useState(false);
   const [pickerAssessments, setPickerAssessments] = useState<AssessmentOption[]>([]);
@@ -690,7 +723,7 @@ const MiniAppEntry = () => {
                 key={c.topic}
                 type="button"
                 onPointerDown={() => preloadRouteOnIntent(`/life-coach-voice?topic=${c.topic}`)}
-                onClick={() => navigate(`/life-coach-voice?topic=${c.topic}`)}
+                onClick={() => handleUseCaseClick(c.topic)}
                 initial={reduceMotion ? false : { opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 + i * 0.04, duration: 0.25 }}
