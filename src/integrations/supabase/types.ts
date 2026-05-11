@@ -3339,6 +3339,7 @@ export type Database = {
           ai_analysis: string | null
           answers: Json
           category_scores: Json
+          claim_code: string | null
           created_at: string | null
           follow_up_insights: Json | null
           id: string
@@ -3352,6 +3353,7 @@ export type Database = {
           ai_analysis?: string | null
           answers?: Json
           category_scores: Json
+          claim_code?: string | null
           created_at?: string | null
           follow_up_insights?: Json | null
           id?: string
@@ -3365,6 +3367,7 @@ export type Database = {
           ai_analysis?: string | null
           answers?: Json
           category_scores?: Json
+          claim_code?: string | null
           created_at?: string | null
           follow_up_insights?: Json | null
           id?: string
@@ -5869,6 +5872,7 @@ export type Database = {
           action_power: number
           ai_analysis: Json | null
           answers: Json
+          claim_code: string | null
           created_at: string
           dimensions: Json
           id: string
@@ -5885,6 +5889,7 @@ export type Database = {
           action_power?: number
           ai_analysis?: Json | null
           answers?: Json
+          claim_code?: string | null
           created_at?: string
           dimensions?: Json
           id?: string
@@ -5901,6 +5906,7 @@ export type Database = {
           action_power?: number
           ai_analysis?: Json | null
           answers?: Json
+          claim_code?: string | null
           created_at?: string
           dimensions?: Json
           id?: string
@@ -12472,7 +12478,9 @@ export type Database = {
         }[]
       }
       generate_assessment_claim_code: { Args: never; Returns: string }
+      generate_competitiveness_claim_code: { Args: never; Returns: string }
       generate_emotion_health_claim_code: { Args: never; Returns: string }
+      generate_midlife_awakening_claim_code: { Args: never; Returns: string }
       get_partner_id_for_user: { Args: { p_user_id: string }; Returns: string }
       get_user_permissions: {
         Args: { p_user_id: string }
