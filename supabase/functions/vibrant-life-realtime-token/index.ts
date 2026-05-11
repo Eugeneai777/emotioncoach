@@ -1268,7 +1268,8 @@ serve(async (req) => {
     }
 
     const OPENAI_PROXY_URL = Deno.env.get('OPENAI_PROXY_URL');
-    const baseUrl = OPENAI_PROXY_URL || 'https://api.openai.com';
+    // 注意：sessions 创建端点必须直连 OpenAI，代理会注入过期的 `OpenAI-Beta: realtime` 头导致 400
+    const baseUrl = 'https://api.openai.com';
 
     // 🚀 加速：通用模式（最常用路径）走"快路径"——立即并行启动 OpenAI session 创建
     // 与上下文查询并发，session.create 与 4 个 DB 查询同时进行，减少 300-500ms
