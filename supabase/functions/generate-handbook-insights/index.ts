@@ -20,7 +20,7 @@ interface ClusterInput {
 
 interface Body {
   recordId: string;
-  type: "male_vitality" | "emotion_health";
+  type: "male_vitality" | "emotion_health" | "women_competitiveness" | "midlife_awakening";
   /** 主导维度 / 主反应模式 key（如 energy / exhaustion） */
   weakestKey?: string | null;
   /** 主导维度的中文名 */
