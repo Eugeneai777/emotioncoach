@@ -1537,8 +1537,8 @@ ${photoList}
       ];
     }
 
-    // 请求 OpenAI Realtime session（快路径下复用并行启动的 Promise）
-    const realtimeUrl = `${baseUrl}/v1/realtime/sessions`;
+    // 请求 OpenAI Realtime client_secrets（快路径下复用并行启动的 Promise）
+    const realtimeUrl = `${baseUrl}/v1/realtime/client_secrets`;
     const response = fastPathSessionPromise
       ? await fastPathSessionPromise
       : await fetch(realtimeUrl, {
@@ -1547,26 +1547,21 @@ ${photoList}
             "Authorization": `Bearer ${OPENAI_API_KEY}`,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
+          body: JSON.stringify(toClientSecretsBody({
             model: "gpt-4o-mini-realtime-preview",
             voice: mapVoiceTypeToOpenAIVoice(voiceOverride, mode),
             instructions: instructions,
             tools: tools,
             tool_choice: "auto",
-            input_audio_format: "pcm16",
-            output_audio_format: "pcm16",
             max_response_output_tokens: "inf",
-            input_audio_transcription: {
-              model: "whisper-1",
-              language: "zh"
-            },
+            input_audio_transcription: { model: "whisper-1", language: "zh" },
             turn_detection: {
               type: "server_vad",
               threshold: 0.6,
               prefix_padding_ms: 200,
               silence_duration_ms: 1800,
             },
-          }),
+          })),
         });
 
     if (!response.ok) {
@@ -1578,15 +1573,16 @@ ${photoList}
     const data = await response.json();
     console.log("Realtime session created, mode:", mode, "fastPath:", !!fastPathSessionPromise);
 
-    const realtimeProxyUrl = OPENAI_PROXY_URL 
-      ? `${OPENAI_PROXY_URL}/v1/realtime`
-      : 'https://api.openai.com/v1/realtime';
+    // SDP 连接端点：新版用 /v1/realtime/calls（替代旧版 /v1/realtime?model=...）
+    const realtimeProxyUrl = OPENAI_PROXY_URL
+      ? `${OPENAI_PROXY_URL}/v1/realtime/calls`
+      : 'https://api.openai.com/v1/realtime/calls';
 
-    // 快路径下：把完整 instructions 和 tools 一并下发，前端在 datachannel open 后用 session.update 推送
-    // 同时透传 scenario_opening：PTT 模式下，前端需主动触发 response.create 让 AI 念开场白
+    // 兼容前端：新接口返回 { value, expires_at, session }，前端读取 client_secret.value
     const scenarioOpening = (scenario && SCENARIO_CONFIGS[scenario]?.opening) || null;
     return new Response(JSON.stringify({
       ...data,
+      client_secret: { value: data.value, expires_at: data.expires_at },
       realtime_url: realtimeProxyUrl,
       mode: mode,
       scenario_opening: scenarioOpening,
