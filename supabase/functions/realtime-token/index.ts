@@ -7,6 +7,21 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
+function toClientSecretsBody(legacy: Record<string, any>): Record<string, any> {
+  const session: Record<string, any> = { type: "realtime", model: legacy.model };
+  if (legacy.instructions !== undefined) session.instructions = legacy.instructions;
+  if (legacy.tools !== undefined) session.tools = legacy.tools;
+  if (legacy.tool_choice !== undefined) session.tool_choice = legacy.tool_choice;
+  if (legacy.max_response_output_tokens !== undefined) session.max_output_tokens = legacy.max_response_output_tokens;
+  const audioInput: Record<string, any> = { format: { type: "audio/pcm", rate: 24000 } };
+  if (legacy.input_audio_transcription) audioInput.transcription = legacy.input_audio_transcription;
+  if (legacy.turn_detection) audioInput.turn_detection = legacy.turn_detection;
+  const audioOutput: Record<string, any> = { format: { type: "audio/pcm", rate: 24000 } };
+  if (legacy.voice) audioOutput.voice = legacy.voice;
+  session.audio = { input: audioInput, output: audioOutput };
+  return { session };
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
