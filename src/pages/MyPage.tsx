@@ -138,9 +138,10 @@ const MyPage: React.FC = () => {
       case "联系客服":
         navigate("/customer-support");
         break;
-      case "退出登录":
+      case "退出登录": {
         sessionStorage.setItem('signing_out', '1');
-        navigate("/auth?signing_out=1");
+        const back = encodeURIComponent(location.pathname + location.search);
+        navigate(`/auth?signing_out=1&redirect=${back}`);
         setTimeout(() => {
           signOut()
             .then(() => toast({ title: "已退出登录" }))
@@ -148,6 +149,7 @@ const MyPage: React.FC = () => {
             .finally(() => sessionStorage.removeItem('signing_out'));
         }, 0);
         break;
+      }
     }
   };
 
