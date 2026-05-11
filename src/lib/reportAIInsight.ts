@@ -9,7 +9,11 @@
 import { supabase } from "@/integrations/supabase/client";
 import { sanitizeHandbookText } from "@/lib/handbookText";
 
-export type HandbookType = "male_vitality" | "emotion_health";
+export type HandbookType =
+  | "male_vitality"
+  | "emotion_health"
+  | "women_competitiveness"
+  | "midlife_awakening";
 
 export interface HandbookClusterInput {
   key: string;
