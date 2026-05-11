@@ -9,7 +9,11 @@
 import { supabase } from "@/integrations/supabase/client";
 import { sanitizeHandbookText } from "@/lib/handbookText";
 
-export type HandbookType = "male_vitality" | "emotion_health";
+export type HandbookType =
+  | "male_vitality"
+  | "emotion_health"
+  | "women_competitiveness"
+  | "midlife_awakening";
 
 export interface HandbookClusterInput {
   key: string;
@@ -47,6 +51,19 @@ const FALLBACK_FULL_READING_FEMALE =
   "你把所有疲惫都翻译成了'还行'，把所有委屈都收进了'算了'。这 7 天，不催你做任何决定，也不让你立刻变好。" +
   "只是先让你被自己温柔地接住——允许有一刻不必先安顿别人，允许把'应该'放下一格。先回到自己，再谈下一步。";
 
+const FALLBACK_FULL_READING_WOMEN_COMP =
+  "你不是输给了年龄，也不是输给了 95 后。雷达上的几个分数说的是同一件事——你已经太久没把自己手里的牌摆到桌面上。" +
+  "凌晨 1 点改完方案，地铁里看到 95 后笑得轻松，朋友圈不敢发观点怕被嘲，谈薪那一刻突然喉咙发紧。" +
+  "你以为是'35 岁不香了'，其实是身边没人替你说一句'你已经很厉害了'。" +
+  "这 7 天不催你卷得更猛，先陪你把 35 岁后真正长出来的肌肉一项项摆出来——存款、人脉、专业、判断力，每一样都是你的筹码。" +
+  "先看见盘面，再决定下一步要不要重新出牌。";
+
+const FALLBACK_FULL_READING_MIDLIFE =
+  "你不是没动力，也不是不想再来一次。雷达上的分数说的是同一件事——你脑子里那个圈一直在转，事情还没发生，先在心里跑了 50 圈。" +
+  "晚上躺下后想起一件没做的事，又翻来覆去；想做的事拆到一半就放下，怕自己撑不住一年；同代人的近况一眼就知道，自己却说不上来这一年在做什么。" +
+  "你以为是中年没劲了，其实是'再来一次'被你自己想得太重。这 7 天不催你立 flag，只把'再来一次'缩到今晚就能做完的 5 分钟动作。" +
+  "先做完那 5 分钟，你会发现下半场没你想得那么远。";
+
 const FALLBACK_BY_TYPE: Record<HandbookType, HandbookInsights> = {
   male_vitality: {
     coverNote: "这 7 天，先不解决问题，先让你看清自己卡在哪。",
@@ -59,6 +76,18 @@ const FALLBACK_BY_TYPE: Record<HandbookType, HandbookInsights> = {
     clusterInsights: {},
     day7Reflection: "你已经走过 7 天了。下一程，不必一个人扛。",
     fullReading: FALLBACK_FULL_READING_FEMALE,
+  },
+  women_competitiveness: {
+    coverNote: "这 7 天，不卷年轻、不比赛道，先把你已有的筹码摆出来。",
+    clusterInsights: {},
+    day7Reflection: "回头看 Day 1 的你，下一步可以一个人继续出牌，也可以让一群同代人陪你看着。",
+    fullReading: FALLBACK_FULL_READING_WOMEN_COMP,
+  },
+  midlife_awakening: {
+    coverNote: "这 7 天，不喊口号，先把'再来一次'缩到今晚就能做完的 5 分钟。",
+    clusterInsights: {},
+    day7Reflection: "你已经做完 7 天的小动作。下半场，不必一个人扛。",
+    fullReading: FALLBACK_FULL_READING_MIDLIFE,
   },
 };
 

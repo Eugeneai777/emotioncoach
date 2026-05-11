@@ -20,7 +20,7 @@ interface ClusterInput {
 
 interface Body {
   recordId: string;
-  type: "male_vitality" | "emotion_health";
+  type: "male_vitality" | "emotion_health" | "women_competitiveness" | "midlife_awakening";
   /** 主导维度 / 主反应模式 key（如 energy / exhaustion） */
   weakestKey?: string | null;
   /** 主导维度的中文名 */
@@ -44,18 +44,45 @@ const FALLBACK_FULL_READING_FEMALE =
   "你把所有疲惫都翻译成了'还行'，把所有委屈都收进了'算了'。这 7 天，不催你做任何决定，也不让你立刻变好。" +
   "只是先让你被自己温柔地接住——允许有一刻不必先安顿别人，允许把'应该'放下一格。先回到自己，再谈下一步。";
 
+const FALLBACK_FULL_READING_WOMEN_COMP =
+  "你不是输给了年龄，也不是输给了 95 后。雷达上的几个分数说的是同一件事——你已经太久没把自己手里的牌摆到桌面上。" +
+  "凌晨 1 点改完方案，地铁里看到 95 后笑得轻松，朋友圈不敢发观点怕被嘲，谈薪那一刻突然喉咙发紧。" +
+  "你以为是'35 岁不香了'，其实是身边没人替你说一句'你已经很厉害了'。" +
+  "这 7 天不催你卷得更猛，先陪你把 35 岁后真正长出来的肌肉一项项摆出来——存款、人脉、专业、判断力，每一样都是你的筹码。" +
+  "先看见盘面，再决定下一步要不要重新出牌。";
+
+const FALLBACK_FULL_READING_MIDLIFE =
+  "你不是没动力，也不是不想再来一次。雷达上的分数说的是同一件事——你脑子里那个圈一直在转，事情还没发生，先在心里跑了 50 圈。" +
+  "晚上躺下后想起一件没做的事，又翻来覆去；想做的事拆到一半就放下，怕自己撑不住一年。" +
+  "你以为是中年没劲了，其实是'再来一次'被你自己想得太重。这 7 天不催你立 flag，只把'再来一次'缩到今晚就能做完的 5 分钟动作。" +
+  "先做完那 5 分钟，你会发现下半场没你想得那么远。";
+
+const COVER_BY_TYPE: Record<Body["type"], string> = {
+  male_vitality: "这 7 天，先不解决问题，先让你看清自己卡在哪。",
+  emotion_health: "这 7 天，先不催你做任何决定，先让你被自己温柔地接住。",
+  women_competitiveness: "这 7 天，不卷年轻、不比赛道，先把你已有的筹码摆出来。",
+  midlife_awakening: "这 7 天，不喊口号，先把'再来一次'缩到今晚就能做完的 5 分钟。",
+};
+
+const DAY7_BY_TYPE: Record<Body["type"], string> = {
+  male_vitality: "回头看 7 天前的你，再决定下一步怎么走——可以一个人继续，也可以让顾问陪你走下一程。",
+  emotion_health: "你已经走过 7 天了。下一程，不必一个人扛。",
+  women_competitiveness: "回头看 Day 1 的你，下一步可以一个人继续出牌，也可以让一群同代人陪你看着。",
+  midlife_awakening: "你已经做完 7 天的小动作。下半场，不必一个人扛。",
+};
+
+const FULL_BY_TYPE: Record<Body["type"], string> = {
+  male_vitality: FALLBACK_FULL_READING_MALE,
+  emotion_health: FALLBACK_FULL_READING_FEMALE,
+  women_competitiveness: FALLBACK_FULL_READING_WOMEN_COMP,
+  midlife_awakening: FALLBACK_FULL_READING_MIDLIFE,
+};
+
 const FALLBACK = (type: Body["type"]) => ({
-  coverNote:
-    type === "male_vitality"
-      ? "这 7 天，先不解决问题，先让你看清自己卡在哪。"
-      : "这 7 天，先不催你做任何决定，先让你被自己温柔地接住。",
+  coverNote: COVER_BY_TYPE[type],
   clusterInsights: {} as Record<string, string>,
-  day7Reflection:
-    type === "male_vitality"
-      ? "回头看 7 天前的你，再决定下一步怎么走——可以一个人继续，也可以让顾问陪你走下一程。"
-      : "你已经走过 7 天了。下一程，不必一个人扛。",
-  fullReading:
-    type === "male_vitality" ? FALLBACK_FULL_READING_MALE : FALLBACK_FULL_READING_FEMALE,
+  day7Reflection: DAY7_BY_TYPE[type],
+  fullReading: FULL_BY_TYPE[type],
 });
 
 serve(async (req) => {
@@ -84,7 +111,13 @@ serve(async (req) => {
     });
   }
 
-  if (body.type !== "male_vitality" && body.type !== "emotion_health") {
+  const ALLOWED_TYPES: Body["type"][] = [
+    "male_vitality",
+    "emotion_health",
+    "women_competitiveness",
+    "midlife_awakening",
+  ];
+  if (!ALLOWED_TYPES.includes(body.type)) {
     return new Response(JSON.stringify({ error: "type 不合法" }), {
       status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -101,15 +134,30 @@ serve(async (req) => {
     );
   }
 
-  const tonePrompt =
-    body.type === "male_vitality"
-      ? "你是一个 38 岁中年男性的同龄朋友，话糙理不糙，不端不装，不讲道理只讲场景。"
-      : "你是 35+ 女性的姐姐，温柔但不哄，戳得到却不戳痛。说人话，不堆专业术语。";
+  const TONE_BY_TYPE: Record<Body["type"], string> = {
+    male_vitality:
+      "你是一个 38 岁中年男性的同龄朋友，话糙理不糙，不端不装，不讲道理只讲场景。",
+    emotion_health:
+      "你是 35+ 女性的姐姐，温柔但不哄，戳得到却不戳痛。说人话，不堆专业术语。",
+    women_competitiveness:
+      "你是 35+ 女性的同代姐姐，洞察她'已有筹码 vs 自我贬低'的撕扯。语气温柔笃定，不卷年轻、不说教、不灌'你可以的'。把已有的资产摆出来给她看。",
+    midlife_awakening:
+      "你是 40+ 中年的同代朋友，看穿'内耗循环 vs 行动停滞'的死结。语气克制冷静，不灌鸡汤、不喊口号、不立 flag。把'再来一次'缩到 5 分钟可执行动作。",
+  };
 
-  const vocabularyAnchors =
-    body.type === "male_vitality"
-      ? "可借用的男性日常画面（不要堆砌，挑 1-2 个就好）：凌晨醒来盯天花板、电话振动那一秒肩膀收紧、应酬完在地库里多坐十分钟才上楼、孩子叫'爸爸'时心里那一下、肩颈/腰、'再扛一下'、'撑住就是赢'。"
-      : "可借用的 35+ 女性日常画面（不要堆砌，挑 1-2 个就好）：清晨睁眼第一口气是叹的、深夜手机亮屏的几分钟属于自己、家人需要你时你才像'在'、对镜子说'我没事'、把疲惫翻译成'还行'、'先把所有人安顿好'、月经周期/更年期身体的变化、自我消失感。";
+  const VOCAB_BY_TYPE: Record<Body["type"], string> = {
+    male_vitality:
+      "可借用的男性日常画面（挑 1-2 个）：凌晨醒来盯天花板、电话振动那一秒肩膀收紧、应酬完在地库里多坐十分钟才上楼、孩子叫'爸爸'时心里那一下、肩颈/腰、'再扛一下'、'撑住就是赢'。",
+    emotion_health:
+      "可借用的 35+ 女性日常画面（挑 1-2 个）：清晨睁眼第一口气是叹的、深夜手机亮屏的几分钟属于自己、家人需要你时你才像'在'、对镜子说'我没事'、把疲惫翻译成'还行'、'先把所有人安顿好'、月经周期/更年期身体的变化、自我消失感。",
+    women_competitiveness:
+      "可借用的 35+ 职业女性日常画面（挑 1-2 个）：凌晨 1 点改完方案、地铁上看到 95 后笑得轻松、朋友圈不敢发观点怕被嘲、谈薪那一刻喉咙发紧、面试官问'你都 35 了'、看着同代人的近况自己却说不上来、'酒香不怕巷子深'、不敢报价、把无形资产白送出去。",
+    midlife_awakening:
+      "可借用的 40+ 中年日常画面（挑 1-2 个）：晚上躺下后想起一件没做的事翻来覆去、想做的事拆到一半就放下、同代人的近况一眼就知道自己却说不上来这一年、'再来一次'被想得太重、孩子升学/父母身体/工作天花板同时压来、'撑住就是赢'但不知道在赢什么、5 分钟动作总被'想清楚'拖住。",
+  };
+
+  const tonePrompt = TONE_BY_TYPE[body.type];
+  const vocabularyAnchors = VOCAB_BY_TYPE[body.type];
 
   const systemPrompt = `${tonePrompt}
 你正在为一份 7 天伴随手册写文字。要求：
