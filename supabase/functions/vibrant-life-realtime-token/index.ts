@@ -24,6 +24,33 @@ function mapVoiceTypeToOpenAIVoice(voiceType: string | null, mode: string): stri
   return VOICE_MAP[voiceType] || fallback;
 }
 
+// 将旧版 /v1/realtime/sessions 请求体转换为新版 /v1/realtime/client_secrets 请求体
+// OpenAI 已废弃 /v1/realtime/sessions（返回 invalid_beta），统一改用 client_secrets。
+function toClientSecretsBody(legacy: Record<string, any>): Record<string, any> {
+  const session: Record<string, any> = {
+    type: "realtime",
+    model: legacy.model,
+  };
+  if (legacy.instructions !== undefined) session.instructions = legacy.instructions;
+  if (legacy.tools !== undefined) session.tools = legacy.tools;
+  if (legacy.tool_choice !== undefined) session.tool_choice = legacy.tool_choice;
+  if (legacy.max_response_output_tokens !== undefined) session.max_output_tokens = legacy.max_response_output_tokens;
+
+  const audioInput: Record<string, any> = {
+    format: { type: "audio/pcm", rate: 24000 },
+  };
+  if (legacy.input_audio_transcription) audioInput.transcription = legacy.input_audio_transcription;
+  if (legacy.turn_detection) audioInput.turn_detection = legacy.turn_detection;
+
+  const audioOutput: Record<string, any> = {
+    format: { type: "audio/pcm", rate: 24000 },
+  };
+  if (legacy.voice) audioOutput.voice = legacy.voice;
+
+  session.audio = { input: audioInput, output: audioOutput };
+  return { session };
+}
+
 // 通用工具定义
 const commonTools = [
   {
