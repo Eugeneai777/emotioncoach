@@ -201,9 +201,15 @@ const dimensionNames: Record<MidlifeDimension, string> = {
   missionClarity: '使命方向',
 };
 
-export function MidlifeAwakeningResult({ result, onShare, onRetake, onViewHistory, aiAnalysis, aiAnalysisLoading = false, aiAnalysisError }: MidlifeAwakeningResultProps) {
+export function MidlifeAwakeningResult({ result, onShare, onRetake, onViewHistory, aiAnalysis, aiAnalysisLoading = false, aiAnalysisError, assessmentId }: MidlifeAwakeningResultProps) {
   const navigate = useNavigate();
   const personality = personalityTypeConfig[result.personalityType];
+  const { user } = useAuth();
+  const { profile } = useProfileCompletion();
+  const { claimCode, loading: loadingCode } = useMidlifeAwakeningClaimCode(assessmentId || null);
+  const [claimSheetOpen, setClaimSheetOpen] = useState(false);
+  const claimDisplayName = profile?.display_name || user?.user_metadata?.name || user?.user_metadata?.display_name || undefined;
+  const claimAvatarUrl = getProxiedAvatarUrl(profile?.avatar_url || user?.user_metadata?.avatar_url);
 
   // === 雷达图数据：语义翻转为"觉醒度" ===
   const awakenedData = result.dimensions.map(d => ({
