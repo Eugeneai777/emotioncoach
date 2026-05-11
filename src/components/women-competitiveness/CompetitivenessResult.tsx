@@ -35,6 +35,11 @@ import {
   CompetitivenessCategory,
   CompetitivenessLevel,
 } from "./competitivenessData";
+import { CompetitivenessClaimReportCard } from "./CompetitivenessClaimReportCard";
+import { CompetitivenessPdfClaimSheet } from "./CompetitivenessPdfClaimSheet";
+import { useCompetitivenessClaimCode } from "@/hooks/useCompetitivenessClaimCode";
+import { useProfileCompletion } from "@/hooks/useProfileCompletion";
+import { getProxiedAvatarUrl } from "@/utils/avatarUtils";
 
 interface CompetitivenessResultProps {
   result: ResultType;
@@ -78,6 +83,11 @@ export function CompetitivenessResult({ result, answers, followUpInsights, onBac
   const [isLoadingAI, setIsLoadingAI] = useState(true);
   const [openSections, setOpenSections] = useState<Record<number, boolean>>({ 0: true });
   const [assessmentId, setAssessmentId] = useState<string | null>(existingId || null);
+  const [claimSheetOpen, setClaimSheetOpen] = useState(false);
+  const { claimCode, loading: loadingCode } = useCompetitivenessClaimCode(assessmentId);
+  const { profile } = useProfileCompletion();
+  const claimDisplayName = profile?.display_name || user?.user_metadata?.name || user?.user_metadata?.display_name || undefined;
+  const claimAvatarUrl = getProxiedAvatarUrl(profile?.avatar_url || user?.user_metadata?.avatar_url);
   const [isSharing, setIsSharing] = useState(false);
   const [sharePreviewUrl, setSharePreviewUrl] = useState<string | null>(null);
   const shareCardRef = useRef<HTMLDivElement>(null);
