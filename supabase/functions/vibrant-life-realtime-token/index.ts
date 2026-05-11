@@ -1304,31 +1304,25 @@ serve(async (req) => {
 
     // 用最简 instructions 立即启动 OpenAI session 创建（与下面 DB 查询并行）
     const fastPathSessionPromise = isFastPath
-      ? fetch(`${baseUrl}/v1/realtime/sessions`, {
+      ? fetch(`${baseUrl}/v1/realtime/client_secrets`, {
           method: "POST",
           headers: {
             "Authorization": `Bearer ${OPENAI_API_KEY}`,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
+          body: JSON.stringify(toClientSecretsBody({
             model: "gpt-4o-mini-realtime-preview",
             voice: mapVoiceTypeToOpenAIVoice(voiceOverride, mode),
-            // 占位 instructions，真正的个性化 instructions 由前端在连接后通过 session.update 推送
             instructions: '你是劲老师，温暖的AI生活教练。请等待系统配置后开始对话。',
-            input_audio_format: "pcm16",
-            output_audio_format: "pcm16",
             max_response_output_tokens: "inf",
-            input_audio_transcription: {
-              model: "whisper-1",
-              language: "zh"
-            },
+            input_audio_transcription: { model: "whisper-1", language: "zh" },
             turn_detection: {
               type: "server_vad",
               threshold: 0.6,
               prefix_padding_ms: 200,
               silence_duration_ms: 1800,
             },
-          }),
+          })),
         })
       : null;
 
