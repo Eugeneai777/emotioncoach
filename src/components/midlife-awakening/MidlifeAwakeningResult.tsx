@@ -496,6 +496,22 @@ export function MidlifeAwakeningResult({ result, onShare, onRetake, onViewHistor
           </Button>
         </div>
       </div>
+
+      {/* 🎁 PDF 领取底部 Sheet */}
+      <MidlifeAwakeningPdfClaimSheet
+        open={claimSheetOpen}
+        onOpenChange={setClaimSheetOpen}
+        claimCode={claimCode}
+        loadingCode={loadingCode}
+        displayName={claimDisplayName}
+        avatarUrl={claimAvatarUrl}
+        personalityType={result.personalityType}
+        dimensions={result.dimensions}
+        internalFrictionRisk={result.internalFrictionRisk}
+        actionPower={result.actionPower}
+        missionClarity={result.missionClarity}
+        weakestDimensionLabel={lowestDim ? dimensionConfig[lowestDim].name : undefined}
+      />
     </div>
   );
 }
