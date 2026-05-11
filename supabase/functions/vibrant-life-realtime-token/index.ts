@@ -24,6 +24,33 @@ function mapVoiceTypeToOpenAIVoice(voiceType: string | null, mode: string): stri
   return VOICE_MAP[voiceType] || fallback;
 }
 
+// 将旧版 /v1/realtime/sessions 请求体转换为新版 /v1/realtime/client_secrets 请求体
+// OpenAI 已废弃 /v1/realtime/sessions（返回 invalid_beta），统一改用 client_secrets。
+function toClientSecretsBody(legacy: Record<string, any>): Record<string, any> {
+  const session: Record<string, any> = {
+    type: "realtime",
+    model: legacy.model,
+  };
+  if (legacy.instructions !== undefined) session.instructions = legacy.instructions;
+  if (legacy.tools !== undefined) session.tools = legacy.tools;
+  if (legacy.tool_choice !== undefined) session.tool_choice = legacy.tool_choice;
+  if (legacy.max_response_output_tokens !== undefined) session.max_output_tokens = legacy.max_response_output_tokens;
+
+  const audioInput: Record<string, any> = {
+    format: { type: "audio/pcm", rate: 24000 },
+  };
+  if (legacy.input_audio_transcription) audioInput.transcription = legacy.input_audio_transcription;
+  if (legacy.turn_detection) audioInput.turn_detection = legacy.turn_detection;
+
+  const audioOutput: Record<string, any> = {
+    format: { type: "audio/pcm", rate: 24000 },
+  };
+  if (legacy.voice) audioOutput.voice = legacy.voice;
+
+  session.audio = { input: audioInput, output: audioOutput };
+  return { session };
+}
+
 // 通用工具定义
 const commonTools = [
   {
@@ -1277,31 +1304,25 @@ serve(async (req) => {
 
     // 用最简 instructions 立即启动 OpenAI session 创建（与下面 DB 查询并行）
     const fastPathSessionPromise = isFastPath
-      ? fetch(`${baseUrl}/v1/realtime/sessions`, {
+      ? fetch(`${baseUrl}/v1/realtime/client_secrets`, {
           method: "POST",
           headers: {
             "Authorization": `Bearer ${OPENAI_API_KEY}`,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
+          body: JSON.stringify(toClientSecretsBody({
             model: "gpt-4o-mini-realtime-preview",
             voice: mapVoiceTypeToOpenAIVoice(voiceOverride, mode),
-            // 占位 instructions，真正的个性化 instructions 由前端在连接后通过 session.update 推送
             instructions: '你是劲老师，温暖的AI生活教练。请等待系统配置后开始对话。',
-            input_audio_format: "pcm16",
-            output_audio_format: "pcm16",
             max_response_output_tokens: "inf",
-            input_audio_transcription: {
-              model: "whisper-1",
-              language: "zh"
-            },
+            input_audio_transcription: { model: "whisper-1", language: "zh" },
             turn_detection: {
               type: "server_vad",
               threshold: 0.6,
               prefix_padding_ms: 200,
               silence_duration_ms: 1800,
             },
-          }),
+          })),
         })
       : null;
 
@@ -1516,8 +1537,8 @@ ${photoList}
       ];
     }
 
-    // 请求 OpenAI Realtime session（快路径下复用并行启动的 Promise）
-    const realtimeUrl = `${baseUrl}/v1/realtime/sessions`;
+    // 请求 OpenAI Realtime client_secrets（快路径下复用并行启动的 Promise）
+    const realtimeUrl = `${baseUrl}/v1/realtime/client_secrets`;
     const response = fastPathSessionPromise
       ? await fastPathSessionPromise
       : await fetch(realtimeUrl, {
@@ -1526,26 +1547,21 @@ ${photoList}
             "Authorization": `Bearer ${OPENAI_API_KEY}`,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
+          body: JSON.stringify(toClientSecretsBody({
             model: "gpt-4o-mini-realtime-preview",
             voice: mapVoiceTypeToOpenAIVoice(voiceOverride, mode),
             instructions: instructions,
             tools: tools,
             tool_choice: "auto",
-            input_audio_format: "pcm16",
-            output_audio_format: "pcm16",
             max_response_output_tokens: "inf",
-            input_audio_transcription: {
-              model: "whisper-1",
-              language: "zh"
-            },
+            input_audio_transcription: { model: "whisper-1", language: "zh" },
             turn_detection: {
               type: "server_vad",
               threshold: 0.6,
               prefix_padding_ms: 200,
               silence_duration_ms: 1800,
             },
-          }),
+          })),
         });
 
     if (!response.ok) {
@@ -1557,15 +1573,16 @@ ${photoList}
     const data = await response.json();
     console.log("Realtime session created, mode:", mode, "fastPath:", !!fastPathSessionPromise);
 
-    const realtimeProxyUrl = OPENAI_PROXY_URL 
-      ? `${OPENAI_PROXY_URL}/v1/realtime`
-      : 'https://api.openai.com/v1/realtime';
+    // SDP 连接端点：新版用 /v1/realtime/calls（替代旧版 /v1/realtime?model=...）
+    const realtimeProxyUrl = OPENAI_PROXY_URL
+      ? `${OPENAI_PROXY_URL}/v1/realtime/calls`
+      : 'https://api.openai.com/v1/realtime/calls';
 
-    // 快路径下：把完整 instructions 和 tools 一并下发，前端在 datachannel open 后用 session.update 推送
-    // 同时透传 scenario_opening：PTT 模式下，前端需主动触发 response.create 让 AI 念开场白
+    // 兼容前端：新接口返回 { value, expires_at, session }，前端读取 client_secret.value
     const scenarioOpening = (scenario && SCENARIO_CONFIGS[scenario]?.opening) || null;
     return new Response(JSON.stringify({
       ...data,
+      client_secret: { value: data.value, expires_at: data.expires_at },
       realtime_url: realtimeProxyUrl,
       mode: mode,
       scenario_opening: scenarioOpening,
