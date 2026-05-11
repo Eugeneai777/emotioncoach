@@ -270,6 +270,19 @@ export function MidlifeAwakeningResult({ result, onShare, onRetake, onViewHistor
         </CardContent>
       </Card>
 
+      {/* 🎁 「7天伴随手册」专属领取卡（对标男人有劲） */}
+      <MidlifeAwakeningClaimReportCard
+        personalityType={result.personalityType}
+        internalFrictionRisk={result.internalFrictionRisk}
+        actionPower={result.actionPower}
+        missionClarity={result.missionClarity}
+        displayName={claimDisplayName}
+        claimCode={claimCode}
+        loadingCode={loadingCode}
+        onClickClaim={() => setClaimSheetOpen(true)}
+        weakestDimensionLabel={lowestDim ? dimensionConfig[lowestDim].name : undefined}
+      />
+
       {/* 2. 核心指标 + 目标值 */}
       <Card className="animate-fade-in" style={{ animationDelay: '0.1s', animationFillMode: 'both' }}>
         <CardHeader className="pb-2">
