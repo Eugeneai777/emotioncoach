@@ -65,7 +65,7 @@ serve(async (req) => {
     // 使用 Cloudflare 代理（如果配置了）
     const OPENAI_PROXY_URL = Deno.env.get('OPENAI_PROXY_URL');
     const baseUrl = OPENAI_PROXY_URL || 'https://api.openai.com';
-    const realtimeUrl = `${baseUrl}/v1/realtime/sessions`;
+    const realtimeUrl = `${baseUrl}/v1/realtime/client_secrets`;
 
     console.log('Creating OpenAI Realtime session via:', OPENAI_PROXY_URL ? 'proxy' : 'direct');
 
