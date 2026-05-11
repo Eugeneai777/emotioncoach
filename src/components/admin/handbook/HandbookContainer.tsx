@@ -120,11 +120,13 @@ export const HandbookContainer = forwardRef<HTMLDivElement, { data: HandbookData
         <P3Strengths recordIdTail={tail} strengths={data.strengths} pageNumber={4} totalPages={HANDBOOK_TOTAL_PAGES} />
         <P4Risks recordIdTail={tail} risks={data.risks} pageNumber={5} totalPages={HANDBOOK_TOTAL_PAGES} />
         {(() => {
-          const isFemale = data.type === "emotion_health";
-          const t12 = isFemale ? "Day 1-2 · 先回到自己" : "Day 1-2 · 先看见";
-          const t34 = isFemale ? "Day 3-4 · 把'应该'放下一格" : "Day 3-4 · 动一点点";
-          const t56 = isFemale ? "Day 5-6 · 让一个人看见你" : "Day 5-6 · 让一个人靠近";
-          const t7 = isFemale ? "Day 7 · 回头看自己走了多远" : "Day 7 · 回头看，向前走";
+          const titles: Record<HandbookData["type"], [string, string, string, string]> = {
+            male_vitality: ["Day 1-2 · 先看见", "Day 3-4 · 动一点点", "Day 5-6 · 让一个人靠近", "Day 7 · 回头看，向前走"],
+            emotion_health: ["Day 1-2 · 先回到自己", "Day 3-4 · 把'应该'放下一格", "Day 5-6 · 让一个人看见你", "Day 7 · 回头看自己走了多远"],
+            women_competitiveness: ["Day 1-2 · 先看见你的盘面", "Day 3-4 · 拆掉假对手", "Day 5-6 · 让一个同代人看见你", "Day 7 · 第 8 天去哪"],
+            midlife_awakening: ["Day 1-2 · 先承认卡住", "Day 3-4 · 缩到 5 分钟", "Day 5-6 · 找一个同代人", "Day 7 · 中场宣言"],
+          };
+          const [t12, t34, t56, t7] = titles[data.type];
           return (
             <>
               <HandbookDayPage recordIdTail={tail} pageNumber={6} totalPages={HANDBOOK_TOTAL_PAGES} pageTitle={t12} days={d.slice(0, 2)} />
