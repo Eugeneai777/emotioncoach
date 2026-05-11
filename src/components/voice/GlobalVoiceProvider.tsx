@@ -108,6 +108,7 @@ export function GlobalVoiceProvider({ children }: { children: ReactNode }) {
               mode={voiceConfig.mode}
               featureKey={voiceConfig.featureKey}
               voiceType={voiceConfig.voiceType}
+              scenario={voiceConfig.scenario}
             />
           </Suspense>
         </div>
