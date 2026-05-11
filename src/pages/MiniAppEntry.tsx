@@ -22,6 +22,20 @@ import AssessmentPickerSheet, { type AssessmentOption } from "@/components/mini-
 import { usePackagesPurchased } from "@/hooks/usePackagePurchased";
 import { useQuery } from "@tanstack/react-query";
 import { preloadRouteOnIntent, scheduleRoutePreload } from "@/utils/preloadRoutes";
+import { useGlobalVoice } from "@/components/voice/GlobalVoiceProvider";
+import { getSavedVoiceType } from "@/config/voiceTypeConfig";
+
+// topic → SCENARIO_CONFIGS key（与 LifeCoachVoice.tsx 保持一致）
+const TOPIC_TO_SCENARIO_KEY: Record<string, string> = {
+  anxiety: "深夜焦虑",
+  career: "职场迷茫",
+  relationship: "关系困扰",
+  wealth: "财富卡点",
+  sleep: "睡不着觉",
+  meltdown: "情绪崩溃",
+  exam: "考试焦虑",
+  social: "社交困扰",
+};
 
 interface AudienceBadge {
   text: string;
