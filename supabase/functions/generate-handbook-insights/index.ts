@@ -44,18 +44,45 @@ const FALLBACK_FULL_READING_FEMALE =
   "你把所有疲惫都翻译成了'还行'，把所有委屈都收进了'算了'。这 7 天，不催你做任何决定，也不让你立刻变好。" +
   "只是先让你被自己温柔地接住——允许有一刻不必先安顿别人，允许把'应该'放下一格。先回到自己，再谈下一步。";
 
+const FALLBACK_FULL_READING_WOMEN_COMP =
+  "你不是输给了年龄，也不是输给了 95 后。雷达上的几个分数说的是同一件事——你已经太久没把自己手里的牌摆到桌面上。" +
+  "凌晨 1 点改完方案，地铁里看到 95 后笑得轻松，朋友圈不敢发观点怕被嘲，谈薪那一刻突然喉咙发紧。" +
+  "你以为是'35 岁不香了'，其实是身边没人替你说一句'你已经很厉害了'。" +
+  "这 7 天不催你卷得更猛，先陪你把 35 岁后真正长出来的肌肉一项项摆出来——存款、人脉、专业、判断力，每一样都是你的筹码。" +
+  "先看见盘面，再决定下一步要不要重新出牌。";
+
+const FALLBACK_FULL_READING_MIDLIFE =
+  "你不是没动力，也不是不想再来一次。雷达上的分数说的是同一件事——你脑子里那个圈一直在转，事情还没发生，先在心里跑了 50 圈。" +
+  "晚上躺下后想起一件没做的事，又翻来覆去；想做的事拆到一半就放下，怕自己撑不住一年。" +
+  "你以为是中年没劲了，其实是'再来一次'被你自己想得太重。这 7 天不催你立 flag，只把'再来一次'缩到今晚就能做完的 5 分钟动作。" +
+  "先做完那 5 分钟，你会发现下半场没你想得那么远。";
+
+const COVER_BY_TYPE: Record<Body["type"], string> = {
+  male_vitality: "这 7 天，先不解决问题，先让你看清自己卡在哪。",
+  emotion_health: "这 7 天，先不催你做任何决定，先让你被自己温柔地接住。",
+  women_competitiveness: "这 7 天，不卷年轻、不比赛道，先把你已有的筹码摆出来。",
+  midlife_awakening: "这 7 天，不喊口号，先把'再来一次'缩到今晚就能做完的 5 分钟。",
+};
+
+const DAY7_BY_TYPE: Record<Body["type"], string> = {
+  male_vitality: "回头看 7 天前的你，再决定下一步怎么走——可以一个人继续，也可以让顾问陪你走下一程。",
+  emotion_health: "你已经走过 7 天了。下一程，不必一个人扛。",
+  women_competitiveness: "回头看 Day 1 的你，下一步可以一个人继续出牌，也可以让一群同代人陪你看着。",
+  midlife_awakening: "你已经做完 7 天的小动作。下半场，不必一个人扛。",
+};
+
+const FULL_BY_TYPE: Record<Body["type"], string> = {
+  male_vitality: FALLBACK_FULL_READING_MALE,
+  emotion_health: FALLBACK_FULL_READING_FEMALE,
+  women_competitiveness: FALLBACK_FULL_READING_WOMEN_COMP,
+  midlife_awakening: FALLBACK_FULL_READING_MIDLIFE,
+};
+
 const FALLBACK = (type: Body["type"]) => ({
-  coverNote:
-    type === "male_vitality"
-      ? "这 7 天，先不解决问题，先让你看清自己卡在哪。"
-      : "这 7 天，先不催你做任何决定，先让你被自己温柔地接住。",
+  coverNote: COVER_BY_TYPE[type],
   clusterInsights: {} as Record<string, string>,
-  day7Reflection:
-    type === "male_vitality"
-      ? "回头看 7 天前的你，再决定下一步怎么走——可以一个人继续，也可以让顾问陪你走下一程。"
-      : "你已经走过 7 天了。下一程，不必一个人扛。",
-  fullReading:
-    type === "male_vitality" ? FALLBACK_FULL_READING_MALE : FALLBACK_FULL_READING_FEMALE,
+  day7Reflection: DAY7_BY_TYPE[type],
+  fullReading: FULL_BY_TYPE[type],
 });
 
 serve(async (req) => {
