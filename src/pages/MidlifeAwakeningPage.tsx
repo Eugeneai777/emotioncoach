@@ -217,7 +217,7 @@ export default function MidlifeAwakeningPage() {
   };
 
   const handleBack = () => { step === 'questions' ? setStep('start') : navigate(-1); };
-  const handleRetake = () => { setAnswers({}); setResult(null); setAiAnalysis(null); setAiAnalysisError(null); setStep('start'); localStorage.removeItem(STORAGE_KEY); };
+  const handleRetake = () => { setAnswers({}); setResult(null); setAssessmentId(null); setAiAnalysis(null); setAiAnalysisError(null); setStep('start'); localStorage.removeItem(STORAGE_KEY); };
 
   const handleViewHistoryResult = (record: MidlifeHistoryRecord) => {
     const dims = (record.dimensions as any) || [];
