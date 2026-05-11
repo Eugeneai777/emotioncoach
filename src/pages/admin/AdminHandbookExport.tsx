@@ -179,7 +179,7 @@ export default function AdminHandbookExport() {
         <ShieldCheck className="w-4 h-4 text-primary" />
         <div className="flex-1 min-w-0">
           <div className="text-sm font-semibold truncate">
-            7 天伴随手册 · {handbookType === "male_vitality" ? "男人有劲" : "情绪健康"}
+            7 天伴随手册 · {TYPE_NAME[handbookType]}
           </div>
           <div className="text-xs text-muted-foreground font-mono truncate">
             recordId: {recordId} · {data?.displayName || "—"}
