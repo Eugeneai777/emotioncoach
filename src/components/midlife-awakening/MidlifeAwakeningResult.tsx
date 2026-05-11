@@ -22,6 +22,12 @@ import {
   type MidlifeDimension,
 } from "./midlifeAwakeningData";
 import { MidlifeAIAnalysis, type MidlifeAIAnalysisData } from "./MidlifeAIAnalysis";
+import { MidlifeAwakeningClaimReportCard } from "./MidlifeAwakeningClaimReportCard";
+import { MidlifeAwakeningPdfClaimSheet } from "./MidlifeAwakeningPdfClaimSheet";
+import { useMidlifeAwakeningClaimCode } from "@/hooks/useMidlifeAwakeningClaimCode";
+import { useAuth } from "@/hooks/useAuth";
+import { useProfileCompletion } from "@/hooks/useProfileCompletion";
+import { getProxiedAvatarUrl } from "@/utils/avatarUtils";
 
 interface MidlifeAwakeningResultProps {
   result: MidlifeResult;
@@ -31,6 +37,7 @@ interface MidlifeAwakeningResultProps {
   aiAnalysis?: MidlifeAIAnalysisData | null;
   aiAnalysisLoading?: boolean;
   aiAnalysisError?: string | null;
+  assessmentId?: string | null;
 }
 
 // === 核心指标配置（含目标值） ===
