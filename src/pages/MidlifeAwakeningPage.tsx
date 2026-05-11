@@ -232,6 +232,7 @@ export default function MidlifeAwakeningPage() {
     };
     setResult(r);
     setAnswers((record.answers as Record<number, number>) || {});
+    setAssessmentId((record as any).id || null);
     setStep('result');
     setActiveTab('assessment');
   };
