@@ -205,6 +205,7 @@ export default function MidlifeAwakeningPage() {
         .single();
       if (error) throw error;
       savedAssessmentId = insertData?.id;
+      setAssessmentId(savedAssessmentId || null);
       localStorage.removeItem(STORAGE_KEY);
       setStep('result');
       // 异步触发 AI 分析，不阻塞结果展示
