@@ -111,7 +111,13 @@ serve(async (req) => {
     });
   }
 
-  if (body.type !== "male_vitality" && body.type !== "emotion_health") {
+  const ALLOWED_TYPES: Body["type"][] = [
+    "male_vitality",
+    "emotion_health",
+    "women_competitiveness",
+    "midlife_awakening",
+  ];
+  if (!ALLOWED_TYPES.includes(body.type)) {
     return new Response(JSON.stringify({ error: "type 不合法" }), {
       status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -128,15 +134,30 @@ serve(async (req) => {
     );
   }
 
-  const tonePrompt =
-    body.type === "male_vitality"
-      ? "你是一个 38 岁中年男性的同龄朋友，话糙理不糙，不端不装，不讲道理只讲场景。"
-      : "你是 35+ 女性的姐姐，温柔但不哄，戳得到却不戳痛。说人话，不堆专业术语。";
+  const TONE_BY_TYPE: Record<Body["type"], string> = {
+    male_vitality:
+      "你是一个 38 岁中年男性的同龄朋友，话糙理不糙，不端不装，不讲道理只讲场景。",
+    emotion_health:
+      "你是 35+ 女性的姐姐，温柔但不哄，戳得到却不戳痛。说人话，不堆专业术语。",
+    women_competitiveness:
+      "你是 35+ 女性的同代姐姐，洞察她'已有筹码 vs 自我贬低'的撕扯。语气温柔笃定，不卷年轻、不说教、不灌'你可以的'。把已有的资产摆出来给她看。",
+    midlife_awakening:
+      "你是 40+ 中年的同代朋友，看穿'内耗循环 vs 行动停滞'的死结。语气克制冷静，不灌鸡汤、不喊口号、不立 flag。把'再来一次'缩到 5 分钟可执行动作。",
+  };
 
-  const vocabularyAnchors =
-    body.type === "male_vitality"
-      ? "可借用的男性日常画面（不要堆砌，挑 1-2 个就好）：凌晨醒来盯天花板、电话振动那一秒肩膀收紧、应酬完在地库里多坐十分钟才上楼、孩子叫'爸爸'时心里那一下、肩颈/腰、'再扛一下'、'撑住就是赢'。"
-      : "可借用的 35+ 女性日常画面（不要堆砌，挑 1-2 个就好）：清晨睁眼第一口气是叹的、深夜手机亮屏的几分钟属于自己、家人需要你时你才像'在'、对镜子说'我没事'、把疲惫翻译成'还行'、'先把所有人安顿好'、月经周期/更年期身体的变化、自我消失感。";
+  const VOCAB_BY_TYPE: Record<Body["type"], string> = {
+    male_vitality:
+      "可借用的男性日常画面（挑 1-2 个）：凌晨醒来盯天花板、电话振动那一秒肩膀收紧、应酬完在地库里多坐十分钟才上楼、孩子叫'爸爸'时心里那一下、肩颈/腰、'再扛一下'、'撑住就是赢'。",
+    emotion_health:
+      "可借用的 35+ 女性日常画面（挑 1-2 个）：清晨睁眼第一口气是叹的、深夜手机亮屏的几分钟属于自己、家人需要你时你才像'在'、对镜子说'我没事'、把疲惫翻译成'还行'、'先把所有人安顿好'、月经周期/更年期身体的变化、自我消失感。",
+    women_competitiveness:
+      "可借用的 35+ 职业女性日常画面（挑 1-2 个）：凌晨 1 点改完方案、地铁上看到 95 后笑得轻松、朋友圈不敢发观点怕被嘲、谈薪那一刻喉咙发紧、面试官问'你都 35 了'、看着同代人的近况自己却说不上来、'酒香不怕巷子深'、不敢报价、把无形资产白送出去。",
+    midlife_awakening:
+      "可借用的 40+ 中年日常画面（挑 1-2 个）：晚上躺下后想起一件没做的事翻来覆去、想做的事拆到一半就放下、同代人的近况一眼就知道自己却说不上来这一年、'再来一次'被想得太重、孩子升学/父母身体/工作天花板同时压来、'撑住就是赢'但不知道在赢什么、5 分钟动作总被'想清楚'拖住。",
+  };
+
+  const tonePrompt = TONE_BY_TYPE[body.type];
+  const vocabularyAnchors = VOCAB_BY_TYPE[body.type];
 
   const systemPrompt = `${tonePrompt}
 你正在为一份 7 天伴随手册写文字。要求：
