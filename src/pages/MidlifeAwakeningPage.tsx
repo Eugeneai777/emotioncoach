@@ -62,6 +62,7 @@ export default function MidlifeAwakeningPage() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('assessment');
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [result, setResult] = useState<MidlifeResult | null>(null);
+  const [assessmentId, setAssessmentId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [showPayDialog, setShowPayDialog] = useState(false);
