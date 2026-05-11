@@ -539,6 +539,21 @@ export function CompetitivenessResult({ result, answers, followUpInsights, onBac
         onRegenerate={handleShare}
         isRegenerating={isSharing}
       />
+
+      {/* 🎁 PDF 领取底部 Sheet */}
+      <CompetitivenessPdfClaimSheet
+        open={claimSheetOpen}
+        onOpenChange={setClaimSheetOpen}
+        claimCode={claimCode}
+        loadingCode={loadingCode}
+        displayName={claimDisplayName}
+        avatarUrl={claimAvatarUrl}
+        totalScore={result.totalScore}
+        categoryScores={result.categoryScores}
+        weakestCategory={result.weakestCategory}
+        strongestCategory={result.strongestCategory}
+        levelName={level.name}
+      />
     </div>
   );
 }
