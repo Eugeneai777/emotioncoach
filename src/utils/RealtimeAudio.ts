@@ -773,7 +773,7 @@ export class RealtimeChat {
             try {
               this.dc.send(JSON.stringify({
                 type: 'session.update',
-                session: { turn_detection: null },
+                session: { type: 'realtime', turn_detection: null },
               }));
               console.log('[WebRTC][PTT] turn_detection forced to null at dc open');
             } catch (e) {
@@ -785,8 +785,8 @@ export class RealtimeChat {
           if (this.pendingSessionConfig && this.dc?.readyState === 'open') {
             try {
               const sessionPayload = this.pttPreset
-                ? { ...this.pendingSessionConfig, turn_detection: null }
-                : this.pendingSessionConfig;
+                ? { type: 'realtime', ...this.pendingSessionConfig, turn_detection: null }
+                : { type: 'realtime', ...this.pendingSessionConfig };
               this.dc.send(JSON.stringify({
                 type: 'session.update',
                 session: sessionPayload,
@@ -1245,6 +1245,7 @@ export class RealtimeChat {
       this.dc.send(JSON.stringify({
         type: 'session.update',
         session: {
+          type: 'realtime',
           turn_detection: enabled
             ? null
             : { type: 'server_vad', threshold: 0.5, prefix_padding_ms: 300, silence_duration_ms: 500 }
