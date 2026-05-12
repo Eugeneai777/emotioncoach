@@ -273,7 +273,7 @@ export const tools: ToolConfig[] = [
     usageScenarios: ["情绪低落时", "焦虑不安时", "定期心理健康检查"],
     available: true,
     duration: "5分钟",
-    tags: []
+    tags: ["热门"]
   },
   {
     id: "scl90",
