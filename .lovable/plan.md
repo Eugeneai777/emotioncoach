@@ -1,29 +1,44 @@
-## 三档解锁方案
+# 统一售前页入口：/promo/midlife-men-399 → /promo/synergy
 
-| 档位 | 触发 | 卡片 | 入口按钮 |
-|---|---|---|---|
-| **基础款** | 冥想 或 对话 任一完成 | 暗色金线 + 日期 + 一句鼓励 | 「先看一眼今天的卡片」 |
-| **进阶款** | 冥想 + 对话 都完成 | 暗色金边 + quote + coachReply（如分享了反思，多一行手写体反思） | 「看看今天的卡片」（金色高亮） |
-| **七日烫金款** | 第 7 天 + 进阶款已解锁 | 深色烫金 + 七日勋章 + "唯一一个真的走完的人" | 「收下你的七日卡」（带闪烁） |
+## 目标
+彻底下线 `PromoMidlifeMen399.tsx` 这个"备用售前页"，所有 7 天有劲训练营 (¥399) 的售前流量统一到 `SynergyPromoPage.tsx`，避免再出现"改错文件、预览看不到变化"的问题。
 
-反思分享 = 加分项，不作触发条件，分享后给 tier ≥ 2 的卡片"加厚"一行。
+## 现状
+- `/promo/synergy` → `SynergyPromoPage.tsx`（**正式售前页**，1266 行，截图中"4 件事，按男人最在意的顺序排"就是它，文案已是最新版）
+- `/promo/midlife-men-399` → `PromoMidlifeMen399.tsx`（早期版本，667 行，被错误当成主页面修改）
+- 两者 package_key 都是 `synergy_bundle` / `camp-emotion_stress_7`，业务上等价
 
-## 改动范围
+## 改动清单
 
-1. **`src/pages/CampCheckIn.tsx`**
-   - 计算 `cardTier`：0 不显示 / 1 基础 / 2 进阶 / 3 七日烫金
-   - 入口按钮文案、颜色、动效随 tier 切换
-   - tier、has_shared_to_community 透传给 `DailyShareCard`
+### 1. `src/App.tsx`
+把 `/promo/midlife-men-399` 路由从指向 `PromoMidlifeMen399` 改为 `<Navigate>` 重定向：
 
-2. **`src/components/camp-checkin/DailyShareCard.tsx`**
-   - 新增 props：`tier: 1 | 2 | 3`、`hasReflection: boolean`、`reflectionText?: string`
-   - tier=1：极简版（仅日期 + LOGO + 鼓励语，**不显示** quote/coachReply）
-   - tier=2：现常规版（quote + coachReply）；若 hasReflection=true，底部多一行手写体反思
-   - tier=3：烫金 + 七日勋章 + 收官文案
-   - 标题/边框/背景按 tier 切换
+```tsx
+<Route 
+  path="/promo/midlife-men-399" 
+  element={<Navigate to={`/promo/synergy${window.location.search}`} replace />} 
+/>
+```
+
+保留 query string（`?ref=xxx&source=xxx` 等推广参数不能丢）。
+
+### 2. `src/pages/PromoMidlifeMen399.tsx`
+**删除该文件**。同时全局搜索并清理对它的 import / 跳转引用（如有）。
+
+### 3. 全局引用核查
+搜索以下字符串并修正：
+- `PromoMidlifeMen399`（import）
+- `/promo/midlife-men-399`（navigate / Link / 后端配置 / 海报二维码）
+
+如发现数据库表 `partner_links`、海报图、微信菜单等存有旧 URL，仅在前端层做兼容（路由层重定向已覆盖），不动数据。
 
 ## 不改动
+- `SynergyPromoPage.tsx` 本身的文案、权益结构、价格 — 截图显示已是最新版。
+- `CampCheckIn.tsx` 三档卡片 (Tier 1/2/3) 逻辑 — 已实施，无需变动。
+- `DailyShareCard.tsx` — 不动。
+- 数据库、订单、套餐 key、支付链路 — 不动。
 
-- 数据库、路由、价格、套餐 key、售前页文案、测评。
-
-确认即开工。
+## 验证
+1. 访问 `/promo/midlife-men-399?ref=share` → 自动跳到 `/promo/synergy?ref=share`，参数保留。
+2. `/promo/synergy` 正常显示。
+3. 构建无 import 残留报错。
