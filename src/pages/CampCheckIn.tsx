@@ -938,15 +938,26 @@ const CampCheckIn = () => {
       )}
 
       {/* 当日卡片弹窗 */}
-      <DailyShareCard
-        open={showDailyCard}
-        onOpenChange={setShowDailyCard}
-        dayNumber={displayCurrentDay || 1}
-        totalDays={camp?.duration_days || 7}
-        userQuote={latestBriefing?.summary || latestBriefing?.insight}
-        coachReply={latestBriefing?.action || latestBriefing?.recommendation}
-        userName={(user as any)?.user_metadata?.full_name || (user?.email ? user.email.split("@")[0] : undefined)}
-      />
+      {(() => {
+        const meditDone = !!todayProgress?.declaration_completed;
+        const dialogDone = !!todayProgress?.is_checked_in;
+        const isLastDay = (displayCurrentDay || 0) >= (camp?.duration_days || 7);
+        let dialogTier: 1 | 2 | 3 = 1;
+        if (meditDone && dialogDone) dialogTier = isLastDay ? 3 : 2;
+        return (
+          <DailyShareCard
+            open={showDailyCard}
+            onOpenChange={setShowDailyCard}
+            dayNumber={displayCurrentDay || 1}
+            totalDays={camp?.duration_days || 7}
+            tier={dialogTier}
+            userQuote={latestBriefing?.summary || latestBriefing?.insight}
+            coachReply={latestBriefing?.action || latestBriefing?.recommendation}
+            hasReflection={!!todayProgress?.has_shared_to_community}
+            userName={(user as any)?.user_metadata?.full_name || (user?.email ? user.email.split("@")[0] : undefined)}
+          />
+        );
+      })()}
     </div>
   );
 };
