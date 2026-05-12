@@ -2930,6 +2930,7 @@ export const CoachVoiceChat = ({
                 if (isEnding) {
                   console.log('[VoiceChat] Force close triggered from bottom button');
                   isEndingRef.current = true;  // 🔧 标记主动挂断
+                  try { localStorage.removeItem(SESSION_STORAGE_KEY); } catch {}
                   try { chatRef.current?.disconnect(); } catch(err) { console.warn(err); }
                   try { if (durationRef.current) clearInterval(durationRef.current); } catch(err) { console.warn(err); }
                   releaseLock();
