@@ -68,7 +68,7 @@ const COACH_TEAM = [
  *  - 套餐 key：synergy_bundle（不变）
  */
 
-const TOTAL_SECTIONS = 11;
+const TOTAL_SECTIONS = 9;
 
 const C = {
   bg: "#0f0f0f",
@@ -927,11 +927,11 @@ export default function SynergyPromoPage() {
           </p>
         </Section>
 
-        {/* ============ 11 价格 + CTA ============ */}
+        {/* ============ 09 价格 + CTA ============ */}
         <section className="px-6 py-12">
           <div className="flex items-center gap-3 mb-3">
             <span className="text-xs tracking-[0.2em] font-mono" style={{ color: C.gold }}>
-              11 / {String(TOTAL_SECTIONS).padStart(2, "0")}
+              09 / {String(TOTAL_SECTIONS).padStart(2, "0")}
             </span>
             <div className="flex-1 h-px" style={{ background: C.divider }} />
           </div>
