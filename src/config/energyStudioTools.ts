@@ -371,7 +371,7 @@ export const tools: ToolConfig[] = [
     usageScenarios: ["感觉无力疲惫时", "中年迷茫期", "想找回状态"],
     available: true,
     duration: "8分钟",
-    tags: ["新", "男士专属"]
+    tags: ["热门"]
   },
 ];
 
