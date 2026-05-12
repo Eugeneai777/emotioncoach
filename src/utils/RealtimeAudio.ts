@@ -785,8 +785,8 @@ export class RealtimeChat {
           if (this.pendingSessionConfig && this.dc?.readyState === 'open') {
             try {
               const sessionPayload = this.pttPreset
-                ? { ...this.pendingSessionConfig, turn_detection: null }
-                : this.pendingSessionConfig;
+                ? { type: 'realtime', ...this.pendingSessionConfig, turn_detection: null }
+                : { type: 'realtime', ...this.pendingSessionConfig };
               this.dc.send(JSON.stringify({
                 type: 'session.update',
                 session: sessionPayload,
