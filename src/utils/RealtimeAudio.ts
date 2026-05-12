@@ -1245,6 +1245,7 @@ export class RealtimeChat {
       this.dc.send(JSON.stringify({
         type: 'session.update',
         session: {
+          type: 'realtime',
           turn_detection: enabled
             ? null
             : { type: 'server_vad', threshold: 0.5, prefix_padding_ms: 300, silence_duration_ms: 500 }
