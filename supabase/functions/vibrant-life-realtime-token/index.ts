@@ -51,6 +51,54 @@ function toClientSecretsBody(legacy: Record<string, any>): Record<string, any> {
   return { session };
 }
 
+function summarizeOpenAIError(errorText: string): string {
+  try {
+    const parsed = JSON.parse(errorText);
+    return parsed?.error?.message || parsed?.error || errorText;
+  } catch {
+    return errorText;
+  }
+}
+
+async function fetchRealtimeClientSecret(
+  baseUrl: string,
+  apiKey: string,
+  legacyBody: Record<string, any>
+): Promise<Response> {
+  const realtimeUrl = `${baseUrl}/v1/realtime/client_secrets`;
+  const makeRequest = (body: Record<string, any>) => fetch(realtimeUrl, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(toClientSecretsBody(body)),
+  });
+
+  const response = await makeRequest(legacyBody);
+  if (response.ok || response.status !== 400) return response;
+
+  const errorText = await response.text();
+  console.error('OpenAI API 400, retrying with minimal Realtime payload:', summarizeOpenAIError(errorText));
+
+  const retryResponse = await makeRequest({
+    model: legacyBody.model,
+    voice: legacyBody.voice,
+    instructions: legacyBody.instructions || '你是劲老师，温暖的AI生活教练。请自然、简短地用中文陪用户聊天。',
+    max_response_output_tokens: legacyBody.max_response_output_tokens || "inf",
+  });
+
+  if (!retryResponse.ok) {
+    const retryErrorText = await retryResponse.text();
+    const retryMessage = summarizeOpenAIError(retryErrorText);
+    console.error('OpenAI API retry failed:', retryResponse.status, retryMessage);
+    throw new Error(`OpenAI API error: ${retryResponse.status} ${retryMessage}`);
+  }
+
+  console.warn('OpenAI Realtime client secret created with minimal fallback payload');
+  return retryResponse;
+}
+
 // 通用工具定义
 const commonTools = [
   {
@@ -1304,13 +1352,10 @@ serve(async (req) => {
 
     // 用最简 instructions 立即启动 OpenAI session 创建（与下面 DB 查询并行）
     const fastPathSessionPromise = isFastPath
-      ? fetch(`${baseUrl}/v1/realtime/client_secrets`, {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${OPENAI_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(toClientSecretsBody({
+      ? fetchRealtimeClientSecret(
+          baseUrl,
+          OPENAI_API_KEY,
+          {
             model: "gpt-4o-mini-realtime-preview",
             voice: mapVoiceTypeToOpenAIVoice(voiceOverride, mode),
             instructions: '你是劲老师，温暖的AI生活教练。请等待系统配置后开始对话。',
@@ -1322,8 +1367,8 @@ serve(async (req) => {
               prefix_padding_ms: 200,
               silence_duration_ms: 1800,
             },
-          })),
-        })
+          }
+        )
       : null;
 
     // 🌟 并行获取用户上下文数据（用户昵称、历史对话、记忆、对话次数）
@@ -1538,16 +1583,12 @@ ${photoList}
     }
 
     // 请求 OpenAI Realtime client_secrets（快路径下复用并行启动的 Promise）
-    const realtimeUrl = `${baseUrl}/v1/realtime/client_secrets`;
     const response = fastPathSessionPromise
       ? await fastPathSessionPromise
-      : await fetch(realtimeUrl, {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${OPENAI_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(toClientSecretsBody({
+      : await fetchRealtimeClientSecret(
+          baseUrl,
+          OPENAI_API_KEY,
+          {
             model: "gpt-4o-mini-realtime-preview",
             voice: mapVoiceTypeToOpenAIVoice(voiceOverride, mode),
             instructions: instructions,
@@ -1561,8 +1602,8 @@ ${photoList}
               prefix_padding_ms: 200,
               silence_duration_ms: 1800,
             },
-          })),
-        });
+          }
+        );
 
     if (!response.ok) {
       const errorText = await response.text();
