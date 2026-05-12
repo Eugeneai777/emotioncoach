@@ -773,7 +773,7 @@ export class RealtimeChat {
             try {
               this.dc.send(JSON.stringify({
                 type: 'session.update',
-                session: { turn_detection: null },
+                session: { type: 'realtime', turn_detection: null },
               }));
               console.log('[WebRTC][PTT] turn_detection forced to null at dc open');
             } catch (e) {
