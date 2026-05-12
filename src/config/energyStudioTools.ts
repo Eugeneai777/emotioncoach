@@ -50,6 +50,7 @@ export const assessmentToolIds = new Set([
   "comm-assessment",
   "midlife-awakening",
   "relationship-assessment",
+  "male-midlife-vitality",
 ]);
 
 export const tools: ToolConfig[] = [
@@ -357,6 +358,20 @@ export const tools: ToolConfig[] = [
     available: true,
     duration: "10分钟",
     tags: []
+  },
+  {
+    id: "male-midlife-vitality",
+    title: "男人有劲状态评估",
+    description: "6维深度扫描，识别男人中年活力卡点",
+    detailedDescription: "针对中年男性设计的活力状态评估，覆盖体力、事业、关系、情绪、意义、身份6大维度，帮你看清当下卡点并给出突破方向。",
+    iconName: "Flame",
+    category: "exploration",
+    type: "assessment",
+    gradient: "from-orange-500 to-red-500",
+    usageScenarios: ["感觉无力疲惫时", "中年迷茫期", "想找回状态"],
+    available: true,
+    duration: "8分钟",
+    tags: ["新", "男士专属"]
   },
 ];
 

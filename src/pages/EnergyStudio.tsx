@@ -101,6 +101,7 @@ const EnergyStudio = () => {
       "comm-assessment": "/communication-assessment",
       "parent-ability": "/parent-ability-assessment",
       "midlife-awakening": "/midlife-awakening",
+      "male-midlife-vitality": "/assessment/male_midlife_vitality",
     };
     if (navRoutes[toolId]) {
       navigate(navRoutes[toolId]);
