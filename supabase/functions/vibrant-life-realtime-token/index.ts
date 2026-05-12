@@ -1352,13 +1352,10 @@ serve(async (req) => {
 
     // 用最简 instructions 立即启动 OpenAI session 创建（与下面 DB 查询并行）
     const fastPathSessionPromise = isFastPath
-      ? fetch(`${baseUrl}/v1/realtime/client_secrets`, {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${OPENAI_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(toClientSecretsBody({
+      ? fetchRealtimeClientSecret(
+          baseUrl,
+          OPENAI_API_KEY,
+          {
             model: "gpt-4o-mini-realtime-preview",
             voice: mapVoiceTypeToOpenAIVoice(voiceOverride, mode),
             instructions: '你是劲老师，温暖的AI生活教练。请等待系统配置后开始对话。',
@@ -1370,8 +1367,8 @@ serve(async (req) => {
               prefix_padding_ms: 200,
               silence_duration_ms: 1800,
             },
-          })),
-        })
+          }
+        )
       : null;
 
     // 🌟 并行获取用户上下文数据（用户昵称、历史对话、记忆、对话次数）
@@ -1586,16 +1583,12 @@ ${photoList}
     }
 
     // 请求 OpenAI Realtime client_secrets（快路径下复用并行启动的 Promise）
-    const realtimeUrl = `${baseUrl}/v1/realtime/client_secrets`;
     const response = fastPathSessionPromise
       ? await fastPathSessionPromise
-      : await fetch(realtimeUrl, {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${OPENAI_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(toClientSecretsBody({
+      : await fetchRealtimeClientSecret(
+          baseUrl,
+          OPENAI_API_KEY,
+          {
             model: "gpt-4o-mini-realtime-preview",
             voice: mapVoiceTypeToOpenAIVoice(voiceOverride, mode),
             instructions: instructions,
@@ -1609,8 +1602,8 @@ ${photoList}
               prefix_padding_ms: 200,
               silence_duration_ms: 1800,
             },
-          })),
-        });
+          }
+        );
 
     if (!response.ok) {
       const errorText = await response.text();
