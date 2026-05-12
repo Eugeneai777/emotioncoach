@@ -704,7 +704,7 @@ export default function SynergyPromoPage() {
                 Icon: Video,
                 title: "1V1 真人 · 不是群里走过场",
                 points: [
-                  "总教练腾讯会议跟你单独坐 2 次",
+                  "资深教练腾讯会议跟你单独坐 2 次",
                   "前后 75 分钟全是你的时间",
                   "全程录像 + AI 纪要 · 只发你本人",
                 ],
