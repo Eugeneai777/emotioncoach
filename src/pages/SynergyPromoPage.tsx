@@ -21,6 +21,8 @@ import {
   CircleCheck,
   Sparkles,
   Award,
+  ClipboardList,
+  Video,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -44,8 +46,18 @@ import coachAmy from "@/assets/coach-amy.jpg";
 import coachMumian from "@/assets/coach-mumian.jpg";
 import coachXiaojianxiong from "@/assets/coach-xiaojianxiong.jpg";
 import coachBetty from "@/assets/coach-betty.jpg";
+import zhileCapsules from "@/assets/zhile-capsules.jpeg";
 import { ShareDialogBase } from "@/components/ui/share-dialog-base";
 import { useShareDialog } from "@/hooks/useShareDialog";
+
+const COACH_TEAM = [
+  { name: "黛汐", role: "总教练", image: coachDaixi, subtitle: "生命教练 / 高级心理咨询师" },
+  { name: "肖剑雄", role: "资深教练", image: coachXiaojianxiong, subtitle: "婚姻关系 / 职业焦虑" },
+  { name: "晓一", role: "资深教练", image: coachXiaoyi, subtitle: "婚姻家庭 / 情绪管理" },
+  { name: "Amy", role: "资深教练", image: coachAmy, subtitle: "情感困惑 / 亲子关系" },
+  { name: "木棉", role: "资深教练", image: coachMumian, subtitle: "身心整体疗愈" },
+  { name: "贝蒂", role: "资深教练", image: coachBetty, subtitle: "亲密关系 / 生命重建" },
+];
 
 /**
  * /promo/synergy · 中年男性专属版（暗金调）
