@@ -50,6 +50,7 @@ export const assessmentToolIds = new Set([
   "comm-assessment",
   "midlife-awakening",
   "relationship-assessment",
+  "male-midlife-vitality",
 ]);
 
 export const tools: ToolConfig[] = [
