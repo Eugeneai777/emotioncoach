@@ -907,6 +907,17 @@ const CampCheckIn = () => {
           date={selectedDate}
         />
       )}
+
+      {/* 当日卡片弹窗 */}
+      <DailyShareCard
+        open={showDailyCard}
+        onOpenChange={setShowDailyCard}
+        dayNumber={displayCurrentDay || 1}
+        totalDays={camp?.duration_days || 7}
+        userQuote={latestBriefing?.summary || latestBriefing?.insight}
+        coachReply={latestBriefing?.action || latestBriefing?.recommendation}
+        userName={(user as any)?.user_metadata?.full_name || (user?.email ? user.email.split("@")[0] : undefined)}
+      />
     </div>
   );
 };
