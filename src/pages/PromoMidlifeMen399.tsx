@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Helmet } from "react-helmet";
-import { ShieldCheck, Lock, MessageCircle, Quote, Users, Wind, Bot, Pill, Truck, EyeOff, Clock, Gem, ChevronDown } from "lucide-react";
+import { ShieldCheck, Lock, MessageCircle, Quote, Users, Wind, Pill, Truck, EyeOff, Clock, Gem, ClipboardList, Award, Video } from "lucide-react";
 import { UnifiedPayDialog } from "@/components/UnifiedPayDialog";
 import { usePaymentCallback } from "@/hooks/usePaymentCallback";
 import { usePackageByKey } from "@/hooks/usePackages";
@@ -138,7 +138,7 @@ export default function PromoMidlifeMen399() {
         <title>40 岁以后，有些事不该一个人扛着 ｜ 7 天私下试听 ¥399</title>
         <meta
           name="description"
-          content="38–55 岁男人专属 7 天身心舒展计划。海沃塔团队对话 + 知乐胶囊 + AI 男士教练 + 私密社群。一杯酒钱，没人会知道你来过。"
+          content="38–55 岁男人专属 7 天身心计划。1 次状态体检 + 2 场总教练 1V1 腾讯会议 + 1 瓶知乐胶囊 + 7 天有人陪你走。一杯酒钱，没人会知道你来过。"
         />
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
       </Helmet>
