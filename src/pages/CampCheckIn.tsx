@@ -717,35 +717,64 @@ const CampCheckIn = () => {
                       </div>
                     </Card>
 
-                    {/* 当日卡片入口：emotion_stress_7 三件事（冥想 + 对话 + 反思）全部完成时显示 */}
-                    {hasMeditation &&
-                      !!todayProgress?.declaration_completed &&
-                      !!todayProgress?.is_checked_in &&
-                      !!todayProgress?.has_shared_to_community && (
+                    {/* 当日卡片入口：三档解锁 */}
+                    {hasMeditation && (() => {
+                      const meditDone = !!todayProgress?.declaration_completed;
+                      const dialogDone = !!todayProgress?.is_checked_in;
+                      const isLastDay = (displayCurrentDay || 0) >= (camp.duration_days || 7);
+                      let cardTier: 0 | 1 | 2 | 3 = 0;
+                      if (meditDone && dialogDone) cardTier = isLastDay ? 3 : 2;
+                      else if (meditDone || dialogDone) cardTier = 1;
+                      if (cardTier === 0) return null;
+
+                      const cfg =
+                        cardTier === 3
+                          ? {
+                              bg: "linear-gradient(160deg, #1f1208 0%, #4a3416 100%)",
+                              border: "2px solid #e9c98a",
+                              gold: "#e9c98a",
+                              label: "收下你的七日卡",
+                              sub: "这 7 天，你是唯一一个真的走完的人",
+                            }
+                          : cardTier === 2
+                          ? {
+                              bg: "linear-gradient(160deg, #2a201a 0%, #3a2a1a 100%)",
+                              border: "1.5px solid #d4b481",
+                              gold: "#d4b481",
+                              label: "看看今天的卡片",
+                              sub: `这一格，你今天动过了 · 第 ${displayCurrentDay}/${camp.duration_days} 天`,
+                            }
+                          : {
+                              bg: "linear-gradient(160deg, #1a1a1a 0%, #221f1b 100%)",
+                              border: "1px solid #a8895a",
+                              gold: "#a8895a",
+                              label: "先看一眼今天的卡片",
+                              sub: "今天你动了一下 · 完成另一项可解锁进阶款",
+                            };
+
+                      return (
                         <motion.button
                           initial={{ opacity: 0, y: 8 }}
                           animate={{ opacity: 1, y: 0 }}
                           onClick={() => setShowDailyCard(true)}
                           className="w-full rounded-xl px-4 py-3.5 text-left active:scale-[0.98] transition"
-                          style={{
-                            background: "linear-gradient(160deg, #2a201a 0%, #3a2a1a 100%)",
-                            border: "1.5px solid #d4b481",
-                            color: "#ece7dc",
-                          }}
+                          style={{ background: cfg.bg, border: cfg.border, color: "#ece7dc" }}
                         >
                           <div className="flex items-center justify-between gap-3">
                             <div className="min-w-0">
-                              <p className="text-[14px] font-semibold" style={{ color: "#d4b481" }}>
-                                看看今天的卡片
+                              <p className="text-[14px] font-semibold flex items-center gap-1.5" style={{ color: cfg.gold }}>
+                                {cardTier === 3 && <Sparkles className="w-3.5 h-3.5 animate-pulse" />}
+                                {cfg.label}
                               </p>
                               <p className="text-[12px] mt-0.5" style={{ color: "#8a8478" }}>
-                                这一格，你今天动过了 · 第 {displayCurrentDay}/{camp.duration_days} 天
+                                {cfg.sub}
                               </p>
                             </div>
-                            <ChevronRight className="w-5 h-5 shrink-0" style={{ color: "#d4b481" }} />
+                            <ChevronRight className="w-5 h-5 shrink-0" style={{ color: cfg.gold }} />
                           </div>
                         </motion.button>
-                      )}
+                      );
+                    })()}
 
                     <div className="space-y-2.5">
                       {/* 冥想任务 - 仅 emotion_stress_7 */}
