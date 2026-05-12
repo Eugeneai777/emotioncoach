@@ -15,6 +15,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { TrainingCamp } from "@/types/trainingCamp";
 import CampProgressCalendar from "@/components/camp/CampProgressCalendar";
 import CampDailyTaskList from "@/components/camp/CampDailyTaskList";
+import DailyShareCard from "@/components/camp-checkin/DailyShareCard";
 import CampShareDialog from "@/components/camp/CampShareDialog";
 import DayDetailDialog from "@/components/camp/DayDetailDialog";
 import { ParentCoachEmbedded } from "@/components/parent-coach/ParentCoachEmbedded";
@@ -251,6 +252,7 @@ const CampCheckIn = () => {
   const [showDayDetail, setShowDayDetail] = useState(false);
   const [hasTriggeredConfetti, setHasTriggeredConfetti] = useState(false);
   const [actualCheckInDates, setActualCheckInDates] = useState<string[]>([]);
+  const [showDailyCard, setShowDailyCard] = useState(false);
 
   useEffect(() => {
     if (user && campId) {
