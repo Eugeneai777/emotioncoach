@@ -329,7 +329,7 @@ export const tools: ToolConfig[] = [
     usageScenarios: ["职业发展规划", "自我价值探索", "提升核心竞争力"],
     available: true,
     duration: "6分钟",
-    tags: ["热门"]
+    tags: ["推荐"]
   },
   {
     id: "parent-ability",
