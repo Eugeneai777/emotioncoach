@@ -15,6 +15,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { TrainingCamp } from "@/types/trainingCamp";
 import CampProgressCalendar from "@/components/camp/CampProgressCalendar";
 import CampDailyTaskList from "@/components/camp/CampDailyTaskList";
+import DailyShareCard from "@/components/camp-checkin/DailyShareCard";
 import CampShareDialog from "@/components/camp/CampShareDialog";
 import DayDetailDialog from "@/components/camp/DayDetailDialog";
 import { ParentCoachEmbedded } from "@/components/parent-coach/ParentCoachEmbedded";
@@ -251,6 +252,7 @@ const CampCheckIn = () => {
   const [showDayDetail, setShowDayDetail] = useState(false);
   const [hasTriggeredConfetti, setHasTriggeredConfetti] = useState(false);
   const [actualCheckInDates, setActualCheckInDates] = useState<string[]>([]);
+  const [showDailyCard, setShowDailyCard] = useState(false);
 
   useEffect(() => {
     if (user && campId) {
@@ -715,7 +717,36 @@ const CampCheckIn = () => {
                       </div>
                     </Card>
 
-                    {/* 任务卡片列表 - 带步骤编号 */}
+                    {/* 当日卡片入口：emotion_stress_7 三件事（冥想 + 对话 + 反思）全部完成时显示 */}
+                    {hasMeditation &&
+                      !!todayProgress?.declaration_completed &&
+                      !!todayProgress?.is_checked_in &&
+                      !!todayProgress?.has_shared_to_community && (
+                        <motion.button
+                          initial={{ opacity: 0, y: 8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          onClick={() => setShowDailyCard(true)}
+                          className="w-full rounded-xl px-4 py-3.5 text-left active:scale-[0.98] transition"
+                          style={{
+                            background: "linear-gradient(160deg, #2a201a 0%, #3a2a1a 100%)",
+                            border: "1.5px solid #d4b481",
+                            color: "#ece7dc",
+                          }}
+                        >
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="text-[14px] font-semibold" style={{ color: "#d4b481" }}>
+                                看看今天的卡片
+                              </p>
+                              <p className="text-[12px] mt-0.5" style={{ color: "#8a8478" }}>
+                                这一格，你今天动过了 · 第 {displayCurrentDay}/{camp.duration_days} 天
+                              </p>
+                            </div>
+                            <ChevronRight className="w-5 h-5 shrink-0" style={{ color: "#d4b481" }} />
+                          </div>
+                        </motion.button>
+                      )}
+
                     <div className="space-y-2.5">
                       {/* 冥想任务 - 仅 emotion_stress_7 */}
                       {hasMeditation && (
@@ -876,6 +907,17 @@ const CampCheckIn = () => {
           date={selectedDate}
         />
       )}
+
+      {/* 当日卡片弹窗 */}
+      <DailyShareCard
+        open={showDailyCard}
+        onOpenChange={setShowDailyCard}
+        dayNumber={displayCurrentDay || 1}
+        totalDays={camp?.duration_days || 7}
+        userQuote={latestBriefing?.summary || latestBriefing?.insight}
+        coachReply={latestBriefing?.action || latestBriefing?.recommendation}
+        userName={(user as any)?.user_metadata?.full_name || (user?.email ? user.email.split("@")[0] : undefined)}
+      />
     </div>
   );
 };
