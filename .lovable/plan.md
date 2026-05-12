@@ -1,44 +1,35 @@
-# 统一售前页入口：/promo/midlife-men-399 → /promo/synergy
+# SynergyPromoPage 入群门槛文案补强（最小改动）
 
 ## 目标
-彻底下线 `PromoMidlifeMen399.tsx` 这个"备用售前页"，所有 7 天有劲训练营 (¥399) 的售前流量统一到 `SynergyPromoPage.tsx`，避免再出现"改错文件、预览看不到变化"的问题。
+把"付款后由专属顾问 1v1 加微信、拉你进同龄男人专属群"这件事，在售前页两个关键位置明确写出来，消除"付完钱不知道下一步"的疑虑。
 
-## 现状
-- `/promo/synergy` → `SynergyPromoPage.tsx`（**正式售前页**，1266 行，截图中"4 件事，按男人最在意的顺序排"就是它，文案已是最新版）
-- `/promo/midlife-men-399` → `PromoMidlifeMen399.tsx`（早期版本，667 行，被错误当成主页面修改）
-- 两者 package_key 都是 `synergy_bundle` / `camp-emotion_stress_7`，业务上等价
+打卡海报（Tier 1/2/3 学习卡）作为内部惊喜功能，**不暴露在售前页**。
 
 ## 改动清单
 
-### 1. `src/App.tsx`
-把 `/promo/midlife-men-399` 路由从指向 `PromoMidlifeMen399` 改为 `<Navigate>` 重定向：
+### 1. `src/pages/SynergyPromoPage.tsx` — 权益04（专属社群）
+当前：
+> 实名审核 · 不进朋友圈
+> 全是 38–55 岁同龄男人。不被同事看到，安全说话的地方。
 
-```tsx
-<Route 
-  path="/promo/midlife-men-399" 
-  element={<Navigate to={`/promo/synergy${window.location.search}`} replace />} 
-/>
-```
+改为（补一句"如何进群"）：
+> 实名审核 · 不进朋友圈
+> 全是 38–55 岁同龄男人。不被同事看到，安全说话的地方。
+> **付款后，专属顾问 1v1 加你微信，拉你进群。**
 
-保留 query string（`?ref=xxx&source=xxx` 等推广参数不能丢）。
+### 2. `src/pages/SynergyPromoPage.tsx` — 底部支付按钮上方
+在固定底栏的支付按钮 / 价格行上方，加一行小字提示（与已有的"实物 / 顺丰"提示同样的轻量样式）：
 
-### 2. `src/pages/PromoMidlifeMen399.tsx`
-**删除该文件**。同时全局搜索并清理对它的 import / 跳转引用（如有）。
+> 付款后，助教会主动加你微信，拉你进同龄男人专属群
 
-### 3. 全局引用核查
-搜索以下字符串并修正：
-- `PromoMidlifeMen399`（import）
-- `/promo/midlife-men-399`（navigate / Link / 后端配置 / 海报二维码）
-
-如发现数据库表 `partner_links`、海报图、微信菜单等存有旧 URL，仅在前端层做兼容（路由层重定向已覆盖），不动数据。
+具体放置：和"实物由有劲生活馆统一发货"那条提示同款样式，作为支付按钮上方的"安心提示"。
 
 ## 不改动
-- `SynergyPromoPage.tsx` 本身的文案、权益结构、价格 — 截图显示已是最新版。
-- `CampCheckIn.tsx` 三档卡片 (Tier 1/2/3) 逻辑 — 已实施，无需变动。
-- `DailyShareCard.tsx` — 不动。
-- 数据库、订单、套餐 key、支付链路 — 不动。
+- 权益01/02/03 文案（已符合反馈）
+- 价格、套餐 key、支付链路、跳转逻辑
+- 打卡海报（Tier 1/2/3）相关 — 不在售前页提
+- `CampCheckIn.tsx` / `DailyShareCard.tsx` — 不动
+- 数据库、订单 — 不动
 
 ## 验证
-1. 访问 `/promo/midlife-men-399?ref=share` → 自动跳到 `/promo/synergy?ref=share`，参数保留。
-2. `/promo/synergy` 正常显示。
-3. 构建无 import 残留报错。
+访问 `/promo/synergy` → 滚到权益04 应能看到"付款后顾问拉群"那一行 → 滚到底部支付按钮上方应能看到同样的安心提示。

@@ -609,7 +609,7 @@ export default function SynergyPromoPage() {
                 Icon: Users,
                 tag: "核心权益 04 · 中年男性专属社群",
                 title: "实名审核 · 不进朋友圈",
-                desc: "全是 38–55 岁同龄男人。不被同事看到，安全说话的地方。",
+                desc: "全是 38–55 岁同龄男人。不被同事看到，安全说话的地方。付款后，专属顾问 1v1 加你微信，拉你进群。",
               },
             ].map((card, i) => (
               <div
@@ -1200,6 +1200,12 @@ export default function SynergyPromoPage() {
         }}
       >
         <div className="mx-auto max-w-[480px] px-4 pt-6 pb-3">
+          <p
+            className="text-[11px] text-center mb-2 leading-[1.5]"
+            style={{ color: C.goldSoft }}
+          >
+            付款后，专属顾问会主动加你微信，拉你进同龄男人专属群
+          </p>
           {alreadyPurchased ? (
             <button
               onClick={handleEnterCamp}
