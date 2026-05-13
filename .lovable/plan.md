@@ -1,49 +1,79 @@
+## 目标
 
-# 修复:智能语音无法挂断
+为5个核心测评分别生成一张**独立的高质量宣传海报PNG**（约1080×1920，竖版手机海报尺寸），可直接下载发到小红书、视频号、合作平台、朋友圈等场景引流扫码。
 
-## 根因(已从控制台日志锁定)
+## 5张海报清单
 
-OpenAI Realtime 服务端报错:
-`Missing required parameter: 'session.type'`
+| # | 测评 | 二维码落地URL |
+|---|------|-------------|
+| 1 | 财富卡点测评 | `https://wechat.eugenewe.net/wealth-block` |
+| 2 | 情绪健康测评 | `https://wechat.eugenewe.net/emotion-health` |
+| 3 | 35+女性竞争力测评 | `https://wechat.eugenewe.net/assessment/women-competitiveness` |
+| 4 | 男人有劲状态评估 | `https://wechat.eugenewe.net/assessment/male_midlife_vitality` |
+| 5 | 中年觉醒测评 | `https://wechat.eugenewe.net/midlife-awakening` |
 
-我们项目里所有 `session.update` 事件都缺少新版协议要求的 `session.type: "realtime"` 字段,导致 session 配置注入失败、连接进入半死状态;同时旧的 30 秒"会话复用窗口"逻辑会在用户点挂断后再次把同一个坏 session 拉起来,表现就是**点挂断没反应 / 挂了又自己回来 / 一直在 Reconnecting**。
+域名使用项目标准外推域名 `wechat.eugenewe.net`（已写入项目记忆，会自动跳转/identify 流量来源）。
 
-## 改动点(只动 2 个文件)
+## 商业架构师视角的海报结构
 
-### 1. `src/utils/RealtimeAudio.ts` — 给所有 session.update 加 `type`
+每张海报统一沿用一套"专业引流模板"，但配色/痛点钩子/视觉主题各自独立，避免一眼识破是同模板：
 
-3 处发送 `session.update` 的地方,session 对象内补 `type: 'realtime'`:
-
-- L770–782 PTT 预设关 VAD
-- L785–799 推送 `pendingSessionConfig`
-- L1246 附近 后续动态 `session.update`(场景切换 / 音色变更等)
-
-形如:
-```ts
-this.dc.send(JSON.stringify({
-  type: 'session.update',
-  session: { type: 'realtime', ...payload },
-}));
+```text
+┌─────────────────────────┐
+│  顶部品牌条：有劲AI · LOGO │
+│                         │
+│  钩子大字（痛点提问）     │  ← 引发共鸣，3秒抓住眼球
+│  "你的财富天花板在哪？"   │
+│                         │
+│  副标题（场景化承诺）     │
+│  "3分钟扫描30个财富卡点"  │
+│                         │
+│  3条核心卖点（带图标）    │  ← 建立专业信任
+│  ✓ ...                  │
+│  ✓ ...                  │
+│  ✓ ...                  │
+│                         │
+│  ┌──────┐  扫码立即测评  │
+│  │ QR   │  限时免费       │  ← 降低决策成本
+│  │      │  3分钟出报告    │
+│  └──────┘                │
+│                         │
+│  底部水印：有劲AI · 合作引流│
+└─────────────────────────┘
 ```
 
-### 2. `src/components/coach/CoachVoiceChat.tsx` — 主动挂断时清掉会话复用窗口
+## 各海报独立调性（防同质化）
 
-问题:用户点"挂断"后 `disconnect()` 跑了,但 `localStorage` 里的 session 还在 30 秒复用窗口内,任何重新 mount(StrictMode / 路由抖动 / 自动重试)都会触发 `getOrCreateSessionId()` 复用旧 session,看起来"挂不断"。
+| 海报 | 主色 | 钩子文案 | 目标用户痛点 |
+|------|------|---------|------------|
+| 财富卡点 | 金紫渐变 (#d97706→#9333ea) | "为什么你越努力越没钱？" | 收入瓶颈、留不住钱 |
+| 情绪健康 | 青绿(#10b981→#3b82f6) | "你的情绪在偷偷消耗你" | 内耗、焦虑、PHQ-9/GAD-7 专业背书 |
+| 35+女性竞争力 | 玫金(#ec4899→#f59e0b) | "35+，你的不可替代性是什么？" | 中年女性身份焦虑 |
+| 男人有劲 | 深墨绿+金 (#1f2937→#0f766e→#f59e0b) | "你有多久没觉得'有劲'了？" | 男性精力/状态/关键时刻 |
+| 中年觉醒 | 紫粉(#ec4899→#a855f7) | "中场时刻，你想清楚了吗？" | 35-50 中年方向感缺失 |
 
-修法:
-- 在所有**用户主动挂断**的入口(L2304、L2387、L2932 三处按钮 + 浮窗 endVoice)
-  在 `isEndingRef.current = true` 之后、`chatRef.current?.disconnect()` 之前,
-  清掉 `localStorage` 里的 `voice_session_*` 键,确保下次不会被 30 秒窗口复用。
-- `getOrCreateSessionId()` 里加一个保护:如果 `isEndingRef.current === true` 直接返回新 session,不走复用分支。
+## 技术方案
 
-### 3. 自检
+使用 Python (Pillow + qrcode) 直接渲染海报：
 
-- 重新进入 `/life-coach-voice`,确认控制台不再出现 `Missing required parameter: 'session.type'`
-- 通话中点"挂断" → 状态秒切到 `disconnected`、不再有 `Reconnecting within Xms` 滚动
-- 30 秒内再点"开始通话" → 新 session ID(不复用坏 session)
-- PTT 模式按住说话仍正常(turn_detection 仍是 null)
+1. 1080×1920 画布，渐变背景
+2. 中文使用系统已有的 Noto/Source Han 字体（如果缺失则 fallback 到 DejaVu + 提前下载思源黑体）
+3. QR 码 320×320，白底圆角卡片承托，下方放"扫码立即测评"
+4. 输出 5 个文件到 `/mnt/documents/`：
+   - `poster_wealth_block.png`
+   - `poster_emotion_health.png`
+   - `poster_women_competitiveness.png`
+   - `poster_male_vitality.png`
+   - `poster_midlife_awakening.png`
+5. 强制 QA：每张转 JPG 预览图，逐张视觉检查文字溢出/对比度/二维码可扫，发现问题就改脚本重渲。
+6. 全部以 `<presentation-artifact>` 形式交付，用户点击即可下载。
 
-## 不动的部分
+## 不会动的东西
 
-- 计费 / 配额 / 麦克风释放(`forceReleaseMicrophone`)逻辑保持不变
-- 30 秒会话复用窗口在"网络抖动意外掉线"场景仍然有效,只对"用户主动挂断"短路掉
+- 不修改任何项目代码（这是一次性产物）
+- 不调用现有 React 分享卡组件（避免依赖运行环境）
+- 不创建数据库记录
+
+## 交付物
+
+5 个独立 PNG 海报文件，全部下载即可投放。
