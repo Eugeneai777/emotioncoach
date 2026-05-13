@@ -279,6 +279,7 @@ const Auth = () => {
           }, 0);
           return;
         }
+        setTimeout(async () => {
           const isNewUser = session.user.created_at &&
             (new Date().getTime() - new Date(session.user.created_at).getTime()) < 5000;
 
