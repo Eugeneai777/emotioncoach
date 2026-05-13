@@ -55,7 +55,7 @@ const MaleMidlifeVitalityShareCard = forwardRef<HTMLDivElement, MaleMidlifeVital
         borderRadius={24}
         footerConfig={{
           ctaTitle: '扫码看你的有劲状态',
-          ctaSubtitle: '3分钟 · 私密 · 免费',
+          ctaSubtitle: '3分钟 · 私密 · 专业',
           primaryColor: '#134e4a',
           secondaryColor: '#64748b',
           showQR: true,

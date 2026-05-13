@@ -174,7 +174,7 @@ const AssessmentValueShareCard = forwardRef<HTMLDivElement, AssessmentValueShare
                   AI财富心理诊断
                 </p>
                 <p style={{ color: 'rgba(252,211,77,0.7)', fontSize: '12px', marginTop: '8px', marginBottom: 0 }}>
-                  🎁 免费测评你的财富卡点
+                  🎁 测评你的财富卡点
                 </p>
               </div>
               {qrCodeUrl && (
