@@ -552,6 +552,7 @@ const App = () => (
               <Route path="/xiaohongshu-covers" element={<XiaohongshuCovers />} />
               <Route path="/mashang" element={<MashangLanding />} />
               <Route path="/women-competitiveness" element={<Navigate to="/assessment/women_competitiveness" replace />} />
+              <Route path="/assessment/women-competitiveness" element={<Navigate to="/assessment/women_competitiveness" replace />} />
               <Route path="/assessment/:assessmentKey" element={<DynamicAssessmentPage />} />
               <Route path="/product-brochure" element={<ProductBrochure />} />
               <Route path="/life-coach-voice" element={<LifeCoachVoice />} />

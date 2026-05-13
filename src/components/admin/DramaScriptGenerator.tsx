@@ -89,7 +89,7 @@ const PRODUCT_CATALOG: Record<string, { label: string; icon: string; items: Prod
     items: [
       { key: "emotion_health", name: "情绪健康测评", description: "基于PHQ-9/GAD-7量表，快速了解情绪健康状态", route: "/assessment/emotion-health", url: `${BASE_URL}/assessment/emotion-health` },
       { key: "wealth_block", name: "财富卡点测评", description: "发现阻碍财富增长的心理卡点", route: "/wealth-block-assessment", url: `${BASE_URL}/wealth-block-assessment` },
-      { key: "women_competitiveness", name: "35+女性竞争力", description: "评估职场女性核心竞争力维度", route: "/assessment/women-competitiveness", url: `${BASE_URL}/assessment/women-competitiveness` },
+      { key: "women_competitiveness", name: "35+女性竞争力", description: "评估职场女性核心竞争力维度", route: "/assessment/women_competitiveness", url: `${BASE_URL}/assessment/women_competitiveness` },
       { key: "midlife_awakening", name: "中场觉醒力", description: "中年人生觉醒力全面评估", route: "/assessment/midlife-awakening", url: `${BASE_URL}/assessment/midlife-awakening` },
       { key: "scl90", name: "SCL-90心理健康", description: "90项症状自评，全面心理健康筛查", route: "/assessment/scl90", url: `${BASE_URL}/assessment/scl90` },
     ],

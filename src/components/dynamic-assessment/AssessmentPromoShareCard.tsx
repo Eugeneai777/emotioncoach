@@ -54,7 +54,7 @@ export const ASSESSMENT_PROMO_CONFIGS: Record<string, AssessmentPromoConfig> = {
     ],
     gradient: 'linear-gradient(135deg, #f59e0b 0%, #ec4899 100%)',
     accentColor: '#f59e0b',
-    sharePath: '/assessment/women-competitiveness',
+    sharePath: '/assessment/women_competitiveness',
     tagline: '有劲AI · 发现你的独特优势',
   },
   sbti_personality: {
