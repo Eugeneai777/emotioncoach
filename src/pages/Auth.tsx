@@ -636,7 +636,13 @@ const Auth = () => {
             </div>
           )}
 
-          {/* 登录方式切换 Tabs（注册仅支持手机号验证码） */}
+          {searchParams.get('wechat_pending') === '1' && (
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-center">
+              <p className="text-sm text-blue-700">
+                🔗 检测到微信授权，请先完成手机号注册/登录，系统将自动绑定该微信
+              </p>
+            </div>
+          )}
           <div className="flex border-b border-border mb-2">
             <button
               type="button"
