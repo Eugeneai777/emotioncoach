@@ -613,38 +613,7 @@ const Auth = () => {
             </div>
           )}
 
-          {/* 登录方式切换 Tabs */}
-          <div className="flex border-b border-border mb-2">
-            <button
-              type="button"
-              onClick={() => setAuthMode('sms')}
-              className={`flex-1 pb-2 text-sm font-medium border-b-2 transition-colors ${
-                authMode === 'sms' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              验证码登录
-            </button>
-            <button
-              type="button"
-              onClick={() => { setAuthMode('phone'); setIsLogin(true); }}
-              className={`flex-1 pb-2 text-sm font-medium border-b-2 transition-colors ${
-                authMode === 'phone' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              密码登录
-            </button>
-            {!isPhoneOnly && (
-              <button
-                type="button"
-                onClick={() => { setAuthMode('email'); setIsLogin(true); }}
-                className={`flex-1 pb-2 text-sm font-medium border-b-2 transition-colors ${
-                  authMode === 'email' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                邮箱登录
-              </button>
-            )}
-          </div>
+          {/* 仅保留手机号验证码登录/注册 */}
 
           {/* 短信验证码登录模式 */}
           {authMode === 'sms' && (
@@ -878,24 +847,7 @@ const Auth = () => {
 
 
 
-          {!isPhoneOnly && (
-            <>
-              <div className="relative my-4">
-                <Separator />
-                <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-background px-2 text-xs text-muted-foreground">
-                  或
-                </span>
-              </div>
-
-              <Button
-                variant="outline"
-                onClick={() => navigate(`/wechat-auth?mode=${isLogin ? 'login' : 'register'}`)}
-                className="w-full rounded-xl md:rounded-2xl h-10 md:h-12 text-sm md:text-base"
-              >
-                使用微信{isLogin ? "登录" : "注册"}
-              </Button>
-            </>
-          )}
+          {/* 微信登录入口已隐藏，仅保留手机号注册 */}
 
           {/* 仅手机号模式显示注册/登录切换 */}
           {authMode === 'phone' && (
