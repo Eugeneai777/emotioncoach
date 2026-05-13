@@ -562,7 +562,11 @@ export function WealthBlockQuestions({ onComplete, onExit, skipStartScreen = fal
           
           {isLastQuestion ? (
             <Button
-              className="flex-1 h-14 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white"
+              ref={submitBtnRef}
+              className={cn(
+                "flex-1 h-14 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white",
+                pulseSubmit && "animate-pulse ring-4 ring-amber-300/60"
+              )}
               disabled={!canSubmit || pendingNextQuestion}
               onClick={handleSubmit}
             >
