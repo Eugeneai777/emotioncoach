@@ -241,10 +241,10 @@ const TransformationValueShareCard = forwardRef<HTMLDivElement, TransformationVa
           )}
           <div style={{ color: '#16a34a' }}>
             <p style={{ fontSize: '13px', fontWeight: '600', margin: '0 0 4px 0' }}>
-              扫码免费定位起点
+              扫码测评
             </p>
             <p style={{ fontSize: '11px', opacity: 0.7, margin: 0 }}>
-              🎁 开启你的觉醒之旅
+              🎁 找到你的财富卡点
             </p>
           </div>
         </div>

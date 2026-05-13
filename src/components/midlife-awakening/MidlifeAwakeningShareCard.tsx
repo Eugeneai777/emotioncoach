@@ -42,7 +42,7 @@ export const MidlifeAwakeningShareCard = React.forwardRef<HTMLDivElement, Midlif
         onReady={onReady}
         footerConfig={{
           ctaTitle: "扫码测测你的觉醒力",
-          ctaSubtitle: "🎁 免费测评 · 3分钟出结果",
+          ctaSubtitle: "🎁 3分钟出结果",
         }}
       >
         {/* 标题 */}

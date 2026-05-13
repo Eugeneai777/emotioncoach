@@ -186,7 +186,7 @@ const AssessmentPromoShareCard = forwardRef<HTMLDivElement, AssessmentPromoShare
             <img src={qrCodeUrl} alt="扫码测评" style={{ width: '80px', height: '80px', borderRadius: '8px' }} />
           )}
           <div style={{ color: config.accentColor }}>
-            <p style={{ fontSize: '14px', fontWeight: '700', margin: '0 0 4px 0' }}>扫码免费测评</p>
+            <p style={{ fontSize: '14px', fontWeight: '700', margin: '0 0 4px 0' }}>扫码测评</p>
             <p style={{ fontSize: '12px', opacity: 0.6, margin: 0 }}>🎁 3分钟出结果</p>
           </div>
         </div>

@@ -27,7 +27,7 @@ const SBTIShareCard = forwardRef<HTMLDivElement, SBTIShareCardProps>(
         borderRadius={24}
         footerConfig={{
           ctaTitle: '扫码测你的搞钱人格',
-          ctaSubtitle: '🎭 全网爆火 · 免费测试',
+          ctaSubtitle: '🎭 全网爆火 · 人格测试',
           primaryColor: '#e2e8f0',
           secondaryColor: '#94a3b8',
           showQR: true,
