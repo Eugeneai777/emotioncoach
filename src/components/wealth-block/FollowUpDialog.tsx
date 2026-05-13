@@ -255,4 +255,4 @@ export const FollowUpDialog = forwardRef<HTMLDivElement, FollowUpDialogProps>(fu
       )}
     </AnimatePresence>
   );
-}
+});
