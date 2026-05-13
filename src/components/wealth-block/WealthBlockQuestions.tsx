@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -69,11 +69,26 @@ export function WealthBlockQuestions({ onComplete, onExit, skipStartScreen = fal
   // 退出确认弹窗状态
   const [showExitConfirm, setShowExitConfirm] = useState(false);
 
+  // 视觉引导状态
+  const [pulseSubmit, setPulseSubmit] = useState(false);
+  const followUpRef = useRef<HTMLDivElement>(null);
+  const submitBtnRef = useRef<HTMLButtonElement>(null);
+  const followUpAbortRef = useRef<AbortController | null>(null);
+  const deepAbortRef = useRef<AbortController | null>(null);
+
   const currentQuestion = questions[currentIndex];
   const answeredCount = Object.keys(answers).length;
   const progress = (answeredCount / questions.length) * 100;
   const isLastQuestion = currentIndex === questions.length - 1;
   const canSubmit = answeredCount === questions.length;
+
+  // 卸载时取消所有进行中的请求，避免内存泄漏与状态污染
+  useEffect(() => {
+    return () => {
+      followUpAbortRef.current?.abort();
+      deepAbortRef.current?.abort();
+    };
+  }, []);
 
   // 进度激励配置
   const milestones = [
@@ -108,21 +123,31 @@ export function WealthBlockQuestions({ onComplete, onExit, skipStartScreen = fal
     const question = questions.find(q => q.id === questionId);
     if (!question) return;
 
+    // 取消之前未完成的请求
+    followUpAbortRef.current?.abort();
+    const ac = new AbortController();
+    followUpAbortRef.current = ac;
+
     setIsLoadingFollowUp(true);
     setShowFollowUp(true);
 
-    // 10秒超时保护，防止请求卡住导致UI锁死
+    // 选答后下一帧滚动到追问骨架卡，确保用户立刻看到反馈
+    requestAnimationFrame(() => {
+      followUpRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    });
+
+    // 6秒超时保护，超时后静默走 fallback，不打断流程
     const timeoutId = setTimeout(() => {
       console.warn('[WealthBlockQuestions] Follow-up generation timeout');
+      ac.abort();
+      // 不直接 setShowFollowUp(false)，而是塞入兜底追问，让用户依然能交互
+      setCurrentFollowUp({
+        followUpQuestion: "这种情况通常在什么场景下出现？",
+        quickOptions: ["工作中", "家庭中", "社交中", "其他"],
+        contextHint: "（AI 响应较慢，已为你准备通用选项）"
+      });
       setIsLoadingFollowUp(false);
-      setShowFollowUp(false);
-      setCurrentFollowUp(null);
-      setPendingNextQuestion(false);
-      // 超时后自动跳到下一题
-      if (currentIndex < questions.length - 1) {
-        setCurrentIndex(prev => prev + 1);
-      }
-    }, 10000);
+    }, 6000);
 
     try {
       const { data, error } = await supabase.functions.invoke('smart-question-followup', {
@@ -136,6 +161,7 @@ export function WealthBlockQuestions({ onComplete, onExit, skipStartScreen = fal
       });
 
       clearTimeout(timeoutId);
+      if (ac.signal.aborted) return;
 
       if (error) throw error;
 
@@ -144,17 +170,20 @@ export function WealthBlockQuestions({ onComplete, onExit, skipStartScreen = fal
       setCurrentFollowUp(followUpData);
     } catch (err) {
       clearTimeout(timeoutId);
+      if (ac.signal.aborted) return;
       console.error('Failed to generate follow-up:', err);
-      // 使用默认追问
+      // 使用默认追问，确保用户不会卡住
       setCurrentFollowUp({
         followUpQuestion: "这种感受通常在什么场景下出现？",
         quickOptions: ["工作中", "家庭中", "社交中", "其他"],
         contextHint: "帮助我们给你更精准的建议"
       });
     } finally {
-      setIsLoadingFollowUp(false);
+      if (!ac.signal.aborted) {
+        setIsLoadingFollowUp(false);
+      }
     }
-  }, [answers, currentIndex]);
+  }, [answers]);
 
   // 生成深度追问 - 修复闭包陷阱：传递参数而非依赖 state
   const generateDeepFollowUp = useCallback(async (
@@ -165,16 +194,21 @@ export function WealthBlockQuestions({ onComplete, onExit, skipStartScreen = fal
       followUpInsights?: FollowUpAnswer[];
     }
   ) => {
+    deepAbortRef.current?.abort();
+    const ac = new AbortController();
+    deepAbortRef.current = ac;
+
     setIsLoadingDeepFollowUp(true);
     setShowDeepFollowUp(true);
 
-    // 15秒超时保护
+    // 8秒超时保护：失败/超时直接进入结果页，不阻塞用户
     const timeoutId = setTimeout(() => {
       console.warn('[WealthBlockQuestions] Deep follow-up generation timeout');
+      ac.abort();
       setShowDeepFollowUp(false);
       setIsLoadingDeepFollowUp(false);
       onComplete(pendingData.result, pendingData.answers, pendingData.followUpInsights, undefined);
-    }, 15000);
+    }, 8000);
 
     try {
       const { data, error } = await supabase.functions.invoke('generate-deep-followup', {
@@ -197,6 +231,7 @@ export function WealthBlockQuestions({ onComplete, onExit, skipStartScreen = fal
       });
 
       clearTimeout(timeoutId);
+      if (ac.signal.aborted) return;
 
       if (error) throw error;
 
@@ -209,12 +244,15 @@ export function WealthBlockQuestions({ onComplete, onExit, skipStartScreen = fal
       }
     } catch (err) {
       clearTimeout(timeoutId);
+      if (ac.signal.aborted) return;
       console.error('Failed to generate deep follow-up:', err);
       // 出错时直接显示结果
       setShowDeepFollowUp(false);
       onComplete(pendingData.result, pendingData.answers, pendingData.followUpInsights, undefined);
     } finally {
-      setIsLoadingDeepFollowUp(false);
+      if (!ac.signal.aborted) {
+        setIsLoadingDeepFollowUp(false);
+      }
     }
   }, [onComplete]);
 
@@ -243,13 +281,27 @@ export function WealthBlockQuestions({ onComplete, onExit, skipStartScreen = fal
     // 检查是否需要AI追问（最后一题不触发，避免卡住）
     if (!isLastQuestion && shouldAskFollowUp(value, currentIndex, followUpAnswers.length)) {
       setPendingNextQuestion(true);
-      await generateFollowUp(currentQuestion.id, value);
+      try {
+        await generateFollowUp(currentQuestion.id, value);
+      } catch (e) {
+        // 兜底：任何异常都不能让按钮永久 disabled
+        console.error('[WealthBlockQuestions] generateFollowUp threw', e);
+        setPendingNextQuestion(false);
+      }
     } else {
       // 自动跳转到下一题（除非是最后一题）
       if (!isLastQuestion) {
         setTimeout(() => {
           setCurrentIndex(prev => prev + 1);
         }, 300);
+      } else {
+        // 最后一题：800ms 后滚动到"查看结果"按钮 + 高亮脉冲
+        setTimeout(() => {
+          submitBtnRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+          setPulseSubmit(true);
+          // 4 秒后停止脉冲，避免视觉疲劳
+          setTimeout(() => setPulseSubmit(false), 4000);
+        }, 800);
       }
     }
   };
@@ -467,7 +519,7 @@ export function WealthBlockQuestions({ onComplete, onExit, skipStartScreen = fal
                             : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                         )}
                         onClick={() => handleAnswer(option.value)}
-                        disabled={showFollowUp}
+                        disabled={showFollowUp && !isLoadingFollowUp}
                       >
                         {option.label}
                       </motion.button>
@@ -475,11 +527,19 @@ export function WealthBlockQuestions({ onComplete, onExit, skipStartScreen = fal
                   })}
                 </div>
 
-                {/* AI追问对话框 */}
-                {(showFollowUp || isLoadingFollowUp) && currentFollowUp && (
+                {/* 最后一题：选答后显示引导，避免用户找不到"查看结果"按钮 */}
+                {isLastQuestion && answers[currentQuestion.id] && !showFollowUp && (
+                  <p className="mt-4 text-center text-sm text-amber-600 font-medium animate-fade-in">
+                    👇 点击下方「查看结果」生成你的报告
+                  </p>
+                )}
+
+                {/* AI追问对话框 - loading 阶段也渲染骨架，给用户即时反馈 */}
+                {(showFollowUp || isLoadingFollowUp) && (
                   <FollowUpDialog
-                    isOpen={showFollowUp}
-                    followUp={currentFollowUp}
+                    ref={followUpRef}
+                    isOpen={showFollowUp || isLoadingFollowUp}
+                    followUp={currentFollowUp ?? { followUpQuestion: '', quickOptions: [], contextHint: '' }}
                     questionText={currentQuestion.text}
                     userScore={answers[currentQuestion.id] || 0}
                     onAnswer={handleFollowUpAnswer}
@@ -509,7 +569,11 @@ export function WealthBlockQuestions({ onComplete, onExit, skipStartScreen = fal
           
           {isLastQuestion ? (
             <Button
-              className="flex-1 h-14 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white"
+              ref={submitBtnRef}
+              className={cn(
+                "flex-1 h-14 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white",
+                pulseSubmit && "animate-pulse ring-4 ring-amber-300/60"
+              )}
               disabled={!canSubmit || pendingNextQuestion}
               onClick={handleSubmit}
             >

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -93,43 +93,7 @@ export function DeepFollowUpDialog({
   };
 
   if (isLoading) {
-    return (
-      <motion.div
-        initial={{ opacity: 0.01, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="fixed inset-0 z-[60] flex items-center justify-center bg-background/80 backdrop-blur-sm p-4"
-        style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
-      >
-        <Card className="w-full max-w-md border-0 shadow-2xl">
-          <CardContent className="p-8 text-center">
-            <div className="flex flex-col items-center gap-4">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
-                <Loader2 className="w-8 h-8 text-white animate-spin" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold">测评已完成 🎉</h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                  AI 正在根据你的回答，准备几个深入问题...
-                </p>
-                <p className="text-xs text-muted-foreground/70 mt-2">
-                  回答后报告会更精准，也可以跳过
-                </p>
-              </div>
-            </div>
-            
-            {/* Loading 状态下的跳过按钮 */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onSkip}
-              className="mt-6 text-sm text-muted-foreground hover:text-foreground"
-            >
-              跳过，直接查看结果 →
-            </Button>
-          </CardContent>
-        </Card>
-      </motion.div>
-    );
+    return <DeepLoadingCard onSkip={onSkip} />;
   }
 
   if (!currentQuestion) return null;
@@ -296,6 +260,85 @@ export function DeepFollowUpDialog({
           </CardContent>
         </Card>
       </motion.div>
+    </motion.div>
+  );
+}
+
+// 分阶段 loading 卡：每 1.2s 推进一阶段；3s 后跳过按钮变高亮主按钮
+function DeepLoadingCard({ onSkip }: { onSkip: () => void }) {
+  const stages = [
+    "分析你的回答…",
+    "匹配你的卡点模式…",
+    "生成深度问题…",
+  ];
+  const [stageIdx, setStageIdx] = useState(0);
+  const [skipProminent, setSkipProminent] = useState(false);
+
+  useEffect(() => {
+    const t1 = setInterval(() => {
+      setStageIdx(i => (i < stages.length - 1 ? i + 1 : i));
+    }, 1200);
+    const t2 = setTimeout(() => setSkipProminent(true), 3000);
+    return () => {
+      clearInterval(t1);
+      clearTimeout(t2);
+    };
+  }, []);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0.01, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-background/80 backdrop-blur-sm p-4"
+      style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
+    >
+      <Card className="w-full max-w-md border-0 shadow-2xl">
+        <CardContent className="p-8 text-center">
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
+              <Loader2 className="w-8 h-8 text-white animate-spin" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold">测评已完成 🎉</h3>
+              <p className="text-sm text-muted-foreground mt-2 transition-opacity">
+                {stages[stageIdx]}
+              </p>
+              <div className="mt-3 flex items-center justify-center gap-1.5">
+                {stages.map((_, i) => (
+                  <span
+                    key={i}
+                    className={cn(
+                      "h-1.5 w-6 rounded-full transition-all",
+                      i <= stageIdx ? "bg-violet-500" : "bg-muted"
+                    )}
+                  />
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground/70 mt-3">
+                回答后报告会更精准，也可以跳过
+              </p>
+            </div>
+          </div>
+
+          {skipProminent ? (
+            <Button
+              onClick={onSkip}
+              className="mt-6 w-full h-12 rounded-full bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white"
+            >
+              跳过，直接查看结果 →
+            </Button>
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onSkip}
+              className="mt-6 text-sm text-muted-foreground hover:text-foreground"
+            >
+              跳过，直接查看结果 →
+            </Button>
+          )}
+        </CardContent>
+      </Card>
     </motion.div>
   );
 }

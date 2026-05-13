@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, forwardRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MessageCircle, X, ChevronRight, Sparkles, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export interface FollowUpData {
   followUpQuestion: string;
@@ -20,7 +21,7 @@ interface FollowUpDialogProps {
   isLoading?: boolean;
 }
 
-export function FollowUpDialog({
+export const FollowUpDialog = forwardRef<HTMLDivElement, FollowUpDialogProps>(function FollowUpDialog({
   isOpen,
   followUp,
   questionText,
@@ -28,7 +29,7 @@ export function FollowUpDialog({
   onAnswer,
   onSkip,
   isLoading = false
-}: FollowUpDialogProps) {
+}, ref) {
   const [customAnswer, setCustomAnswer] = useState("");
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
@@ -64,6 +65,7 @@ export function FollowUpDialog({
     <AnimatePresence>
       {isOpen && (
         <motion.div
+          ref={ref}
           initial={{ opacity: 0.01, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0.01, y: -20 }}
@@ -72,12 +74,57 @@ export function FollowUpDialog({
           className="mt-6 rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5 p-5"
         >
           {isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="flex items-center gap-3 text-muted-foreground">
-                <Sparkles className="h-5 w-5 animate-pulse text-primary" />
-                <span>正在生成追问...</span>
+            <>
+              {/* 骨架：头部 + 跳过按钮 */}
+              <div className="mb-4 flex items-start justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+                    <MessageCircle className="h-4 w-4 text-primary" />
+                  </div>
+                  <span className="text-sm font-medium text-primary">想多了解一点</span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onSkip}
+                  className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground"
+                >
+                  <X className="mr-1 h-3 w-3" />
+                  跳过
+                </Button>
               </div>
-            </div>
+
+              {/* 原题目提示 */}
+              <div className="mb-3 rounded-lg bg-muted/50 px-3 py-2">
+                <p className="text-xs text-muted-foreground">
+                  你刚才选择了 {userScore} 分
+                </p>
+              </div>
+
+              {/* 加载中说明 */}
+              <div className="mb-4 flex items-center gap-2 text-base font-medium text-foreground">
+                <Sparkles className="h-4 w-4 animate-pulse text-primary" />
+                <span>AI 正在为你生成追问…</span>
+              </div>
+
+              {/* 占位 chip */}
+              <div className="flex flex-wrap gap-2 mb-2">
+                <Skeleton className="h-9 w-20 rounded-full" />
+                <Skeleton className="h-9 w-24 rounded-full" />
+                <Skeleton className="h-9 w-16 rounded-full" />
+                <Skeleton className="h-9 w-20 rounded-full" />
+              </div>
+
+              {/* 底部跳过链接，强化退出通道 */}
+              <div className="mt-4 flex items-center justify-end">
+                <button
+                  onClick={onSkip}
+                  className="text-xs text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
+                >
+                  不想等，跳过下一题 →
+                </button>
+              </div>
+            </>
           ) : (
             <>
               {/* 头部 */}
@@ -208,4 +255,4 @@ export function FollowUpDialog({
       )}
     </AnimatePresence>
   );
-}
+});
