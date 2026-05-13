@@ -923,6 +923,9 @@ const Auth = () => {
               >
                 使用微信登录
               </Button>
+              <p className="text-xs text-center text-muted-foreground mt-2">
+                微信登录仅限已绑定手机号的账号；新用户请先用手机号注册
+              </p>
             </>
           )}
 
