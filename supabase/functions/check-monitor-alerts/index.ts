@@ -218,23 +218,32 @@ serve(async (req) => {
       });
     }
 
-    // 2. 检查前端错误突增（15分钟内 > 15 条）
-    const { count: feErrorCount } = await supabase
+    // 2. 检查前端错误突增（15分钟内 > 15 条，已排除网络噪音 / 监控回环）
+    const NOISE_MESSAGES = ['Failed to fetch', 'signal is aborted without reason', 'NetworkError', 'Load failed'];
+    const NOISE_URL_KEYWORDS = ['monitor_frontend_errors', 'monitor_api_errors', 'monitor_stability_records', 'monitor_ux_anomalies'];
+    const isFrontendNoise = (e: any) => {
+      const msg = String(e.message || '');
+      const resUrl = String(e.resource_url || '');
+      const reqInfo = String(e.request_info || '');
+      if (e.error_type === 'network_error' && NOISE_MESSAGES.some(m => msg.includes(m))) return true;
+      if (NOISE_URL_KEYWORDS.some(k => resUrl.includes(k) || reqInfo.includes(k))) return true;
+      if (e.error_type === 'resource_error' && resUrl.includes('<link>')) return true;
+      return false;
+    };
+
+    const { data: feErrorsRaw } = await supabase
       .from('monitor_frontend_errors')
-      .select('*', { count: 'exact', head: true })
-      .gte('created_at', fifteenMinAgo);
+      .select('error_type, message, page, resource_url, request_info')
+      .gte('created_at', fifteenMinAgo)
+      .order('created_at', { ascending: false })
+      .limit(500);
 
-    if ((feErrorCount || 0) > 15) {
-      // 查询详情用于聚合
-      const { data: feErrors } = await supabase
-        .from('monitor_frontend_errors')
-        .select('error_type, message, page')
-        .gte('created_at', fifteenMinAgo)
-        .order('created_at', { ascending: false })
-        .limit(50);
+    const feErrors = (feErrorsRaw || []).filter((e: any) => !isFrontendNoise(e));
+    const feErrorCount = feErrors.length;
 
+    if (feErrorCount > 15) {
       const feAgg = new Map<string, { count: number; pages: Set<string> }>();
-      for (const e of (feErrors || [])) {
+      for (const e of feErrors.slice(0, 50)) {
         const key = `[${e.error_type}] ${(e.message || '').slice(0, 80)}`;
         const existing = feAgg.get(key);
         if (existing) {
@@ -281,22 +290,23 @@ serve(async (req) => {
       });
     }
 
-    // 4. 检查 UX 体验异常突增（15分钟内 > 20 条）
-    const { count: uxAnomalyCount } = await supabase
+    // 4. 检查 UX 体验异常突增（15分钟内 > 20 条，已排除用户主动取消 / 无场景慢请求）
+    const { data: uxDetailsRaw } = await supabase
       .from('monitor_ux_anomalies')
-      .select('*', { count: 'exact', head: true })
-      .gte('created_at', fifteenMinAgo);
+      .select('anomaly_type, scene')
+      .gte('created_at', fifteenMinAgo)
+      .limit(500);
 
-    if ((uxAnomalyCount || 0) > 20) {
-      // 获取分布详情
-      const { data: uxDetails } = await supabase
-        .from('monitor_ux_anomalies')
-        .select('anomaly_type, scene')
-        .gte('created_at', fifteenMinAgo)
-        .limit(50);
+    const uxDetails = (uxDetailsRaw || []).filter((d: any) => {
+      if (d.anomaly_type === 'user_cancel') return false;
+      if (d.anomaly_type === 'slow_request' && (!d.scene || d.scene === 'other')) return false;
+      return true;
+    });
+    const uxAnomalyCount = uxDetails.length;
 
+    if (uxAnomalyCount > 20) {
       const typeCounts = new Map<string, number>();
-      for (const d of (uxDetails || [])) {
+      for (const d of uxDetails.slice(0, 50)) {
         const key = `${d.anomaly_type}(${d.scene || '未知'})`;
         typeCounts.set(key, (typeCounts.get(key) || 0) + 1);
       }
