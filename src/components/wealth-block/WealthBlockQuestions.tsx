@@ -123,21 +123,31 @@ export function WealthBlockQuestions({ onComplete, onExit, skipStartScreen = fal
     const question = questions.find(q => q.id === questionId);
     if (!question) return;
 
+    // 取消之前未完成的请求
+    followUpAbortRef.current?.abort();
+    const ac = new AbortController();
+    followUpAbortRef.current = ac;
+
     setIsLoadingFollowUp(true);
     setShowFollowUp(true);
 
-    // 10秒超时保护，防止请求卡住导致UI锁死
+    // 选答后下一帧滚动到追问骨架卡，确保用户立刻看到反馈
+    requestAnimationFrame(() => {
+      followUpRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    });
+
+    // 6秒超时保护，超时后静默走 fallback，不打断流程
     const timeoutId = setTimeout(() => {
       console.warn('[WealthBlockQuestions] Follow-up generation timeout');
+      ac.abort();
+      // 不直接 setShowFollowUp(false)，而是塞入兜底追问，让用户依然能交互
+      setCurrentFollowUp({
+        followUpQuestion: "这种情况通常在什么场景下出现？",
+        quickOptions: ["工作中", "家庭中", "社交中", "其他"],
+        contextHint: "（AI 响应较慢，已为你准备通用选项）"
+      });
       setIsLoadingFollowUp(false);
-      setShowFollowUp(false);
-      setCurrentFollowUp(null);
-      setPendingNextQuestion(false);
-      // 超时后自动跳到下一题
-      if (currentIndex < questions.length - 1) {
-        setCurrentIndex(prev => prev + 1);
-      }
-    }, 10000);
+    }, 6000);
 
     try {
       const { data, error } = await supabase.functions.invoke('smart-question-followup', {
@@ -151,6 +161,7 @@ export function WealthBlockQuestions({ onComplete, onExit, skipStartScreen = fal
       });
 
       clearTimeout(timeoutId);
+      if (ac.signal.aborted) return;
 
       if (error) throw error;
 
@@ -159,17 +170,20 @@ export function WealthBlockQuestions({ onComplete, onExit, skipStartScreen = fal
       setCurrentFollowUp(followUpData);
     } catch (err) {
       clearTimeout(timeoutId);
+      if (ac.signal.aborted) return;
       console.error('Failed to generate follow-up:', err);
-      // 使用默认追问
+      // 使用默认追问，确保用户不会卡住
       setCurrentFollowUp({
         followUpQuestion: "这种感受通常在什么场景下出现？",
         quickOptions: ["工作中", "家庭中", "社交中", "其他"],
         contextHint: "帮助我们给你更精准的建议"
       });
     } finally {
-      setIsLoadingFollowUp(false);
+      if (!ac.signal.aborted) {
+        setIsLoadingFollowUp(false);
+      }
     }
-  }, [answers, currentIndex]);
+  }, [answers]);
 
   // 生成深度追问 - 修复闭包陷阱：传递参数而非依赖 state
   const generateDeepFollowUp = useCallback(async (
