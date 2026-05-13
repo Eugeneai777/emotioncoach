@@ -54,8 +54,10 @@ export default function WeChatOAuthCallback() {
             navigate(`/settings?tab=notifications&wechat_error=already_bound&bound_account=${encodeURIComponent(accountName)}`, { replace: true });
           } else if (data.error === 'not_registered') {
             setStep("returning");
-            toast.error("该微信未注册，请先注册");
-            navigate("/wechat-auth?mode=register", { replace: true });
+            // 不再让用户走"微信注册"自动建临时账号，引导他们去手机号注册/登录后绑定
+            sessionStorage.setItem('pending_wechat_bind', '1');
+            toast.info("请先用手机号注册/登录，完成后将自动绑定微信");
+            navigate("/auth?wechat_pending=1", { replace: true });
           } else {
             throw new Error(data.error);
           }
