@@ -519,13 +519,20 @@ export function WealthBlockQuestions({ onComplete, onExit, skipStartScreen = fal
                             : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                         )}
                         onClick={() => handleAnswer(option.value)}
-                        disabled={showFollowUp}
+                        disabled={showFollowUp && !isLoadingFollowUp}
                       >
                         {option.label}
                       </motion.button>
                     );
                   })}
                 </div>
+
+                {/* 最后一题：选答后显示引导，避免用户找不到"查看结果"按钮 */}
+                {isLastQuestion && answers[currentQuestion.id] && !showFollowUp && (
+                  <p className="mt-4 text-center text-sm text-amber-600 font-medium animate-fade-in">
+                    👇 点击下方「查看结果」生成你的报告
+                  </p>
+                )}
 
                 {/* AI追问对话框 - loading 阶段也渲染骨架，给用户即时反馈 */}
                 {(showFollowUp || isLoadingFollowUp) && (
