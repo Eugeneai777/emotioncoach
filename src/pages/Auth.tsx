@@ -847,24 +847,7 @@ const Auth = () => {
 
 
 
-          {!isPhoneOnly && (
-            <>
-              <div className="relative my-4">
-                <Separator />
-                <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-background px-2 text-xs text-muted-foreground">
-                  或
-                </span>
-              </div>
-
-              <Button
-                variant="outline"
-                onClick={() => navigate(`/wechat-auth?mode=${isLogin ? 'login' : 'register'}`)}
-                className="w-full rounded-xl md:rounded-2xl h-10 md:h-12 text-sm md:text-base"
-              >
-                使用微信{isLogin ? "登录" : "注册"}
-              </Button>
-            </>
-          )}
+          {/* 微信登录入口已隐藏，仅保留手机号注册 */}
 
           {/* 仅手机号模式显示注册/登录切换 */}
           {authMode === 'phone' && (
