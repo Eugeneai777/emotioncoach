@@ -1,26 +1,22 @@
-## 修改方案（方案C）
+## 目标
+将这 3 张海报上 QR 卡片里的「扫码免费测评」改成「扫码测评」，并去掉下方「限时免费 长按识别」中的"免费"字样，其它内容（标题、卖点、二维码链接、底部 slogan、配色）全部保持不变。
 
-统一去除 5 张测评海报中"免费"字样，避免与实际付费（¥9.9 起）产生误导。
+## 涉及海报
+1. 财富卡点测评（橙→紫渐变）
+2. 35+女性竞争力测评（粉→橙渐变）
+3. 中年觉醒测评（紫→粉渐变）
 
-### 文案修改对照表
+## 执行步骤
+1. 复用之前的 `/tmp/make_posters.py`，仅修改这 3 张海报 QR 卡片的两处文案：
+   - 主标题：`扫码免费测评` → `扫码测评`
+   - 副提示：`限时免费 长按识别` → `长按识别`
+2. 保持二维码 URL 不变：
+   - 财富卡点 → `https://wechat.eugenewe.net/wealth-block`
+   - 35+女性 → `https://wechat.eugenewe.net/assessment/women_competitiveness`
+   - 中年觉醒 → `https://wechat.eugenewe.net/midlife-awakening`
+3. 输出 1080×1920 PNG 到 `/mnt/documents/`，文件名带 `_v2` 后缀，避免覆盖之前版本。
+4. 用 QA 截图逐张检查文案、二维码清晰度，再以 `<presentation-artifact>` 交付。
 
-| 文件 | 行号 | 旧文案 | 新文案 |
-|---|---|---|---|
-| `src/components/share/AssessmentPromoShareCard.tsx` | 189 | 扫码免费测评 | 扫码测评 |
-| `src/components/wealth-block/WealthBlockPromoShareCard.tsx` | 119 | 扫码免费测评 | 扫码测评 |
-| `src/components/share/TransformationValueShareCard.tsx` | 244 | 扫码免费定位起点 | 扫码测评 |
-| `src/components/share/TransformationValueShareCard.tsx` | (副标) | 🎁 开启你的觉醒之旅 | 🎁 找到你的财富卡点 |
-| `src/components/share/AssessmentValueShareCard.tsx` | 177 | 🎁 免费测评你的财富卡点 | 🎁 测评你的财富卡点 |
-| `src/components/share/MidlifeAwakeningShareCard.tsx` | 45 | 🎁 免费测评 · 3分钟出结果 | 🎁 3分钟出结果 |
-| `src/components/share/MaleMidlifeVitalityShareCard.tsx` | 58 | 3分钟 · 私密 · 免费 | 3分钟 · 私密 · 专业 |
-| `src/components/share/SBTIShareCard.tsx` | 30 | 🎭 全网爆火 · 免费测试 | 🎭 全网爆火 · 人格测试 |
-
-### 不在本次范围
-
-- 落地页"限时免费"促销 hook
-- AI 工具类"免费体验"文案
-- `AssessmentPromoShareCard` 的"🎁 3分钟出结果"副标（无"免费"字样，保留）
-
-### 实现方式
-
-纯前端展示层文案替换，使用 `code--line_replace` 逐处精确替换，不涉及业务逻辑、定价或后端。
+## 不变项
+- 上次已生成的「情绪健康测评」「男人有劲状态测评」两张不动。
+- 不修改任何项目源码。
