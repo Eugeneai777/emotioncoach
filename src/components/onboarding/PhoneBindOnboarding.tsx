@@ -147,7 +147,7 @@ export function PhoneBindOnboarding() {
         onPointerDownOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
         onInteractOutside={(e) => e.preventDefault()}
-        hideClose
+        hideCloseButton
       >
         {step === 'prompt' ? (
           <>
