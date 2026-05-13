@@ -7,15 +7,19 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { extractEdgeFunctionError } from '@/lib/edgeFunctionError';
-import { Phone, Shield, Loader2 } from 'lucide-react';
+import { Phone, Shield, Loader2, AlertTriangle, LogOut } from 'lucide-react';
 
 /**
- * 微信用户绑定手机号引导弹窗
- * 仅对微信临时邮箱用户（@temp.youjin365.com）且未绑定手机号的用户显示
- * 延迟 4 秒显示，避免与其他引导弹窗冲突
+ * 微信临时账号强制绑定手机号弹窗
+ *
+ * 策略（B + C 混合）：
+ *  - 仅对 @temp.youjin365.com 微信临时账号生效
+ *  - 强制阻断：不可关闭、不可跳过，必须绑定手机号才能继续使用
+ *  - 已存在对应手机号账号 → 自动合并资产到手机号主账号（由后端 bind-phone-to-wechat 处理）
+ *  - 不愿意绑定的用户只能退出登录
  */
 export function PhoneBindOnboarding() {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<'prompt' | 'verify'>('prompt');
@@ -26,38 +30,40 @@ export function PhoneBindOnboarding() {
   const [countdown, setCountdown] = useState(0);
   const [needsBind, setNeedsBind] = useState(false);
 
-  // 检查是否需要绑定
   const checkNeedsBind = useCallback(async () => {
-    if (!user) return;
+    if (!user) {
+      setNeedsBind(false);
+      return;
+    }
     const email = user.email || '';
-    // 仅微信临时邮箱用户
-    if (!email.includes('@temp.youjin365.com')) return;
+    if (!email.includes('@temp.youjin365.com')) {
+      setNeedsBind(false);
+      return;
+    }
 
     const { data: profile } = await supabase
       .from('profiles')
-      .select('phone, phone_bind_prompted')
+      .select('phone')
       .eq('id', user.id)
       .single() as any;
 
-    if (!profile) return;
-    // 已绑定手机号或已永久关闭提示
-    if (profile.phone || profile.phone_bind_prompted) return;
-
-    setNeedsBind(true);
+    // 强制策略：只要是临时微信账号且未绑定手机号，立即弹出且不可关闭
+    if (profile && !profile.phone) {
+      setNeedsBind(true);
+    } else {
+      setNeedsBind(false);
+    }
   }, [user]);
 
   useEffect(() => {
     checkNeedsBind();
   }, [checkNeedsBind]);
 
-  // 延迟显示，避免与其他弹窗冲突
+  // 强制立即弹出（无延迟）
   useEffect(() => {
-    if (!needsBind) return;
-    const timer = setTimeout(() => setOpen(true), 4000);
-    return () => clearTimeout(timer);
+    if (needsBind) setOpen(true);
   }, [needsBind]);
 
-  // 倒计时
   useEffect(() => {
     if (countdown <= 0) return;
     const t = setInterval(() => setCountdown(c => c - 1), 1000);
@@ -99,16 +105,14 @@ export function PhoneBindOnboarding() {
         throw new Error(msg);
       }
 
-      // 账号合并场景：切换到合并后的手机号用户 session
       if (data?.merged && data?.session) {
         await supabase.auth.setSession({
           access_token: data.session.access_token,
           refresh_token: data.session.refresh_token,
         });
-        toast({ title: '🎉 手机号绑定成功，账号已合并' });
+        toast({ title: '🎉 手机号绑定成功，权益已合并到手机号账号' });
       } else if (data?.merged && data?.needRelogin) {
-        toast({ title: '手机号绑定成功，请使用手机号重新登录', description: '账号已合并' });
-        // 退出当前微信临时账号
+        toast({ title: '权益已合并到手机号账号，请用手机号重新登录' });
         await supabase.auth.signOut();
       } else {
         toast({ title: '🎉 手机号绑定成功' });
@@ -122,19 +126,12 @@ export function PhoneBindOnboarding() {
     }
   };
 
-  const handleSkip = async () => {
-    // 标记已提示，不再弹出
-    if (user) {
-      await supabase
-        .from('profiles')
-        .update({ phone_bind_prompted: true } as any)
-        .eq('id', user.id);
-    }
+  const handleLogout = async () => {
+    await signOut();
     setOpen(false);
     setNeedsBind(false);
   };
 
-  // 自动提交
   useEffect(() => {
     if (code.length === 6 && step === 'verify') {
       handleVerify(code);
@@ -144,37 +141,50 @@ export function PhoneBindOnboarding() {
   if (!needsBind) return null;
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) setOpen(false); }}>
-      <DialogContent className="sm:max-w-md">
+    <Dialog open={open} onOpenChange={() => { /* 强制阻断：不允许通过遮罩或 ESC 关闭 */ }}>
+      <DialogContent
+        className="sm:max-w-md"
+        onPointerDownOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.preventDefault()}
+        onInteractOutside={(e) => e.preventDefault()}
+        hideCloseButton
+      >
         {step === 'prompt' ? (
           <>
             <DialogHeader>
               <DialogTitle className="text-center text-lg flex items-center justify-center gap-2">
                 <Phone className="h-5 w-5 text-primary" />
-                绑定手机号
+                请绑定手机号以继续使用
               </DialogTitle>
               <DialogDescription className="text-center">
-                绑定手机号后可使用手机号登录，避免更换设备后无法找回账号
+                平台已升级为「手机号唯一主账号」，您当前的微信临时账号需要绑定手机号才能继续使用
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+                <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 shrink-0" />
+                <div className="text-sm text-amber-900 dark:text-amber-200">
+                  <p className="font-medium">为什么必须绑定？</p>
+                  <ul className="mt-1 space-y-1">
+                    <li>• 微信临时账号在更换设备/微信升级后可能丢失</li>
+                    <li>• 绑定后您的所有订单、权益、记录将自动合并到手机号账号</li>
+                    <li>• 之后可用手机号或微信任意一种方式登录同一账号</li>
+                  </ul>
+                </div>
+              </div>
               <div className="flex items-start gap-3 p-3 rounded-lg bg-secondary/50">
                 <Shield className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-                <div className="text-sm">
-                  <p className="font-medium">为什么需要绑定？</p>
-                  <ul className="mt-1 text-muted-foreground space-y-1">
-                    <li>• 支持手机号登录，多端无缝切换</li>
-                    <li>• 避免微信环境变化导致账号丢失</li>
-                    <li>• 保障您的数据和权益安全</li>
-                  </ul>
+                <div className="text-sm text-muted-foreground">
+                  若该手机号已注册过本平台账号，本次微信账号下的权益将自动迁移合并到对应手机号主账号。
                 </div>
               </div>
               <div className="flex flex-col gap-2">
                 <Button onClick={() => setStep('verify')} className="w-full">
-                  立即绑定
+                  立即绑定手机号
                 </Button>
-                <Button variant="ghost" onClick={handleSkip} className="text-sm text-muted-foreground">
-                  暂不绑定
+                <Button variant="ghost" onClick={handleLogout} className="text-sm text-muted-foreground">
+                  <LogOut className="h-4 w-4 mr-2" />
+                  暂不绑定，退出登录
                 </Button>
               </div>
             </div>
@@ -184,7 +194,7 @@ export function PhoneBindOnboarding() {
             <DialogHeader>
               <DialogTitle className="text-center text-lg">验证手机号</DialogTitle>
               <DialogDescription className="text-center">
-                请输入您的手机号并验证
+                绑定后权益将自动合并到手机号账号
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
@@ -232,8 +242,9 @@ export function PhoneBindOnboarding() {
                 <Button variant="outline" onClick={() => { setStep('prompt'); setCode(''); }} className="flex-1">
                   返回
                 </Button>
-                <Button variant="ghost" onClick={handleSkip} className="flex-1 text-muted-foreground">
-                  暂不绑定
+                <Button variant="ghost" onClick={handleLogout} className="flex-1 text-muted-foreground">
+                  <LogOut className="h-4 w-4 mr-2" />
+                  退出登录
                 </Button>
               </div>
             </div>
