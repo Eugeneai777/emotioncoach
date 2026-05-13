@@ -13,6 +13,8 @@ import {
   type Dimension,
 } from "./parentAbilityData";
 import { supabase } from "@/integrations/supabase/client";
+import { useProgressMilestones } from "@/hooks/useProgressMilestones";
+import { MilestoneAchievementOverlay } from "@/components/common/MilestoneAchievementOverlay";
 
 export interface FollowUpAnswer {
   subDimension: SubDimension;
@@ -95,9 +97,14 @@ export function ParentAbilityQuestions({ onComplete, onBack }: ParentAbilityQues
     }
   }, [currentIndex, total]);
 
+  const { activeMilestone, trigger: triggerMilestone, dismiss: dismissMilestone } = useProgressMilestones();
+
   const handleSelect = (value: number) => {
     const newAnswers = { ...answers, [current.id]: value };
     setAnswers(newAnswers);
+
+    // 进度激励
+    triggerMilestone((Object.keys(newAnswers).length / total) * 100);
 
     // Check AI follow-up trigger
     const { shouldTrigger, subDimension, dimension } = shouldTriggerFollowUp(newAnswers, currentIndex, followUpCount);
@@ -204,6 +211,7 @@ export function ParentAbilityQuestions({ onComplete, onBack }: ParentAbilityQues
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-emerald-50 to-teal-50 p-4 flex flex-col">
+      <MilestoneAchievementOverlay milestone={activeMilestone} onDismiss={dismissMilestone} />
       {/* 顶部导航 */}
       <div className="flex items-center justify-between mb-4">
         <Button variant="ghost" size="sm" onClick={handlePrev}>

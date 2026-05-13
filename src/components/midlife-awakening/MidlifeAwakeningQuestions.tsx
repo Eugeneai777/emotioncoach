@@ -15,6 +15,8 @@ import {
   type MidlifeDimension,
   type DimensionTransitionKey,
 } from "./midlifeAwakeningData";
+import { useProgressMilestones } from "@/hooks/useProgressMilestones";
+import { MilestoneAchievementOverlay } from "@/components/common/MilestoneAchievementOverlay";
 
 interface MidlifeAwakeningQuestionsProps {
   answers: Record<number, number>;
@@ -170,8 +172,13 @@ export function MidlifeAwakeningQuestions({ answers, onAnswerChange, onComplete,
     }
   };
 
+  const { activeMilestone, trigger: triggerMilestone, dismiss: dismissMilestone } = useProgressMilestones();
+
   const handleAnswer = (value: number) => {
+    const wasAnswered = answers[currentQuestion.id] !== undefined;
     onAnswerChange(currentQuestion.id, value);
+    const newCount = wasAnswered ? answeredCount : answeredCount + 1;
+    triggerMilestone((newCount / totalQuestions) * 100);
     if (!isLastQuestion) {
       setTimeout(() => tryAdvance(currentIndex + 1), 300);
     }
@@ -202,6 +209,7 @@ export function MidlifeAwakeningQuestions({ answers, onAnswerChange, onComplete,
 
   return (
     <div className="space-y-4 min-h-[calc(100dvh-120px)] flex flex-col">
+      <MilestoneAchievementOverlay milestone={activeMilestone} onDismiss={dismissMilestone} />
       <Card>
         <CardContent className="p-4 space-y-3">
           <DimensionProgressIndicator currentDimension={currentDimension} />
