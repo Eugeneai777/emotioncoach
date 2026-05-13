@@ -256,6 +256,29 @@ const Auth = () => {
     // All async work is deferred via setTimeout to avoid blocking the auth state machine
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session && event === 'SIGNED_IN') {
+        // 微信引导回流：登录后自动跳到微信绑定流程
+        const pendingWechatBind = sessionStorage.getItem('pending_wechat_bind');
+        if (pendingWechatBind === '1') {
+          sessionStorage.removeItem('pending_wechat_bind');
+          setTimeout(async () => {
+            try {
+              const { data, error } = await supabase.functions.invoke('get-wechat-bind-url', {
+                body: { redirectUri: `${window.location.origin}/settings?tab=notifications` },
+              });
+              if (!error && data?.url) {
+                toast({ title: '正在自动绑定微信...', description: '请在微信中完成授权' });
+                window.location.href = data.url;
+                return;
+              }
+              toast({ title: '微信自动绑定失败', description: '可在「设置 → 通知偏好」手动绑定', variant: 'destructive' });
+              navigate('/settings?tab=notifications');
+            } catch (e: any) {
+              toast({ title: '微信自动绑定失败', description: e?.message || '请稍后重试', variant: 'destructive' });
+              navigate('/settings?tab=notifications');
+            }
+          }, 0);
+          return;
+        }
         setTimeout(async () => {
           const isNewUser = session.user.created_at &&
             (new Date().getTime() - new Date(session.user.created_at).getTime()) < 5000;
@@ -613,7 +636,13 @@ const Auth = () => {
             </div>
           )}
 
-          {/* 登录方式切换 Tabs（注册仅支持手机号验证码） */}
+          {searchParams.get('wechat_pending') === '1' && (
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-center">
+              <p className="text-sm text-blue-700">
+                🔗 检测到微信授权，请先完成手机号注册/登录，系统将自动绑定该微信
+              </p>
+            </div>
+          )}
           <div className="flex border-b border-border mb-2">
             <button
               type="button"
@@ -894,6 +923,9 @@ const Auth = () => {
               >
                 使用微信登录
               </Button>
+              <p className="text-xs text-center text-muted-foreground mt-2">
+                微信登录仅限已绑定手机号的账号；新用户请先用手机号注册
+              </p>
             </>
           )}
 

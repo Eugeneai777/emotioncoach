@@ -83,68 +83,13 @@ serve(async (req) => {
         isNewUser = false;
         console.log('User already registered, logging in:', finalUserId);
       } else {
-        // 创建新用户
-        const email = `wechat_${tokenData.openid}@temp.youjin365.com`;
-        const password = crypto.randomUUID();
-        
-        const { data: newUser, error: signUpError } = await supabaseClient.auth.admin.createUser({
-          email,
-          password,
-          email_confirm: true,
-          user_metadata: {
-            nickname: userInfo.nickname,
-            avatar_url: userInfo.headimgurl,
-            wechat_openid: tokenData.openid
-          }
-        });
-
-        if (signUpError) {
-          // 如果是邮箱已存在错误，尝试获取现有用户并登录
-          if (signUpError.code === 'email_exists') {
-            console.log('Email exists, fetching existing user by email...');
-            const { data: existingUserData, error: getUserError } = await supabaseClient.auth.admin.getUserByEmail(email);
-            
-            if (!getUserError && existingUserData?.user) {
-              finalUserId = existingUserData.user.id;
-              isNewUser = false;
-              console.log('Found existing user by email:', finalUserId);
-              
-              // 确保映射存在（基于 openid 唯一约束）
-              await supabaseClient
-                .from('wechat_user_mappings')
-                .upsert({
-                  system_user_id: finalUserId,
-                  openid: tokenData.openid,
-                  unionid: tokenData.unionid,
-                  nickname: userInfo.nickname,
-                  avatar_url: userInfo.headimgurl,
-                  subscribe_status: true,
-                  updated_at: new Date().toISOString(),
-                }, { onConflict: 'openid' });
-            } else {
-              console.error('Sign up error:', signUpError);
-              return new Response(
-                JSON.stringify({ error: signUpError.message }),
-                { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-              );
-            }
-          } else {
-            console.error('Sign up error:', signUpError);
-            return new Response(
-              JSON.stringify({ error: signUpError.message }),
-              { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-            );
-          }
-        } else if (!newUser?.user) {
-          return new Response(
-            JSON.stringify({ error: 'Failed to create user' }),
-            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        } else {
-          finalUserId = newUser.user.id;
-          isNewUser = true;
-          console.log('Created new user:', finalUserId);
-        }
+        // 未绑定：不再自动创建 wechat_*@temp.youjin365.com 临时账号
+        // 统一引导用户用手机号注册/登录后再绑定微信
+        console.log('WeChat not bound, redirecting to phone-first flow');
+        return new Response(
+          JSON.stringify({ error: 'not_registered' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
     } else if (isBind && bindUserId) {
       // 绑定流程 - 从 state 中获取用户ID（因为从微信跳回来时session可能丢失）

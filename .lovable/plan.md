@@ -1,79 +1,47 @@
-## 目标
+# 修复方案：问题 1-3 对齐"手机号唯一主账号"模型
 
-为5个核心测评分别生成一张**独立的高质量宣传海报PNG**（约1080×1920，竖版手机海报尺寸），可直接下载发到小红书、视频号、合作平台、朋友圈等场景引流扫码。
+## 问题 1：禁用微信"临时账号"自动注册路径
 
-## 5张海报清单
+**现状**：`wechat-oauth-callback` 在 register/默认模式下，若未绑定手机号会自动用 `wechat_*@temp.youjin365.com` 建账号并登录，与方案冲突。
 
-| # | 测评 | 二维码落地URL |
-|---|------|-------------|
-| 1 | 财富卡点测评 | `https://wechat.eugenewe.net/wealth-block` |
-| 2 | 情绪健康测评 | `https://wechat.eugenewe.net/emotion-health` |
-| 3 | 35+女性竞争力测评 | `https://wechat.eugenewe.net/assessment/women-competitiveness` |
-| 4 | 男人有劲状态评估 | `https://wechat.eugenewe.net/assessment/male_midlife_vitality` |
-| 5 | 中年觉醒测评 | `https://wechat.eugenewe.net/midlife-awakening` |
+**改动**：
+1. **后端 `supabase/functions/wechat-oauth-callback/index.ts`**
+   - 删除"自动创建 temp 账号 + 签发 magicLink"分支
+   - 未绑定时统一返回 `{ error: 'not_registered', openid, unionid?, nickname?, avatar? }`
+2. **后端 `supabase/functions/wechat-oauth-process/index.ts`**
+   - 同步保证 register/login 模式未绑定时返回 `not_registered` + openid（用于后续补绑）
+3. **前端 `src/pages/WeChatOAuthCallback.tsx`**
+   - 收到 `not_registered`：把 `openid`(+ 昵称头像) 写入 `sessionStorage('pending_wechat_bind')`
+   - 跳转 `/auth?wechat_pending=1`，toast「请先用手机号注册/登录后自动绑定微信」
 
-域名使用项目标准外推域名 `wechat.eugenewe.net`（已写入项目记忆，会自动跳转/identify 流量来源）。
+## 问题 2：/auth 微信入口加引导
 
-## 商业架构师视角的海报结构
+**前端 `src/pages/Auth.tsx`**
+- 微信登录按钮上方加说明条：「微信登录仅限已绑定手机号的账号；新用户请先使用手机号注册」
+- 检测到 URL `?wechat_pending=1`：
+  - 顶部展示蓝色提示卡：「检测到微信授权，完成手机号注册/登录后将自动绑定」
+  - 默认 Tab 切到「手机号」
+- 登录/注册成功后（在 `useAuth` `SIGNED_IN` 钩子或 Auth.tsx 成功回调里）：
+  - 若 `sessionStorage('pending_wechat_bind')` 存在 → 调用 `bind-phone-to-wechat`（传 openid），成功后 toast「微信已自动绑定」，清缓存
 
-每张海报统一沿用一套"专业引流模板"，但配色/痛点钩子/视觉主题各自独立，避免一眼识破是同模板：
+## 问题 3：历史微信 temp 账号策略（**需用户决定**）
 
-```text
-┌─────────────────────────┐
-│  顶部品牌条：有劲AI · LOGO │
-│                         │
-│  钩子大字（痛点提问）     │  ← 引发共鸣，3秒抓住眼球
-│  "你的财富天花板在哪？"   │
-│                         │
-│  副标题（场景化承诺）     │
-│  "3分钟扫描30个财富卡点"  │
-│                         │
-│  3条核心卖点（带图标）    │  ← 建立专业信任
-│  ✓ ...                  │
-│  ✓ ...                  │
-│  ✓ ...                  │
-│                         │
-│  ┌──────┐  扫码立即测评  │
-│  │ QR   │  限时免费       │  ← 降低决策成本
-│  │      │  3分钟出报告    │
-│  └──────┘                │
-│                         │
-│  底部水印：有劲AI · 合作引流│
-└─────────────────────────┘
-```
+库里现有大量 `wechat_*@temp.youjin365.com` 账号。三选一：
 
-## 各海报独立调性（防同质化）
+- **A. 保留现状**：老用户继续可用微信直登；只对"新微信"强制走手机号。最低风险。
+- **B. 强制补绑**：老 temp 账号下次微信登录后弹窗"请绑定手机号才能继续使用"，未绑定不可访问核心功能。
+- **C. 自动迁移**：登录时若该微信对应手机号已注册主账号，复用现有"账号合并"逻辑把 temp 资产转移到手机账号，然后软删 temp。最干净但不可逆。
 
-| 海报 | 主色 | 钩子文案 | 目标用户痛点 |
-|------|------|---------|------------|
-| 财富卡点 | 金紫渐变 (#d97706→#9333ea) | "为什么你越努力越没钱？" | 收入瓶颈、留不住钱 |
-| 情绪健康 | 青绿(#10b981→#3b82f6) | "你的情绪在偷偷消耗你" | 内耗、焦虑、PHQ-9/GAD-7 专业背书 |
-| 35+女性竞争力 | 玫金(#ec4899→#f59e0b) | "35+，你的不可替代性是什么？" | 中年女性身份焦虑 |
-| 男人有劲 | 深墨绿+金 (#1f2937→#0f766e→#f59e0b) | "你有多久没觉得'有劲'了？" | 男性精力/状态/关键时刻 |
-| 中年觉醒 | 紫粉(#ec4899→#a855f7) | "中场时刻，你想清楚了吗？" | 35-50 中年方向感缺失 |
+> 我会先实现问题 1+2（A 方案兼容），等你确认 B/C 后再追加。
 
-## 技术方案
+## 不改动
+- `bind-phone-to-wechat` 逻辑（已支持，复用）
+- 设置页绑定/解绑入口（问题 4 暂搁置）
+- 现有 RLS、订单、微信支付 openid 缓存
 
-使用 Python (Pillow + qrcode) 直接渲染海报：
+## 技术细节
+- `pending_wechat_bind` 用 `sessionStorage` 跨 OAuth 跳转保活
+- 绑定调用放在 `useAuth` 的 `SIGNED_IN` 监听里，确保任何登录路径（验证码/密码/SMS）触发后都会自动补绑
+- 失败 toast 区分：`already_bound`（提示去解绑）、`network`（重试）
 
-1. 1080×1920 画布，渐变背景
-2. 中文使用系统已有的 Noto/Source Han 字体（如果缺失则 fallback 到 DejaVu + 提前下载思源黑体）
-3. QR 码 320×320，白底圆角卡片承托，下方放"扫码立即测评"
-4. 输出 5 个文件到 `/mnt/documents/`：
-   - `poster_wealth_block.png`
-   - `poster_emotion_health.png`
-   - `poster_women_competitiveness.png`
-   - `poster_male_vitality.png`
-   - `poster_midlife_awakening.png`
-5. 强制 QA：每张转 JPG 预览图，逐张视觉检查文字溢出/对比度/二维码可扫，发现问题就改脚本重渲。
-6. 全部以 `<presentation-artifact>` 形式交付，用户点击即可下载。
-
-## 不会动的东西
-
-- 不修改任何项目代码（这是一次性产物）
-- 不调用现有 React 分享卡组件（避免依赖运行环境）
-- 不创建数据库记录
-
-## 交付物
-
-5 个独立 PNG 海报文件，全部下载即可投放。
+请确认问题 3 选 A/B/C，然后我实现 1+2。
