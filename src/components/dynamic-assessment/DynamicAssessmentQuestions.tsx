@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight, X, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { useProgressMilestones } from "@/hooks/useProgressMilestones";
+import { MilestoneAchievementOverlay } from "@/components/common/MilestoneAchievementOverlay";
 
 interface DynamicAssessmentQuestionsProps {
   questions: any[];
@@ -70,8 +72,19 @@ export function DynamicAssessmentQuestions({ questions, scoreOptions, onComplete
 
   const options = shuffledOptionsMap[currentQ];
 
+  // 进度激励：仅当题量 >10 才启用，避免短测评打扰
+  const enableMilestones = questions.length > 10;
+  const { activeMilestone, trigger: triggerMilestone, dismiss: dismissMilestone } = useProgressMilestones();
+
   const handleAnswer = (questionIndex: number, score: number) => {
-    setAnswers((prev) => ({ ...prev, [questionIndex]: score }));
+    setAnswers((prev) => {
+      const wasAnswered = prev[questionIndex] !== undefined;
+      const next = { ...prev, [questionIndex]: score };
+      if (enableMilestones && !wasAnswered) {
+        triggerMilestone((Object.keys(next).length / questions.length) * 100);
+      }
+      return next;
+    });
     if (questionIndex < questions.length - 1) {
       setDirection(1);
       setTimeout(() => setCurrentQ(questionIndex + 1), 300);
@@ -94,6 +107,7 @@ export function DynamicAssessmentQuestions({ questions, scoreOptions, onComplete
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 p-4 max-w-lg mx-auto flex flex-col">
+      <MilestoneAchievementOverlay milestone={activeMilestone} onDismiss={dismissMilestone} />
       {/* Top bar */}
       <motion.div
         className="flex items-center justify-between mb-3"

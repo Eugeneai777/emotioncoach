@@ -20,6 +20,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useSCL90Progress } from "./useSCL90Progress";
+import { useProgressMilestones } from "@/hooks/useProgressMilestones";
+import { MilestoneAchievementOverlay } from "@/components/common/MilestoneAchievementOverlay";
 
 interface SCL90QuestionsProps {
   onComplete: (result: SCL90Result, answers: Record<number, number>) => void;
@@ -92,10 +94,20 @@ export function SCL90Questions({ onComplete, onExit }: SCL90QuestionsProps) {
     return true;
   }, [answers]);
 
+  // 进度激励（90 题使用 dense 模式：6 个里程碑）
+  const { activeMilestone, trigger: triggerMilestone, dismiss: dismissMilestone } = useProgressMilestones({ dense: true });
+
   // 处理答案选择
   const handleAnswer = useCallback((questionId: number, score: number) => {
-    setAnswers(prev => ({ ...prev, [questionId]: score }));
-  }, []);
+    setAnswers(prev => {
+      const wasAnswered = prev[questionId] !== undefined;
+      const next = { ...prev, [questionId]: score };
+      if (!wasAnswered) {
+        triggerMilestone((Object.keys(next).length / 90) * 100);
+      }
+      return next;
+    });
+  }, [triggerMilestone]);
 
   // 跳转到指定页
   const handleGoToPage = useCallback((pageIndex: number) => {
@@ -137,6 +149,7 @@ export function SCL90Questions({ onComplete, onExit }: SCL90QuestionsProps) {
 
   return (
     <div className="space-y-4">
+      <MilestoneAchievementOverlay milestone={activeMilestone} onDismiss={dismissMilestone} />
       {/* 顶部导航 + 进度 */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">

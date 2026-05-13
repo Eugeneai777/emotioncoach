@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { questions, scoreLabels, type Perspective } from "./communicationAssessmentData";
+import { useProgressMilestones } from "@/hooks/useProgressMilestones";
+import { MilestoneAchievementOverlay } from "@/components/common/MilestoneAchievementOverlay";
 
 interface CommAssessmentQuestionsProps {
   perspective: Perspective;
@@ -24,8 +26,15 @@ export function CommAssessmentQuestions({ perspective, onComplete, onBack }: Com
   const isFirst = currentIndex === 0;
   const progress = ((currentIndex + (hasAnswer ? 1 : 0)) / total) * 100;
 
+  const { activeMilestone, trigger: triggerMilestone, dismiss: dismissMilestone } = useProgressMilestones();
+
   const handleSelect = (value: number) => {
+    const wasAnswered = answers[current.id] !== undefined;
     setAnswers((prev) => ({ ...prev, [current.id]: value }));
+
+    // 进度激励
+    const newCount = wasAnswered ? Object.keys(answers).length : Object.keys(answers).length + 1;
+    triggerMilestone((newCount / total) * 100);
 
     // 自动前进
     if (!isLast) {
@@ -61,6 +70,7 @@ export function CommAssessmentQuestions({ perspective, onComplete, onBack }: Com
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-sky-50 to-indigo-50 p-4 flex flex-col">
+      <MilestoneAchievementOverlay milestone={activeMilestone} onDismiss={dismissMilestone} />
       {/* 顶部导航 */}
       <div className="flex items-center justify-between mb-4">
         <Button variant="ghost" size="sm" onClick={handlePrev}>
