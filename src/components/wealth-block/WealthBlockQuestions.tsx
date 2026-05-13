@@ -527,11 +527,12 @@ export function WealthBlockQuestions({ onComplete, onExit, skipStartScreen = fal
                   })}
                 </div>
 
-                {/* AI追问对话框 */}
-                {(showFollowUp || isLoadingFollowUp) && currentFollowUp && (
+                {/* AI追问对话框 - loading 阶段也渲染骨架，给用户即时反馈 */}
+                {(showFollowUp || isLoadingFollowUp) && (
                   <FollowUpDialog
-                    isOpen={showFollowUp}
-                    followUp={currentFollowUp}
+                    ref={followUpRef}
+                    isOpen={showFollowUp || isLoadingFollowUp}
+                    followUp={currentFollowUp ?? { followUpQuestion: '', quickOptions: [], contextHint: '' }}
                     questionText={currentQuestion.text}
                     userScore={answers[currentQuestion.id] || 0}
                     onAnswer={handleFollowUpAnswer}
