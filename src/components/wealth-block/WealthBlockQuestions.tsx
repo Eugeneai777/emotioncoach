@@ -194,16 +194,21 @@ export function WealthBlockQuestions({ onComplete, onExit, skipStartScreen = fal
       followUpInsights?: FollowUpAnswer[];
     }
   ) => {
+    deepAbortRef.current?.abort();
+    const ac = new AbortController();
+    deepAbortRef.current = ac;
+
     setIsLoadingDeepFollowUp(true);
     setShowDeepFollowUp(true);
 
-    // 15秒超时保护
+    // 8秒超时保护：失败/超时直接进入结果页，不阻塞用户
     const timeoutId = setTimeout(() => {
       console.warn('[WealthBlockQuestions] Deep follow-up generation timeout');
+      ac.abort();
       setShowDeepFollowUp(false);
       setIsLoadingDeepFollowUp(false);
       onComplete(pendingData.result, pendingData.answers, pendingData.followUpInsights, undefined);
-    }, 15000);
+    }, 8000);
 
     try {
       const { data, error } = await supabase.functions.invoke('generate-deep-followup', {
@@ -226,6 +231,7 @@ export function WealthBlockQuestions({ onComplete, onExit, skipStartScreen = fal
       });
 
       clearTimeout(timeoutId);
+      if (ac.signal.aborted) return;
 
       if (error) throw error;
 
@@ -238,12 +244,15 @@ export function WealthBlockQuestions({ onComplete, onExit, skipStartScreen = fal
       }
     } catch (err) {
       clearTimeout(timeoutId);
+      if (ac.signal.aborted) return;
       console.error('Failed to generate deep follow-up:', err);
       // 出错时直接显示结果
       setShowDeepFollowUp(false);
       onComplete(pendingData.result, pendingData.answers, pendingData.followUpInsights, undefined);
     } finally {
-      setIsLoadingDeepFollowUp(false);
+      if (!ac.signal.aborted) {
+        setIsLoadingDeepFollowUp(false);
+      }
     }
   }, [onComplete]);
 
