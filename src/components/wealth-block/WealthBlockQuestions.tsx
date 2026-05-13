@@ -69,11 +69,26 @@ export function WealthBlockQuestions({ onComplete, onExit, skipStartScreen = fal
   // 退出确认弹窗状态
   const [showExitConfirm, setShowExitConfirm] = useState(false);
 
+  // 视觉引导状态
+  const [pulseSubmit, setPulseSubmit] = useState(false);
+  const followUpRef = useRef<HTMLDivElement>(null);
+  const submitBtnRef = useRef<HTMLButtonElement>(null);
+  const followUpAbortRef = useRef<AbortController | null>(null);
+  const deepAbortRef = useRef<AbortController | null>(null);
+
   const currentQuestion = questions[currentIndex];
   const answeredCount = Object.keys(answers).length;
   const progress = (answeredCount / questions.length) * 100;
   const isLastQuestion = currentIndex === questions.length - 1;
   const canSubmit = answeredCount === questions.length;
+
+  // 卸载时取消所有进行中的请求，避免内存泄漏与状态污染
+  useEffect(() => {
+    return () => {
+      followUpAbortRef.current?.abort();
+      deepAbortRef.current?.abort();
+    };
+  }, []);
 
   // 进度激励配置
   const milestones = [
