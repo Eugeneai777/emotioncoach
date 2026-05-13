@@ -21,7 +21,7 @@ interface FollowUpDialogProps {
   isLoading?: boolean;
 }
 
-export function FollowUpDialog({
+export const FollowUpDialog = forwardRef<HTMLDivElement, FollowUpDialogProps>(function FollowUpDialog({
   isOpen,
   followUp,
   questionText,
@@ -29,7 +29,7 @@ export function FollowUpDialog({
   onAnswer,
   onSkip,
   isLoading = false
-}: FollowUpDialogProps) {
+}, ref) {
   const [customAnswer, setCustomAnswer] = useState("");
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
