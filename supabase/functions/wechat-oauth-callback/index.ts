@@ -71,64 +71,22 @@ serve(async (req) => {
       finalUserId = existingMapping.system_user_id;
       isNewUser = false;
       console.log('微信已绑定用户，直接登录:', finalUserId);
-    } else if (isRegister) {
-      // 注册模式且微信未绑定，创建新用户
-      const email = `wechat_${tokenData.openid}@temp.youjin365.com`;
-      const password = crypto.randomUUID();
-      
-      const { data: newUser, error: signUpError } = await supabaseClient.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: true,
-        user_metadata: {
-          nickname: userInfo.nickname,
-          avatar_url: userInfo.headimgurl,
-          wechat_openid: tokenData.openid
-        }
-      });
-
-      if (signUpError) {
-        // 如果邮箱已存在，尝试获取现有用户
-        if (signUpError.code === 'email_exists') {
-          console.log('邮箱已存在，通过邮箱精准查找现有用户...');
-          const { data: existingUserData, error: getUserError } = await supabaseClient.auth.admin.getUserByEmail(email);
-          
-          if (!getUserError && existingUserData?.user) {
-            finalUserId = existingUserData.user.id;
-            isNewUser = false;
-            console.log('找到现有用户:', finalUserId);
-          } else {
-            console.error('getUserByEmail failed:', getUserError);
-            throw signUpError;
-          }
-        } else {
-          throw signUpError;
-        }
-      } else if (!newUser?.user) {
-        throw new Error('Failed to create user');
-      } else {
-        finalUserId = newUser.user.id;
-        isNewUser = true;
-        console.log('创建新用户成功:', finalUserId);
-      }
-    } else if (isLogin || isBind) {
-      // 登录或绑定模式但没有映射，引导去注册
-      const redirectUrl = Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '.lovableproject.com') || '';
-      return new Response(null, {
-        status: 302,
-        headers: {
-          ...corsHeaders,
-          'Location': `${redirectUrl}/wechat-auth?mode=register&wechat_error=not_registered`
-        }
-      });
     } else {
-      // 未知 state，引导去注册
+      // 未绑定微信：统一引导用户用手机号注册/登录后再回到设置页绑定微信
+      // 不再自动创建 wechat_*@temp.youjin365.com 临时账号
       const redirectUrl = Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '.lovableproject.com') || '';
+      await logAuthEvent(req, {
+        event_type: 'login_failed',
+        auth_method: 'wechat_oauth',
+        platform: 'wechat',
+        error_message: 'wechat_not_bound_redirect_to_phone',
+        error_code: 'not_registered',
+      });
       return new Response(null, {
         status: 302,
         headers: {
           ...corsHeaders,
-          'Location': `${redirectUrl}/wechat-auth?mode=register`
+          'Location': `${redirectUrl}/auth?wechat_pending=1`
         }
       });
     }
