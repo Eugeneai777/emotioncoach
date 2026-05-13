@@ -281,13 +281,27 @@ export function WealthBlockQuestions({ onComplete, onExit, skipStartScreen = fal
     // 检查是否需要AI追问（最后一题不触发，避免卡住）
     if (!isLastQuestion && shouldAskFollowUp(value, currentIndex, followUpAnswers.length)) {
       setPendingNextQuestion(true);
-      await generateFollowUp(currentQuestion.id, value);
+      try {
+        await generateFollowUp(currentQuestion.id, value);
+      } catch (e) {
+        // 兜底：任何异常都不能让按钮永久 disabled
+        console.error('[WealthBlockQuestions] generateFollowUp threw', e);
+        setPendingNextQuestion(false);
+      }
     } else {
       // 自动跳转到下一题（除非是最后一题）
       if (!isLastQuestion) {
         setTimeout(() => {
           setCurrentIndex(prev => prev + 1);
         }, 300);
+      } else {
+        // 最后一题：800ms 后滚动到"查看结果"按钮 + 高亮脉冲
+        setTimeout(() => {
+          submitBtnRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+          setPulseSubmit(true);
+          // 4 秒后停止脉冲，避免视觉疲劳
+          setTimeout(() => setPulseSubmit(false), 4000);
+        }, 800);
       }
     }
   };
