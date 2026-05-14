@@ -42,7 +42,7 @@ export const PERSIST_BUSTER = APP_VERSION;
  * - meta.persist === false → 不持久化(实时数据/敏感数据显式声明)
  * - queryKey 含 'realtime' / 'private' / 'token' → 不持久化(兜底)
  */
-export function shouldDehydrateQuery(query: Query): boolean {
+export function shouldDehydrateQuery(query: any): boolean {
   if (query.state.status !== "success") return false;
   const meta = query.meta as { persist?: boolean } | undefined;
   if (meta?.persist === false) return false;
