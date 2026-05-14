@@ -2,7 +2,9 @@ import React, { Suspense, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/react-query";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
+import { persister, PERSIST_BUSTER, shouldDehydrateQuery, installAuthCacheGuard } from "@/lib/queryPersist";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { CoachCallProvider } from "@/components/coach-call";
 import { AICoachCallProvider } from "@/components/coach-call/AICoachCallProvider";
@@ -298,12 +300,18 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 5 * 60 * 1000,
-      gcTime: 10 * 60 * 1000,
+      // 持久化场景需要更长 gcTime,否则刚 hydrate 的查询会被 GC 掉
+      gcTime: 24 * 60 * 60 * 1000,
       retry: 1,
       refetchOnWindowFocus: false,
     },
   },
 });
+
+// 登出/换号 → 清空内存 + 持久化缓存,防止串号
+if (typeof window !== "undefined") {
+  installAuthCacheGuard(() => queryClient.clear());
+}
 
 // 防止 Dialog/预览层等残留的 scroll-lock 导致页面无法上下滚动
 const ScrollUnlocker = () => {
@@ -353,7 +361,15 @@ const GlobalFloatingLayer = () => {
 };
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
+  <PersistQueryClientProvider
+    client={queryClient}
+    persistOptions={{
+      persister,
+      maxAge: 24 * 60 * 60 * 1000, // 24h
+      buster: PERSIST_BUSTER,
+      dehydrateOptions: { shouldDehydrateQuery },
+    }}
+  >
     <TooltipProvider>
       <BrowserRouter>
         <CoachCallProvider>
@@ -587,7 +603,7 @@ const App = () => (
         </CoachCallProvider>
       </BrowserRouter>
     </TooltipProvider>
-  </QueryClientProvider>
+  </PersistQueryClientProvider>
 );
 
 export default App;

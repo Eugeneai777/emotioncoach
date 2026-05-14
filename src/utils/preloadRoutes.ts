@@ -42,9 +42,35 @@ export const preloadRoute = (route: string) => {
     case '/assessment-tools':
       void import('@/pages/AssessmentTools');
       break;
+    case '/wealth-camp-checkin':
+      void import('@/pages/WealthCampCheckIn');
+      break;
+    case '/community':
+      void import('@/pages/Community');
+      break;
+    case '/history':
+      void import('@/pages/History');
+      break;
+    case '/settings':
+      void import('@/pages/Settings');
+      break;
+    case '/calendar':
+      void import('@/pages/Calendar');
+      break;
+    case '/health-store':
+      void import('@/pages/HealthStore');
+      break;
+    case '/coach-space':
+      void import('@/pages/CoachSpace');
+      break;
+    case '/human-coaches':
+      void import('@/pages/HumanCoaches');
+      break;
     default:
       if (path.startsWith('/assessment/')) {
         void import('@/pages/DynamicAssessmentPage');
+      } else if (path.startsWith('/coach/')) {
+        void import('@/pages/DynamicCoach');
       }
       break;
   }
@@ -82,4 +108,23 @@ export const scheduleRoutePreload = (routes: string[], delay = 500) => {
       (window as any).cancelIdleCallback(idleId);
     }
   };
+};
+
+/**
+ * 启动后空闲时段批量预热高频路由,大幅提升路由切换流畅度。
+ * 在 main.tsx 启动尾部调用即可,完全 idle,不影响首屏。
+ */
+export const warmHighFrequencyRoutes = () => {
+  scheduleRoutePreload(
+    [
+      '/my-page',
+      '/camps',
+      '/assessment-tools',
+      '/community',
+      '/history',
+      '/wealth-camp-checkin',
+      '/life-coach-voice',
+    ],
+    2000
+  );
 };
