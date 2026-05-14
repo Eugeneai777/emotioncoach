@@ -946,6 +946,10 @@ export const CoachVoiceChat = ({
     const mappedStatus: ConnectionStatus = newStatus === 'disconnected' ? 'disconnected' : newStatus === 'connecting' ? 'connecting' : newStatus === 'connected' ? 'connected' : newStatus === 'error' ? 'error' : 'idle';
     statusRef.current = mappedStatus;
     setStatus(mappedStatus);
+    // 🔧 已连接过 → 后续 connecting 视为"静默重连"，不再整页覆盖 ConnectionProgress
+    if (mappedStatus === 'connecting' && hasEverConnectedRef.current) {
+      setIsSilentReconnecting(true);
+    }
     if (mappedStatus === 'connected') {
       hasEverConnectedRef.current = true;
       setIsSilentReconnecting(false);
