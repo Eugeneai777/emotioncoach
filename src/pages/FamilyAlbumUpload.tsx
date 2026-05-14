@@ -41,12 +41,15 @@ export default function FamilyAlbumUpload() {
   useEffect(() => {
     if (!token) { setInvalid(true); setLoading(false); return; }
     supabase
-      .rpc("resolve_family_album_share", { p_token: token })
+      .from("family_album_shares" as any)
+      .select("user_id, nickname")
+      .eq("share_token", token)
+      .eq("is_active", true)
+      .maybeSingle()
       .then(({ data }: any) => {
-        const row = Array.isArray(data) ? data[0] : data;
-        if (row && row.target_user_id) {
-          setTargetUserId(row.target_user_id);
-          setNickname(row.nickname);
+        if (data) {
+          setTargetUserId(data.user_id);
+          setNickname(data.nickname);
         } else {
           setInvalid(true);
         }
@@ -56,7 +59,7 @@ export default function FamilyAlbumUpload() {
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (!files?.length || !targetUserId || !token) return;
+    if (!files?.length || !targetUserId) return;
 
     const filesToUpload = Array.from(files).slice(0, MAX_UPLOAD);
     setUploading(true);
@@ -83,10 +86,9 @@ export default function FamilyAlbumUpload() {
 
         const { data: { publicUrl } } = supabase.storage.from("family-photos").getPublicUrl(data.path);
 
-        const { error: dbErr } = await supabase.rpc("insert_family_photo_via_token", {
-          p_token: token,
-          p_photo_url: publicUrl,
-          p_caption: null,
+        const { error: dbErr } = await supabase.from("family_photos").insert({
+          user_id: targetUserId,
+          photo_url: publicUrl,
         });
         if (dbErr) throw dbErr;
         count++;

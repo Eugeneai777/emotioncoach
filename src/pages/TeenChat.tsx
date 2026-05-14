@@ -38,16 +38,17 @@ export default function TeenChat() {
     queryFn: async () => {
       if (!token) throw new Error('无效的访问链接');
 
-      // 走安全 RPC，避免匿名枚举所有 token
-      const { data, error } = await supabase.rpc('validate_teen_token', {
-        p_token: token,
-      });
+      const { data, error } = await supabase
+        .from('teen_access_tokens')
+        .select('parent_user_id, teen_nickname, usage_count')
+        .eq('access_token', token)
+        .eq('is_active', true)
+        .maybeSingle();
 
       if (error) throw error;
-      const row = Array.isArray(data) ? data[0] : data;
-      if (!row) throw new Error('链接已失效或不存在');
+      if (!data) throw new Error('链接已失效或不存在');
 
-      return row as { parent_user_id: string; teen_nickname: string | null; usage_count: number | null };
+      return data;
     },
     retry: false
   });
@@ -55,9 +56,16 @@ export default function TeenChat() {
   // Update usage count on mount
   useEffect(() => {
     if (accessInfo && token) {
-      supabase.rpc('increment_teen_token_usage', { p_token: token }).then(() => {
-        console.log('Usage count updated');
-      });
+      supabase
+        .from('teen_access_tokens')
+        .update({ 
+          usage_count: (accessInfo.usage_count || 0) + 1,
+          last_used_at: new Date().toISOString()
+        })
+        .eq('access_token', token)
+        .then(() => {
+          console.log('Usage count updated');
+        });
     }
   }, [accessInfo, token]);
 
