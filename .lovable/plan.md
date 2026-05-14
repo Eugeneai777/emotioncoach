@@ -1,126 +1,99 @@
-# 全端加载性能优化方案
 
-目标：解决"每次打开页面都要好长时间，切换不流畅"的问题，覆盖 Web、移动端浏览器、微信内置浏览器、微信小程序 WebView。
+# AI 语音教练对话优化方案
 
-⚠️ 本方案先评估现状 + 列出落地步骤，**等你确认后再执行**。
-
----
-
-## 一、问题根因（基于现有代码已观察到的）
-
-1. **首屏 JS 体积大**：`src/main.tsx` 启动即装 4 个 tracker（error / api / stability / monitor），加上 lazyRetry 自动 reload、麦克风兜底等逻辑，主 bundle 偏重。
-2. **路由全靠 lazy 拉 chunk**：`preloadRoutes.ts` 已有但只覆盖少量页面；微信 WebView 网络抖动时 chunk 加载失败 → 触发 `lazyRetry` → 整页 reload → 用户感知"卡死"。
-3. **数据请求重复且无持久化**：大量 `useQuery` 每次进页面都重新打 Supabase；`/coach/wealth_coach_4_questions` 这类内容页其实是**准静态**的。
-4. **图片/海报未走 CDN 转码**：海报、头像、分享图基本是原图直出。
-5. **小程序 WebView 缓存策略弱**：微信对 H5 的 disk cache 行为不稳定，没有 SW 兜底就只能每次回源。
-6. **版本检查 `useVersionCheck`** 会拉 `/version.json` 并可能触发 reload，遇到忙碌态会跳过，但仍可能在切页瞬间触发抖动。
+下面针对你提出的 5 个问题，先做**根因定位**，再给出**可选方案 + 风险**，由你决定执行哪些。所有改动都集中在 `CoachVoiceChat.tsx`、`vibrant-life-realtime-token/index.ts`、`RealtimeAudio.ts`、`ConnectionProgress.tsx`，不会动业务表结构。
 
 ---
 
-## 二、方案分层（由低风险到高风险）
+## 1. 杂音误识别 / 韩文英文乱码 — 已修，建议再加一道防线
 
-### L0｜立刻可做，零风险（建议先做）
+**根因**：OpenAI Realtime 用 `whisper-1` + `language: "zh"` 做转写，但 VAD 阈值 0.6 偏低，环境噪音/喘息也会被切成"语音段"送给 Whisper，Whisper 在无效语音上经常乱猜成韩/日/英文。
 
-| 项 | 做法 | 收益 |
-|---|---|---|
-| **静态资源强缓存** | Vite 已对带 hash 的 JS/CSS 输出 `immutable`，确认 `vercel/lovable` 边缘 `Cache-Control: public, max-age=31536000, immutable`；`index.html` / `version.json` 用 `no-cache` | 二次进入秒开 |
-| **路由智能预加载** | 扩展 `preloadRoutes.ts`：登录后 idle 时段批量 prefetch 用户高频页（首页、my-page、camp-checkin、coach 4Q4A 等） | 切页 0 等待 |
-| **首屏 tracker 延后** | `installApiErrorTracker / Stability / Monitor` 已 `requestIdleCallback`，再把 `installErrorTracker` 也轻量化（只保留 onerror 钩子，重逻辑 idle 注入） | TTI ↓ 200~400ms |
-| **图片懒加载 + 尺寸标定** | 全局 `<img loading="lazy" decoding="async" width height>`；首屏 LCP 图加 `fetchpriority="high"` | LCP ↓，CLS=0 |
-| **关键字体 swap** | `font-display: swap`，避免微信 WebView 等字体阻塞 | 首屏文字 0 阻塞 |
+**方案 A（推荐，改动小）**：
+- VAD `threshold` 从 `0.6` → `0.75`，`silence_duration_ms` 从 `1800` → `1200`（更难触发，但对话节奏不变慢）。
+- Whisper 的 `prompt` 加一句"用户使用简体中文，无中文内容时请输出空字符串"，并在前端转写回调里做后过滤：非中文字符占比 > 60% 且无中文 → 丢弃该条 transcript（不显示、不送 AI）。
+- 已修部分保留。
 
-### L1｜React Query 持久化缓存（核心，强烈建议）
+**方案 B（更彻底）**：转写模型从 `whisper-1` 换成 `gpt-4o-mini-transcribe`，对环境噪音更稳，多语种误识别率显著下降，价格相近。
 
-引入 `@tanstack/query-sync-storage-persister` + `persistQueryClient`：
-
-- **存储**：localStorage（≤2MB）；超大列表走 IndexedDB（idb-keyval）
-- **策略**：
-  - 准静态数据（教练介绍、4Q4A、配置、产品列表）`staleTime: 1h, gcTime: 24h, persist: true`
-  - 用户私有数据（订单、进度、积分）`staleTime: 30s, persist: true, networkMode: offlineFirst`
-  - 实时数据（聊天、通话、配额）不持久化
-- **失效**：`buster` 用 `app version`；用户登出时 `queryClient.clear()`
-- **安全**：persist key 按 `userId` 隔离；切换账号自动清空，防止串号
-
-**预期**：二次进入页面**首屏直接渲染缓存内容**，后台静默 revalidate（stale-while-revalidate 模式）。
-
-### L2｜Service Worker（仅 Web / H5 / 微信浏览器，小程序 WebView 不可用）
-
-用 `vite-plugin-pwa` workbox 模式：
-
-- **App Shell 预缓存**：index.html、主 chunk、logo、关键 CSS
-- **运行时缓存**：
-  - JS/CSS chunk → `CacheFirst` 永久（带 hash）
-  - Supabase REST GET → `StaleWhileRevalidate`（白名单：og_configurations / energy_studio_tools / human_coaches_public 等公开表）
-  - 图片 → `CacheFirst` 30 天，最多 200 张
-  - 字体 → `CacheFirst` 1 年
-- **离线兜底页**：断网时显示已缓存的最后一次内容
-- **更新策略**：`autoUpdate` + 顶部 toast 提示"有新版本，点击刷新"，**不强刷**（避免打断录音/通话），与现有 `useBusyGuard` 联动
-- **微信 WebView 注意**：iOS 微信 SW 支持，安卓微信 X5/TBS 内核支持但偶有抖动 → 加 `navigator.serviceWorker` 能力检测，失败静默降级
-
-### L3｜小程序 WebView 专项（微信 MP）
-
-小程序 WebView 不能用 Service Worker，必须走另一条路：
-
-1. **小程序壳缓存关键资源**：在小程序端用 `wx.setStorageSync` 缓存 H5 入口 URL、用户 token、openid，避免每次进 WebView 重新走 OAuth
-2. **H5 端用 localStorage + IndexedDB**：和 L1 共用同一套 React Query persist
-3. **关键页面 SSG 静态化**：`/coach/wealth_coach_4_questions` 这种内容固定页，可在构建时预渲染 HTML，减少首次水合时间（用 `vite-plugin-prerender` 或手写脚本）
-4. **接口聚合**：把首屏 3~5 个 supabase 请求合并到一个 edge function `get-bootstrap`，一次返回，减少串行 RTT
-5. **CDN 就近**：确认 Lovable Cloud / Supabase Storage 的图片走国内可达 CDN（必要时把头像/海报镜像到七牛/腾讯云 COS 域名 wechat.eugenewe.net）
-
-### L4｜数据层进一步优化（可选，按需）
-
-- **路由级 prefetch on hover/intent**：`<Link>` 鼠标 hover / touchstart 时预拉数据
-- **图片 WebP/AVIF**：`vite-imagetools` 构建时转格式
-- **大列表虚拟滚动**：`@tanstack/react-virtual`
-- **Supabase Realtime 节流**：高频频道改成 debounce 200ms 合并
+**风险**：阈值调高在低麦音量场景可能漏识别一两句 → 配一个"麦克风提示音量过低"toast。
 
 ---
 
-## 三、安全 & 隐私
+## 2. 偶发断开后弹"连接成功"页面
 
-- **多账号隔离**：所有持久化 cache key 必带 `userId` 前缀；`useAuth` 监听到登出/换号 → `queryClient.clear() + localStorage.removeItem(persist key) + caches.delete()`
-- **敏感数据不入持久层**：订单金额、手机号、token、聊天明文 → 仅内存 / sessionStorage，不进 localStorage / SW cache
-- **RLS 不放松**：缓存只是前端加速，**所有请求仍走 RLS**；后台 revalidate 失败时不显示陈旧的他人数据
-- **版本失效**：`buster = app version`，每次发版自动废弃旧缓存，避免老用户卡在旧 UI
-- **SW 范围限定**：`scope: '/'`，且只缓存 GET；POST/PUT/DELETE 永远直连
-- **微信合规**：不缓存 openid 到 localStorage 明文（已用 `wechatOpenIdCache`，沿用即可）
+**根因**：`CoachVoiceChat` 用一个 `connectionPhase` 状态机驱动 `<ConnectionProgress />`，"重连"会再次跑 `setConnectionPhase('preparing' → 'connected')`，所以即使是后台静默重连，UI 也会全屏弹"连接成功"。
+
+**方案**：
+- 给 `<ConnectionProgress />` 增加 `mode: 'initial' | 'silent-reconnect'`。
+- 在已经有过一次 `connected` 后，再次进入 `connecting` 时只显示顶部一个细条（"网络波动，正在恢复…"）+ 顶部 toast，不再整页覆盖。
+- 加一个 `hasEverConnectedRef`，进入重连只切顶部 badge 不切 phase。
+
+**风险**：低，纯 UI 层。
 
 ---
 
-## 四、可行性评估
+## 3. 偶尔断开后又重连 — 期望对话不中断
 
-| 端 | L0 | L1 | L2 | L3 |
+**根因**：当前 `disconnect` 一旦触发（WebRTC ICE 断连/Realtime WS 关闭），`chatRef.current?.disconnect()` 直接清掉 session，再次连接相当于**新开 session**，AI 上下文丢失，所以"中断感"明显。当前只保存了 `sessionId + lastBilledMinute` 用于退款，并没真正用于恢复对话历史。
+
+**方案 A（推荐，工程量中等）**：
+- 在 `RealtimeAudio.ts` 增加：a) `enableAutoReconnect` 选项；b) WS/PeerConnection `oniceconnectionstatechange === 'disconnected'` 时启动指数退避重连（1s/2s/4s，最多 3 次，10s 内成功不通知用户）；c) 重连成功后用本地缓存的 `conversation.item.create` 把最近 N 条对话用 `previous_item_id` 推回 OpenAI session（Realtime 支持手动注入历史）。
+- 前端把每条 user/assistant transcript 入内存数组 → 重连时回灌。
+- 与方案 2 联动：自动重连过程不打断 UI、不重置计时。
+
+**方案 B（保底，简单）**：仅做 a + b，重连后给 OpenAI 注入一条 system "继续刚才的对话主题：…"摘要，避免硬中断观感。
+
+**风险**：注入历史会消耗一些 token；网络持续不通仍需明确告知用户中断。
+
+---
+
+## 4. 对话不够"四部曲"，趋于给建议或浮于表面
+
+**根因**：`vibrant-life-realtime-token` 默认快路径用的是极简 instructions（"你是劲老师，温暖的AI生活教练"），只有 `scenario` 模式才走完整四部曲提示。通用模式下没有四部曲约束，模型自然倾向直接给建议。
+
+**方案**：
+- 在 `buildResponseGuidelines()` 增加一段强约束的"四部曲对话规则"：
+  1. 觉察：先回应感受，禁止 30 秒内给建议；
+  2. 理解：用 1-2 个开放式问题挖动机/需求；
+  3. 反应：复述并核对，再给方向（不超过 2 条）；
+  4. 转化：邀请用户自己说出最小一步。
+- 配一组 `few-shot` 反例（"❌ 直接列 3 条建议"）和正例。
+- 通用模式不再走"极简 instructions 快路径"，统一注入完整 system prompt + 四部曲约束（启动延迟约 +200ms，可接受）。
+- 增加一个 `track_dialog_stage` tool，AI 自评当前阶段，便于后期回看与监控偏离率。
+
+**风险**：用户问"几点开门""怎么做"这种事实问题时，规则可能让 AI 显得啰嗦 → 在 prompt 里做例外处理（信息查询直答）。
+
+---
+
+## 5. 无记忆功能 — 提前读历史再对话
+
+**现状**：实际上**已读了** `user_coach_memory`（最多 5 条按 importance_score）+ 最近一次 `vibrant_life_sage_briefings` 简报，但只用于通用劲老师，且只在非 fast-path 下注入。其他教练（情绪、亲子、财富、青少年）大多没用，且很多场景"opening"是写死开场白，没读用户名/上次主题。
+
+**方案**：
+- 抽出 `loadUserMemoryContext(userId, coachType)` 公共函数，在所有 `*-realtime-token` 边缘函数里统一调用（情绪、亲子、财富、青少年、生活教练）。
+- 注入内容标准化：① 昵称；② 最近 1 次 briefing 摘要（用户问题 + 关键洞察）；③ 跨教练关键 memories（top 5，按 importance）；④ 最近 3 次本教练对话主题（新增 `voice_chat_sessions.topic` 摘要字段，对话结束时让 AI summarize 一句存表）。
+- 通话开场由 AI 自己按上下文生成 1 句个性化问候（"上次你说在准备述职，今天怎么样了？"），替换现在的写死 opening。
+- 增加 `forget_memory` / `update_memory` tool 供用户主动管理。
+
+**安全**：所有 memory 已有 RLS（按 user_id），新加字段沿用同策略；不向 AI 注入敏感字段（电话/身份证）。
+
+**风险**：每次启动多 1 次 DB 聚合查询（~50ms）；prompt 变长 → token 成本小幅上升（约 +300 tokens/次）。
+
+---
+
+## 推进建议（请你勾选）
+
+| 序号 | 问题 | 推荐方案 | 工作量 | 风险 |
 |---|---|---|---|---|
-| Web 桌面 | ✅ | ✅ | ✅ | — |
-| 移动端浏览器 H5 | ✅ | ✅ | ✅ | — |
-| 微信内置浏览器 | ✅ | ✅ | ✅（iOS/X5 OK，加降级） | — |
-| 微信小程序 WebView | ✅ | ✅ | ❌（不支持 SW） | ✅ 必做 |
+| ① | 杂音/多语种 | 方案 A | 0.5 天 | 低 |
+| ② | 重连弹"连接成功" | 上述 UI 改造 | 0.5 天 | 低 |
+| ③ | 重连不中断对话 | 方案 A（含历史回灌） | 1.5 天 | 中 |
+| ④ | 四部曲约束 | 强 prompt + tool 监控 | 0.5 天 | 低-中 |
+| ⑤ | 全教练记忆贯通 | 抽公共函数 + 主题摘要表 | 1.5 天 | 低 |
 
----
+**总计 ~4.5 天**。可拆批次：
+- **第一批（最快见效）**：①+②+④，约 1.5 天
+- **第二批（体验跃迁）**：③+⑤，约 3 天
 
-## 五、预估收益
-
-- 首次访问：LCP **2.8s → 1.6s**（L0 + 图片优化）
-- 二次访问：白屏 **1.5s → 0.2s**（L1 + L2）
-- 切页：从「拉 chunk + 拉数据」**1~2s** → 缓存命中 **<100ms**（L1）
-- 微信小程序 WebView：登录态秒进，避免重复 OAuth（L3）
-
----
-
-## 六、建议落地顺序
-
-1. **第一批**（1 次发布）：L0 全部 + L1 React Query 持久化 → 80% 收益
-2. **第二批**：L2 Service Worker（带降级） + 图片格式转换
-3. **第三批**：L3 小程序专项 + bootstrap 聚合接口
-4. **持续**：L4 按页面优化
-
----
-
-## 七、需要你决定的点
-
-1. 是否同意按 **L0 → L1 → L2 → L3** 分批推进？还是只做 L0+L1？
-2. 是否启用 Service Worker（会引入"新版本提示"交互，需你接受）？
-3. 小程序壳是否能配合改造（L3 的第 1 项需要小程序端代码同步改）？
-4. 是否允许我新建 `get-bootstrap` 聚合 edge function？
-
-确认后我再开始实施。
+请告诉我：要全部推进，还是先做第一批？或对哪个方案需要再细化／换思路？
