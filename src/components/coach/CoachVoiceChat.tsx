@@ -947,6 +947,8 @@ export const CoachVoiceChat = ({
     statusRef.current = mappedStatus;
     setStatus(mappedStatus);
     if (mappedStatus === 'connected') {
+      hasEverConnectedRef.current = true;
+      setIsSilentReconnecting(false);
       lastActivityRef.current = Date.now();
       if (durationRef.current) clearInterval(durationRef.current);
       durationRef.current = setInterval(() => {
