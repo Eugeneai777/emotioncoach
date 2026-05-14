@@ -1,5 +1,5 @@
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
-import type { Query } from "@tanstack/react-query";
+
 import { supabase } from "@/integrations/supabase/client";
 
 // 用 app version 作为 buster,发版后自动失效旧缓存
