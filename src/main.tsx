@@ -26,6 +26,8 @@ runWhenIdle(() => {
   installApiErrorTracker();
   installStabilityCollector();
   installMonitorReporter();
+  // 空闲时段预热高频路由,提升路由切换流畅度
+  warmHighFrequencyRoutes();
 });
 
 /**
