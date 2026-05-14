@@ -1007,7 +1007,23 @@ export class RealtimeChat {
       case 'conversation.item.input_audio_transcription.completed':
         // 用户语音转文字完成
         if (event.transcript) {
-          this.onTranscript(event.transcript, true, 'user');
+          const raw = String(event.transcript).trim();
+          // 🔧 中文过滤：避免噪音被识别为韩/日/英文乱码送入对话
+          // 规则：去掉空白和标点后，若全无中文且总长度<10或非中文占比>60%，丢弃
+          const stripped = raw.replace(/[\s\p{P}\p{S}]/gu, '');
+          const chineseChars = (stripped.match(/[\u4e00-\u9fff]/g) || []).length;
+          const totalChars = stripped.length;
+          const hasChinese = chineseChars > 0;
+          const nonChineseRatio = totalChars > 0 ? (totalChars - chineseChars) / totalChars : 0;
+          const looksLikeNoise =
+            totalChars === 0 ||
+            (!hasChinese) ||
+            (nonChineseRatio > 0.6 && totalChars < 20);
+          if (looksLikeNoise) {
+            console.log('[Transcript] dropped non-Chinese / noise transcript:', raw);
+            break;
+          }
+          this.onTranscript(raw, true, 'user');
         }
         break;
 
