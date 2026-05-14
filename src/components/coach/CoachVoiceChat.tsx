@@ -2302,6 +2302,18 @@ export const CoachVoiceChat = ({
           </Button>
         </div>
       )}
+      {/* 🔧 静默重连细条：网络抖动时显示，避免整页弹"连接成功"页 */}
+      {(isSilentReconnecting || (status === 'connecting' && hasEverConnectedRef.current)) && (
+        <div className="bg-amber-500/90 text-white text-xs py-1.5 px-4 flex items-center justify-center gap-2 animate-in slide-in-from-top duration-200">
+          <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+          网络波动，正在自动恢复…
+        </div>
+      )}
+      {status === 'disconnected' && hasEverConnectedRef.current && (
+        <div className="bg-red-500/90 text-white text-xs py-1.5 px-4 flex items-center justify-center gap-2 animate-in slide-in-from-top duration-200">
+          连接已断开，请检查网络后重新发起通话
+        </div>
+      )}
       {/* 顶部状态栏 - 小程序环境预留胶囊按钮空间 */}
       <div className={`flex items-center justify-between p-4 ${useMiniProgramMode ? 'pt-2' : 'pt-safe'}`}>
         {/* 左侧：返回按钮 */}
