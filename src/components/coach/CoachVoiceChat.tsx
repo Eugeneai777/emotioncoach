@@ -300,6 +300,9 @@ export const CoachVoiceChat = ({
 
   const { sessionId: initialSessionId, billedMinutes: initialBilledMinutes } = getOrCreateSessionId();
   const sessionIdRef = useRef(initialSessionId);
+  // 🔧 标记是否曾经连通过（用于"静默重连"UI 决策）
+  const hasEverConnectedRef = useRef(false);
+  const [isSilentReconnecting, setIsSilentReconnecting] = useState(false);
 
   // 如果是重连，恢复已扣费分钟数
   useEffect(() => {
@@ -943,7 +946,13 @@ export const CoachVoiceChat = ({
     const mappedStatus: ConnectionStatus = newStatus === 'disconnected' ? 'disconnected' : newStatus === 'connecting' ? 'connecting' : newStatus === 'connected' ? 'connected' : newStatus === 'error' ? 'error' : 'idle';
     statusRef.current = mappedStatus;
     setStatus(mappedStatus);
+    // 🔧 已连接过 → 后续 connecting 视为"静默重连"，不再整页覆盖 ConnectionProgress
+    if (mappedStatus === 'connecting' && hasEverConnectedRef.current) {
+      setIsSilentReconnecting(true);
+    }
     if (mappedStatus === 'connected') {
+      hasEverConnectedRef.current = true;
+      setIsSilentReconnecting(false);
       lastActivityRef.current = Date.now();
       if (durationRef.current) clearInterval(durationRef.current);
       durationRef.current = setInterval(() => {
@@ -993,6 +1002,7 @@ export const CoachVoiceChat = ({
         }
       }
     } else if (mappedStatus === 'disconnected' || mappedStatus === 'error') {
+      setIsSilentReconnecting(false);
       if (durationRef.current) clearInterval(durationRef.current);
 
       // 🔧 优先展示“明确断开原因”（例如计费网络失败/点数不足）
@@ -2215,7 +2225,8 @@ export const CoachVoiceChat = ({
   }, []);
 
   // 🔧 连接中显示进度
-  if (isCheckingQuota || status === 'connecting') {
+  // 🔧 静默重连：已成功连过一次后，不再整页覆盖，让用户继续看到对话画面 + 顶部细条
+  if ((isCheckingQuota || status === 'connecting') && !hasEverConnectedRef.current) {
     // PTT 模式：极简接通画面（呼吸光圈 + 正在接通… + 取消）
     if (pttMode) {
       return (
@@ -2289,6 +2300,18 @@ export const CoachVoiceChat = ({
           >
             前往充值
           </Button>
+        </div>
+      )}
+      {/* 🔧 静默重连细条：网络抖动时显示，避免整页弹"连接成功"页 */}
+      {(isSilentReconnecting || (status === 'connecting' && hasEverConnectedRef.current)) && (
+        <div className="bg-amber-500/90 text-white text-xs py-1.5 px-4 flex items-center justify-center gap-2 animate-in slide-in-from-top duration-200">
+          <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+          网络波动，正在自动恢复…
+        </div>
+      )}
+      {status === 'disconnected' && hasEverConnectedRef.current && (
+        <div className="bg-red-500/90 text-white text-xs py-1.5 px-4 flex items-center justify-center gap-2 animate-in slide-in-from-top duration-200">
+          连接已断开，请检查网络后重新发起通话
         </div>
       )}
       {/* 顶部状态栏 - 小程序环境预留胶囊按钮空间 */}
