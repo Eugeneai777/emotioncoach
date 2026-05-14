@@ -603,7 +603,7 @@ const App = () => (
         </CoachCallProvider>
       </BrowserRouter>
     </TooltipProvider>
-  </QueryClientProvider>
+  </PersistQueryClientProvider>
 );
 
 export default App;
