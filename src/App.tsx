@@ -361,7 +361,15 @@ const GlobalFloatingLayer = () => {
 };
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
+  <PersistQueryClientProvider
+    client={queryClient}
+    persistOptions={{
+      persister,
+      maxAge: 24 * 60 * 60 * 1000, // 24h
+      buster: PERSIST_BUSTER,
+      dehydrateOptions: { shouldDehydrateQuery },
+    }}
+  >
     <TooltipProvider>
       <BrowserRouter>
         <CoachCallProvider>
