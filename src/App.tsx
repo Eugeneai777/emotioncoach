@@ -300,12 +300,18 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 5 * 60 * 1000,
-      gcTime: 10 * 60 * 1000,
+      // 持久化场景需要更长 gcTime,否则刚 hydrate 的查询会被 GC 掉
+      gcTime: 24 * 60 * 60 * 1000,
       retry: 1,
       refetchOnWindowFocus: false,
     },
   },
 });
+
+// 登出/换号 → 清空内存 + 持久化缓存,防止串号
+if (typeof window !== "undefined") {
+  installAuthCacheGuard(() => queryClient.clear());
+}
 
 // 防止 Dialog/预览层等残留的 scroll-lock 导致页面无法上下滚动
 const ScrollUnlocker = () => {
