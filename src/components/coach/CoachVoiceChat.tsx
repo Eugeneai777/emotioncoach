@@ -2225,7 +2225,8 @@ export const CoachVoiceChat = ({
   }, []);
 
   // 🔧 连接中显示进度
-  if (isCheckingQuota || status === 'connecting') {
+  // 🔧 静默重连：已成功连过一次后，不再整页覆盖，让用户继续看到对话画面 + 顶部细条
+  if ((isCheckingQuota || status === 'connecting') && !hasEverConnectedRef.current) {
     // PTT 模式：极简接通画面（呼吸光圈 + 正在接通… + 取消）
     if (pttMode) {
       return (
