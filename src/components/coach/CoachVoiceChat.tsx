@@ -1002,6 +1002,7 @@ export const CoachVoiceChat = ({
         }
       }
     } else if (mappedStatus === 'disconnected' || mappedStatus === 'error') {
+      setIsSilentReconnecting(false);
       if (durationRef.current) clearInterval(durationRef.current);
 
       // 🔧 优先展示“明确断开原因”（例如计费网络失败/点数不足）
