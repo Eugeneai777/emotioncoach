@@ -1370,12 +1370,16 @@ serve(async (req) => {
             voice: mapVoiceTypeToOpenAIVoice(voiceOverride, mode),
             instructions: '你是劲老师，温暖的AI生活教练。请等待系统配置后开始对话。',
             max_response_output_tokens: "inf",
-            input_audio_transcription: { model: "whisper-1", language: "zh" },
+            input_audio_transcription: {
+              model: "gpt-4o-mini-transcribe",
+              language: "zh",
+              prompt: "用户使用简体中文交流。如果识别不到清晰的中文内容（仅有噪音、喘息、环境音或非常短暂模糊的音节），请输出空字符串，不要猜测。请勿输出英文、日文、韩文等其他语言。",
+            },
             turn_detection: {
               type: "server_vad",
-              threshold: 0.6,
+              threshold: 0.75,
               prefix_padding_ms: 200,
-              silence_duration_ms: 1800,
+              silence_duration_ms: 1200,
             },
           }
         )
