@@ -6,6 +6,7 @@ import { installErrorTracker } from "./lib/frontendErrorTracker";
 import { installApiErrorTracker } from "./lib/apiErrorTracker";
 import { installStabilityCollector } from "./lib/stabilityDataCollector";
 import { installMonitorReporter } from "./lib/monitorReporter";
+import { warmHighFrequencyRoutes } from "./utils/preloadRoutes";
 import { CHUNK_RELOAD_KEY } from "./utils/lazyRetry";
 import { forceReleaseMicrophone } from "./utils/microphoneManager";
 import { hasActiveSession } from "./hooks/useVoiceSessionLock";
