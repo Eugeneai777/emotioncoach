@@ -43,7 +43,7 @@ export const preloadRoute = (route: string) => {
       void import('@/pages/AssessmentTools');
       break;
     case '/wealth-camp-checkin':
-      void import('@/pages/WealthCampCheckin' as any).catch(() => {});
+      void import('@/pages/WealthCampCheckIn');
       break;
     case '/community':
       void import('@/pages/Community');
