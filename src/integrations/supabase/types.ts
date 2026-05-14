@@ -746,6 +746,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "bloom_delivery_completions_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners_public"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "bloom_delivery_completions_purchase_id_fkey"
             columns: ["purchase_id"]
             isOneToOne: false
@@ -1065,6 +1072,13 @@ export type Database = {
             columns: ["partner_id"]
             isOneToOne: false
             referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bloom_partner_orders_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners_public"
             referencedColumns: ["id"]
           },
         ]
@@ -1918,6 +1932,13 @@ export type Database = {
             referencedRelation: "partners"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "campaigns_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       coach_call_signals: {
@@ -2579,6 +2600,13 @@ export type Database = {
             columns: ["created_by_partner_id"]
             isOneToOne: false
             referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_templates_created_by_partner_id_fkey"
+            columns: ["created_by_partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners_public"
             referencedColumns: ["id"]
           },
         ]
@@ -3383,6 +3411,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "competitiveness_assessments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
             referencedColumns: ["id"]
           },
         ]
@@ -5477,6 +5512,13 @@ export type Database = {
             referencedRelation: "partners"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "health_store_products_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       human_coaches: {
@@ -7150,6 +7192,13 @@ export type Database = {
             referencedRelation: "partners"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "partner_admin_bindings_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       partner_assessment_results: {
@@ -7310,6 +7359,13 @@ export type Database = {
             referencedRelation: "partners"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "partner_assessment_templates_created_by_partner_id_fkey"
+            columns: ["created_by_partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       partner_benefits: {
@@ -7402,6 +7458,13 @@ export type Database = {
             referencedRelation: "partners"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "partner_commissions_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       partner_experience_items: {
@@ -7491,6 +7554,13 @@ export type Database = {
             referencedRelation: "partners"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "partner_followup_reminders_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       partner_followup_settings: {
@@ -7530,6 +7600,13 @@ export type Database = {
             columns: ["partner_id"]
             isOneToOne: true
             referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_followup_settings_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: true
+            referencedRelation: "partners_public"
             referencedColumns: ["id"]
           },
         ]
@@ -7663,6 +7740,13 @@ export type Database = {
             referencedRelation: "partners"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "partner_landing_pages_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       partner_level_rules: {
@@ -7759,6 +7843,13 @@ export type Database = {
             columns: ["partner_id"]
             isOneToOne: false
             referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_marketing_copies_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners_public"
             referencedColumns: ["id"]
           },
         ]
@@ -7894,6 +7985,13 @@ export type Database = {
             referencedRelation: "partners"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "partner_products_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       partner_promotions: {
@@ -7960,6 +8058,13 @@ export type Database = {
             columns: ["partner_id"]
             isOneToOne: false
             referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_promotions_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners_public"
             referencedColumns: ["id"]
           },
         ]
@@ -8029,6 +8134,13 @@ export type Database = {
             referencedRelation: "partners"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "partner_referrals_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       partner_shared_metrics: {
@@ -8073,6 +8185,13 @@ export type Database = {
             referencedRelation: "partners"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "partner_shared_metrics_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       partner_student_followups: {
@@ -8111,6 +8230,13 @@ export type Database = {
             referencedRelation: "partners"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "partner_student_followups_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       partner_student_tags: {
@@ -8141,6 +8267,13 @@ export type Database = {
             columns: ["partner_id"]
             isOneToOne: false
             referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_student_tags_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners_public"
             referencedColumns: ["id"]
           },
         ]
@@ -8230,6 +8363,13 @@ export type Database = {
             columns: ["partner_id"]
             isOneToOne: false
             referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_withdrawals_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners_public"
             referencedColumns: ["id"]
           },
         ]
@@ -9321,6 +9461,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "store_orders_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners_public"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "store_orders_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
@@ -9757,6 +9904,13 @@ export type Database = {
             columns: ["partner_id"]
             isOneToOne: false
             referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_coaching_sessions_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners_public"
             referencedColumns: ["id"]
           },
         ]
@@ -11889,6 +12043,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "wecom_messages_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       wecom_user_mappings: {
@@ -12378,6 +12539,84 @@ export type Database = {
           },
         ]
       }
+      partners_public: {
+        Row: {
+          company_name: string | null
+          contact_person: string | null
+          default_entry_price: number | null
+          default_entry_type: string | null
+          default_product_type: string | null
+          default_quota_amount: number | null
+          id: string | null
+          partner_code: string | null
+          partner_expires_at: string | null
+          partner_level: string | null
+          partner_type: string | null
+          selected_experience_packages: string[] | null
+          status: string | null
+          wecom_group_name: string | null
+          wecom_group_qrcode_url: string | null
+        }
+        Insert: {
+          company_name?: string | null
+          contact_person?: string | null
+          default_entry_price?: number | null
+          default_entry_type?: string | null
+          default_product_type?: string | null
+          default_quota_amount?: number | null
+          id?: string | null
+          partner_code?: string | null
+          partner_expires_at?: string | null
+          partner_level?: string | null
+          partner_type?: string | null
+          selected_experience_packages?: string[] | null
+          status?: string | null
+          wecom_group_name?: string | null
+          wecom_group_qrcode_url?: string | null
+        }
+        Update: {
+          company_name?: string | null
+          contact_person?: string | null
+          default_entry_price?: number | null
+          default_entry_type?: string | null
+          default_product_type?: string | null
+          default_quota_amount?: number | null
+          id?: string | null
+          partner_code?: string | null
+          partner_expires_at?: string | null
+          partner_level?: string | null
+          partner_type?: string | null
+          selected_experience_packages?: string[] | null
+          status?: string | null
+          wecom_group_name?: string | null
+          wecom_group_qrcode_url?: string | null
+        }
+        Relationships: []
+      }
+      profiles_public: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          display_name: string | null
+          id: string | null
+          preferred_coach: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          id?: string | null
+          preferred_coach?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          id?: string | null
+          preferred_coach?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       add_coach_pending_balance: {
@@ -12534,6 +12773,14 @@ export type Database = {
         Args: { p_session_id: string }
         Returns: undefined
       }
+      increment_teen_token_usage: {
+        Args: { p_token: string }
+        Returns: undefined
+      }
+      insert_family_photo_via_token: {
+        Args: { p_caption?: string; p_photo_url: string; p_token: string }
+        Returns: string
+      }
       is_following: {
         Args: { follower: string; following: string }
         Returns: boolean
@@ -12559,6 +12806,21 @@ export type Database = {
           message: string
           new_balance: number
           success: boolean
+        }[]
+      }
+      resolve_family_album_share: {
+        Args: { p_token: string }
+        Returns: {
+          nickname: string
+          target_user_id: string
+        }[]
+      }
+      validate_teen_token: {
+        Args: { p_token: string }
+        Returns: {
+          parent_user_id: string
+          teen_nickname: string
+          usage_count: number
         }[]
       }
     }
