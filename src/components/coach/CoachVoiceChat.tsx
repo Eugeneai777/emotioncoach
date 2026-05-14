@@ -300,6 +300,9 @@ export const CoachVoiceChat = ({
 
   const { sessionId: initialSessionId, billedMinutes: initialBilledMinutes } = getOrCreateSessionId();
   const sessionIdRef = useRef(initialSessionId);
+  // 🔧 标记是否曾经连通过（用于"静默重连"UI 决策）
+  const hasEverConnectedRef = useRef(false);
+  const [isSilentReconnecting, setIsSilentReconnecting] = useState(false);
 
   // 如果是重连，恢复已扣费分钟数
   useEffect(() => {
