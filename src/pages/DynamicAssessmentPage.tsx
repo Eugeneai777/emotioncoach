@@ -14,9 +14,13 @@ import PageHeader from "@/components/PageHeader";
 import { setPostAuthRedirect } from "@/lib/postAuthRedirect";
 
 import { DynamicAssessmentIntro } from "@/components/dynamic-assessment/DynamicAssessmentIntro";
-import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
-import { DynamicAssessmentQuestions } from "@/components/dynamic-assessment/DynamicAssessmentQuestions";
-import { DynamicAssessmentResult } from "@/components/dynamic-assessment/DynamicAssessmentResult";
+import midlifeVitalitySceneImage from "@/assets/audience/midlife-vitality-scene-clean.jpg";
+import lazyRetry from "@/utils/lazyRetry";
+import { runWhenIdle } from "@/utils/runWhenIdle";
+
+const DynamicOGMeta = lazy(() => import("@/components/common/DynamicOGMeta").then((m) => ({ default: m.DynamicOGMeta })));
+const DynamicAssessmentQuestions = lazyRetry(() => import("@/components/dynamic-assessment/DynamicAssessmentQuestions").then((m) => ({ default: m.DynamicAssessmentQuestions })));
+const DynamicAssessmentResult = lazyRetry(() => import("@/components/dynamic-assessment/DynamicAssessmentResult").then((m) => ({ default: m.DynamicAssessmentResult })));
 const AssessmentPromoShareDialog = lazy(() => import("@/components/dynamic-assessment/AssessmentPromoShareDialog").then((m) => ({ default: m.AssessmentPromoShareDialog })));
 const DynamicAssessmentHistory = lazy(() => import("@/components/dynamic-assessment/DynamicAssessmentHistory").then((m) => ({ default: m.DynamicAssessmentHistory })));
 const AssessmentPayDialog = lazy(() => import("@/components/wealth-block/AssessmentPayDialog").then((m) => ({ default: m.AssessmentPayDialog })));
@@ -40,6 +44,31 @@ export default function DynamicAssessmentPage() {
   const [insightError, setInsightError] = useState<boolean>(false);
   const [showPayDialog, setShowPayDialog] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
+  const [ogReady, setOgReady] = useState(false);
+
+  // 首屏空闲后再挂载 OG meta + 预热下一阶段 chunk，释放主线程
+  useEffect(() => {
+    const cancels: Array<() => void> = [];
+    cancels.push(runWhenIdle(() => setOgReady(true), 800));
+    cancels.push(runWhenIdle(() => {
+      import("@/components/dynamic-assessment/DynamicAssessmentQuestions");
+    }, 1200));
+    cancels.push(runWhenIdle(() => {
+      import("@/components/dynamic-assessment/DynamicAssessmentResult");
+    }, 2000));
+    return () => { cancels.forEach((c) => c()); };
+  }, []);
+
+  // male_midlife_vitality: 海报扫码入口，提前 preload hero 图与 JS 并行下载
+  useEffect(() => {
+    if (assessmentKey !== 'male_midlife_vitality') return;
+    const link = document.createElement('link');
+    link.rel = 'preload';
+    link.as = 'image';
+    link.href = midlifeVitalitySceneImage;
+    document.head.appendChild(link);
+    return () => { try { document.head.removeChild(link); } catch {} };
+  }, [assessmentKey]);
 
   // Cast template to access extended fields
   const tpl = template as any;
@@ -408,9 +437,21 @@ export default function DynamicAssessmentPage() {
   }, [urlRecordId, template?.id, historyLoading, historyRecords.length, adminPdf]);
 
   if (isLoading) {
+    // 轻量骨架屏：模板加载中也保留页面结构与品牌感，避免裸 spinner 的「白屏感」
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="min-h-screen bg-background">
+        <div className="h-14 border-b border-border/40 flex items-center px-4">
+          <div className="h-5 w-5 rounded bg-muted animate-pulse" />
+          <div className="ml-3 h-4 w-32 rounded bg-muted animate-pulse" />
+        </div>
+        <main className="container max-w-2xl mx-auto px-4 py-6 space-y-4">
+          <div className="h-8 w-2/3 rounded-md bg-muted animate-pulse" />
+          <div className="h-4 w-1/2 rounded bg-muted/70 animate-pulse" />
+          <div className="aspect-[16/10] w-full rounded-2xl bg-muted animate-pulse" />
+          <div className="h-4 w-full rounded bg-muted/70 animate-pulse" />
+          <div className="h-4 w-5/6 rounded bg-muted/70 animate-pulse" />
+          <div className="h-12 w-full rounded-xl bg-primary/20 animate-pulse mt-6" />
+        </main>
       </div>
     );
   }
@@ -433,7 +474,11 @@ export default function DynamicAssessmentPage() {
   if (phase === "intro") {
     return (
       <div className="h-screen overflow-y-auto overscroll-contain bg-background" style={{ WebkitOverflowScrolling: 'touch' }}>
-        {ogPageKey && <DynamicOGMeta pageKey={ogPageKey} />}
+        {ogPageKey && ogReady && (
+          <Suspense fallback={null}>
+            <DynamicOGMeta pageKey={ogPageKey} />
+          </Suspense>
+        )}
         <PageHeader
           title={template.title}
           showBack={true}
@@ -493,12 +538,14 @@ export default function DynamicAssessmentPage() {
   // === QUESTIONS ===
   if (phase === "questions") {
     return (
-      <DynamicAssessmentQuestions
-        questions={questions}
-        scoreOptions={tpl?.score_options}
-        onComplete={handleQuestionsComplete}
-        onExit={() => setPhase("intro")}
-      />
+      <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-background"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
+        <DynamicAssessmentQuestions
+          questions={questions}
+          scoreOptions={tpl?.score_options}
+          onComplete={handleQuestionsComplete}
+          onExit={() => setPhase("intro")}
+        />
+      </Suspense>
     );
   }
 
@@ -524,7 +571,7 @@ export default function DynamicAssessmentPage() {
   // === RESULT ===
   if (phase === "result" && result) {
     return (
-      <>
+      <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-background"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
         {ogPageKey && <DynamicOGMeta pageKey={ogPageKey} />}
         <DynamicAssessmentResult
           result={result}
@@ -565,7 +612,6 @@ export default function DynamicAssessmentPage() {
         />
 
         {requirePayment && packageKey && showPayDialog && (
-          <Suspense fallback={null}>
           <AssessmentPayDialog
             open={showPayDialog}
             onOpenChange={setShowPayDialog}
@@ -575,9 +621,8 @@ export default function DynamicAssessmentPage() {
             packageKey={packageKey}
             packageName={template.title}
           />
-          </Suspense>
         )}
-      </>
+      </Suspense>
     );
   }
 
