@@ -409,6 +409,33 @@ export function DynamicAssessmentResult({
       rawMaxScore: d.maxScore,
     }));
   }, [isMaleMidlifeVitality, result.dimensionScores]);
+
+  // ===== 男性有劲 · 4 屏漏斗专用派生数据 =====
+  const maleWeakestKey: VitalityDimensionKey | null = useMemo(
+    () => (isMaleMidlifeVitality ? getWeakestDimensionKey(result.dimensionScores as any) : null),
+    [isMaleMidlifeVitality, result.dimensionScores],
+  );
+  const maleWeakestLabel = useMemo(() => {
+    if (!isMaleMidlifeVitality || !maleWeakestKey) return undefined;
+    const d = vitalityStatusScores.find((x: any) => x.key === maleWeakestKey);
+    return d?.label;
+  }, [isMaleMidlifeVitality, maleWeakestKey, vitalityStatusScores]);
+  const maleStorageKey = useMemo(
+    () => `${user?.id || 'anon'}__${recordId || template.assessment_key}`,
+    [user?.id, recordId, template.assessment_key],
+  );
+  const maleStatusBand = isMaleMidlifeVitality ? getStatusBand(vitalityStatusPercent) : null;
+  const maleMbtiTags = maleStatusBand
+    ? MBTI_STYLE_TAGS_BY_LEVEL[maleStatusBand.level]
+    : [];
+  const maleHeadlineTitle = maleWeakestLabel
+    ? `你这台机器最缺的是「${maleWeakestLabel}」`
+    : "你这台机器现在的状态";
+  const maleCompactInsight = useMemo(() => {
+    if (!aiInsight) return null;
+    const cleaned = aiInsight.replace(/\s+/g, '').trim();
+    return cleaned.length > 120 ? cleaned.slice(0, 118) + '…' : aiInsight;
+  }, [aiInsight]);
   const vitalitySummary = vitalityStatusPercent >= 80
     ? "当前阻力较低，底盘还稳。适合趁状态还在，先建立一套轻量恢复节奏。"
     : vitalityStatusPercent >= 60
