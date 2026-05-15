@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useProgressMilestones } from "@/hooks/useProgressMilestones";
 import { MilestoneAchievementOverlay } from "@/components/common/MilestoneAchievementOverlay";
+import { QuestionMedia } from "./QuestionMedia";
 
 interface DynamicAssessmentQuestionsProps {
   questions: any[];
@@ -187,6 +188,7 @@ export function DynamicAssessmentQuestions({ questions, scoreOptions, onComplete
               {q.subtitle && (
                 <p className="mt-2 text-xs text-muted-foreground">{q.subtitle}</p>
               )}
+              {q.media && <QuestionMedia media={q.media} />}
             </motion.div>
 
             {/* Options with stagger */}

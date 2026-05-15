@@ -133,6 +133,13 @@ const getVitalityStatusTone = (score: number) => {
 };
 
 const vitalityDimensionTips: Record<string, string> = {
+  // 新版 5 维（v2）
+  nerve_tension: "神经一直在线，先给它一个真正的休息窗。",
+  chronic_fatigue: "睡了像没睡，是电池老化的信号，先修睡眠。",
+  mood_baseline: "情绪底色变灰不是矫情，是身体在求救。",
+  performance_anxiety: "关键时刻怕翻车，先恢复节奏，再谈表现。",
+  core_drive: "核心动力低不是病，是你太久没有为自己活过。",
+  // 旧版兼容（历史记录回看）
   energy: "先把白天电量稳住，不急着证明自己还能扛。",
   sleep: "睡眠是第一块电池，先从睡前少刷 15 分钟开始。",
   stress: "不是你扛不住，是脑子一直没有真正下班。",
@@ -997,8 +1004,8 @@ export function DynamicAssessmentResult({
           </motion.div>
         )}
 
-        {/* AI Coach Button (hidden in lite mode) */}
-        {!isLiteMode && (template.coach_prompt || template.coach_type) && (
+        {/* AI Coach Button (hidden in lite mode and for male_midlife_vitality 漏斗 A 方案) */}
+        {!isLiteMode && !isMaleMidlifeVitality && (template.coach_prompt || template.coach_type) && (
           <motion.div custom={6} variants={fadeUp} initial="hidden" animate="visible">
             <Button
               onClick={handleAICoach}
@@ -1016,9 +1023,9 @@ export function DynamicAssessmentResult({
                 <div className="flex items-start gap-3">
                   <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center text-xl shrink-0">🔋</div>
                   <div className="min-w-0 flex-1">
-                    <h3 className="font-bold text-sm text-foreground">先用 7 天，把电量充回来</h3>
+                    <h3 className="font-bold text-sm text-foreground">你刚勾的 3 件事，生命教练陪你做 7 天</h3>
                     <p className="text-xs text-muted-foreground leading-relaxed mt-1">
-                      适合压力大、睡不好、容易疲惫、关键时刻信心波动的人。先从睡眠、呼吸、身体节奏和每日小行动开始恢复。
+                      靠自己坚持 7 天的概率不到 12%。生命教练带过 3000+ 个像你这样的兄弟，陪你打卡 7 天，把电量一点点充回来。
                     </p>
                   </div>
                 </div>
