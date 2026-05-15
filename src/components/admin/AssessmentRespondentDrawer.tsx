@@ -81,7 +81,7 @@ export function AssessmentRespondentDrawer({ open, onOpenChange, row, template }
           <div className="flex flex-wrap gap-2 mt-2">
             <Badge variant="default">{row.primaryPattern || "未分类"}</Badge>
             <Badge variant="outline">总分 {row.totalScore}</Badge>
-            {(template?.assessmentKey === "male_midlife_vitality" || isEmotionHealth) && row.claimCode && (
+            {isEmotionHealth && row.claimCode && (
               <Badge
                 variant="secondary"
                 className="gap-1 font-mono cursor-pointer hover:bg-secondary/80"
@@ -95,33 +95,6 @@ export function AssessmentRespondentDrawer({ open, onOpenChange, row, template }
               </Badge>
             )}
           </div>
-          {template?.assessmentKey === "male_midlife_vitality" && row.claimCode && (
-            <div className="flex flex-wrap gap-2 mt-2">
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-8 gap-1.5"
-                onClick={() => {
-                  const script = `您好，您的领取码是 ${row.claimCode}。\n附件为您本次「男人有劲状态测评」的完整 PDF 报告，请查收 ✅\n如有疑问随时回复。`;
-                  navigator.clipboard.writeText(script);
-                  toast.success("话术已复制");
-                }}
-              >
-                <Copy className="w-3.5 h-3.5" /> 复制发送话术
-              </Button>
-              <Button
-                size="sm"
-                variant="default"
-                className="h-8 gap-1.5"
-                onClick={() => {
-                  window.open(`/admin/handbook/male/${row.resultId}`, "_blank");
-                  toast.message("已打开 7 天伴随手册导出页（含完整测评雷达图与 AI 解读），生成约 15-25 秒");
-                }}
-              >
-                <FileDown className="w-3.5 h-3.5" /> 下载 7 天伴随手册 PDF
-              </Button>
-            </div>
-          )}
           {isEmotionHealth && row.claimCode && (
             <div className="flex flex-wrap gap-2 mt-2">
               <Button
