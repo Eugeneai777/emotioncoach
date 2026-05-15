@@ -66,14 +66,19 @@ export function QuestionMedia({ media }: { media?: MediaSpec | null }) {
 
 function ImageBlock({ url, alt }: { url: string; alt?: string }) {
   const abs = useMemo(() => absolutize(url), [url]);
-  // 自动 webp 优先：仅当 url 以 .png/.jpg 结尾时生成 webp 候选
-  const webp = useMemo(() => {
-    if (!abs) return undefined;
-    if (/\.(png|jpe?g)$/i.test(abs)) return abs.replace(/\.(png|jpe?g)$/i, ".webp");
-    return undefined;
+  // 显式候选链：优先用数据库配置的真实 URL；
+  // 仅当原图是 .webp 时,才把同名 .jpg 作为兜底（已确认存在）。
+  // 不再对 .jpg/.png 自动猜测同名 .webp（猜测的文件可能不存在,反而触发失败）。
+  const candidates = useMemo<string[]>(() => {
+    if (!abs) return [];
+    const list = [abs];
+    if (/\.webp$/i.test(abs)) list.push(abs.replace(/\.webp$/i, ".jpg"));
+    return list;
   }, [abs]);
-  const [errored, setErrored] = useState(false);
+
+  const [idx, setIdx] = useState(0);
   const [bust, setBust] = useState(0);
+  const [errored, setErrored] = useState(false);
 
   if (!abs) return null;
 
@@ -82,7 +87,7 @@ function ImageBlock({ url, alt }: { url: string; alt?: string }) {
       <div className="flex justify-center my-2">
         <button
           type="button"
-          onClick={() => { setErrored(false); setBust((n) => n + 1); }}
+          onClick={() => { setErrored(false); setIdx(0); setBust((n) => n + 1); }}
           className="flex items-center gap-2 px-4 py-3 rounded-xl border border-dashed border-border/60 text-xs text-muted-foreground hover:bg-muted/40"
         >
           <RefreshCw className="w-3.5 h-3.5" /> 图片加载失败,点击重试
@@ -92,23 +97,24 @@ function ImageBlock({ url, alt }: { url: string; alt?: string }) {
   }
 
   const cb = bust ? `?_=${bust}` : "";
+  const current = candidates[idx];
   return (
     <div className="flex justify-center my-2">
-      <picture>
-        {webp && <source srcSet={`${webp}${cb}`} type="image/webp" />}
-        <img
-          src={`${abs}${cb}`}
-          alt={alt || ""}
-          width={280}
-          height={280}
-          loading="eager"
-          decoding="async"
-          // @ts-ignore
-          fetchpriority="high"
-          onError={() => setErrored(true)}
-          className="rounded-xl max-w-[280px] w-full h-auto shadow-md border border-border/40"
-        />
-      </picture>
+      <img
+        src={`${current}${cb}`}
+        alt={alt || ""}
+        width={280}
+        height={280}
+        loading="eager"
+        decoding="async"
+        // @ts-ignore
+        fetchpriority="high"
+        onError={() => {
+          if (idx < candidates.length - 1) setIdx(idx + 1);
+          else setErrored(true);
+        }}
+        className="rounded-xl max-w-[280px] w-full h-auto shadow-md border border-border/40"
+      />
     </div>
   );
 }
