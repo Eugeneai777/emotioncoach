@@ -1043,7 +1043,7 @@ export function DynamicAssessmentResult({
         })()}
 
         {/* 35-55 男版：场景化「7 天有劲恢复行动」清单（替代通用 tips） */}
-        {isMaleMidlifeVitality && !isLiteMode && (() => {
+        {false && isMaleMidlifeVitality && !isLiteMode && (() => {
           const vitalityActions = vitalityStatusPercent >= 60
             ? [
                 { emoji: '🔋', title: '把"再撑一下"换成"按时收工"', body: '今晚 11 点前关掉工作群，明天开会脑子更稳。' },
