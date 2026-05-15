@@ -1115,7 +1115,7 @@ export function DynamicAssessmentResult({
           </motion.div>
         )}
 
-        {isMaleMidlifeVitality && (
+        {isMaleMidlifeVitality && isLiteMode && (
           <motion.div custom={4} variants={fadeUp} initial="hidden" animate="visible">
             <Button
               onClick={handleShare}
