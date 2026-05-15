@@ -53,15 +53,26 @@ serve(async (req) => {
       .map((m: any) => `${m.role === 'user' ? '用户' : '教练'}: ${m.content}`)
       .join('\n');
 
-    const systemPrompt = `你是一个专门提取对话中重要觉察点的分析师。
+    const coachLabels: Record<string, string> = {
+      wealth: '财富教练',
+      emotion: '情绪教练',
+      parent: '亲子教练',
+      vibrant_life: '生活教练',
+      vibrant_life_sage: '生活教练',
+      teen: '青少年教练',
+      communication: '沟通/婚姻教练',
+      gratitude: '感恩教练',
+    };
+
+    const systemPrompt = `你是一个专门提取对话中重要长期记忆的分析师。
     
-你的任务是从财富教练对话中提取用户的重要觉察点，这些觉察将被保存并在未来对话中使用。
+你的任务是从${coachLabels[coach_type] || 'AI教练'}语音/文字对话中提取用户的重要信息和觉察，这些内容会在未来同类教练对话中使用。
 
 提取标准：
-1. 用户自己表达出的"原来是这样"的顿悟
-2. 用户识别出的具体行为/情绪/信念模式
-3. 用户承诺要做的改变或行动
-4. 用户分享的重要经历或故事
+1. 用户刚刚明确分享的事件、困扰、关系对象、工作/家庭背景
+2. 用户自己表达出的"原来是这样"的顿悟
+3. 用户识别出的具体行为/情绪/信念模式
+4. 用户承诺要做的改变或行动
 5. 反复出现的卡点或模式
 
 不要提取：
@@ -73,7 +84,7 @@ serve(async (req) => {
 {
   "memories": [
     {
-      "content": "具体的觉察内容，使用用户的原话或简洁改写，30字以内",
+      "content": "具体、可在下次对话中自然引用的记忆，使用用户原话或简洁改写，40字以内",
       "memory_type": "insight/pattern/milestone/sticking_point/awakening",
       "layer": "behavior/emotion/belief",
       "importance_score": 5-10的评分
@@ -88,7 +99,7 @@ memory_type说明：
 - sticking_point: 用户反复出现的卡点
 - awakening: 觉醒时刻
 
-最多返回3条最重要的记忆。如果对话中没有值得记录的内容，返回空数组。`;
+至少提取1条可用于下次续聊的基础记忆，除非整段对话只有问候/噪声/无意义内容。最多返回3条最重要的记忆。`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',

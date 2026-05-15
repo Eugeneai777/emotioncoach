@@ -8,6 +8,27 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
+async function buildRecentVoiceSessionPrompt(supabase: any, userId: string): Promise<string> {
+  const { data } = await supabase
+    .from('voice_chat_sessions')
+    .select('transcript_summary, created_at')
+    .eq('user_id', userId)
+    .eq('coach_key', 'wealth')
+    .not('transcript_summary', 'is', null)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (!data?.transcript_summary) return '';
+  return `
+
+【最近一次语音对话摘要】
+用户上一次通话刚聊到：
+${String(data.transcript_summary).slice(0, 900)}
+
+如果用户问“还记得刚才/上次聊什么吗”，请直接简短复述上面内容，不要说没有记录。`;
+}
+
 const FREE_SESSION_LIMIT = 2;
 
 serve(async (req) => {
@@ -102,23 +123,29 @@ serve(async (req) => {
 
     // 加载长期记忆（财富教练 + 跨教练高分洞察）
     let memoryPrompt = '';
+    let recentVoicePrompt = '';
     try {
       const supabaseService = createClient(
         supabaseUrl,
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
       );
-      const ctx = await getCrossCoachMemoryContext(supabaseService, user.id, 'wealth', 5, 3);
+      const [ctx, recentPrompt] = await Promise.all([
+        getCrossCoachMemoryContext(supabaseService, user.id, 'wealth', 5, 3),
+        buildRecentVoiceSessionPrompt(supabaseService, user.id),
+      ]);
       memoryPrompt = ctx.memoryPrompt || '';
+      recentVoicePrompt = recentPrompt || '';
       console.log('[WealthAssessmentRealtimeToken] Memory loaded:', {
         current: ctx.currentCoachMemories.length,
         cross: ctx.crossCoachMemories.length,
+        hasRecentVoice: !!recentVoicePrompt,
       });
     } catch (e) {
       console.error('[WealthAssessmentRealtimeToken] Memory load failed:', e);
     }
 
     // 构建动态 prompt
-    const instructions = buildWealthCoachInstructions(assessmentData, userName) + memoryPrompt;
+    const instructions = buildWealthCoachInstructions(assessmentData, userName) + memoryPrompt + recentVoicePrompt;
 
     // 请求 OpenAI Realtime session
     const realtimeUrl = `${baseUrl}/v1/realtime/sessions`;

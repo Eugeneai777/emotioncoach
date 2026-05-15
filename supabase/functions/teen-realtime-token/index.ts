@@ -8,6 +8,27 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
+async function buildRecentVoiceSessionPrompt(supabase: any, userId: string): Promise<string> {
+  const { data } = await supabase
+    .from('voice_chat_sessions')
+    .select('transcript_summary, created_at')
+    .eq('user_id', userId)
+    .eq('coach_key', 'teen')
+    .not('transcript_summary', 'is', null)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (!data?.transcript_summary) return '';
+  return `
+
+【最近一次语音对话摘要】
+用户上一次通话刚聊到：
+${String(data.transcript_summary).slice(0, 900)}
+
+如果用户问“还记得刚才/上次聊什么吗”，请直接简短复述上面内容，不要说没有记录。`;
+}
+
 // Rate limiting: Track requests per token
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
 const RATE_LIMIT_WINDOW = 60000; // 1 minute
@@ -128,18 +149,24 @@ serve(async (req) => {
 
     // 加载青少年长期记忆（按 parent_user_id 归属，因为青少年通过 token 进入无独立账号）
     let memoryPrompt = '';
+    let recentVoicePrompt = '';
     try {
-      const ctx = await getCrossCoachMemoryContext(
-        supabase,
-        tokenData.parent_user_id,
-        'teen',
-        5,
-        3
-      );
+      const [ctx, recentPrompt] = await Promise.all([
+        getCrossCoachMemoryContext(
+          supabase,
+          tokenData.parent_user_id,
+          'teen',
+          5,
+          3
+        ),
+        buildRecentVoiceSessionPrompt(supabase, tokenData.parent_user_id),
+      ]);
       memoryPrompt = ctx.memoryPrompt || '';
+      recentVoicePrompt = recentPrompt || '';
       console.log('[TeenRealtimeToken] Memory loaded:', {
         current: ctx.currentCoachMemories.length,
         cross: ctx.crossCoachMemories.length,
+        hasRecentVoice: !!recentVoicePrompt,
       });
     } catch (e) {
       console.error('[TeenRealtimeToken] Memory load failed:', e);
@@ -172,7 +199,7 @@ serve(async (req) => {
       body: JSON.stringify({
         model: "gpt-4o-mini-realtime-preview",
         voice: "shimmer",
-        instructions: baseInstructions + memoryPrompt,
+        instructions: baseInstructions + memoryPrompt + recentVoicePrompt,
         input_audio_format: "pcm16",
         output_audio_format: "pcm16",
         // 用户体验优先：不硬性限制 token，通过 Prompt 软控制回复长度

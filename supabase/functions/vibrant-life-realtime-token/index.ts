@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.0'
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { getCrossCoachMemoryContext } from '../_shared/coachMemoryUtils.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -840,6 +841,34 @@ ${parts.join('\n')}
 `;
 }
 
+function normalizeVoiceCoachType(mode: string): string {
+  if (mode === 'emotion') return 'emotion';
+  if (mode === 'teen') return 'teen';
+  if (mode === 'parent_teen') return 'parent';
+  return 'vibrant_life';
+}
+
+async function buildRecentVoiceSessionPrompt(supabase: any, userId: string, coachType: string): Promise<string> {
+  const { data } = await supabase
+    .from('voice_chat_sessions')
+    .select('transcript_summary, created_at')
+    .eq('user_id', userId)
+    .eq('coach_key', coachType)
+    .not('transcript_summary', 'is', null)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (!data?.transcript_summary) return '';
+  return `
+
+【最近一次语音对话摘要】
+用户上一次通话刚聊到：
+${String(data.transcript_summary).slice(0, 900)}
+
+如果用户问“还记得刚才/上次聊什么吗”，请直接简短复述上面内容，不要说没有记录。`;
+}
+
 // 获取当前北京时间小时
 function getChinaHour(): number {
   const now = new Date();
@@ -1385,12 +1414,16 @@ serve(async (req) => {
         )
       : null;
 
-    // 🌟 并行获取用户上下文数据（用户昵称、历史对话、记忆、对话次数）
+    const currentCoachType = normalizeVoiceCoachType(mode);
+
+    // 🌟 并行获取用户上下文数据（用户昵称、历史对话、记忆、最近通话、对话次数）
     const [
       profileResult,
       lastBriefingResult,
       memoriesResult,
-      sessionCountResult
+      sessionCountResult,
+      crossMemoryContext,
+      recentVoicePrompt
     ] = await Promise.all([
       // 用户昵称
       supabase
@@ -1411,14 +1444,22 @@ serve(async (req) => {
         .from('user_coach_memory')
         .select('memory_type, content, importance_score')
         .eq('user_id', user.id)
-        .eq('coach_type', 'vibrant_life_sage')
+        .in('coach_type', currentCoachType === 'vibrant_life' ? ['vibrant_life', 'vibrant_life_sage'] : [currentCoachType])
         .order('importance_score', { ascending: false })
         .limit(5),
       // 对话次数
       supabase
         .from('voice_chat_sessions')
         .select('id', { count: 'exact', head: true })
-        .eq('user_id', user.id)
+        .eq('user_id', user.id),
+      getCrossCoachMemoryContext(supabase, user.id, currentCoachType, 5, 3).catch((e) => {
+        console.error('[VibrantRealtimeToken] Cross memory load failed:', e);
+        return { memoryPrompt: '', currentCoachMemories: [], crossCoachMemories: [] };
+      }),
+      buildRecentVoiceSessionPrompt(supabase, user.id, currentCoachType).catch((e) => {
+        console.error('[VibrantRealtimeToken] Recent voice load failed:', e);
+        return '';
+      })
     ]);
     
     const userName = profileResult.data?.display_name || '';
@@ -1434,7 +1475,7 @@ serve(async (req) => {
       memories
     };
     
-    console.log('User context loaded:', { userName, sessionCount, hasLastBriefing: !!lastBriefing, memoriesCount: memories.length });
+    console.log('User context loaded:', { userName, sessionCount, hasLastBriefing: !!lastBriefing, memoriesCount: memories.length, currentCoachType, crossMemoryCount: crossMemoryContext.currentCoachMemories.length + crossMemoryContext.crossCoachMemories.length, hasRecentVoice: !!recentVoicePrompt });
 
     let instructions: string;
     let tools: any[];
@@ -1594,6 +1635,11 @@ ${photoList}
           }
         }
       ];
+    }
+
+    const persistentContextPrompt = `${crossMemoryContext.memoryPrompt || ''}${recentVoicePrompt || ''}`;
+    if (persistentContextPrompt) {
+      instructions += persistentContextPrompt;
     }
 
     // 请求 OpenAI Realtime client_secrets（快路径下复用并行启动的 Promise）
