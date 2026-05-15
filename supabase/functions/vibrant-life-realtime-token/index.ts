@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.0'
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { getCrossCoachMemoryContext } from '../_shared/coachMemoryUtils.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -838,6 +839,34 @@ ${parts.join('\n')}
 - 持续关注的事（"孩子的成绩"、"睡眠问题"）
 记住后下次对话可以自然提起，增加亲切感。
 `;
+}
+
+function normalizeVoiceCoachType(mode: string): string {
+  if (mode === 'emotion') return 'emotion';
+  if (mode === 'teen') return 'teen';
+  if (mode === 'parent_teen') return 'parent';
+  return 'vibrant_life';
+}
+
+async function buildRecentVoiceSessionPrompt(supabase: any, userId: string, coachType: string): Promise<string> {
+  const { data } = await supabase
+    .from('voice_chat_sessions')
+    .select('transcript_summary, created_at')
+    .eq('user_id', userId)
+    .eq('coach_key', coachType)
+    .not('transcript_summary', 'is', null)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (!data?.transcript_summary) return '';
+  return `
+
+【最近一次语音对话摘要】
+用户上一次通话刚聊到：
+${String(data.transcript_summary).slice(0, 900)}
+
+如果用户问“还记得刚才/上次聊什么吗”，请直接简短复述上面内容，不要说没有记录。`;
 }
 
 // 获取当前北京时间小时
