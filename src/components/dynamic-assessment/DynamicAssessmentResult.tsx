@@ -734,7 +734,7 @@ export function DynamicAssessmentResult({
         )}
 
         {/* Radar Chart (non-SBTI only) */}
-        {!isSBTI && result.dimensionScores.length >= 3 && (
+        {!isSBTI && result.dimensionScores.length >= 3 && (!isMaleMidlifeVitality || isLiteMode) && (
           <motion.div custom={1} variants={fadeUp} initial="hidden" animate="visible" className={cn(useExpandedLayout && "lg:row-span-2")}>
             <Card className="border-border/40 bg-card/90 backdrop-blur-sm shadow-sm overflow-hidden">
               <CardContent className="p-4 pt-3 sm:p-5">
