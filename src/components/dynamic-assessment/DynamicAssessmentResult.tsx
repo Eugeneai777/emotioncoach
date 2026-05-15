@@ -595,10 +595,144 @@ export function DynamicAssessmentResult({
 
       <div className={cn(
         "mx-auto px-4",
-        useExpandedLayout
-          ? "max-w-lg space-y-4 lg:max-w-5xl lg:grid lg:grid-cols-[minmax(0,1.15fr)_minmax(340px,0.85fr)] lg:items-start lg:gap-4 lg:space-y-0"
-          : "max-w-lg space-y-4"
+        isMaleMidlifeVitality && !isLiteMode
+          ? "max-w-lg space-y-4"
+          : useExpandedLayout
+            ? "max-w-lg space-y-4 lg:max-w-5xl lg:grid lg:grid-cols-[minmax(0,1.15fr)_minmax(340px,0.85fr)] lg:items-start lg:gap-4 lg:space-y-0"
+            : "max-w-lg space-y-4"
       )}>
+        {/* ============================================================ */}
+        {/* 男性有劲 · 4 屏漏斗 (A 方案)                                 */}
+        {/* ============================================================ */}
+        {isMaleMidlifeVitality && !isLiteMode && (
+          <>
+            {/* 屏 1 · 被看见 */}
+            <motion.div custom={0} variants={fadeUp} initial="hidden" animate="visible">
+              <Card className="border-teal-200/60 bg-gradient-to-br from-teal-50/70 via-card to-amber-50/40 dark:from-teal-950/25 dark:to-amber-950/15 shadow-sm overflow-hidden">
+                <CardContent className="p-4 space-y-3">
+                  <EnergyBarBadge statusPercent={vitalityStatusPercent} />
+                  <div>
+                    <h3 className="font-bold text-base text-foreground leading-snug">{maleHeadlineTitle}</h3>
+                    {maleStatusBand && (
+                      <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{maleStatusBand.subline}</p>
+                    )}
+                  </div>
+                  {maleMbtiTags.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {maleMbtiTags.map((t) => (
+                        <span key={t} className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-medium bg-white/80 dark:bg-card/80 text-foreground/80 border border-border/50">
+                          #{t}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  <div className="rounded-xl border border-border/40 bg-white/60 dark:bg-card/50 p-3">
+                    <div className="flex items-center gap-1.5 mb-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-primary" />
+                      <span className="text-xs font-semibold text-foreground">AI 个性化洞察</span>
+                    </div>
+                    {loadingInsight ? (
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground py-1.5">
+                        <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
+                        <span>AI 正在结合你的画像分析…</span>
+                      </div>
+                    ) : maleCompactInsight ? (
+                      <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-line">{maleCompactInsight}</p>
+                    ) : insightError ? (
+                      <div className="space-y-1.5">
+                        <p className="text-xs text-muted-foreground">AI 洞察生成失败,可能是网络波动。</p>
+                        {onRegenerateInsight && (
+                          <Button size="sm" variant="outline" onClick={onRegenerateInsight} className="h-8 gap-1.5 text-xs">
+                            <RotateCcw className="w-3 h-3" /> 重新生成
+                          </Button>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">AI 洞察生成中,你可以先看下方盲区。</p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* 屏 2 · 被点醒 + 加微前置 */}
+            <motion.div custom={1} variants={fadeUp} initial="hidden" animate="visible">
+              <BlindSpotActionCard weakestKey={maleWeakestKey} weakestLabel={maleWeakestLabel} />
+            </motion.div>
+            <InlineWechatLeadCard
+              qrImageUrl={template.qr_image_url}
+              qrTitle={template.qr_title}
+              onClick={() => setShowClaimSheet(true)}
+            />
+
+            {/* 屏 3 · 能动手 */}
+            <motion.div custom={2} variants={fadeUp} initial="hidden" animate="visible">
+              <ImmediateActionChecklist
+                weakestKey={maleWeakestKey}
+                storageKey={maleStorageKey}
+                onCheckedCountChange={setMaleCheckedCount}
+              />
+            </motion.div>
+
+            {/* 屏 4 · 主转化 */}
+            <CampPrimaryCTA
+              checkedCount={maleCheckedCount}
+              onShare={handleShare}
+              isSharing={isSharing}
+            />
+
+            {/* 折叠 · 查看完整诊断报告 */}
+            {result.dimensionScores.length >= 3 && (
+              <MaleVitalityFullReportCollapse>
+                <Card className="border-border/40 bg-card/90 backdrop-blur-sm shadow-sm overflow-hidden">
+                  <CardContent className="p-4 pt-3 sm:p-5">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Target className="w-4 h-4 text-primary" />
+                      <h3 className="font-semibold text-sm">有劲状态雷达</h3>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground mb-2">越靠外代表状态越稳,越靠内代表越需要优先恢复。</p>
+                    <div className="h-[300px] sm:h-[320px]">
+                      <DimensionRadarChart dimensionScores={vitalityStatusScores} variant="default" />
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="border-border/40 bg-card/90 backdrop-blur-sm shadow-sm">
+                  <CardContent className="p-4 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <TrendingUp className="w-4 h-4 text-primary" />
+                      <h3 className="font-semibold text-sm">六项状态</h3>
+                    </div>
+                    <div className="space-y-3">
+                      {vitalityStatusScores.map((d: any) => {
+                        const pct = d.maxScore > 0 ? (d.score / d.maxScore) * 100 : 0;
+                        const tone = getVitalityStatusTone(pct);
+                        return (
+                          <div key={d.label}>
+                            <div className="flex justify-between text-sm mb-1">
+                              <span className="font-medium">{d.emoji} {d.label}</span>
+                              <span className={cn("tabular-nums text-xs font-medium", tone.text)}>
+                                状态 {Math.round(pct)}% · {tone.label}
+                              </span>
+                            </div>
+                            <div className="relative h-2 rounded-full bg-muted overflow-hidden">
+                              <div className={cn("h-full rounded-full", tone.bar)} style={{ width: `${pct}%` }} />
+                            </div>
+                            {vitalityDimensionTips[d.key || ''] && (
+                              <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground">
+                                {vitalityDimensionTips[d.key || '']}
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+              </MaleVitalityFullReportCollapse>
+            )}
+          </>
+        )}
+
         {/* Radar Chart (non-SBTI only) */}
         {!isSBTI && result.dimensionScores.length >= 3 && (
           <motion.div custom={1} variants={fadeUp} initial="hidden" animate="visible" className={cn(useExpandedLayout && "lg:row-span-2")}>
