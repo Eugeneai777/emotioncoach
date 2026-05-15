@@ -1140,9 +1140,7 @@ export function DynamicAssessmentResult({
         )}
 
         {/* AI Insight (hidden in lite mode) */}
-        {!isLiteMode && (
-          <motion.div custom={5} variants={fadeUp} initial="hidden" animate="visible">
-            <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5 shadow-sm">
+        {!isLiteMode && !isMaleMidlifeVitality && (
               <CardContent className="p-4">
                 <div className="flex items-center gap-2 mb-3">
                   <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
