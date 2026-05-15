@@ -17,7 +17,7 @@ import MaleVitalityReportCard from "./MaleVitalityReportCard";
 import WomenCompetitivenessShareCard from "./WomenCompetitivenessShareCard";
 import WomenCompetitivenessReportCard from "./WomenCompetitivenessReportCard";
 import { WeChatPdfGuideSheet } from "./WeChatPdfGuideSheet";
-import { MaleVitalityPdfClaimSheet } from "./MaleVitalityPdfClaimSheet";
+import { MaleVitalityWeChatSheet } from "./MaleVitalityWeChatSheet";
 import { MaleVitalityClaimStickyBar } from "./MaleVitalityClaimStickyBar";
 import { useClaimCode } from "@/hooks/useClaimCode";
 import { EnergyBarBadge } from "./male-vitality-funnel/EnergyBarBadge";
@@ -1474,22 +1474,13 @@ export function DynamicAssessmentResult({
         />
       )}
 
-      {/* 男版：领取码 PDF Sheet */}
+      {/* 男版：仅企微二维码弹窗 */}
       {isMaleMidlifeVitality && (
-        <MaleVitalityPdfClaimSheet
+        <MaleVitalityWeChatSheet
           open={showClaimSheet}
           onOpenChange={setShowClaimSheet}
-          claimCode={claimCode}
-          loadingCode={loadingClaimCode}
-          displayName={profileData.displayName}
-          avatarUrl={profileData.avatarUrl}
-          statusPercent={vitalityStatusPercent}
-          statusLabel={
-            vitalityStatusPercent >= 80 ? "稳"
-              : vitalityStatusPercent >= 60 ? "可调整"
-              : vitalityStatusPercent >= 40 ? "需留意"
-              : "优先恢复"
-          }
+          qrImageUrl={template.qr_image_url}
+          qrTitle={template.qr_title}
         />
       )}
       <ShareImagePreview
