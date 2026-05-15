@@ -14,9 +14,13 @@ import PageHeader from "@/components/PageHeader";
 import { setPostAuthRedirect } from "@/lib/postAuthRedirect";
 
 import { DynamicAssessmentIntro } from "@/components/dynamic-assessment/DynamicAssessmentIntro";
-import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
-import { DynamicAssessmentQuestions } from "@/components/dynamic-assessment/DynamicAssessmentQuestions";
-import { DynamicAssessmentResult } from "@/components/dynamic-assessment/DynamicAssessmentResult";
+import midlifeVitalitySceneImage from "@/assets/audience/midlife-vitality-scene-clean.jpg";
+import lazyRetry from "@/utils/lazyRetry";
+import { runWhenIdle } from "@/utils/runWhenIdle";
+
+const DynamicOGMeta = lazy(() => import("@/components/common/DynamicOGMeta").then((m) => ({ default: m.DynamicOGMeta })));
+const DynamicAssessmentQuestions = lazyRetry(() => import("@/components/dynamic-assessment/DynamicAssessmentQuestions").then((m) => ({ default: m.DynamicAssessmentQuestions })));
+const DynamicAssessmentResult = lazyRetry(() => import("@/components/dynamic-assessment/DynamicAssessmentResult").then((m) => ({ default: m.DynamicAssessmentResult })));
 const AssessmentPromoShareDialog = lazy(() => import("@/components/dynamic-assessment/AssessmentPromoShareDialog").then((m) => ({ default: m.AssessmentPromoShareDialog })));
 const DynamicAssessmentHistory = lazy(() => import("@/components/dynamic-assessment/DynamicAssessmentHistory").then((m) => ({ default: m.DynamicAssessmentHistory })));
 const AssessmentPayDialog = lazy(() => import("@/components/wealth-block/AssessmentPayDialog").then((m) => ({ default: m.AssessmentPayDialog })));
