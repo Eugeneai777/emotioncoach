@@ -292,7 +292,7 @@ function ClaimSkeleton({
       >
         {formatClaimCode(claimCode) || "— —"}
       </div>
-      <div className="text-amber-300 text-[11px]">🔒 仅限本人凭码领取 · 24 小时内送达</div>
+      <div className="text-amber-300 text-[11px]">🔒 仅限本人凭码 · 加顾问预约 1V1 解读</div>
       <div className="absolute bottom-3 right-3 flex items-center gap-1 text-[10px] text-white/50">
         {loading && <Loader2 className="w-3 h-3 animate-spin" />}
         <span>高清凭证生成中…</span>
