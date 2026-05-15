@@ -1,86 +1,57 @@
-## 目标
+## 问题诊断
 
-- 移除【男人有劲状态评估】+【中年觉醒测评】结果页所有 PDF 领取功能与文案。
-- 保留加微转化入口,改为「1V1 顾问解读 · 拆解认知盲区 · 拿专属行动方案」轻量话术。
-- 同步移除管理后台对这两个测评的「领取码」相关功能。
-- 【情绪健康测评】+【35+ 女性竞争力测评】完全不动。
+扫码进入 `/assessment/male_midlife_vitality` 慢，根因不在网络，而在前端首屏加载链路：
 
-## 商业评估
+1. **首屏 JS 包过大**：`DynamicAssessmentPage` 静态 import 了 `DynamicAssessmentResult`（1404 行），它又同步引入 html2canvas、jsPDF、framer-motion、6+ 个分享卡 / 报告卡组件、领取码 hook 等 → intro 阶段根本用不到，却必须先下载执行。
+2. **Questions 组件同样静态加载**，进入 intro 也得先解析答题机里程碑/动画逻辑。
+3. **`DynamicOGMeta` 在 intro 挂载即同步触发**：DB 查询 OG 配置、微信 JSSDK 注入、小程序桥接、OG 健康上报，跟首屏渲染抢主线程。
+4. **加载态是裸 spinner**：模板 fetch 返回前用户只看到一个小转圈，主观感受 = 空白页 + 等。
+5. **Supabase 域名没有 preconnect**：每次冷启动要重新 DNS + TLS 才能拉模板和 OG 配置。
+6. **Hero 图（59KB JPG）**未做 preload，进入 intro 后还要再发一次请求才出图。
 
-- 中年男性对「完整 PDF 报告」感知偏重,反而抑制扫码加微动机。改为「拆解盲区 · 拿行动方案」更轻、更勾人。
-- 加微漏斗保留,顾问后台改用普通用户列表 + 测评摘要识别用户(无需领取码核销),减少一道操作。
-- 情绪健康 / 女性竞争力测评的 PDF 领取转化此前数据正常,**不动**。
+## 优化方案（仅前端 / 表现层，不动业务逻辑）
 
-## 改动范围(纯前端)
+### 1. 代码分割：把 Result / Questions 改成懒加载
+`src/pages/DynamicAssessmentPage.tsx`
+- `DynamicAssessmentResult` 改 `React.lazy`，用 `<Suspense fallback={<同样的 Loader2 全屏>} >` 包裹 result 阶段。
+- `DynamicAssessmentQuestions` 同样改 `React.lazy`，包 Suspense。
+- intro 阶段保持同步，确保首屏即出。
+- 预期收益：intro 首屏 chunk 体积下降 ~60%（html2canvas/jsPDF 全部移到 result chunk）。
 
-### 1. 男人有劲(`male_midlife_vitality`)结果页
+### 2. 在用户开始答题/快出结果前预热下一段
+- intro 阶段挂载后用 `requestIdleCallback`（带 setTimeout 兜底）异步 `import('@/components/dynamic-assessment/DynamicAssessmentQuestions')`，用户点「开始」时 chunk 已就位，不会出现按钮卡顿。
+- 同理在 questions 阶段空闲预拉 Result chunk。
 
-文件:`src/components/dynamic-assessment/DynamicAssessmentResult.tsx`
+### 3. OG Meta 延迟挂载
+`DynamicAssessmentPage.tsx` intro 分支
+- 新增 `const [ogReady, setOgReady] = useState(false)`，`useEffect` 内 `requestIdleCallback(() => setOgReady(true), { timeout: 800 })`，根据 `ogReady` 才渲染 `<DynamicOGMeta />`。
+- OG 标签延迟 300–800ms 出现对 SEO 与微信分享卡片无影响（首次扫码用户不会立刻分享），却释放了首屏主线程。
 
-- **L1174-1192 主 CTA**:
-  - 文案:`📋 领取我的完整诊断报告(PDF)` → `🎯 拆解你的认知盲区,拿专属行动方案`
-  - 副文案:`由 有劲顾问 亲自发送  · 1v1 解读建议` → `1V1 顾问解读 · 帮你拿到本周可执行的下一步`
-  - 行为:仍打开 `MaleVitalityPdfClaimSheet`(改名后即「加微解读弹窗」)。
-- **L747-776 未登录态 Lite 卡**:
-  - 标题:`登录解锁完整报告 + 私密 PDF` → `登录解锁 6 维深度诊断 + AI 私人解读`
-  - 副文案:`6 维深度诊断 · AI 私人解读 · 一键保存私密 PDF` → `6 维深度诊断 · AI 私人解读 · 关键认知盲区拆解`
-- *L85- `autoSavePdf` & 保存格式 Sheet**:男版禁用 PDF 路径(`?autoSave=pdf` 仅对女性竞争力生效);保存 Sheet 仅 `isWomenCompetitiveness` 触达,男版无入口。
-- **L315 toast**「网络较慢,可截屏保存或改存 PDF」:男版触达分支改为「网络较慢,可截屏保存」。
+### 4. 提升「感知速度」：骨架屏替换裸 spinner
+`DynamicAssessmentPage.tsx` `isLoading` 分支
+- 用一个轻量骨架（顶部 PageHeader 占位 + 标题灰条 + 大按钮灰块 + 图片灰块），不跑动画、不引依赖；assessmentKey 已知时还能直接渲染「男人有劲状态评估」标题文案，让用户秒看到目标页面。
 
-文件:`src/components/dynamic-assessment/MaleVitalityClaimStickyBar.tsx`
+### 5. 网络层 preconnect + hero 图 preload
+`index.html`
+- 新增：
+  ```html
+  <link rel="preconnect" href="https://vlsuzskvykddwrxbmcbu.supabase.co" crossorigin>
+  <link rel="dns-prefetch" href="https://vlsuzskvykddwrxbmcbu.supabase.co">
+  ```
+- 在 `DynamicAssessmentPage` intro 阶段对 `male_midlife_vitality` 注入 `<link rel="preload" as="image" href={midlifeVitalitySceneImage}>`（通过 react-helmet 或一次性 DOM 注入），让 hero 图与 JS 并行下载。
 
-- 按钮文案:`📋 领取我的完整诊断报告(PDF)` → `🎯 拆解认知盲区 · 拿专属行动方案`
-- 副文案:`由 有劲顾问 亲自发送 · 24 小时内送达 · 1v1 解读建议` → `1V1 顾问解读 · 帮你拿到下一步行动`
+### 6. 跨端兼容收尾
+- intro 容器已有 `WebkitOverflowScrolling: 'touch'`，保持。
+- Safari/iOS 微信 WebView 上 `requestIdleCallback` 不存在，统一封装一个 `runWhenIdle(cb, timeout=800)` helper（`window.requestIdleCallback ?? (cb => setTimeout(cb, 1))`），所有空闲调度走它，避免 iOS 上崩。
+- 对 Android 微信旧 WebView：`React.lazy` 需要 `Suspense` 包裹，已在方案 1 内置；同时保留现有 `lazyRetry` 模式（chunk load 失败重试），避免弱网下白屏。
 
-文件:`src/components/dynamic-assessment/MaleVitalityPdfClaimSheet.tsx`
+## 不动的范围
+- 业务逻辑：评分、保存、AI insight、领取码、支付、登录拦截全部不变。
+- 后端：模板查询、OG 配置 DB、edge function 全部不变。
+- 视觉与文案：除骨架屏外，UI 完全保留。
 
-- 不重命名文件(避免 import 大改),仅替换内部全部「PDF / 完整诊断报告 / 24 小时内送达 / 手册」字样。
-- 主标题示例:`领取你的 1V1 顾问解读`;副文案:`凭此码加顾问企微,预约一次解读 + 拿专属行动方案`。
-- 视觉:去掉 PDF 图标暗示,保留头像 + 领取码 + 二维码。
-
-### 2. 中年觉醒(`midlife_awakening`)结果页
-
-文件:`src/components/midlife-awakening/MidlifeAwakeningClaimReportCard.tsx`
-
-- L160 `份专属 PDF` → `次 1V1 顾问解读`(或删除该统计格)。
-- L225 `凭此码加顾问企微,免费领取你的「7 天伴随手册」PDF` → `凭此码加顾问企微,预约一次 1V1 解读 + 拿专属行动方案`。
-- 顶部 hero 主行动文案 / 副文案统一去掉 `PDF / 手册 / 报告`,改为「拆解你的中场盲区 · 拿一份行动地图」(stamina 计算不动)。
-
-文件:`src/components/midlife-awakening/MidlifeAwakeningPdfClaimSheet.tsx`
-
-- 不重命名;内部所有 PDF / 手册字样替换为 1V1 顾问解读话术,与男版统一调性。
-
-### 3. 管理后台移除「领取码」相关功能
-
-文件:`src/components/admin/AssessmentInsightsDetail.tsx`
-
-- 当 `template.assessmentKey === "male_midlife_vitality"` 时,不显示领取码列 / CSV 不导出 `claimCode` 列。
-- 搜索逻辑保留(避免破坏其他测评),但移除男版 `claimCode` 命中分支。
-- `isMaleVitality` 相关领取码 UI 全部删除。
-- 情绪健康 / 女性竞争力测评的领取码列表逻辑保持不变。
-
-文件:`src/components/admin/AssessmentRespondentDrawer.tsx`
-
-- L84-97:删除 `template?.assessmentKey === "male_midlife_vitality"` 的领取码复制按钮分支(保留 `isEmotionHealth` 分支)。
-- L98-123:删除男版「复制 PDF 发送话术」按钮。
-- L125-* 情绪健康分支保留不动。
-
-文件:`src/hooks/useMidlifeAwakeningClaimCode.ts`
-
-- 前端不再展示领取码 → hook 调用方移除(`MidlifeAwakeningResult.tsx` 中 `useMidlifeAwakeningClaimCode` 调用 + `claimCode` / `loadingCode` 透传删除)。
-- hook 文件本身保留(可能被其他页面/邮件链路引用,留作未来回滚)。
-
-### 4. 不动项
-
-- `useClaimCode` / `useMidlifeAwakeningClaimCode` 后端 edge function、生成逻辑、数据库表:**全部保留**(便于回滚 + 顾问端历史码核销)。
-- 情绪健康(`emotion_health`)+ 35+ 女性竞争力(`women_competitiveness`)的结果页、PDF 流程、后台领取码 UI:**完全不动**。
-- `WeChatPdfGuideSheet`(女力测评仍用)、`AdminHandbookExport`(后台仍可手工导出 PDF 发企微):保留。
-- 埋点事件名(`pdf_claim_sheet_opened` / `pdf_claim_sticky_clicked` / `pdf_claim_sticky_view`)保留,只换 UI 文案,避免历史漏斗断裂;后续平台侧可重命名展示。
-
-## 验证
-
-1. `/assessment/male_midlife_vitality` 完成测评 → 顶部 hero、主 CTA、Sticky 底栏、加微弹窗均无「PDF / 完整诊断报告 / 手册」字样;加微弹窗仍可正常显示头像 + 二维码。
-2. `/midlife-awakening` 完成测评 → 同上;顶部续航卡仍展示但话术轻量化。
-3. 管理后台 → 男人有劲测评受访者抽屉:领取码与 PDF 话术按钮消失;情绪健康抽屉领取码仍在。
-4. 管理后台 → 男人有劲洞察导出 CSV:不含 claimCode 列;情绪健康 / 女力导出不变。
-5. `/assessment/women_competitiveness` + `/assessment/emotion_health` 端到端不受影响。
+## 验收
+- Chrome DevTools Lighthouse 移动模拟：intro 路由 LCP 从当前 → 目标 < 2.0s。
+- 在真机微信 / Safari / Chrome 三端扫码，进入 intro 后第一屏内容（标题 + 开始按钮 + hero 图）出现时间显著缩短。
+- 点击「开始评估」无明显加载延迟（chunk 已预热）。
+- 现有跳转、保存、分享、PDF 等功能行为不变。
