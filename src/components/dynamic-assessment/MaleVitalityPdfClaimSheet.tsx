@@ -172,7 +172,7 @@ export function MaleVitalityPdfClaimSheet({
         <div className="px-5 pt-5 pb-3">
           <SheetHeader>
             <SheetTitle className="text-left text-base">
-              📋 领取你的专属诊断报告
+              🎯 预约你的 1V1 顾问解读
             </SheetTitle>
           </SheetHeader>
         </div>
@@ -190,7 +190,7 @@ export function MaleVitalityPdfClaimSheet({
             </li>
             <li className="flex gap-2">
               <span className="font-bold text-primary shrink-0">3.</span>
-              <span>把「截图 + 领取码」发给顾问，<b>24 小时内</b>收到完整报告 + 1 次 1v1 解读建议</span>
+              <span>把「截图 + 领取码」发给顾问,即可<b>预约 1V1 解读</b>,拆解认知盲区,拿到专属行动方案</span>
             </li>
           </ol>
 
@@ -292,7 +292,7 @@ function ClaimSkeleton({
       >
         {formatClaimCode(claimCode) || "— —"}
       </div>
-      <div className="text-amber-300 text-[11px]">🔒 仅限本人凭码领取 · 24 小时内送达</div>
+      <div className="text-amber-300 text-[11px]">🔒 仅限本人凭码 · 加顾问预约 1V1 解读</div>
       <div className="absolute bottom-3 right-3 flex items-center gap-1 text-[10px] text-white/50">
         {loading && <Loader2 className="w-3 h-3 animate-spin" />}
         <span>高清凭证生成中…</span>

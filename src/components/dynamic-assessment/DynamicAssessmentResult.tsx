@@ -312,7 +312,7 @@ export function DynamicAssessmentResult({
         } catch (err) {
           console.warn('[saveReport] upload failed, keeping blob url:', err);
           if (isWeChatLike) {
-            toast.message('网络较慢，可截屏保存或改存 PDF', { duration: 4000 });
+            toast.message('网络较慢,可截屏保存', { duration: 4000 });
           }
         }
       })();
@@ -754,10 +754,10 @@ export function DynamicAssessmentResult({
                 </div>
                 <div>
                   <h3 className="font-bold text-base text-foreground mb-1">
-                    登录解锁完整报告 + 私密 PDF
+                    登录解锁 6 维深度诊断 + AI 私人解读
                   </h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    6 维深度诊断 · AI 私人解读 · 一键保存私密 PDF
+                    6 维深度诊断 · AI 私人解读 · 关键认知盲区拆解
                   </p>
                 </div>
                 <Button
@@ -1183,10 +1183,10 @@ export function DynamicAssessmentResult({
                   setShowClaimSheet(true);
                 }}
               >
-                📋 领取我的完整诊断报告（PDF）
+                🎯 拆解你的认知盲区,拿专属行动方案
               </Button>
               <p className="text-center text-[11px] text-muted-foreground mt-1.5">
-                由 有劲顾问 亲自发送 · 24 小时内送达 · 1v1 解读建议
+                1V1 顾问解读 · 帮你拿到本周可执行的下一步
               </p>
             </div>
           )}

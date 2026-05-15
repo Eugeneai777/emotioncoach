@@ -94,7 +94,7 @@ export default function AssessmentInsightsDetail() {
   const [patternFilter, setPatternFilter] = useState<string>("all");
   const [drawerRow, setDrawerRow] = useState<RespondentRow | null>(null);
 
-  const isMaleVitality = data?.template.assessmentKey === "male_midlife_vitality";
+  const isMaleVitality = false; // 已下线男版领取码后台展示
 
   const filtered = useMemo(() => {
     if (!data) return [];
