@@ -251,6 +251,10 @@ export default function DynamicAssessmentPage() {
     const scoringResult = calculateScore(scoringType, answers, questions, dimensions, patterns);
     setResult(scoringResult);
     setPhase("result");
+    // 男人有劲: 提交后清除题目顺序种子, 下次进入重新洗
+    if (template.assessment_key === 'male_midlife_vitality') {
+      try { sessionStorage.removeItem(`mmv_q_seed_${template.id}`); } catch {}
+    }
 
     let newResultId: string | null = null;
     if (user) {
