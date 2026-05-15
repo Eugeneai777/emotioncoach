@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.0'
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { getCrossCoachMemoryContext } from '../_shared/coachMemoryUtils.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -194,8 +195,25 @@ serve(async (req) => {
 
     console.log('Creating OpenAI Realtime session via:', OPENAI_PROXY_URL ? 'proxy' : 'direct');
 
+    // 加载长期记忆（当前教练 + 跨教练高分洞察）
+    let memoryPrompt = '';
+    try {
+      const supabaseService = createClient(
+        supabaseUrl,
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+      );
+      const ctx = await getCrossCoachMemoryContext(supabaseService, user.id, 'emotion', 5, 3);
+      memoryPrompt = ctx.memoryPrompt || '';
+      console.log('[EmotionRealtimeToken] Memory loaded:', {
+        current: ctx.currentCoachMemories.length,
+        cross: ctx.crossCoachMemories.length,
+      });
+    } catch (e) {
+      console.error('[EmotionRealtimeToken] Memory load failed:', e);
+    }
+
     // 获取情绪教练专用 instructions
-    const instructions = getEmotionCoachInstructions(userName);
+    const instructions = getEmotionCoachInstructions(userName) + memoryPrompt;
 
     // 解析 OpenAI Realtime voice 名称（从前端传入的 ElevenLabs ID 映射）
     // 有效值: alloy, ash, ballad, coral, echo, sage, shimmer, verse

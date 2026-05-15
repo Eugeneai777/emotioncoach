@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.0'
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { getCrossCoachMemoryContext } from '../_shared/coachMemoryUtils.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -99,8 +100,25 @@ serve(async (req) => {
 
     const userName = profile?.display_name || '';
 
+    // 加载长期记忆（财富教练 + 跨教练高分洞察）
+    let memoryPrompt = '';
+    try {
+      const supabaseService = createClient(
+        supabaseUrl,
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+      );
+      const ctx = await getCrossCoachMemoryContext(supabaseService, user.id, 'wealth', 5, 3);
+      memoryPrompt = ctx.memoryPrompt || '';
+      console.log('[WealthAssessmentRealtimeToken] Memory loaded:', {
+        current: ctx.currentCoachMemories.length,
+        cross: ctx.crossCoachMemories.length,
+      });
+    } catch (e) {
+      console.error('[WealthAssessmentRealtimeToken] Memory load failed:', e);
+    }
+
     // 构建动态 prompt
-    const instructions = buildWealthCoachInstructions(assessmentData, userName);
+    const instructions = buildWealthCoachInstructions(assessmentData, userName) + memoryPrompt;
 
     // 请求 OpenAI Realtime session
     const realtimeUrl = `${baseUrl}/v1/realtime/sessions`;

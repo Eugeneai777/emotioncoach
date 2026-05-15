@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.0'
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { getCrossCoachMemoryContext } from '../_shared/coachMemoryUtils.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -125,17 +126,26 @@ serve(async (req) => {
 
     const teenName = tokenData.teen_nickname || '你';
 
-    // Create realtime session with teen-specific instructions
-    const response = await fetch(realtimeUrl, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${OPENAI_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini-realtime-preview",
-        voice: "shimmer",
-        instructions: `【交互方式 - 非常重要】
+    // 加载青少年长期记忆（按 parent_user_id 归属，因为青少年通过 token 进入无独立账号）
+    let memoryPrompt = '';
+    try {
+      const ctx = await getCrossCoachMemoryContext(
+        supabase,
+        tokenData.parent_user_id,
+        'teen',
+        5,
+        3
+      );
+      memoryPrompt = ctx.memoryPrompt || '';
+      console.log('[TeenRealtimeToken] Memory loaded:', {
+        current: ctx.currentCoachMemories.length,
+        cross: ctx.crossCoachMemories.length,
+      });
+    } catch (e) {
+      console.error('[TeenRealtimeToken] Memory load failed:', e);
+    }
+
+    const baseInstructions = `【交互方式 - 非常重要】
 你正在通过语音和用户实时对话，用户能听到你说话，你也能听到用户说话。
 这是真正的语音通话，不是文字聊天。
 请像面对面聊天一样自然交流，可以感知用户的语气和周围环境。
@@ -150,7 +160,19 @@ serve(async (req) => {
 - 多用"我懂""嗯嗯"
 
 先理解感受再探索。
-开场："嗨～我是小星，说什么都可以，我帮你保密💜"`,
+开场："嗨～我是小星，说什么都可以，我帮你保密💜"`;
+
+    // Create realtime session with teen-specific instructions
+    const response = await fetch(realtimeUrl, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${OPENAI_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini-realtime-preview",
+        voice: "shimmer",
+        instructions: baseInstructions + memoryPrompt,
         input_audio_format: "pcm16",
         output_audio_format: "pcm16",
         // 用户体验优先：不硬性限制 token，通过 Prompt 软控制回复长度

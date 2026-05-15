@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.0';
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { getCrossCoachMemoryContext } from '../_shared/coachMemoryUtils.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -124,8 +126,36 @@ serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const userName = body.userName || '';
 
+    // 加载长期记忆（需要认证）
+    let memoryPrompt = '';
+    try {
+      const authHeader = req.headers.get('Authorization');
+      if (authHeader) {
+        const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+        const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+        const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+          global: { headers: { Authorization: authHeader } },
+        });
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const supabaseService = createClient(
+            supabaseUrl,
+            Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+          );
+          const ctx = await getCrossCoachMemoryContext(supabaseService, user.id, 'communication', 5, 3);
+          memoryPrompt = ctx.memoryPrompt || '';
+          console.log('[MarriageRealtimeToken] Memory loaded:', {
+            current: ctx.currentCoachMemories.length,
+            cross: ctx.crossCoachMemories.length,
+          });
+        }
+      }
+    } catch (e) {
+      console.error('[MarriageRealtimeToken] Memory load failed:', e);
+    }
+
     const baseUrl = OPENAI_PROXY_URL || 'https://api.openai.com';
-    const instructions = buildMarriageCoachInstructions(userName);
+    const instructions = buildMarriageCoachInstructions(userName) + memoryPrompt;
 
     const realtimeUrl = `${baseUrl}/v1/realtime/sessions`;
     const response = await fetch(realtimeUrl, {
