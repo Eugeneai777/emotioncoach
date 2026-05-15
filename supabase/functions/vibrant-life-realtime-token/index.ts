@@ -1414,12 +1414,16 @@ serve(async (req) => {
         )
       : null;
 
-    // 🌟 并行获取用户上下文数据（用户昵称、历史对话、记忆、对话次数）
+    const currentCoachType = normalizeVoiceCoachType(mode);
+
+    // 🌟 并行获取用户上下文数据（用户昵称、历史对话、记忆、最近通话、对话次数）
     const [
       profileResult,
       lastBriefingResult,
       memoriesResult,
-      sessionCountResult
+      sessionCountResult,
+      crossMemoryContext,
+      recentVoicePrompt
     ] = await Promise.all([
       // 用户昵称
       supabase
@@ -1440,14 +1444,22 @@ serve(async (req) => {
         .from('user_coach_memory')
         .select('memory_type, content, importance_score')
         .eq('user_id', user.id)
-        .eq('coach_type', 'vibrant_life_sage')
+        .in('coach_type', currentCoachType === 'vibrant_life' ? ['vibrant_life', 'vibrant_life_sage'] : [currentCoachType])
         .order('importance_score', { ascending: false })
         .limit(5),
       // 对话次数
       supabase
         .from('voice_chat_sessions')
         .select('id', { count: 'exact', head: true })
-        .eq('user_id', user.id)
+        .eq('user_id', user.id),
+      getCrossCoachMemoryContext(supabase, user.id, currentCoachType, 5, 3).catch((e) => {
+        console.error('[VibrantRealtimeToken] Cross memory load failed:', e);
+        return { memoryPrompt: '', currentCoachMemories: [], crossCoachMemories: [] };
+      }),
+      buildRecentVoiceSessionPrompt(supabase, user.id, currentCoachType).catch((e) => {
+        console.error('[VibrantRealtimeToken] Recent voice load failed:', e);
+        return '';
+      })
     ]);
     
     const userName = profileResult.data?.display_name || '';
@@ -1463,7 +1475,7 @@ serve(async (req) => {
       memories
     };
     
-    console.log('User context loaded:', { userName, sessionCount, hasLastBriefing: !!lastBriefing, memoriesCount: memories.length });
+    console.log('User context loaded:', { userName, sessionCount, hasLastBriefing: !!lastBriefing, memoriesCount: memories.length, currentCoachType, crossMemoryCount: crossMemoryContext.currentCoachMemories.length + crossMemoryContext.crossCoachMemories.length, hasRecentVoice: !!recentVoicePrompt });
 
     let instructions: string;
     let tools: any[];
