@@ -474,7 +474,11 @@ export default function DynamicAssessmentPage() {
   if (phase === "intro") {
     return (
       <div className="h-screen overflow-y-auto overscroll-contain bg-background" style={{ WebkitOverflowScrolling: 'touch' }}>
-        {ogPageKey && <DynamicOGMeta pageKey={ogPageKey} />}
+        {ogPageKey && ogReady && (
+          <Suspense fallback={null}>
+            <DynamicOGMeta pageKey={ogPageKey} />
+          </Suspense>
+        )}
         <PageHeader
           title={template.title}
           showBack={true}
@@ -534,12 +538,14 @@ export default function DynamicAssessmentPage() {
   // === QUESTIONS ===
   if (phase === "questions") {
     return (
-      <DynamicAssessmentQuestions
-        questions={questions}
-        scoreOptions={tpl?.score_options}
-        onComplete={handleQuestionsComplete}
-        onExit={() => setPhase("intro")}
-      />
+      <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-background"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
+        <DynamicAssessmentQuestions
+          questions={questions}
+          scoreOptions={tpl?.score_options}
+          onComplete={handleQuestionsComplete}
+          onExit={() => setPhase("intro")}
+        />
+      </Suspense>
     );
   }
 
