@@ -1,57 +1,160 @@
-## 问题诊断
+## 目标
 
-扫码进入 `/assessment/male_midlife_vitality` 慢，根因不在网络，而在前端首屏加载链路：
+把【男人有劲状态评估】（`male_midlife_vitality`）从 20 道纯文字题，重构为 **10 道多模态测评 + 漏斗化结果页**，紧扣施强 26-45 岁男性"性焦虑 / 慢性疲劳 / 失眠"三角痛点，语气**自嘲式直白**。
 
-1. **首屏 JS 包过大**：`DynamicAssessmentPage` 静态 import 了 `DynamicAssessmentResult`（1404 行），它又同步引入 html2canvas、jsPDF、framer-motion、6+ 个分享卡 / 报告卡组件、领取码 hook 等 → intro 阶段根本用不到，却必须先下载执行。
-2. **Questions 组件同样静态加载**，进入 intro 也得先解析答题机里程碑/动画逻辑。
-3. **`DynamicOGMeta` 在 intro 挂载即同步触发**：DB 查询 OG 配置、微信 JSSDK 注入、小程序桥接、OG 健康上报，跟首屏渲染抢主线程。
-4. **加载态是裸 spinner**：模板 fetch 返回前用户只看到一个小转圈，主观感受 = 空白页 + 等。
-5. **Supabase 域名没有 preconnect**：每次冷启动要重新 DNS + TLS 才能拉模板和 OG 配置。
-6. **Hero 图（59KB JPG）**未做 preload，进入 intro 后还要再发一次请求才出图。
+结果页采用 **A 方案（精简漏斗）+ 加微软前置**：戳穿盲区瞬间插入加微卡，最后用训练营 CTA 收单。
 
-## 优化方案（仅前端 / 表现层，不动业务逻辑）
+---
 
-### 1. 代码分割：把 Result / Questions 改成懒加载
-`src/pages/DynamicAssessmentPage.tsx`
-- `DynamicAssessmentResult` 改 `React.lazy`，用 `<Suspense fallback={<同样的 Loader2 全屏>} >` 包裹 result 阶段。
-- `DynamicAssessmentQuestions` 同样改 `React.lazy`，包 Suspense。
-- intro 阶段保持同步，确保首屏即出。
-- 预期收益：intro 首屏 chunk 体积下降 ~60%（html2canvas/jsPDF 全部移到 result chunk）。
+## 一、测评内容：10 题最终结构
 
-### 2. 在用户开始答题/快出结果前预热下一段
-- intro 阶段挂载后用 `requestIdleCallback`（带 setTimeout 兜底）异步 `import('@/components/dynamic-assessment/DynamicAssessmentQuestions')`，用户点「开始」时 chunk 已就位，不会出现按钮卡顿。
-- 同理在 questions 阶段空闲预拉 Result chunk。
+5 大维度 × 每维 2 题，前 5 钩表层焦虑、后 5 探心因深处。
 
-### 3. OG Meta 延迟挂载
-`DynamicAssessmentPage.tsx` intro 分支
-- 新增 `const [ogReady, setOgReady] = useState(false)`，`useEffect` 内 `requestIdleCallback(() => setOgReady(true), { timeout: 800 })`，根据 `ogReady` 才渲染 `<DynamicOGMeta />`。
-- OG 标签延迟 300–800ms 出现对 SEO 与微信分享卡片无影响（首次扫码用户不会立刻分享），却释放了首屏主线程。
+| # | 类型 | 维度 | 主题 | 自嘲式选项示例 |
+|---|---|---|---|---|
+| Q1 | 视觉 | 神经紧绷 | 视错觉旋转图 | A 几乎不动 / B 风车速 / C 转得我想吐 |
+| Q2 | 文字 | 躯体化 | 老板深夜"在吗" | A 心如止水 / B 心脏漏拍 / C 立刻想拉肚子 |
+| Q3 | 视觉 | 情绪底色 | 6 色低饱和色盘 | 选最贴近本周心情的一格 |
+| Q4 | 听觉 | 易激惹 | 5 秒键盘+水滴+婴儿哭复合音 | A 没感觉 / B 烦躁 / C 拳头硬了 |
+| Q5 | 文字 | 慢性疲劳 | 闹钟响那一秒 | A 电量满 / B 像被卡车碾过 / C 凌晨 3 点就醒了 |
+| Q6 | 视觉 | 心因防御 | 半开的门，门缝漆黑透微光 | 你直觉门后是 A 出口 / B 空房 / C 不敢看 |
+| Q7 | 听觉 | 入睡反刍 | 5 秒下雨白噪音 | A 听着就困 / B 越听越清醒 / C 反而开始心慌 |
+| Q8 | 文字 | 亲密意愿 | 伴侣周末发出邀请 | A 顺理成章 / B 怕"翻车" / C 装睡敷衍 |
+| Q9 | 文字 | 表现焦虑 | 那事儿结束后第一反应 | A 抱着睡 / B 复盘"刚才几分钟" / C 空虚到想抽根烟 |
+| Q10 | 文字 | 核心动力 | 清晨那几分钟的"晨间信号" | A 旗帜鲜明 / B 时有时无 / C 已经很久没注意了 |
 
-### 4. 提升「感知速度」：骨架屏替换裸 spinner
-`DynamicAssessmentPage.tsx` `isLoading` 分支
-- 用一个轻量骨架（顶部 PageHeader 占位 + 标题灰条 + 大按钮灰块 + 图片灰块），不跑动画、不引依赖；assessmentKey 已知时还能直接渲染「男人有劲状态评估」标题文案，让用户秒看到目标页面。
+**5 维度**：`nerve_tension` 神经紧绷 / `chronic_fatigue` 慢性疲劳 / `mood_baseline` 情绪底色 / `core_drive` 核心动力 / `performance_anxiety` 心因表现焦虑
 
-### 5. 网络层 preconnect + hero 图 preload
-`index.html`
-- 新增：
-  ```html
-  <link rel="preconnect" href="https://vlsuzskvykddwrxbmcbu.supabase.co" crossorigin>
-  <link rel="dns-prefetch" href="https://vlsuzskvykddwrxbmcbu.supabase.co">
-  ```
-- 在 `DynamicAssessmentPage` intro 阶段对 `male_midlife_vitality` 注入 `<link rel="preload" as="image" href={midlifeVitalitySceneImage}>`（通过 react-helmet 或一次性 DOM 注入），让 hero 图与 JS 并行下载。
+---
 
-### 6. 跨端兼容收尾
-- intro 容器已有 `WebkitOverflowScrolling: 'touch'`，保持。
-- Safari/iOS 微信 WebView 上 `requestIdleCallback` 不存在，统一封装一个 `runWhenIdle(cb, timeout=800)` helper（`window.requestIdleCallback ?? (cb => setTimeout(cb, 1))`），所有空闲调度走它，避免 iOS 上崩。
-- 对 Android 微信旧 WebView：`React.lazy` 需要 `Suspense` 包裹，已在方案 1 内置；同时保留现有 `lazyRetry` 模式（chunk load 失败重试），避免弱网下白屏。
+## 二、引擎扩展：支持图片 / 音频题
 
-## 不动的范围
-- 业务逻辑：评分、保存、AI insight、领取码、支付、登录拦截全部不变。
-- 后端：模板查询、OG 配置 DB、edge function 全部不变。
-- 视觉与文案：除骨架屏外，UI 完全保留。
+题目 schema 新增可选字段（向后兼容现有题）：
+```ts
+media?: { kind: 'image' | 'audio', url: string, alt?: string, caption?: string }
+```
 
-## 验收
-- Chrome DevTools Lighthouse 移动模拟：intro 路由 LCP 从当前 → 目标 < 2.0s。
-- 在真机微信 / Safari / Chrome 三端扫码，进入 intro 后第一屏内容（标题 + 开始按钮 + hero 图）出现时间显著缩短。
-- 点击「开始评估」无明显加载延迟（chunk 已预热）。
-- 现有跳转、保存、分享、PDF 等功能行为不变。
+- 图片：`<img>` 圆角懒加载，最大宽度 320。
+- 音频：自定义 ▶︎ 按钮 + 5 秒进度条，单例（切题自动停），首次点击才加载（绕开 iOS 自动播放限制）。
+- 不引入视频。
+
+**素材生成**：
+
+| 题 | 资源 | 方式 |
+|---|---|---|
+| Q1 | 视错觉波纹 PNG | imagegen premium |
+| Q3 | 6 色低饱和色盘 | 前端 SVG 直绘 |
+| Q4 | 5 秒环境噪声 mp3 | ffmpeg 合成 |
+| Q6 | 半开的门插画 | imagegen standard |
+| Q7 | 5 秒下雨白噪音 mp3 | ffmpeg 合成 |
+
+上传到 `assessment-media` 公开 bucket。失败降级为视觉/文字题。
+
+---
+
+## 三、结果页：A 方案漏斗化（4 屏）
+
+```text
+┌─────────────────────────────────────────┐
+│ 第 1 屏  人格标签 + 电量条 + 戳穿金句     │
+│  · MBTI 称号（如"脆皮打工人 ENTP"）       │
+│  · 5 节电量（剩 X 格）                    │
+│  · 一句话："你这台机器最缺的是 X"         │
+│  · AI 洞察压缩为 1 段引言（≤120 字）      │
+├─────────────────────────────────────────┤
+│ 第 2 屏  认知盲区（戳穿"你以为…其实是…"） │
+│  · 基于最弱 3 维，从静态字典取（0 延迟）  │
+│  ↓ 紧跟"软前置加微卡"【关键】             │
+│  ┌───────────────────────────────────┐ │
+│  │ 💬 这 3 条戳到你了吗？             │ │
+│  │ 还有更多没说透的盲区，加微 1V1 拆给你 │ │
+│  │ · 拿你专属的「本周行动方案」      │ │
+│  │ · 把没戳到的盲区一条条拆开讲      │ │
+│  │ · 私聊提问，不打扰、不推销        │ │
+│  │ [扫码加微 / 1V1 拆解]             │ │
+│  └───────────────────────────────────┘ │
+├─────────────────────────────────────────┤
+│ 第 3 屏  即刻行动 3 件事（可勾选+本地存）  │
+├─────────────────────────────────────────┤
+│ 第 4 屏  主 CTA：7 天有劲训练营           │
+│  · "你刚勾的 3 件事，生命教练陪你做 7 天" │
+│  · 次按钮：分享海报                      │
+│  · 底部小字："查看完整报告" → 折叠模块    │
+└─────────────────────────────────────────┘
+```
+
+### 关键文案（已按反馈调整）
+
+**加微卡（第 2 屏，盲区下方）**
+- 标题：**这 3 条戳到你了吗？**
+- 副标：**还有更多没说透的盲区，加微 1V1 拆给你**
+- 三条点列（去掉无法兑现的 PDF / 案例集 / 24h 解读）：
+  1. 拿你这个标签的**专属本周行动方案**
+  2. 把测评里**没说透的认知盲区**一条条拆开讲
+  3. 私聊提问，**不打扰、不推销**
+- 按钮：`[扫码加微]` / `[1V1 拆解]`
+
+**训练营 CTA（第 4 屏）**
+- 主标："你刚勾的 3 件事，**生命教练**陪你做 7 天"
+- 副标："靠自己坚持 7 天的概率不到 12%。生命教练带过 3000+ 个像你这样的兄弟，**陪你打卡 7 天**。"
+
+### 模块取舍表
+
+| 模块 | 处置 |
+|---|---|
+| MBTI 标签 + 电量条 | ✅ 第 1 屏主视觉 |
+| AI 个性化洞察 | ⚠️ 压缩为 120 字引言；完整版藏二级页 |
+| **认知盲区** | ✅ 第 2 屏（新增） |
+| **加微卡** | ✅ 第 2 屏盲区下方（前置） |
+| 即刻行动 3 件事 | ✅ 第 3 屏 |
+| **7 天训练营** | ✅ 第 4 屏主 CTA |
+| 分享海报 | ✅ 次按钮 |
+| 雷达图 / 状态表 | 🔽 折叠到"查看完整报告"二级页 |
+| AI 教练深度解读 | ❌ 移除结果页入口 |
+| 5 个 MBTI → 科室映射 | 🔽 浮层（盲区底部小字"如有持续困扰…"） |
+
+---
+
+## 四、配套体验
+
+1. 进度分段 4 段 → **3 段**
+2. 完成弹窗仅 1 个（Q5 后）："你白天身体已经写满了'扛'字…接下来 5 题，聊点你不会跟兄弟说的"
+3. Intro 副标："10 道题，看你这台机器现在还剩几格电"
+4. 预估时长：3 分钟 → **2 分钟**
+
+---
+
+## 五、技术实现
+
+**新文件**
+- `src/components/dynamic-assessment/QuestionMedia.tsx` — 图/音渲染器（音频单例）
+- `src/components/dynamic-assessment/BlindSpotActionCard.tsx` — 认知盲区卡（含科室浮层）
+- `src/components/dynamic-assessment/InlineWechatLeadCard.tsx` — 软前置加微卡（新文案）
+- `src/components/dynamic-assessment/EnergyBarBadge.tsx` — 5 节电量条 + MBTI 主标签
+- `src/components/dynamic-assessment/ImmediateActionChecklist.tsx` — 3 条勾选行动（localStorage）
+- `src/components/dynamic-assessment/CampPrimaryCTA.tsx` — 训练营 CTA（"生命教练"文案）
+
+**改动文件**
+- `DynamicAssessmentQuestions.tsx` — 题干上方挂 `<QuestionMedia>`
+- `DynamicAssessmentResult.tsx` — `male_midlife_vitality` 分支重排为 4 屏；雷达/状态表挪入 `<details>`；移除 AI 教练入口
+- `maleMidlifeVitalityCopy.ts` — 新增 `BLIND_SPOT_BY_DIMENSION` + 拆 `WEEK_ACTION` 为 3 条 + MBTI→科室映射 + **将"戴西教练"措辞统一改为"生命教练"**
+- `MaleVitalityClaimStickyBar.tsx` — 同步训练营 CTA 文案
+
+**数据库**
+- 迁移：建 `assessment-media` 公开 storage bucket
+- 数据更新：`partner_assessment_templates` UPDATE 新版 questions / dimensions / result_patterns
+- 备份：旧 JSON 写入 `_backup_male_vitality_template_20260515` 表
+
+**不动**：评分引擎、PDF 报告、claim 流程、分享海报、训练营详情页。
+
+---
+
+## 工作步骤
+
+1. 备份旧模板 + 建 storage bucket（一次迁移）
+2. 跑素材生成脚本（imagegen + ffmpeg）→ 上传 bucket
+3. 写新版 10 题 JSON + result_patterns → UPDATE 入库
+4. 实现 `QuestionMedia` 接入 Questions 组件
+5. 实现 5 个新结果页组件 + 重排 Result 组件（采用本次确认的加微 / 训练营文案）
+6. 改进度条/分段弹窗/Intro 文案/时长
+7. 真机自测 iOS / Android 微信加载流畅度
