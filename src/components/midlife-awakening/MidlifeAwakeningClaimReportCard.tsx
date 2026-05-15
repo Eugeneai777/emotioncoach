@@ -156,8 +156,8 @@ export function MidlifeAwakeningClaimReportCard({
           </div>
           <div className="w-px h-6 bg-zinc-700" />
           <div>
-            <div className="font-bold text-amber-300 text-sm">1</div>
-            <div className="mt-0.5">份专属 PDF</div>
+            <div className="font-bold text-amber-300 text-sm">1V1</div>
+            <div className="mt-0.5">顾问解读</div>
           </div>
         </div>
 
