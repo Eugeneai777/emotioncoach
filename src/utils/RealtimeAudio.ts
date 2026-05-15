@@ -1387,6 +1387,67 @@ export class RealtimeChat {
     this.dc.send(JSON.stringify({ type: 'response.create' }));
   }
 
+  /**
+   * 远端音频后处理：DynamicsCompressor + Gain，解决 OpenAI Realtime 输出忽大忽小。
+   * 必须保留 audioEl.srcObject = remoteStream，iOS Safari 才会真正拉取 RTP；
+   * 同时把 audioEl 静音，避免 <audio> 与 Web Audio 双声道叠加。
+   */
+  private setupPlaybackProcessing(remoteStream: MediaStream): void {
+    if (!this.audioEl) return;
+    // 清理旧链路（重连时）
+    this.teardownPlaybackProcessing();
+
+    const Ctx: typeof AudioContext =
+      (window.AudioContext as any) || (window as any).webkitAudioContext;
+    if (!Ctx) {
+      console.warn('[Playback] AudioContext unavailable, falling back to raw <audio>');
+      this.audioEl.muted = false;
+      return;
+    }
+
+    const ctx = new Ctx({ latencyHint: 'interactive' });
+    const source = ctx.createMediaStreamSource(remoteStream);
+    const compressor = ctx.createDynamicsCompressor();
+    compressor.threshold.value = -24;   // dB
+    compressor.knee.value = 30;
+    compressor.ratio.value = 12;        // 偏激进，压平峰值
+    compressor.attack.value = 0.003;
+    compressor.release.value = 0.25;
+    const gain = ctx.createGain();
+    gain.gain.value = 1.4;              // 补偿压缩后的整体响度
+
+    source.connect(compressor);
+    compressor.connect(gain);
+    gain.connect(ctx.destination);
+
+    // 用户手势内才能 resume；unlockAudio 已在用户手势链路里运行过
+    if (ctx.state === 'suspended') {
+      ctx.resume().catch(err => console.warn('[Playback] AudioContext resume failed:', err));
+    }
+
+    // 静音 <audio>，由 Web Audio 出声
+    this.audioEl.muted = true;
+
+    this.playbackCtx = ctx;
+    this.playbackSource = source;
+    this.playbackCompressor = compressor;
+    this.playbackGain = gain;
+    console.log('[Playback] Compressor+Gain pipeline attached');
+  }
+
+  private teardownPlaybackProcessing(): void {
+    try { this.playbackSource?.disconnect(); } catch {}
+    try { this.playbackCompressor?.disconnect(); } catch {}
+    try { this.playbackGain?.disconnect(); } catch {}
+    if (this.playbackCtx) {
+      this.playbackCtx.close().catch(() => {});
+    }
+    this.playbackSource = null;
+    this.playbackCompressor = null;
+    this.playbackGain = null;
+    this.playbackCtx = null;
+  }
+
   disconnect() {
     // 防止重复断开
     if (this.isDisconnected) {
