@@ -312,7 +312,7 @@ export function DynamicAssessmentResult({
         } catch (err) {
           console.warn('[saveReport] upload failed, keeping blob url:', err);
           if (isWeChatLike) {
-            toast.message('网络较慢，可截屏保存或改存 PDF', { duration: 4000 });
+            toast.message('网络较慢,可截屏保存', { duration: 4000 });
           }
         }
       })();
