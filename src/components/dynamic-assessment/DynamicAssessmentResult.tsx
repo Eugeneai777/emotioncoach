@@ -754,10 +754,10 @@ export function DynamicAssessmentResult({
                 </div>
                 <div>
                   <h3 className="font-bold text-base text-foreground mb-1">
-                    登录解锁完整报告 + 私密 PDF
+                    登录解锁 6 维深度诊断 + AI 私人解读
                   </h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    6 维深度诊断 · AI 私人解读 · 一键保存私密 PDF
+                    6 维深度诊断 · AI 私人解读 · 关键认知盲区拆解
                   </p>
                 </div>
                 <Button
