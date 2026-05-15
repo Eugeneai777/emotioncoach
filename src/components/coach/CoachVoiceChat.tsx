@@ -1152,6 +1152,7 @@ export const CoachVoiceChat = ({
           aiFlushRafRef.current = null;
         }
         if (sanitizedText.trim()) {
+          const finalText = sanitizedText.trim();
           completedTranscriptRef.current = completedTranscriptRef.current
             ? `${completedTranscriptRef.current}\n${sanitizedText}`
             : sanitizedText;
@@ -1159,7 +1160,6 @@ export const CoachVoiceChat = ({
           conversationMessagesRef.current.push({ role: 'assistant', content: finalText });
           // 仅当 final 文本与当前展示有差异时才覆盖，避免无意义重渲闪烁
           const currentShown = latestAiLineRef.current.trim();
-          const finalText = sanitizedText.trim();
           if (currentShown !== finalText) {
             latestAiLineRef.current = sanitizedText;
             setLatestAiLine(sanitizedText);
