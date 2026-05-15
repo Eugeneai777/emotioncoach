@@ -1190,9 +1190,7 @@ export function DynamicAssessmentResult({
           </motion.div>
         )}
 
-        {isMaleMidlifeVitality && !isLiteMode && (
-          <motion.div custom={7} variants={fadeUp} initial="hidden" animate="visible" className="space-y-3">
-            <Card className="border-primary/25 bg-gradient-to-br from-primary/8 to-accent/8 shadow-sm overflow-hidden">
+        {false && isMaleMidlifeVitality && !isLiteMode && (
               <CardContent className="p-4 space-y-3">
                 <div className="flex items-start gap-3">
                   <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center text-xl shrink-0">🔋</div>
