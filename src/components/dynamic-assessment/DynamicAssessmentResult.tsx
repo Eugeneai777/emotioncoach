@@ -197,6 +197,7 @@ export function DynamicAssessmentResult({
   const [pulseSaveBtn, setPulseSaveBtn] = useState(false);
   const [showClaimSheet, setShowClaimSheet] = useState(false);
   const { claimCode, loading: loadingClaimCode } = useClaimCode(recordId);
+  const [maleCheckedCount, setMaleCheckedCount] = useState(0);
 
   // Fetch coach route
   useEffect(() => {
