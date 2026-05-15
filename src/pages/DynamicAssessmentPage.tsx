@@ -116,16 +116,55 @@ export default function DynamicAssessmentPage() {
   const [retakeNonce, setRetakeNonce] = useState(0);
 
   // SBTI: randomly select 2 questions per dimension (+ 1 DRUNK_TRIGGER) = 31 total
-  // male_midlife_vitality: 全量 20 题, Fisher-Yates 随机顺序(不抽题, 保留维度完整性)
+  // male_midlife_vitality: 维度外层顺序固定, 维度内 2 题随机交换
+  // 同一次测评内顺序稳定 (sessionStorage 种子), 提交后/重测时重洗
   const questions = useMemo(() => {
-    // 男人有劲: 全量打乱顺序, 每次重测 (retakeNonce 变化) 重新洗牌
     if (template?.assessment_key === 'male_midlife_vitality' && allQuestions.length > 0) {
-      const arr = [...allQuestions];
-      for (let i = arr.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [arr[i], arr[j]] = [arr[j], arr[i]];
+      // seedable PRNG (mulberry32) so refresh within a session keeps the same order
+      const SEED_KEY = `mmv_q_seed_${template.id}`;
+      let seedStr: string | null = null;
+      try {
+        seedStr = sessionStorage.getItem(SEED_KEY);
+        if (!seedStr || retakeNonce > 0) {
+          seedStr = String(Date.now() + Math.floor(Math.random() * 1e6));
+          sessionStorage.setItem(SEED_KEY, seedStr);
+        }
+      } catch {
+        seedStr = String(Date.now());
       }
-      return arr;
+      let seed = 0;
+      for (let i = 0; i < seedStr.length; i++) seed = (seed * 31 + seedStr.charCodeAt(i)) >>> 0;
+      const rand = () => {
+        seed = (seed + 0x6D2B79F5) >>> 0;
+        let t = seed;
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+
+      // 按维度分组, 保留维度首次出现顺序
+      const groups: Record<string, any[]> = {};
+      const dimOrder: string[] = [];
+      allQuestions.forEach((q: any) => {
+        const dim = q.dimension || q.factor || '__none__';
+        if (!groups[dim]) {
+          groups[dim] = [];
+          dimOrder.push(dim);
+        }
+        groups[dim].push(q);
+      });
+
+      // 维度内 Fisher-Yates 打乱
+      const result: any[] = [];
+      dimOrder.forEach((dim) => {
+        const arr = [...groups[dim]];
+        for (let i = arr.length - 1; i > 0; i--) {
+          const j = Math.floor(rand() * (i + 1));
+          [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        result.push(...arr);
+      });
+      return result;
     }
 
     if (scoringType !== 'sbti' || allQuestions.length <= 31) return allQuestions;
