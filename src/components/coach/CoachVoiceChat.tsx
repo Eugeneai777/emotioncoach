@@ -72,6 +72,28 @@ interface CoachVoiceChatProps {
 
 type ConnectionStatus = 'idle' | 'connecting' | 'connected' | 'disconnected' | 'error';
 type SpeakingStatus = 'idle' | 'user-speaking' | 'assistant-speaking';
+type VoiceConversationMessage = { role: 'user' | 'assistant'; content: string };
+
+const resolveVoiceCoachType = (
+  tokenEndpoint: string,
+  mode: VoiceChatMode,
+  featureKey: string,
+  coachTitle: string
+): string => {
+  if (tokenEndpoint === 'emotion-realtime-token' || mode === 'emotion' || featureKey.includes('emotion')) return 'emotion';
+  if (tokenEndpoint === 'marriage-realtime-token' || coachTitle.includes('婚姻')) return 'communication';
+  if (tokenEndpoint === 'teen-realtime-token' || mode === 'teen' || featureKey.includes('teen')) return 'teen';
+  if (tokenEndpoint === 'wealth-assessment-realtime-token' || featureKey.includes('wealth') || coachTitle.includes('财富')) return 'wealth';
+  if (mode === 'parent_teen') return 'parent';
+  return 'vibrant_life';
+};
+
+const formatVoiceConversation = (messages: VoiceConversationMessage[]): string => {
+  return messages
+    .filter((message) => message.content.trim())
+    .map((message) => `${message.role === 'user' ? '用户' : '教练'}：${message.content.trim()}`)
+    .join('\n');
+};
 
 const POINTS_PER_MINUTE = 8;
 const DEFAULT_MAX_DURATION_MINUTES = 5; // 默认5分钟（未配置时）
@@ -662,11 +684,15 @@ export const CoachVoiceChat = ({
       // 🔧 使用传入的值或 Ref 值，避免 state 延迟
       const actualDuration = finalDuration ?? durationValueRef.current;
       const actualBilledMinutes = finalBilledMinutes ?? lastBilledMinuteRef.current;
+      const conversationHistory = conversationMessagesRef.current.filter((message) => message.content.trim());
+      const fallbackTranscriptContent = `${userTranscriptRef.current}\n${completedTranscriptRef.current}`.trim();
+      const transcriptContent = formatVoiceConversation(conversationHistory) || fallbackTranscriptContent;
+      const coachTypeForMemory = resolveVoiceCoachType(tokenEndpoint, mode, featureKey, coachTitle);
       
       console.log(`[VoiceChat] recordSession - actualDuration: ${actualDuration}, actualBilledMinutes: ${actualBilledMinutes}`);
       
-      if (!user || actualBilledMinutes === 0) {
-        console.log('[VoiceChat] recordSession skipped: no user or no billed minutes');
+      if (!user || (!transcriptContent && actualBilledMinutes === 0)) {
+        console.log('[VoiceChat] recordSession skipped: no user or no transcript/billing');
         return;
       }
 
@@ -688,18 +714,48 @@ export const CoachVoiceChat = ({
       console.log(`[VoiceChat] Session API cost: $${totalCostUsd.toFixed(4)} (¥${totalCostCny.toFixed(4)}), tokens: ${inputTokens} in / ${outputTokens} out`);
 
       // 保存到 voice_chat_sessions (包含 API 成本) - 🔧 使用 actualDuration 和 actualBilledMinutes
-      await supabase.from('voice_chat_sessions').insert({
+      const { data: insertedSession, error: sessionInsertError } = await supabase.from('voice_chat_sessions').insert({
         user_id: user.id,
-        coach_key: tokenEndpoint === 'wealth-assessment-realtime-token' ? 'wealth_coach' : 'vibrant_life_sage',
+        coach_key: coachTypeForMemory,
         duration_seconds: actualDuration,
         billed_minutes: actualBilledMinutes,
         total_cost: actualBilledMinutes * POINTS_PER_MINUTE,
-        transcript_summary: (userTranscript + '\n' + transcript).slice(0, 500) || null,
+        transcript_summary: transcriptContent.slice(0, 1200) || null,
         input_tokens: inputTokens,
         output_tokens: outputTokens,
         api_cost_usd: parseFloat(totalCostUsd.toFixed(6)),
         api_cost_cny: parseFloat(totalCostCny.toFixed(4))
-      });
+      }).select('id').maybeSingle();
+
+      if (sessionInsertError) {
+        console.error('[VoiceChat] Failed to save voice_chat_sessions:', sessionInsertError);
+        throw sessionInsertError;
+      }
+
+      if (transcriptContent.length >= 20 && conversationHistory.length > 0) {
+        try {
+          console.log('[VoiceChat] 🧠 Extracting long-term memory from voice conversation...', { coachType: coachTypeForMemory });
+          const memoryPromise = supabase.functions.invoke('extract-coach-memory', {
+            body: {
+              conversation: conversationHistory,
+              session_id: insertedSession?.id || sessionIdRef.current,
+              coach_type: coachTypeForMemory,
+            }
+          });
+          const memoryResult = await Promise.race([
+            memoryPromise,
+            new Promise<{ data: null; error: Error }>((resolve) => setTimeout(() => resolve({ data: null, error: new Error('memory_extract_timeout') }), 8000))
+          ]);
+
+          if (memoryResult.error) {
+            console.warn('[VoiceChat] ⚠️ Memory extraction skipped/failed:', memoryResult.error.message);
+          } else {
+            console.log('[VoiceChat] ✅ Memory extraction completed:', memoryResult.data);
+          }
+        } catch (memoryError) {
+          console.warn('[VoiceChat] ⚠️ Memory extraction exception:', memoryError);
+        }
+      }
       
       // 记录到 api_cost_logs 表 (用于管理后台成本分析)
       try {
@@ -724,7 +780,6 @@ export const CoachVoiceChat = ({
       }
       
       // 调用 Edge Function 生成深度简报
-      const transcriptContent = (userTranscript + '\n' + transcript).trim();
       console.log(`[VoiceChat] 📝 Transcript stats: user=${userTranscript.length}chars, ai=${transcript.length}chars, total=${transcriptContent.length}chars`);
       
       const isWealthCoach = tokenEndpoint === 'wealth-assessment-realtime-token';
@@ -1043,6 +1098,8 @@ export const CoachVoiceChat = ({
 
   // ✅ 用于累积 assistant 的 delta 片段（正在生成的回复）
   const currentAssistantDeltaRef = useRef('');
+  const userTranscriptRef = useRef('');
+  const conversationMessagesRef = useRef<VoiceConversationMessage[]>([]);
   // ✅ 存储已完成的历史回复
   const completedTranscriptRef = useRef('');
   // ✅ 字幕节流：rAF 调度 + 上一次 delta 到达时间 + latestAiLine 镜像
@@ -1099,6 +1156,7 @@ export const CoachVoiceChat = ({
             ? `${completedTranscriptRef.current}\n${sanitizedText}`
             : sanitizedText;
           setTranscript(completedTranscriptRef.current);
+          conversationMessagesRef.current.push({ role: 'assistant', content: finalText });
           // 仅当 final 文本与当前展示有差异时才覆盖，避免无意义重渲闪烁
           const currentShown = latestAiLineRef.current.trim();
           const finalText = sanitizedText.trim();
@@ -1137,7 +1195,9 @@ export const CoachVoiceChat = ({
       }
       const cleanUserText = normalizedUserTranscript.text;
       // 用户发言：每次收到 final 文本时累积，用换行分隔
-      setUserTranscript(prev => prev ? `${prev}\n${cleanUserText}` : cleanUserText);
+      userTranscriptRef.current = userTranscriptRef.current ? `${userTranscriptRef.current}\n${cleanUserText}` : cleanUserText;
+      setUserTranscript(userTranscriptRef.current);
+      conversationMessagesRef.current.push({ role: 'user', content: cleanUserText });
       setLatestUserLine(cleanUserText); // 🔧 PTT 字幕：仅保留最近一句
       // 用户开口 = 新一轮，立即清空 AI 字幕（语义优先）
       if (aiFlushRafRef.current != null) {
@@ -1289,6 +1349,8 @@ export const CoachVoiceChat = ({
       setLatestAiLine('');
       // ✅ 重置 delta 累积 refs
       currentAssistantDeltaRef.current = '';
+      userTranscriptRef.current = '';
+      conversationMessagesRef.current = [];
       completedTranscriptRef.current = '';
 
       // 🔧 所有平台（含Safari）：在任何其他 await 之前，立即在用户手势上下文中请求麦克风
