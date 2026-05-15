@@ -44,6 +44,31 @@ export default function DynamicAssessmentPage() {
   const [insightError, setInsightError] = useState<boolean>(false);
   const [showPayDialog, setShowPayDialog] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
+  const [ogReady, setOgReady] = useState(false);
+
+  // 首屏空闲后再挂载 OG meta + 预热下一阶段 chunk，释放主线程
+  useEffect(() => {
+    const cancels: Array<() => void> = [];
+    cancels.push(runWhenIdle(() => setOgReady(true), 800));
+    cancels.push(runWhenIdle(() => {
+      import("@/components/dynamic-assessment/DynamicAssessmentQuestions");
+    }, 1200));
+    cancels.push(runWhenIdle(() => {
+      import("@/components/dynamic-assessment/DynamicAssessmentResult");
+    }, 2000));
+    return () => { cancels.forEach((c) => c()); };
+  }, []);
+
+  // male_midlife_vitality: 海报扫码入口，提前 preload hero 图与 JS 并行下载
+  useEffect(() => {
+    if (assessmentKey !== 'male_midlife_vitality') return;
+    const link = document.createElement('link');
+    link.rel = 'preload';
+    link.as = 'image';
+    link.href = midlifeVitalitySceneImage;
+    document.head.appendChild(link);
+    return () => { try { document.head.removeChild(link); } catch {} };
+  }, [assessmentKey]);
 
   // Cast template to access extended fields
   const tpl = template as any;
