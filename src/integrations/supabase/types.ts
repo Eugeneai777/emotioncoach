@@ -14,6 +14,111 @@ export type Database = {
   }
   public: {
     Tables: {
+      _backup_male_vitality_template_20260515: {
+        Row: {
+          ai_insight_prompt: string | null
+          assessment_key: string | null
+          coach_options: Json | null
+          coach_prompt: string | null
+          coach_type: string | null
+          created_at: string | null
+          created_by_partner_id: string | null
+          description: string | null
+          dimensions: Json | null
+          emoji: string | null
+          gradient: string | null
+          id: string | null
+          is_active: boolean | null
+          max_score: number | null
+          package_key: string | null
+          page_route: string | null
+          qr_image_url: string | null
+          qr_title: string | null
+          question_count: number | null
+          questions: Json | null
+          recommended_camp_types: Json | null
+          require_auth: boolean | null
+          require_payment: boolean | null
+          result_patterns: Json | null
+          result_renderer: string | null
+          score_options: Json | null
+          scoring_logic: string | null
+          scoring_type: string | null
+          source_type: string | null
+          subtitle: string | null
+          title: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          ai_insight_prompt?: string | null
+          assessment_key?: string | null
+          coach_options?: Json | null
+          coach_prompt?: string | null
+          coach_type?: string | null
+          created_at?: string | null
+          created_by_partner_id?: string | null
+          description?: string | null
+          dimensions?: Json | null
+          emoji?: string | null
+          gradient?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          max_score?: number | null
+          package_key?: string | null
+          page_route?: string | null
+          qr_image_url?: string | null
+          qr_title?: string | null
+          question_count?: number | null
+          questions?: Json | null
+          recommended_camp_types?: Json | null
+          require_auth?: boolean | null
+          require_payment?: boolean | null
+          result_patterns?: Json | null
+          result_renderer?: string | null
+          score_options?: Json | null
+          scoring_logic?: string | null
+          scoring_type?: string | null
+          source_type?: string | null
+          subtitle?: string | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          ai_insight_prompt?: string | null
+          assessment_key?: string | null
+          coach_options?: Json | null
+          coach_prompt?: string | null
+          coach_type?: string | null
+          created_at?: string | null
+          created_by_partner_id?: string | null
+          description?: string | null
+          dimensions?: Json | null
+          emoji?: string | null
+          gradient?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          max_score?: number | null
+          package_key?: string | null
+          page_route?: string | null
+          qr_image_url?: string | null
+          qr_title?: string | null
+          question_count?: number | null
+          questions?: Json | null
+          recommended_camp_types?: Json | null
+          require_auth?: boolean | null
+          require_payment?: boolean | null
+          result_patterns?: Json | null
+          result_renderer?: string | null
+          score_options?: Json | null
+          scoring_logic?: string | null
+          scoring_type?: string | null
+          source_type?: string | null
+          subtitle?: string | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       ab_tests: {
         Row: {
           ai_suggestion: string | null
