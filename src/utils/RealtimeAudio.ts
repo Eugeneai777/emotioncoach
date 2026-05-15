@@ -464,6 +464,12 @@ export class RealtimeChat {
   // 🎬 场景开场白：PTT 模式下，进入 PTT 后由 AI 主动播报第一句
   private scenarioOpening: string | null = null;
 
+  // 🔊 远端音频后处理（压缩+归一化）：解决 OpenAI Realtime 输出忽大忽小
+  private playbackCtx: AudioContext | null = null;
+  private playbackSource: MediaStreamAudioSourceNode | null = null;
+  private playbackCompressor: DynamicsCompressorNode | null = null;
+  private playbackGain: GainNode | null = null;
+
   // 🎙️ PTT 预设：在 init 之前由外部声明，确保 dc 一打开就立刻关闭 VAD 并静音麦克风
   // 修复"小程序里 PTT 不生效、直接说话也能被识别"的根因（VAD 默认仍开启）
   private pttPreset: boolean = false;
