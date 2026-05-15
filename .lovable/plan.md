@@ -1,160 +1,87 @@
+# 男性有劲测评结果页 · 4 屏漏斗化重排
+
+承接已完成的 10 题多模态题型 + 文案修订,本期只在 `male_midlife_vitality` 分支重排结果页布局,不影响其他测评。
+
 ## 目标
+让中年男性在结果页快速获得"被看见 → 被点醒 → 能动手 → 想加微/进训练营"的体验,以加企微转化和【7 天有劲训练营】点击为主目标。
 
-把【男人有劲状态评估】（`male_midlife_vitality`）从 20 道纯文字题，重构为 **10 道多模态测评 + 漏斗化结果页**，紧扣施强 26-45 岁男性"性焦虑 / 慢性疲劳 / 失眠"三角痛点，语气**自嘲式直白**。
-
-结果页采用 **A 方案（精简漏斗）+ 加微软前置**：戳穿盲区瞬间插入加微卡，最后用训练营 CTA 收单。
-
----
-
-## 一、测评内容：10 题最终结构
-
-5 大维度 × 每维 2 题，前 5 钩表层焦虑、后 5 探心因深处。
-
-| # | 类型 | 维度 | 主题 | 自嘲式选项示例 |
-|---|---|---|---|---|
-| Q1 | 视觉 | 神经紧绷 | 视错觉旋转图 | A 几乎不动 / B 风车速 / C 转得我想吐 |
-| Q2 | 文字 | 躯体化 | 老板深夜"在吗" | A 心如止水 / B 心脏漏拍 / C 立刻想拉肚子 |
-| Q3 | 视觉 | 情绪底色 | 6 色低饱和色盘 | 选最贴近本周心情的一格 |
-| Q4 | 听觉 | 易激惹 | 5 秒键盘+水滴+婴儿哭复合音 | A 没感觉 / B 烦躁 / C 拳头硬了 |
-| Q5 | 文字 | 慢性疲劳 | 闹钟响那一秒 | A 电量满 / B 像被卡车碾过 / C 凌晨 3 点就醒了 |
-| Q6 | 视觉 | 心因防御 | 半开的门，门缝漆黑透微光 | 你直觉门后是 A 出口 / B 空房 / C 不敢看 |
-| Q7 | 听觉 | 入睡反刍 | 5 秒下雨白噪音 | A 听着就困 / B 越听越清醒 / C 反而开始心慌 |
-| Q8 | 文字 | 亲密意愿 | 伴侣周末发出邀请 | A 顺理成章 / B 怕"翻车" / C 装睡敷衍 |
-| Q9 | 文字 | 表现焦虑 | 那事儿结束后第一反应 | A 抱着睡 / B 复盘"刚才几分钟" / C 空虚到想抽根烟 |
-| Q10 | 文字 | 核心动力 | 清晨那几分钟的"晨间信号" | A 旗帜鲜明 / B 时有时无 / C 已经很久没注意了 |
-
-**5 维度**：`nerve_tension` 神经紧绷 / `chronic_fatigue` 慢性疲劳 / `mood_baseline` 情绪底色 / `core_drive` 核心动力 / `performance_anxiety` 心因表现焦虑
-
----
-
-## 二、引擎扩展：支持图片 / 音频题
-
-题目 schema 新增可选字段（向后兼容现有题）：
-```ts
-media?: { kind: 'image' | 'audio', url: string, alt?: string, caption?: string }
-```
-
-- 图片：`<img>` 圆角懒加载，最大宽度 320。
-- 音频：自定义 ▶︎ 按钮 + 5 秒进度条，单例（切题自动停），首次点击才加载（绕开 iOS 自动播放限制）。
-- 不引入视频。
-
-**素材生成**：
-
-| 题 | 资源 | 方式 |
-|---|---|---|
-| Q1 | 视错觉波纹 PNG | imagegen premium |
-| Q3 | 6 色低饱和色盘 | 前端 SVG 直绘 |
-| Q4 | 5 秒环境噪声 mp3 | ffmpeg 合成 |
-| Q6 | 半开的门插画 | imagegen standard |
-| Q7 | 5 秒下雨白噪音 mp3 | ffmpeg 合成 |
-
-上传到 `assessment-media` 公开 bucket。失败降级为视觉/文字题。
-
----
-
-## 三、结果页：A 方案漏斗化（4 屏）
+## 4 屏结构
 
 ```text
-┌─────────────────────────────────────────┐
-│ 第 1 屏  人格标签 + 电量条 + 戳穿金句     │
-│  · MBTI 称号（如"脆皮打工人 ENTP"）       │
-│  · 5 节电量（剩 X 格）                    │
-│  · 一句话："你这台机器最缺的是 X"         │
-│  · AI 洞察压缩为 1 段引言（≤120 字）      │
-├─────────────────────────────────────────┤
-│ 第 2 屏  认知盲区（戳穿"你以为…其实是…"） │
-│  · 基于最弱 3 维，从静态字典取（0 延迟）  │
-│  ↓ 紧跟"软前置加微卡"【关键】             │
-│  ┌───────────────────────────────────┐ │
-│  │ 💬 这 3 条戳到你了吗？             │ │
-│  │ 还有更多没说透的盲区，加微 1V1 拆给你 │ │
-│  │ · 拿你专属的「本周行动方案」      │ │
-│  │ · 把没戳到的盲区一条条拆开讲      │ │
-│  │ · 私聊提问，不打扰、不推销        │ │
-│  │ [扫码加微 / 1V1 拆解]             │ │
-│  └───────────────────────────────────┘ │
-├─────────────────────────────────────────┤
-│ 第 3 屏  即刻行动 3 件事（可勾选+本地存）  │
-├─────────────────────────────────────────┤
-│ 第 4 屏  主 CTA：7 天有劲训练营           │
-│  · "你刚勾的 3 件事，生命教练陪你做 7 天" │
-│  · 次按钮：分享海报                      │
-│  · 底部小字："查看完整报告" → 折叠模块    │
-└─────────────────────────────────────────┘
+┌─ 屏 1 · 被看见 ──────────────────┐
+│ MBTI 风格标签 (5 个)             │
+│ 电量条徽章 EnergyBarBadge        │
+│ "你这台机器最缺的是 X" 一句话    │
+│ AI 个性化洞察 (≤120 字精简版)    │
+└──────────────────────────────────┘
+┌─ 屏 2 · 被点醒 + 加微前置 ───────┐
+│ BlindSpotActionCard              │
+│  · 3 条认知盲区 (按最弱维度)     │
+│ InlineWechatLeadCard (软前置)    │
+│  · 加微拿专属本周行动方案        │
+│  · 未说透盲区逐条拆解            │
+│  · 私聊提问 不打扰 不推销        │
+└──────────────────────────────────┘
+┌─ 屏 3 · 能动手 ──────────────────┐
+│ ImmediateActionChecklist         │
+│  · 3 条即刻行动 (localStorage)   │
+└──────────────────────────────────┘
+┌─ 屏 4 · 主转化 ──────────────────┐
+│ CampPrimaryCTA                   │
+│  · "你刚勾的 3 件事,             │
+│     生命教练陪你做 7 天"         │
+│  · 主按钮: 了解 7 天有劲训练营   │
+│  · 次按钮: 生成分享海报          │
+│ ─────────────────                │
+│ <折叠> 查看完整报告              │
+│   雷达图 + 状态表 + 行动建议     │
+└──────────────────────────────────┘
 ```
 
-### 关键文案（已按反馈调整）
+## 新增组件 (src/components/dynamic-assessment/male-vitality-funnel/)
 
-**加微卡（第 2 屏，盲区下方）**
-- 标题：**这 3 条戳到你了吗？**
-- 副标：**还有更多没说透的盲区，加微 1V1 拆给你**
-- 三条点列（去掉无法兑现的 PDF / 案例集 / 24h 解读）：
-  1. 拿你这个标签的**专属本周行动方案**
-  2. 把测评里**没说透的认知盲区**一条条拆开讲
-  3. 私聊提问，**不打扰、不推销**
-- 按钮：`[扫码加微]` / `[1V1 拆解]`
-
-**训练营 CTA（第 4 屏）**
-- 主标："你刚勾的 3 件事，**生命教练**陪你做 7 天"
-- 副标："靠自己坚持 7 天的概率不到 12%。生命教练带过 3000+ 个像你这样的兄弟，**陪你打卡 7 天**。"
-
-### 模块取舍表
-
-| 模块 | 处置 |
+| 组件 | 职责 |
 |---|---|
-| MBTI 标签 + 电量条 | ✅ 第 1 屏主视觉 |
-| AI 个性化洞察 | ⚠️ 压缩为 120 字引言；完整版藏二级页 |
-| **认知盲区** | ✅ 第 2 屏（新增） |
-| **加微卡** | ✅ 第 2 屏盲区下方（前置） |
-| 即刻行动 3 件事 | ✅ 第 3 屏 |
-| **7 天训练营** | ✅ 第 4 屏主 CTA |
-| 分享海报 | ✅ 次按钮 |
-| 雷达图 / 状态表 | 🔽 折叠到"查看完整报告"二级页 |
-| AI 教练深度解读 | ❌ 移除结果页入口 |
-| 5 个 MBTI → 科室映射 | 🔽 浮层（盲区底部小字"如有持续困扰…"） |
+| `EnergyBarBadge.tsx` | 0–5 格电量条 + 状态文字,基于 `getStatusBand` |
+| `BlindSpotActionCard.tsx` | 按维度 key 渲染 `BLIND_SPOT_BY_DIMENSION` 中的 3 条盲区 |
+| `InlineWechatLeadCard.tsx` | 加微卡 (复用 `MaleVitalityPdfClaimSheet` 内部加微逻辑/二维码),文案按用户最新口径 |
+| `ImmediateActionChecklist.tsx` | 3 条勾选项 + `localStorage` 持久化 (key: `male_vitality_actions_${userId or anon}`) |
+| `CampPrimaryCTA.tsx` | 主/次按钮 + 文案"…生命教练陪你做 7 天" |
+| `MaleVitalityFullReportCollapse.tsx` | 折叠包裹现有雷达图 + `ClinicalResultSection` |
 
----
+## 数据/文案
 
-## 四、配套体验
+`src/config/maleMidlifeVitalityCopy.ts` 新增:
+- `BLIND_SPOT_BY_DIMENSION: Record<DimensionKey, string[]>` — 5 维度 × 3 条盲区
+- `IMMEDIATE_ACTIONS_BY_DIMENSION: Record<DimensionKey, string[]>` — 5 维度 × 3 条即刻行动
+- `MBTI_STYLE_TAGS_BY_PATTERN: Record<string, string[]>` — 5 个标签
 
-1. 进度分段 4 段 → **3 段**
-2. 完成弹窗仅 1 个（Q5 后）："你白天身体已经写满了'扛'字…接下来 5 题，聊点你不会跟兄弟说的"
-3. Intro 副标："10 道题，看你这台机器现在还剩几格电"
-4. 预估时长：3 分钟 → **2 分钟**
+加微卡文案 (固定):
+- 标题: 加顾问微信,拿你的专属本周方案
+- 三点: ① 专属本周行动方案 ② 未说透的盲区逐条拆解 ③ 私聊提问 · 不打扰 · 不推销
+- 按钮: 长按识别二维码 / 复制微信号
 
----
+## 改动文件
 
-## 五、技术实现
+- `DynamicAssessmentResult.tsx`
+  - `isMaleMidlifeVitality === true` 时,渲染新的 4 屏布局,完全替代默认结果区 (雷达图/状态表/AI 教练按钮均归入折叠)
+  - 其他测评分支保持现状,零影响
+- `maleMidlifeVitalityCopy.ts` — 新增上述 3 个映射
+- 不再改动 `DynamicAssessmentQuestions.tsx`、`MaleMidlifeVitalityShareCard.tsx`(分享海报保持现状)
+- 不动数据库、不动评分逻辑
 
-**新文件**
-- `src/components/dynamic-assessment/QuestionMedia.tsx` — 图/音渲染器（音频单例）
-- `src/components/dynamic-assessment/BlindSpotActionCard.tsx` — 认知盲区卡（含科室浮层）
-- `src/components/dynamic-assessment/InlineWechatLeadCard.tsx` — 软前置加微卡（新文案）
-- `src/components/dynamic-assessment/EnergyBarBadge.tsx` — 5 节电量条 + MBTI 主标签
-- `src/components/dynamic-assessment/ImmediateActionChecklist.tsx` — 3 条勾选行动（localStorage）
-- `src/components/dynamic-assessment/CampPrimaryCTA.tsx` — 训练营 CTA（"生命教练"文案）
+## 兼容与降级
 
-**改动文件**
-- `DynamicAssessmentQuestions.tsx` — 题干上方挂 `<QuestionMedia>`
-- `DynamicAssessmentResult.tsx` — `male_midlife_vitality` 分支重排为 4 屏；雷达/状态表挪入 `<details>`；移除 AI 教练入口
-- `maleMidlifeVitalityCopy.ts` — 新增 `BLIND_SPOT_BY_DIMENSION` + 拆 `WEEK_ACTION` 为 3 条 + MBTI→科室映射 + **将"戴西教练"措辞统一改为"生命教练"**
-- `MaleVitalityClaimStickyBar.tsx` — 同步训练营 CTA 文案
+- 维度 key 未匹配时,盲区/行动 fallback 到通用 3 条
+- AI 洞察加载中/失败 → 屏 1 显示骨架/重试,不阻塞屏 2-4
+- 加微二维码取自 `template.qr_image_url`,缺失时隐藏整张加微卡(不留空)
+- `localStorage` 不可用时降级为内存 state
 
-**数据库**
-- 迁移：建 `assessment-media` 公开 storage bucket
-- 数据更新：`partner_assessment_templates` UPDATE 新版 questions / dimensions / result_patterns
-- 备份：旧 JSON 写入 `_backup_male_vitality_template_20260515` 表
+## 验收
 
-**不动**：评分引擎、PDF 报告、claim 流程、分享海报、训练营详情页。
-
----
-
-## 工作步骤
-
-1. 备份旧模板 + 建 storage bucket（一次迁移）
-2. 跑素材生成脚本（imagegen + ffmpeg）→ 上传 bucket
-3. 写新版 10 题 JSON + result_patterns → UPDATE 入库
-4. 实现 `QuestionMedia` 接入 Questions 组件
-5. 实现 5 个新结果页组件 + 重排 Result 组件（采用本次确认的加微 / 训练营文案）
-6. 改进度条/分段弹窗/Intro 文案/时长
-7. 真机自测 iOS / Android 微信加载流畅度
+1. `/assessment/male_midlife_vitality` 完成测评后,首屏即看到 MBTI 标签 + 电量条
+2. 第 2 屏盲区正下方紧邻加微卡,文案与上面约定一致
+3. 第 3 屏勾选状态刷新后保持
+4. 第 4 屏主按钮跳 `/training-camp/...` (沿用现有 CTA 路由),次按钮唤起分享海报
+5. 折叠"查看完整报告"展开后能看到原雷达图与状态表
+6. 其他测评 (SBTI / 女性 / 财富等) 结果页无任何变化

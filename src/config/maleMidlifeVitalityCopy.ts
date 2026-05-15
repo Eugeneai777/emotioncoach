@@ -128,3 +128,105 @@ export function getStatusToneText(pct: number): string {
 export function getStatusLabel(rawLabel: string): string {
   return VITALITY_STATUS_LABEL[rawLabel] || rawLabel;
 }
+
+// =====================================================================
+// 4 屏漏斗化重排 (A 方案) 配套数据
+// =====================================================================
+
+export type VitalityDimensionKey =
+  | 'nerve_tension'
+  | 'chronic_fatigue'
+  | 'mood_baseline'
+  | 'performance_anxiety'
+  | 'core_drive';
+
+/** 5 维度 × 3 条认知盲区 — 戳穿"中年男人没说出口的事" */
+export const BLIND_SPOT_BY_DIMENSION: Record<VitalityDimensionKey, string[]> = {
+  nerve_tension: [
+    '你以为是"忙",其实大脑 24 小时没真正下过班。',
+    '刷手机不是放松,是神经在用一种更廉价的方式自我麻痹。',
+    '你没在恢复,只是在硬扛——身体的账,迟早一次性结清。',
+  ],
+  chronic_fatigue: [
+    '你以为是"年纪到了",其实是连续多年睡眠债没还。',
+    '不是不想睡,是身体已经忘了怎么进入深度修复。',
+    '咖啡能续命,但代偿出来的精力,正在透支你 40 岁后的底盘。',
+  ],
+  mood_baseline: [
+    '你不是脾气变差,是心里那块"备用电池"早就空了。',
+    '对家人没耐心,常常不是不爱,是你已经没有多余电量给情绪了。',
+    '"我没事"说久了,连你自己都信了——其实你已经很久没有真正快乐过。',
+  ],
+  performance_anxiety: [
+    '关键时刻硬撑,不是你强,是你怕一旦松下来就再也起不来。',
+    '你怕的不是失败,是"被看见自己原来也撑不住"。',
+    '靠肾上腺素续命的状态,赢了表面,输的是身体和家人的时间。',
+  ],
+  core_drive: [
+    '你以为是"中年没劲",其实是太久没为自己活过一件事。',
+    '所有目标都在为别人(公司/家庭/孩子),你忘了自己真正想要什么。',
+    '动力低不是病,是身体在替你说"再这么活下去,我罢工了"。',
+  ],
+};
+
+/** 5 维度 × 3 条即刻行动 — 今晚 / 本周可落地 */
+export const IMMEDIATE_ACTIONS_BY_DIMENSION: Record<VitalityDimensionKey, string[]> = {
+  nerve_tension: [
+    '今晚 22:30 把手机放到客厅充电,卧室物理隔离。',
+    '明天上午挑 1 个会,会前做 3 次"4-7-8"呼吸再开口。',
+    '本周给自己安排一次 30 分钟"什么都不做"的窗口。',
+  ],
+  chronic_fatigue: [
+    '今晚 11 点前躺下,哪怕睡不着,也让身体先归位。',
+    '明天下午 3 点不喝咖啡,改用 10 分钟快走唤醒。',
+    '本周挑 2 天提前 1 小时收工,把恢复当 KPI。',
+  ],
+  mood_baseline: [
+    '今晚回家先和家人说一句"今天还好吗",再看手机。',
+    '明天写下 3 件"今天我做到了"的小事,再小也算。',
+    '本周和 1 个老朋友通 1 次电话,只聊近况不聊事。',
+  ],
+  performance_anxiety: [
+    '挑 1 个本周关键场合,提前 5 分钟做"4-7-8"呼吸。',
+    '今晚把"我必须赢"换成"我尽力就好",写下来。',
+    '本周允许自己拒绝 1 个新承诺,把节奏让回来。',
+  ],
+  core_drive: [
+    '今晚写下 1 件"如果不为任何人,我想做的事"。',
+    '本周给自己留 1 小时,只做这件事,不解释。',
+    '本月找 1 个能说真话的人,把"我想要什么"说出口。',
+  ],
+};
+
+/** 通用 fallback */
+export const FALLBACK_BLIND_SPOTS: string[] = [
+  '你以为是"中年的常态",其实是身体长期透支后的报警。',
+  '你不是不行,是太久没有给自己真正的恢复窗口。',
+  '"再撑一下"撑出来的,不是更强,是更深的债。',
+];
+export const FALLBACK_IMMEDIATE_ACTIONS: string[] = [
+  '今晚 22:30 前放下手机,让大脑提前 1 小时下班。',
+  '明天选 1 件最弱维度的小事,只做 10 分钟。',
+  '本周拒绝 1 个本不该是你扛的承诺。',
+];
+
+/** 5 个 MBTI 风格状态标签 — 给中年男性"被看见"的认同感 */
+export const MBTI_STYLE_TAGS_BY_LEVEL: Record<'full' | 'half' | 'low', string[]> = {
+  full: ['SR-稳态续航型', 'EN-能量充沛型', 'CL-思路清明型', 'BS-底盘扎实型', 'OW-开放有度型'],
+  half: ['HD-硬扛代偿型', 'NM-夜间补偿型', 'KP-关键场合紧绷型', 'SC-自我克制型', 'MS-情绪沉默型'],
+  low: ['LB-低电运行型', 'OW-超载预警型', 'AF-逃避刷屏型', 'GH-硬撑硬抗型', 'NS-自我消音型'],
+};
+
+/** 找到"最弱"维度 (raw score 越高 = 阻力越大 = 越弱) */
+export function getWeakestDimensionKey(
+  dimensionScores: Array<{ key?: string; score: number; maxScore: number }>
+): VitalityDimensionKey | null {
+  const valid = dimensionScores.filter((d) => d.key && d.maxScore > 0);
+  if (!valid.length) return null;
+  const sorted = [...valid].sort((a, b) => (b.score / b.maxScore) - (a.score / a.maxScore));
+  const key = sorted[0].key as string;
+  if ((['nerve_tension','chronic_fatigue','mood_baseline','performance_anxiety','core_drive'] as const).includes(key as VitalityDimensionKey)) {
+    return key as VitalityDimensionKey;
+  }
+  return null;
+}
