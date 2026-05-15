@@ -800,7 +800,7 @@ export function DynamicAssessmentResult({
         )}
 
         {/* Standard Dimension Scores (non-SBTI) */}
-        {!isSBTI && (
+        {!isSBTI && (!isMaleMidlifeVitality || isLiteMode) && (
           <motion.div custom={2} variants={fadeUp} initial="hidden" animate="visible">
             <Card className="border-border/40 bg-card/90 backdrop-blur-sm shadow-sm">
               <CardContent className="p-4 space-y-3 relative">
