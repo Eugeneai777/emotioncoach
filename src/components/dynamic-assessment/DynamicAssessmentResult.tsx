@@ -1191,6 +1191,8 @@ export function DynamicAssessmentResult({
         )}
 
         {false && isMaleMidlifeVitality && !isLiteMode && (
+          <motion.div className="space-y-3">
+            <Card>
               <CardContent className="p-4 space-y-3">
                 <div className="flex items-start gap-3">
                   <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center text-xl shrink-0">🔋</div>
