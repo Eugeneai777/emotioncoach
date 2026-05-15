@@ -571,7 +571,7 @@ export default function DynamicAssessmentPage() {
   // === RESULT ===
   if (phase === "result" && result) {
     return (
-      <>
+      <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-background"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
         {ogPageKey && <DynamicOGMeta pageKey={ogPageKey} />}
         <DynamicAssessmentResult
           result={result}
@@ -612,7 +612,6 @@ export default function DynamicAssessmentPage() {
         />
 
         {requirePayment && packageKey && showPayDialog && (
-          <Suspense fallback={null}>
           <AssessmentPayDialog
             open={showPayDialog}
             onOpenChange={setShowPayDialog}
@@ -622,9 +621,8 @@ export default function DynamicAssessmentPage() {
             packageKey={packageKey}
             packageName={template.title}
           />
-          </Suspense>
         )}
-      </>
+      </Suspense>
     );
   }
 
