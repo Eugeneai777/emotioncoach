@@ -437,9 +437,21 @@ export default function DynamicAssessmentPage() {
   }, [urlRecordId, template?.id, historyLoading, historyRecords.length, adminPdf]);
 
   if (isLoading) {
+    // 轻量骨架屏：模板加载中也保留页面结构与品牌感，避免裸 spinner 的「白屏感」
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="min-h-screen bg-background">
+        <div className="h-14 border-b border-border/40 flex items-center px-4">
+          <div className="h-5 w-5 rounded bg-muted animate-pulse" />
+          <div className="ml-3 h-4 w-32 rounded bg-muted animate-pulse" />
+        </div>
+        <main className="container max-w-2xl mx-auto px-4 py-6 space-y-4">
+          <div className="h-8 w-2/3 rounded-md bg-muted animate-pulse" />
+          <div className="h-4 w-1/2 rounded bg-muted/70 animate-pulse" />
+          <div className="aspect-[16/10] w-full rounded-2xl bg-muted animate-pulse" />
+          <div className="h-4 w-full rounded bg-muted/70 animate-pulse" />
+          <div className="h-4 w-5/6 rounded bg-muted/70 animate-pulse" />
+          <div className="h-12 w-full rounded-xl bg-primary/20 animate-pulse mt-6" />
+        </main>
       </div>
     );
   }
