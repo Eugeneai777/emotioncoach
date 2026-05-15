@@ -746,10 +746,18 @@ export class RealtimeChat {
         }
       };
 
-      // 设置远程音频
+      // 设置远程音频 + Web Audio 后处理（压缩器+增益），解决远端语音忽大忽小
       this.pc.ontrack = e => {
-        if (this.audioEl && !this.isDisconnected) {
-          this.audioEl.srcObject = e.streams[0];
+        if (!this.audioEl || this.isDisconnected) return;
+        const remoteStream = e.streams[0];
+        // 必须先把流挂到 <audio>，iOS Safari 才会真正拉取 WebRTC 远端 RTP；
+        // 然后静音 <audio>，由 Web Audio 链路出声，避免双声道叠加。
+        this.audioEl.srcObject = remoteStream;
+        try {
+          this.setupPlaybackProcessing(remoteStream);
+        } catch (err) {
+          console.warn('[WebRTC] playback processing setup failed, fallback to raw audio element:', err);
+          if (this.audioEl) this.audioEl.muted = false;
         }
       };
 
