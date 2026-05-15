@@ -1637,6 +1637,11 @@ ${photoList}
       ];
     }
 
+    const persistentContextPrompt = `${crossMemoryContext.memoryPrompt || ''}${recentVoicePrompt || ''}`;
+    if (persistentContextPrompt) {
+      instructions += persistentContextPrompt;
+    }
+
     // 请求 OpenAI Realtime client_secrets（快路径下复用并行启动的 Promise）
     const response = fastPathSessionPromise
       ? await fastPathSessionPromise
