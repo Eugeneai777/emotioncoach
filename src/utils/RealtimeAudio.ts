@@ -1409,7 +1409,14 @@ export class RealtimeChat {
     }
     
     // 🔧 增强断开可靠性：每个步骤都包裹 try-catch
-    
+
+    // 0. 拆除播放后处理链路
+    try {
+      this.teardownPlaybackProcessing();
+    } catch (e) {
+      console.error('RealtimeChat: error tearing down playback processing:', e);
+    }
+
     // 1. 停止录音器
     try {
       this.recorder?.stop();
