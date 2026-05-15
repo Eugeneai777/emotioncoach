@@ -150,7 +150,7 @@ export function MidlifeAwakeningPdfClaimSheet({
         <div className="px-5 pt-5 pb-3">
           <SheetHeader>
             <SheetTitle className="text-left text-base">
-              🎁 领取你的专属 7 天伴随手册 PDF
+              🎯 预约你的中场 1V1 解读
             </SheetTitle>
           </SheetHeader>
         </div>
@@ -167,7 +167,7 @@ export function MidlifeAwakeningPdfClaimSheet({
             </li>
             <li className="flex gap-2">
               <span className="font-bold text-amber-600 shrink-0">3.</span>
-              <span>把「截图 + 领取码」发给顾问，<b>24 小时内</b>收到完整 PDF + 1 次 1v1 解读</span>
+              <span>把「截图 + 领取码」发给顾问,即可<b>预约 1V1 解读</b>,拆解中场盲区,拿专属行动地图</span>
             </li>
           </ol>
 
