@@ -20,6 +20,18 @@ import { WeChatPdfGuideSheet } from "./WeChatPdfGuideSheet";
 import { MaleVitalityPdfClaimSheet } from "./MaleVitalityPdfClaimSheet";
 import { MaleVitalityClaimStickyBar } from "./MaleVitalityClaimStickyBar";
 import { useClaimCode } from "@/hooks/useClaimCode";
+import { EnergyBarBadge } from "./male-vitality-funnel/EnergyBarBadge";
+import { BlindSpotActionCard } from "./male-vitality-funnel/BlindSpotActionCard";
+import { InlineWechatLeadCard } from "./male-vitality-funnel/InlineWechatLeadCard";
+import { ImmediateActionChecklist } from "./male-vitality-funnel/ImmediateActionChecklist";
+import { CampPrimaryCTA } from "./male-vitality-funnel/CampPrimaryCTA";
+import { MaleVitalityFullReportCollapse } from "./male-vitality-funnel/MaleVitalityFullReportCollapse";
+import {
+  getWeakestDimensionKey,
+  MBTI_STYLE_TAGS_BY_LEVEL,
+  getStatusBand,
+  type VitalityDimensionKey,
+} from "@/config/maleMidlifeVitalityCopy";
 import ShareImagePreview from "@/components/ui/share-image-preview";
 import { executeOneClickShare } from "@/utils/oneClickShare";
 import { generateCardBlob } from "@/utils/shareCardConfig";
