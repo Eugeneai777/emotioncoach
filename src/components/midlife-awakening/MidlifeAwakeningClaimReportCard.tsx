@@ -222,8 +222,7 @@ export function MidlifeAwakeningClaimReportCard({
             )}
           </div>
           <div className="text-[11px] text-zinc-300 mt-2 leading-snug">
-            🎁 凭此码加顾问企微，免费领取你的<b className="text-amber-300">「7 天伴随手册」PDF</b>
-            ，由同代教练 1v1 解读
+            🎯 凭此码加顾问企微,预约一次 <b className="text-amber-300">1V1 解读</b>,拆解中场盲区,拿一份属于你的行动地图
           </div>
         </button>
       </div>
