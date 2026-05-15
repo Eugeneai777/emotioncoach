@@ -1183,10 +1183,10 @@ export function DynamicAssessmentResult({
                   setShowClaimSheet(true);
                 }}
               >
-                📋 领取我的完整诊断报告（PDF）
+                🎯 拆解你的认知盲区,拿专属行动方案
               </Button>
               <p className="text-center text-[11px] text-muted-foreground mt-1.5">
-                由 有劲顾问 亲自发送 · 24 小时内送达 · 1v1 解读建议
+                1V1 顾问解读 · 帮你拿到本周可执行的下一步
               </p>
             </div>
           )}
