@@ -59,7 +59,7 @@ export function MaleVitalityClaimStickyBar({ onClick, hideOnAnchorRef }: Props) 
           }}
           className="w-full h-12 rounded-xl text-base font-semibold gap-2 bg-gradient-to-r from-teal-700 to-amber-600 hover:from-teal-600 hover:to-amber-500 text-white shadow-lg shadow-teal-700/20"
         >
-          📋 领取我的完整诊断报告（PDF）
+          📋 领取我的完整诊断报告(PDF)
         </Button>
         <p className="text-center text-[11px] text-muted-foreground mt-1.5">
           由 有劲顾问 亲自发送 · 24 小时内送达 · 1v1 解读建议
