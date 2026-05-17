@@ -199,17 +199,11 @@ export default function Packages() {
               </div>
               <div className="flex-1 min-w-0">
                 <h2 className="text-base font-bold text-foreground leading-tight">
-                  有劲AI · 你的情绪陪伴教练
+                  有劲AI 365会员
                 </h2>
                 <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                  AI 测评 + 教练对话 + 每日陪伴，开通 <span className="font-semibold text-orange-600">365 会员</span>，全年 ¥365（¥1/天），随时倾诉、被理解。
+                  AI 测评 + 教练对话 + 每日守护，一次开通 <span className="font-semibold text-orange-600">365 会员</span>，全年仅 ¥365（¥1/天）。
                 </p>
-                <button
-                  onClick={() => navigate('/product-brochure')}
-                  className="mt-2.5 inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-orange-500 hover:bg-orange-600 text-white text-xs font-medium transition-colors shadow-sm"
-                >
-                  查看详细介绍 →
-                </button>
               </div>
             </div>
           </div>
