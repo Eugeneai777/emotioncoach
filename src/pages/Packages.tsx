@@ -213,8 +213,8 @@ export default function Packages() {
               <section>
                 <h3 className="font-semibold text-orange-700 mb-1">一、它是什么</h3>
                 <p>
-                  有劲AI 是面向 35–55 岁中年人的「能量加油站」：把 AI 测评、AI 教练对话、AI 训练营、每日守护工具整合在一起，帮你把"扛不住的情绪、说不清的关系、看不清的财务、提不起劲的状态"一点点理顺。
-                  <strong>365 会员</strong>是有劲AI 的<strong>主推年卡</strong>，一次开通，全年所有 AI 能力按点数畅用。
+                  有劲AI 是面向<strong>所有需要"加点劲"人群</strong>的能量加油站——青少年、年轻职场人、宝妈、中年男女、银发父母都能找到对应的 AI 教练与训练营：把 AI 测评、AI 教练对话、AI 训练营、每日守护工具整合在一起，帮你把"扛不住的情绪、说不清的关系、看不清的财务、提不起劲的状态"一点点理顺。
+                  <strong>365 会员</strong>是有劲AI 的<strong>主推年卡</strong>，一次开通，全家全年所有 AI 能力按点数畅用。
                 </p>
               </section>
 
