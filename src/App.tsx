@@ -468,6 +468,7 @@ const App = () => (
               <Route path="/partner/type" element={<PartnerTypeSelector />} />
               <Route path="/partner/youjin-intro" element={<YoujinPartnerIntro />} />
               <Route path="/partner/youjin-plan" element={<YoujinPartnerPlan />} />
+              <Route path="/youjin-365" element={<Youjin365Intro />} />
               <Route path="/partner/promo-guide" element={<PromoGuide />} />
               <Route path="/partner/graduate" element={<CampGraduate />} />
               <Route path="/partner-intro" element={<PartnerIntro />} />
