@@ -133,6 +133,7 @@ const PartnerBenefitsUnified = lazyRetry(() => import("./pages/PartnerBenefitsUn
 const PartnerIntro = lazyRetry(() => import("./pages/PartnerIntro"));
 const PartnerTypeSelector = lazyRetry(() => import("./pages/PartnerTypeSelector"));
 const YoujinPartnerIntro = lazyRetry(() => import("./pages/YoujinPartnerIntro"));
+const Youjin365Intro = lazyRetry(() => import("./pages/Youjin365Intro"));
 const YoujinPartnerPlan = lazyRetry(() => import("./pages/YoujinPartnerPlan"));
 const PromoGuide = lazyRetry(() => import("./pages/partner/PromoGuide"));
 const CampGraduate = lazyRetry(() => import("./pages/partner/CampGraduate"));
@@ -467,6 +468,7 @@ const App = () => (
               <Route path="/partner/type" element={<PartnerTypeSelector />} />
               <Route path="/partner/youjin-intro" element={<YoujinPartnerIntro />} />
               <Route path="/partner/youjin-plan" element={<YoujinPartnerPlan />} />
+              <Route path="/youjin-365" element={<Youjin365Intro />} />
               <Route path="/partner/promo-guide" element={<PromoGuide />} />
               <Route path="/partner/graduate" element={<CampGraduate />} />
               <Route path="/partner-intro" element={<PartnerIntro />} />

@@ -310,6 +310,12 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
             recommended
             onPurchase={() => handlePurchase({ key: 'member365', name: '365会员', price: member365Price, quota: member365Quota })}
           />
+          <a
+            href="/youjin-365"
+            className="block text-center text-xs text-orange-600 hover:underline -mt-1"
+          >
+            📖 了解 365 会员详细介绍（含全部工具、权益、FAQ） →
+          </a>
         </div>
       );
     }
