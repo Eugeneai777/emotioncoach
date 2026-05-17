@@ -191,6 +191,40 @@ export default function Packages() {
         <PageHeader title="产品中心" />
 
         <div className="container max-w-2xl mx-auto px-3 py-3 space-y-3">
+          {/* 有劲AI 产品介绍卡片 */}
+          <div className="rounded-xl border border-orange-200/70 bg-gradient-to-br from-orange-50 via-white to-orange-50/40 p-4 shadow-sm">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-orange-500 text-white flex items-center justify-center text-lg font-bold shadow-sm">
+                劲
+              </div>
+              <div className="flex-1 min-w-0">
+                <h2 className="text-base font-bold text-foreground leading-tight">
+                  有劲AI · 中年人的能量加油站
+                </h2>
+                <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                  AI 测评 + 教练对话 + 每日守护，一次开通 <span className="font-semibold text-orange-600">365 会员</span>，全年仅 ¥365（¥1/天）。
+                </p>
+                <div className="flex flex-wrap gap-2 mt-2.5">
+                  <a
+                    href="/youjin-ai-intro.pdf"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-orange-500 hover:bg-orange-600 text-white text-xs font-medium transition-colors shadow-sm"
+                  >
+                    📄 下载产品介绍 PDF
+                  </a>
+                  <a
+                    href="/youjin-ai-intro.pdf"
+                    download="有劲AI产品详细介绍.pdf"
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md border border-orange-300 text-orange-700 hover:bg-orange-50 text-xs font-medium transition-colors"
+                  >
+                    保存到本地
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div className="flex gap-1.5 p-1 bg-muted/50 rounded-lg">
             {brandGroups.map(brand => (
               <button
