@@ -12890,6 +12890,19 @@ export type Database = {
         Args: { follower: string; following: string }
         Returns: boolean
       }
+      lookup_coach_invitation: {
+        Args: { p_token: string }
+        Returns: {
+          default_certifications: Json
+          default_service_name: string
+          expires_at: string
+          id: string
+          invitee_name: string
+          note: string
+          status: string
+          token: string
+        }[]
+      }
       lookup_partner_invitation: {
         Args: { p_invite_code: string }
         Returns: {
