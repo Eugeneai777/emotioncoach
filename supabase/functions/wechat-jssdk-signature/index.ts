@@ -20,6 +20,29 @@ function generateNonceStr(): string {
   return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 }
 
+// 带超时和重试的代理请求（应对 ETIMEDOUT 等不稳定网络）
+async function fetchWithRetry(url: string, init: RequestInit, label: string, maxAttempts = 3, timeoutMs = 8000): Promise<Response> {
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const res = await fetch(url, { ...init, signal: controller.signal });
+      clearTimeout(timer);
+      return res;
+    } catch (err) {
+      clearTimeout(timer);
+      lastError = err;
+      const msg = err instanceof Error ? err.message : String(err);
+      console.warn(`[JSSDK] ${label} attempt ${attempt}/${maxAttempts} failed: ${msg}`);
+      if (attempt < maxAttempts) {
+        await new Promise((r) => setTimeout(r, 1000));
+      }
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error(`${label} failed after ${maxAttempts} attempts`);
+}
+
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -63,7 +86,7 @@ serve(async (req) => {
       // 通过代理获取新的 access_token
       console.log('[JSSDK] Fetching new access_token via proxy');
       
-      const tokenResponse = await fetch(`${proxyUrl}/wechat/token`, {
+      const tokenResponse = await fetchWithRetry(`${proxyUrl}/wechat/token`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -73,7 +96,7 @@ serve(async (req) => {
           appid: appId,
           secret: appSecret,
         }),
-      });
+      }, 'access_token');
 
       const tokenResult = await tokenResponse.json();
       console.log('[JSSDK] Token response:', JSON.stringify(tokenResult));
@@ -118,7 +141,7 @@ serve(async (req) => {
       
       const ticketUrl = `https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token=${accessToken}&type=jsapi`;
       
-      const ticketResponse = await fetch(`${proxyUrl}/wechat-proxy`, {
+      const ticketResponse = await fetchWithRetry(`${proxyUrl}/wechat-proxy`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -127,7 +150,7 @@ serve(async (req) => {
         body: JSON.stringify({
           target_url: ticketUrl,
         }),
-      });
+      }, 'jsapi_ticket');
 
       const ticketResult = await ticketResponse.json();
       console.log('[JSSDK] Ticket response:', JSON.stringify(ticketResult));
