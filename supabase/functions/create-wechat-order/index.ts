@@ -85,6 +85,28 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // 🔒 服务端校验金额：若该 package_key 在 packages 表中有标准价，必须匹配
+    try {
+      const { data: pkgRow } = await supabase
+        .from('packages')
+        .select('price')
+        .eq('package_key', packageKey)
+        .maybeSingle();
+      if (pkgRow && pkgRow.price != null) {
+        const expected = Number(pkgRow.price);
+        const provided = Number(amount);
+        if (!Number.isFinite(provided) || Math.abs(provided - expected) > 0.001) {
+          console.error('[CreateOrder] Amount mismatch', { packageKey, provided, expected });
+          return new Response(
+            JSON.stringify({ error: '订单金额与套餐价格不一致', expected }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+      }
+    } catch (priceErr) {
+      console.warn('[CreateOrder] Price validation skipped:', priceErr);
+    }
+
     // 🔑 幂等检查：如果传了 existingOrderNo，先检查该订单状态
     if (existingOrderNo) {
       console.log('[CreateOrder] Checking existing order:', existingOrderNo);

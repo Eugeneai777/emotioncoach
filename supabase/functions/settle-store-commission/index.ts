@@ -1,10 +1,15 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.0'
 import { corsHeaders } from '../_shared/cors.ts'
+import { validateServiceRole } from '../_shared/auth.ts'
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // 🔒 仅允许 service_role 调用（应由其他 edge function / cron 在服务端触发）
+  const authError = validateServiceRole(req);
+  if (authError) return authError;
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
