@@ -19,6 +19,34 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // 🔒 admin-only: writes to storage and uses LOVABLE_API_KEY
+  const authHeader = req.headers.get('Authorization');
+  if (!authHeader?.startsWith('Bearer ')) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+  const supabaseAuth = createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_ANON_KEY')!,
+  );
+  const { data: { user }, error: authErr } = await supabaseAuth.auth.getUser(authHeader.replace('Bearer ', ''));
+  if (authErr || !user) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+  const supabaseRole = createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+  );
+  const { data: isAdmin } = await supabaseRole.rpc('has_role', { _user_id: user.id, _role: 'admin' });
+  if (!isAdmin) {
+    return new Response(JSON.stringify({ error: 'Forbidden: admin only' }), {
+      status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
   try {
     const { keywords, style = 'brand', pageKey } = await req.json();
 
