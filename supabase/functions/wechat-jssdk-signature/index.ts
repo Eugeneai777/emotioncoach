@@ -86,7 +86,7 @@ serve(async (req) => {
       // 通过代理获取新的 access_token
       console.log('[JSSDK] Fetching new access_token via proxy');
       
-      const tokenResponse = await fetch(`${proxyUrl}/wechat/token`, {
+      const tokenResponse = await fetchWithRetry(`${proxyUrl}/wechat/token`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -96,7 +96,7 @@ serve(async (req) => {
           appid: appId,
           secret: appSecret,
         }),
-      });
+      }, 'access_token');
 
       const tokenResult = await tokenResponse.json();
       console.log('[JSSDK] Token response:', JSON.stringify(tokenResult));
