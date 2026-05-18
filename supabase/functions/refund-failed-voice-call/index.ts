@@ -58,11 +58,27 @@ Deno.serve(async (req) => {
     // 安全验证：只有当前用户自己或通过 target_user_id 指定的父账户才能接收退款
     const refundUserId = target_user_id || authenticatedUserId;
     
-    // 如果指定了 target_user_id，验证合法性（青少年模式下，teen 用户可以为 parent 退款）
+    // 如果指定了 target_user_id，服务端必须验证 parent_teen_bindings 合法性
     if (target_user_id && target_user_id !== authenticatedUserId) {
-      console.log(`🔧 Teen mode refund: authenticated=${authenticatedUserId}, target=${target_user_id}`);
-      // 这里假设前端已验证 target_user_id 是合法的父账户
-      // 在生产环境中，可以添加额外的验证（如检查 teen_access_links 表）
+      const supabaseVerify = createClient(
+        Deno.env.get('SUPABASE_URL')!,
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+      );
+      const { data: binding, error: bindingErr } = await supabaseVerify
+        .from('parent_teen_bindings')
+        .select('id')
+        .eq('teen_user_id', authenticatedUserId)
+        .eq('parent_user_id', target_user_id)
+        .eq('status', 'active')
+        .maybeSingle();
+      if (bindingErr || !binding) {
+        console.error('❌ Teen refund target verification failed', { authenticatedUserId, target_user_id, bindingErr });
+        return new Response(
+          JSON.stringify({ error: 'Forbidden: invalid teen-parent binding' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      console.log(`🔧 Teen mode refund verified: teen=${authenticatedUserId}, parent=${target_user_id}`);
     }
 
     if (!amount || amount <= 0) {
