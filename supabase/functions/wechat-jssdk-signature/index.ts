@@ -141,7 +141,7 @@ serve(async (req) => {
       
       const ticketUrl = `https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token=${accessToken}&type=jsapi`;
       
-      const ticketResponse = await fetch(`${proxyUrl}/wechat-proxy`, {
+      const ticketResponse = await fetchWithRetry(`${proxyUrl}/wechat-proxy`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -150,7 +150,7 @@ serve(async (req) => {
         body: JSON.stringify({
           target_url: ticketUrl,
         }),
-      });
+      }, 'jsapi_ticket');
 
       const ticketResult = await ticketResponse.json();
       console.log('[JSSDK] Ticket response:', JSON.stringify(ticketResult));
