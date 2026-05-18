@@ -1288,15 +1288,21 @@ export const CoachVoiceChat = ({
     console.log(`[VoiceChat] Connection phase: ${phase}`);
   }, []);
 
-  // 🔧 根据网络质量更新警告级别
+  // 🔧 根据网络质量更新警告级别（按 Android/WebView 平台自适应放宽）
+  // 安卓上 STUN 测量本身含 150-300ms 本地启动开销，桌面阈值会造成大量误报
   useEffect(() => {
+    const ua = typeof navigator !== 'undefined' ? navigator.userAgent.toLowerCase() : '';
+    const isAndroid = /android|harmonyos/.test(ua);
+    const isWebView = /micromessenger|miniprogram|mmwebsdk|mmw/.test(ua);
+    const budget = (isAndroid ? 150 : 0) + (isWebView ? 100 : 0);
+
     if (networkQuality === 'poor') {
       setNetworkWarningLevel('critical');
       setShowNetworkHint(true);
-    } else if (networkQuality === 'fair' && networkRtt && networkRtt > 300) {
+    } else if (networkQuality === 'fair' && networkRtt && networkRtt > 500 + budget) {
       setNetworkWarningLevel('unstable');
       setShowNetworkHint(true);
-    } else if (networkRtt && networkRtt > 200) {
+    } else if (networkRtt && networkRtt > 400 + budget) {
       setNetworkWarningLevel('slow');
     } else {
       setNetworkWarningLevel('none');
