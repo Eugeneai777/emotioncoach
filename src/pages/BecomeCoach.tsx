@@ -61,23 +61,20 @@ export default function BecomeCoach() {
 
     const validateInvite = async () => {
       const { data, error } = await supabase
-        .from("coach_invitations")
-        .select("id, token, invitee_name, note, status, expires_at, default_service_name, default_certifications")
-        .eq("token", inviteToken)
-        .eq("status", "pending")
-        .single();
+        .rpc("lookup_coach_invitation", { p_token: inviteToken });
 
-      if (error || !data) {
+      const row = Array.isArray(data) ? data[0] : null;
+      if (error || !row) {
         setInviteStatus("invalid");
         return;
       }
 
-      if (new Date(data.expires_at) < new Date()) {
+      if (new Date(row.expires_at) < new Date()) {
         setInviteStatus("invalid");
         return;
       }
 
-      setInvitationData(data);
+      setInvitationData(row);
       setInviteStatus("valid");
 
       // Pre-fill certifications from invitation
