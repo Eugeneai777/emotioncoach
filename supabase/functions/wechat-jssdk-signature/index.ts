@@ -20,6 +20,29 @@ function generateNonceStr(): string {
   return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 }
 
+// 带超时和重试的代理请求（应对 ETIMEDOUT 等不稳定网络）
+async function fetchWithRetry(url: string, init: RequestInit, label: string, maxAttempts = 3, timeoutMs = 8000): Promise<Response> {
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const res = await fetch(url, { ...init, signal: controller.signal });
+      clearTimeout(timer);
+      return res;
+    } catch (err) {
+      clearTimeout(timer);
+      lastError = err;
+      const msg = err instanceof Error ? err.message : String(err);
+      console.warn(`[JSSDK] ${label} attempt ${attempt}/${maxAttempts} failed: ${msg}`);
+      if (attempt < maxAttempts) {
+        await new Promise((r) => setTimeout(r, 1000));
+      }
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error(`${label} failed after ${maxAttempts} attempts`);
+}
+
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
