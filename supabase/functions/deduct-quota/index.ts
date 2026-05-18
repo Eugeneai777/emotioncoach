@@ -367,9 +367,6 @@ Deno.serve(async (req) => {
         }
         featureName = costRule.feature_name || featureName;
       }
-        costSource = 'legacy_cost_rules';
-        featureName = costRule.feature_name;
-      }
 
       // Check legacy package_free_quotas
       if (packageId && actualCost > 0) {
