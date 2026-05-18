@@ -340,10 +340,10 @@ Deno.serve(async (req) => {
           { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
-    } else if (!useExplicitAmount) {
-      // Fallback to legacy feature_cost_rules (only if no explicit amount)
+    } else {
+      // Fallback to legacy feature_cost_rules
       console.log(`⚠️ Feature ${featureKey} not in feature_items, checking legacy rules`);
-      
+
       const { data: costRule } = await supabase
         .from('feature_cost_rules')
         .select('default_cost, feature_name, is_active')
@@ -357,7 +357,16 @@ Deno.serve(async (req) => {
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
-        actualCost = costRule.default_cost;
+        const dbCost = Number(costRule.default_cost) || 0;
+        if (useExplicitAmount) {
+          actualCost = Math.max(Number(explicitAmount) || 0, dbCost);
+          costSource = actualCost > Number(explicitAmount) ? 'legacy_rules_enforced' : 'explicit_amount';
+        } else {
+          actualCost = dbCost;
+          costSource = 'legacy_rules';
+        }
+        featureName = costRule.feature_name || featureName;
+      }
         costSource = 'legacy_cost_rules';
         featureName = costRule.feature_name;
       }
