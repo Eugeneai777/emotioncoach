@@ -294,19 +294,23 @@ Deno.serve(async (req) => {
         if (featureSetting) {
           foundSettings = true;
           isEnabled = featureSetting.is_enabled;
-          // ⭐ 只有在没有显式 amount 时才使用数据库配置的 cost
-          if (!useExplicitAmount) {
-            actualCost = featureSetting.cost_per_use;
+          const dbCost = Number(featureSetting.cost_per_use) || 0;
+          // 🔒 服务端校验：显式 amount 不能低于数据库配置的成本（防止客户端少付）
+          if (useExplicitAmount) {
+            actualCost = Math.max(Number(explicitAmount) || 0, dbCost);
+            costSource = actualCost > Number(explicitAmount) ? 'package_settings_enforced' : 'explicit_amount';
+          } else {
+            actualCost = dbCost;
             costSource = 'package_settings';
           }
           freeQuota = featureSetting.free_quota;
           freeQuotaPeriod = featureSetting.free_quota_period;
-          console.log(`📋 Found package settings: dbCost=${featureSetting.cost_per_use}, actualCost=${actualCost}, freeQuota=${freeQuota}, costSource=${costSource}`);
+          console.log(`📋 Found package settings: dbCost=${dbCost}, actualCost=${actualCost}, freeQuota=${freeQuota}, costSource=${costSource}`);
         }
       }
 
       // 如果用户没有套餐或套餐没有配置该功能，尝试获取任意套餐的默认配置
-      if (!foundSettings && !useExplicitAmount) {
+      if (!foundSettings) {
         const { data: defaultSetting } = await supabase
           .from('package_feature_settings')
           .select('cost_per_use, free_quota, free_quota_period')
@@ -316,11 +320,17 @@ Deno.serve(async (req) => {
           .single();
 
         if (defaultSetting) {
-          actualCost = defaultSetting.cost_per_use;
-          costSource = 'default_package_settings';
+          const dbCost = Number(defaultSetting.cost_per_use) || 0;
+          if (useExplicitAmount) {
+            actualCost = Math.max(Number(explicitAmount) || 0, dbCost);
+            costSource = actualCost > Number(explicitAmount) ? 'default_package_settings_enforced' : 'explicit_amount';
+          } else {
+            actualCost = dbCost;
+            costSource = 'default_package_settings';
+          }
           freeQuota = 0; // 无套餐用户不享受免费额度
           freeQuotaPeriod = 'per_use';
-          console.log(`ℹ️ No package settings, using default cost: ${actualCost} for ${featureKey}`);
+          console.log(`ℹ️ No package settings, using default cost: ${actualCost} (dbCost=${dbCost}) for ${featureKey}`);
         }
       }
 
