@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { Mic, Square, Loader2, Play, Download, Sparkles } from "lucide-react";
+import { Mic, Square, Loader2, Play, Pause, Download, Sparkles, ChevronDown } from "lucide-react";
 import {
   COACH_VOICE_TEMPLATES,
   getTemplatesByGender,
@@ -20,6 +20,7 @@ import {
 type VoiceClone = {
   id: string; coach_name: string; gender: 'male'|'female';
   source: 'cloned'|'preset'; display_order: number; description?: string | null;
+  sample_audio_url?: string | null;
 };
 
 type Generation = {
@@ -167,26 +168,18 @@ const GenerateTab = ({ voices, accessKey, onGenerated, history }: {
     <div className="space-y-6">
       {/* Step 1: 选音色 */}
       <Card className="p-4">
-        <h3 className="font-semibold mb-3">① 选音色</h3>
+        <h3 className="font-semibold mb-3">① 选音色（点 ▶︎ 试听）</h3>
         {voices.length === 0 ? (
           <p className="text-sm text-muted-foreground">暂无音色，请先去「克隆教练声音」上传</p>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
             {voices.map(v => (
-              <button
+              <VoiceCard
                 key={v.id}
-                onClick={() => { setSelectedVoice(v); setSelectedTemplate(null); setCoachName(""); }}
-                className={`p-3 rounded-lg border text-left transition ${selectedVoice?.id === v.id ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}
-              >
-                <div className="flex items-center gap-1.5 mb-1">
-                  <span className="text-lg">{v.gender === "male" ? "👨" : "👩"}</span>
-                  <span className="font-medium text-sm">{v.coach_name}</span>
-                </div>
-                <Badge variant={v.source === "cloned" ? "default" : "secondary"} className="text-xs">
-                  {v.source === "cloned" ? "🎤 真人" : "🎵 素材"}
-                </Badge>
-                {v.description && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{v.description}</p>}
-              </button>
+                voice={v}
+                selected={selectedVoice?.id === v.id}
+                onSelect={() => { setSelectedVoice(v); setSelectedTemplate(null); setCoachName(""); }}
+              />
             ))}
           </div>
         )}
@@ -195,21 +188,26 @@ const GenerateTab = ({ voices, accessKey, onGenerated, history }: {
       {/* Step 2: 选模板 */}
       {selectedVoice && (
         <Card className="p-4">
-          <h3 className="font-semibold mb-3">② 选模板（已按音色性别过滤）</h3>
+          <h3 className="font-semibold mb-3">② 选模板（已按音色性别过滤，可展开预览话术）</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {templates.map(t => (
-              <button
+              <div
                 key={t.key}
-                onClick={() => setSelectedTemplate(t)}
-                className={`p-3 rounded-lg border text-left transition ${selectedTemplate?.key === t.key ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}
+                className={`rounded-lg border transition ${selectedTemplate?.key === t.key ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}
               >
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-xl">{t.emoji}</span>
-                  <span className="font-medium">{t.label}</span>
-                </div>
-                <p className="text-xs text-muted-foreground">{t.tagline}</p>
-                <p className="text-xs text-primary/70 mt-1">对应：{t.sourceAssessmentLabel}</p>
-              </button>
+                <button
+                  onClick={() => setSelectedTemplate(t)}
+                  className="w-full p-3 text-left"
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xl">{t.emoji}</span>
+                    <span className="font-medium">{t.label}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">{t.tagline}</p>
+                  <p className="text-xs text-primary/70 mt-1">对应：{t.sourceAssessmentLabel}</p>
+                </button>
+                <TemplatePreview template={t} coachName={selectedVoice.coach_name} />
+              </div>
             ))}
           </div>
         </Card>
@@ -288,6 +286,99 @@ const GenerateTab = ({ voices, accessKey, onGenerated, history }: {
           </div>
         )}
       </Card>
+    </div>
+  );
+};
+
+// ============================ Voice Card (with sample play) ============================
+const sharedAudio: { el: HTMLAudioElement | null; voiceId: string | null; setters: Set<(id: string | null) => void> } = {
+  el: null, voiceId: null, setters: new Set(),
+};
+const broadcastPlaying = (id: string | null) => {
+  sharedAudio.voiceId = id;
+  sharedAudio.setters.forEach(fn => fn(id));
+};
+
+const VoiceCard = ({ voice, selected, onSelect }: { voice: VoiceClone; selected: boolean; onSelect: () => void }) => {
+  const [playingId, setPlayingId] = useState<string | null>(sharedAudio.voiceId);
+  useEffect(() => {
+    sharedAudio.setters.add(setPlayingId);
+    return () => { sharedAudio.setters.delete(setPlayingId); };
+  }, []);
+  const isPlaying = playingId === voice.id;
+
+  const togglePlay = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!voice.sample_audio_url) {
+      toast({ title: "该音色暂无试听样本", variant: "destructive" });
+      return;
+    }
+    if (isPlaying) {
+      sharedAudio.el?.pause();
+      broadcastPlaying(null);
+      return;
+    }
+    sharedAudio.el?.pause();
+    const audio = new Audio(voice.sample_audio_url);
+    sharedAudio.el = audio;
+    audio.onended = () => broadcastPlaying(null);
+    audio.onerror = () => { toast({ title: "试听加载失败", variant: "destructive" }); broadcastPlaying(null); };
+    audio.play().then(() => broadcastPlaying(voice.id)).catch(err => {
+      toast({ title: "播放失败", description: err.message, variant: "destructive" });
+    });
+  };
+
+  return (
+    <button
+      onClick={onSelect}
+      className={`p-3 rounded-lg border text-left transition relative ${selected ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}
+    >
+      <div className="flex items-center justify-between mb-1">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <span className="text-lg">{voice.gender === "male" ? "👨" : "👩"}</span>
+          <span className="font-medium text-sm truncate">{voice.coach_name}</span>
+        </div>
+        <span
+          onClick={togglePlay}
+          role="button"
+          aria-label={isPlaying ? "暂停试听" : "试听"}
+          className="shrink-0 w-7 h-7 rounded-full bg-primary/10 hover:bg-primary/20 flex items-center justify-center text-primary"
+        >
+          {isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 ml-0.5" />}
+        </span>
+      </div>
+      <Badge variant={voice.source === "cloned" ? "default" : "secondary"} className="text-xs">
+        {voice.source === "cloned" ? "🎤 真人" : "🎵 素材"}
+      </Badge>
+      {voice.description && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{voice.description}</p>}
+    </button>
+  );
+};
+
+// ============================ Template Preview (collapsible) ============================
+const TemplatePreview = ({ template, coachName }: { template: CoachVoiceTemplate; coachName: string }) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="border-t border-border/50">
+      <button
+        onClick={(e) => { e.stopPropagation(); setOpen(o => !o); }}
+        className="w-full flex items-center justify-between px-3 py-2 text-xs text-muted-foreground hover:text-foreground transition"
+      >
+        <span>{open ? "收起话术预览" : "展开预览两种钩子话术"}</span>
+        <ChevronDown className={`w-3.5 h-3.5 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <div className="px-3 pb-3 space-y-2">
+          {(Object.keys(HOOK_TYPE_LABELS) as HookType[]).map(h => (
+            <div key={h} className="bg-muted/40 rounded p-2 text-xs">
+              <div className="font-medium mb-1">{HOOK_TYPE_LABELS[h].emoji} {HOOK_TYPE_LABELS[h].label}</div>
+              <p className="text-muted-foreground whitespace-pre-line leading-relaxed">
+                {template.buildScript({ coachName: coachName || template.label, hookType: h })}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

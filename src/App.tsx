@@ -64,6 +64,7 @@ const PayEntry = lazyRetry(() => import("./pages/PayEntry"));
 // 能量空间
 const EnergyStudio = lazyRetry(() => import("./pages/EnergyStudio"));
 const MiniAppEntry = lazyRetry(() => import("./pages/MiniAppEntry"));
+const CoachVoiceStudio = lazyRetry(() => import("./pages/CoachVoiceStudio"));
 const YoujinLife = lazyRetry(() => import("./pages/YoujinLife"));
 const YoujinLifeChat = lazyRetry(() => import("./pages/YoujinLifeChat"));
 const YoujinLifeExpenses = lazyRetry(() => import("./pages/YoujinLifeExpenses"));
@@ -425,6 +426,7 @@ const App = () => (
               <Route path="/deployment-package" element={<DeploymentPackage />} />
               <Route path="/energy-studio" element={<EnergyStudio />} />
               <Route path="/mini-app" element={<MiniAppEntry />} />
+              <Route path="/coach-voice-studio" element={<CoachVoiceStudio />} />
               <Route path="/youjin-life" element={<YoujinLife />} />
               <Route path="/youjin-life/chat" element={<YoujinLifeChat />} />
               <Route path="/youjin-life/expenses" element={<YoujinLifeExpenses />} />

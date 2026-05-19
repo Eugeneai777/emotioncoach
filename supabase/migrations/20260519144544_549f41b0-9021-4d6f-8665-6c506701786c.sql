@@ -1,0 +1,1 @@
+ALTER TABLE public.coach_voice_clones ADD COLUMN IF NOT EXISTS sample_preview_url text;
