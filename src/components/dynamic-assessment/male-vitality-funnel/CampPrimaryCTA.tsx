@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Share2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { useCampPurchase } from "@/hooks/useCampPurchase";
+import { trackEvent } from "@/lib/behaviorTracker";
 
 interface Props {
   checkedCount: number;
@@ -12,10 +14,29 @@ interface Props {
 
 export function CampPrimaryCTA({ checkedCount, onShare, isSharing }: Props) {
   const navigate = useNavigate();
+  const { data: purchase } = useCampPurchase("emotion_stress_7");
+  const purchased = !!purchase;
+
   const headline =
     checkedCount > 0
       ? `你刚勾的 ${checkedCount} 件事,生命教练陪你做 7 天`
       : "你刚看到的 3 件事,生命教练陪你做 7 天";
+
+  const ctaLabel = purchased ? "进入今日打卡" : "了解 7 天有劲训练营";
+
+  const handleClick = () => {
+    trackEvent("assessment_result_to_synergy_click", {
+      campType: "emotion_stress_7",
+      purchased,
+      checkedCount,
+      source: "male_midlife_vitality_result",
+    });
+    if (purchased) {
+      navigate("/camp-checkin?campType=emotion_stress_7");
+    } else {
+      navigate("/promo/synergy");
+    }
+  };
 
   return (
     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="space-y-3">
@@ -32,9 +53,9 @@ export function CampPrimaryCTA({ checkedCount, onShare, isSharing }: Props) {
           </div>
           <Button
             className="w-full h-11 rounded-xl gap-2 bg-white text-teal-700 hover:bg-white/95 font-semibold"
-            onClick={() => navigate("/camp-intro/emotion_stress_7")}
+            onClick={handleClick}
           >
-            了解 7 天有劲训练营 <ArrowRight className="w-4 h-4" />
+            {ctaLabel} <ArrowRight className="w-4 h-4" />
           </Button>
         </CardContent>
       </Card>

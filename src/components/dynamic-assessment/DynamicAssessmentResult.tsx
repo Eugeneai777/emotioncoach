@@ -1203,7 +1203,7 @@ export function DynamicAssessmentResult({
                     </p>
                   </div>
                 </div>
-                <Button className="w-full h-11 rounded-xl gap-2" onClick={() => navigate('/camp-intro/emotion_stress_7')}>
+                <Button className="w-full h-11 rounded-xl gap-2" onClick={() => navigate('/promo/synergy')}>
                   了解 7天有劲训练营 <ArrowRight className="w-4 h-4" />
                 </Button>
               </CardContent>
@@ -1231,7 +1231,7 @@ export function DynamicAssessmentResult({
                 <Button
                   variant="secondary"
                   className="w-full h-11 rounded-xl gap-2 bg-white text-rose-600 hover:bg-white/90"
-                  onClick={() => navigate('/camp-intro/emotion_stress_7')}
+                  onClick={() => navigate('/promo/synergy')}
                 >
                   了解7天有劲训练营 <ArrowRight className="w-4 h-4" />
                 </Button>

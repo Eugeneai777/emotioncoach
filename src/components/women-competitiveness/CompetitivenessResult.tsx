@@ -507,7 +507,7 @@ export function CompetitivenessResult({ result, answers, followUpInsights, onBac
               </p>
               <Button
                 className="w-full bg-white text-rose-600 hover:bg-white/90 font-semibold"
-                onClick={() => navigate('/camp-intro/emotion_stress_7')}
+                onClick={() => navigate('/promo/synergy')}
               >
                 了解7天有劲训练营
                 <ChevronRight className="w-4 h-4 ml-1" />

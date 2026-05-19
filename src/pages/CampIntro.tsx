@@ -48,6 +48,15 @@ const CampIntro = () => {
   const [showStartDialog, setShowStartDialog] = useState(false);
   const [showPayDialog, setShowPayDialog] = useState(false);
   const { user } = useAuth();
+
+  // emotion_stress_7 已统一收口到 /promo/synergy 售前转化页，
+  // 此处保留旧路径的兜底重定向，避免旧链接/二维码失效。
+  useEffect(() => {
+    if (campType === 'emotion_stress_7') {
+      const search = window.location.search || '';
+      navigate(`/promo/synergy${search}`, { replace: true });
+    }
+  }, [campType, navigate]);
   const [resumedOpenId, setResumedOpenId] = useState<string | undefined>();
   const [paymentCompleted, setPaymentCompleted] = useState(false);
 

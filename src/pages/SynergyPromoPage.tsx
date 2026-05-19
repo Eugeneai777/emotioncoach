@@ -406,7 +406,7 @@ export default function SynergyPromoPage() {
   const autoCreateAndEnterCamp = async (overrideUserId?: string) => {
     const targetUserId = overrideUserId || user?.id;
     if (!targetUserId) {
-      navigate("/camp-intro/emotion_stress_7");
+      navigate("/promo/synergy");
       return;
     }
 
@@ -459,7 +459,7 @@ export default function SynergyPromoPage() {
 
       if (createError || !newCamp) {
         console.error("[SynergyPromo] Auto-create camp failed:", createError);
-        navigate("/camp-intro/emotion_stress_7");
+        navigate("/promo/synergy");
         return;
       }
 
@@ -471,7 +471,7 @@ export default function SynergyPromoPage() {
       navigate(`/camp-checkin/${newCamp.id}`);
     } catch (err) {
       console.error("[SynergyPromo] Auto-enter camp error:", err);
-      navigate("/camp-intro/emotion_stress_7");
+      navigate("/promo/synergy");
     }
   };
 
