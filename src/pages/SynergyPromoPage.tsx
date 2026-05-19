@@ -33,6 +33,7 @@ import zhileProductNew from "@/assets/zhile-product-new.jpg";
 import wecomCoachQr from "@/assets/wecom-coach-qr.jpg";
 import SynergyShareCard from "@/components/promo/SynergyShareCard";
 import { SynergyRedeemDialog } from "@/components/promo/SynergyRedeemDialog";
+import { trackEvent } from "@/lib/behaviorTracker";
 import {
   Accordion,
   AccordionContent,
