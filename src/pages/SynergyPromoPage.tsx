@@ -485,6 +485,10 @@ export default function SynergyPromoPage() {
 
   // === 主 CTA：弹兑换码弹窗（业务入口不变） ===
   const handlePrimaryCTA = () => {
+    trackEvent("synergy_cta_click", {
+      source: "primary_cta",
+      already_purchased: alreadyPurchased,
+    });
     if (alreadyPurchased) {
       handleEnterCamp();
       return;
