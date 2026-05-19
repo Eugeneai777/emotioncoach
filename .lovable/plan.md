@@ -1,61 +1,76 @@
-# Coach Voice Studio 路由接入 + 试听/预览增强
 
-## 1. 接入路由（前端）
+# 方案 A：Coach Voice Studio 切换到 Doubao 中文 TTS
 
-在 `src/App.tsx` 路由表里追加一行（与 `/mini-app` 同级，public 不需要登录）：
+## 1. 数据库迁移
 
-```tsx
-<Route path="/coach-voice-studio" element={<CoachVoiceStudio />} />
-```
+`coach_voice_clones` 表新增一列：
 
-加上 lazy import。访问 `/coach-voice-studio?key=youjin2026sop` 即可。
+- `doubao_voice_type text` — Doubao BigTTS speaker（如 `zh_male_M392_conversation_wvae_bigtts`），preset 必填、cloned 留空。
 
-**Key 校验流程**（已在组件内实现，无需改动）：
-- 无 `?key=` → 显示「缺少访问密钥」
-- 有 `?key=` 但 edge function `validateAccessKey` 返回 403 → 显示「访问密钥无效」
-- 校验通过 → 加载音色库 + 历史
+不动 `elevenlabs_voice_id`（克隆 Tab 还要用）。
 
-## 2. 音色试听功能（新增）
+清掉 6 个 preset 已缓存的 `sample_preview_url`（之前缓存的是英文 mp3），等下次访问时用 Doubao 重新合成。
 
-**目标**：在「选音色」卡片上点小喇叭就能听到该音色样本，不必先生成才知道音色是否合适。
+## 2. 6 个预设音色替换为 Doubao 中文音色
 
-### 后端
-- `coach-voice-library` edge function：返回 `sample_audio_url`
-  - `source='preset'` → 用 ElevenLabs 公开 preview URL（每个 voice_id 有固定 preview mp3），直接存到 DB 字段 `sample_preview_url` 后下发
-  - `source='cloned'` → 从 storage `sample_storage_path` 生成 1 小时签名 URL 下发
-- migration: 给 `coach_voice_clones` 加 `sample_preview_url text`，并把 6 个 ElevenLabs preset 的 preview mp3 URL 写入（这些 URL 来自 ElevenLabs 公开 voices 接口，长期可用）
+| coach_name | gender | doubao_voice_type | 定位 |
+|---|---|---|---|
+| 沉稳磁性男 | male | `zh_male_M392_conversation_wvae_bigtts` | 35-55 中年男对话感 |
+| 温暖兄长男 | male | `zh_male_xudong_conversation_wvae_bigtts` | 兄长 / 邻家大哥 |
+| 醇厚长者男 | male | `zh_male_baqiqingshu_mars_bigtts` | 沉稳长者 / 播音感 |
+| 温柔姐姐女 | female | `zh_female_wanwanxiaohe_moon_bigtts` | 温柔知性姐姐 |
+| 治愈轻语女 | female | `zh_female_roumeinvyou_emo_v2_mars_bigtts` | 柔美治愈、轻语感 |
+| 知性主理女 | female | `zh_female_zhixingnvsheng_mars_bigtts` | 知性主理人 |
 
-### 前端
-- 音色卡片右上角加一个 ▶︎ 按钮，点击播放/暂停 `sample_audio_url`
-- 用单例 `<audio>` ref 控制，切换卡片自动停上一个
+> 这些是 Doubao BigTTS 标准 speaker，需在火山引擎控制台已开通对应音色权限。如哪个音色未开通，可后续单独换掉那一行的 `doubao_voice_type`，无需改代码。
 
-## 3. 模板话术预览（新增）
+## 3. 后端改动
 
-**目标**：选模板时不用先选钩子就能看到 4 段式完整示例，方便快速判断哪个模板贴合。
+### `coach-voice-generate`
+- 移除 ElevenLabs 调用。
+- 读取 `doubao_voice_type`（preset）；如果是 `cloned`（无 doubao_voice_type），暂时回退到 ElevenLabs（保留克隆音色可用）。
+- 复用 `volcengine-tts` 的「V3 优先 → V1 兜底」双重重试逻辑（已成熟），抽到 `_shared/doubao-tts.ts` 共享。
+- 拿到 mp3 buffer 后照旧上传 storage + 入库 + 返回 signedUrl + base64。
 
-### 前端
-- 在「② 选模板」卡片底部加「点击展开看完整话术」折叠区
-- 展开后渲染 `template.buildScript({ hookType: 'direct399' })` 和 `buildScript({ hookType: 'communityNurture' })` 两个版本并排
-- 用 `<details>`/`Collapsible` 实现，无需新组件
+### `coach-voice-library`
+- preset 的预览策略改为：
+  - 若 `sample_preview_url` 存在 → 直接返回。
+  - 否则用 Doubao 合成一段固定中文 demo（约 15s），上传到 `voice-recordings/coach-studio/previews/{voice_id}.mp3`，回写 `sample_storage_path` + 24h signed URL 缓存。
+- 预览 demo 文案（按性别）：
+  - 男：「兄弟，状态校准这件事，三十几岁之后，比拼命更重要。今晚做一件事，给自己留一份预警雷达。」
+  - 女：「姐妹，最近的状态我看见了。你不是不够好，是太久没把自己放在前面。今晚，给自己留一个温柔的小动作。」
+- cloned 类型逻辑不变（ElevenLabs preview / storage signed URL）。
 
-## 4. 已生成历史的试听（小修）
+### `_shared/doubao-tts.ts`（新增）
+抽取 `volcengine-tts/index.ts` 里的 `tryV3TTS` / `tryV1TTS` 与重试编排，导出 `synthesizeDoubaoMp3(text, voiceType) → Uint8Array`。
 
-历史卡片里 `audio_url` 目前是直链。改为：
-- `coach-voice-history` edge function 对 `audio_storage_path` 生成 1 小时签名 URL 后下发为 `audio_url`
-- 前端无需改动
+## 4. 前端改动（`CoachVoiceStudio.tsx`）
+
+- 卡片描述与页面副标题：去掉 ElevenLabs 字样，改为「中文 Doubao 教练音色」。
+- 「克隆音色」Tab 顶部加一行小字提示：「克隆音色基于 ElevenLabs，中文场景略带口音；正式跟进建议先用上方 Doubao 预设音色。」
+- VoiceCard / 模板预览 / 生成调用方式不变（仍然走 `coach-voice-generate`，只是后端切换了引擎）。
+
+## 5. 不改动
+
+- 路由、Key 校验、模板话术（`coachVoiceTemplates.ts`）、克隆流程、`coach-voice-history`。
+- ElevenLabs API Key 仍保留，用于 cloned tab。
+
+## 6. 部署 & 验证
+
+部署 4 个 edge function（generate / library / clone / history 因 shared 文件变动需要一起部署），随后：
+
+- 访问 `/coach-voice-studio?key=youjin2026sop`
+- 试听 6 个预设 → 应听到中文 demo（首发会有 ~2s 合成延迟，之后秒开）
+- 选模板 + 生成 → 中文 mp3，沉稳磁性男听起来应是国语对话感
 
 ## 文件改动清单
 
 | 文件 | 改动 |
 |---|---|
-| `src/App.tsx` | +1 行 lazy import +1 行 Route |
-| `src/pages/CoachVoiceStudio.tsx` | 音色卡片加试听按钮；模板卡片加折叠预览；类型增加 `sample_audio_url` |
-| `supabase/functions/coach-voice-library/index.ts` | select 增加 `sample_preview_url, sample_storage_path`；为 cloned 类型生成 signed URL；返回统一字段 `sample_audio_url` |
-| `supabase/functions/coach-voice-history/index.ts` | 把 `audio_storage_path` → signed `audio_url` |
-| 新 migration | `ALTER TABLE coach_voice_clones ADD COLUMN sample_preview_url text;` + UPDATE 6 个 preset 写入 ElevenLabs preview mp3 URL |
+| 新 migration | `ALTER TABLE coach_voice_clones ADD COLUMN doubao_voice_type text;` + UPDATE 6 行 + 清 `sample_preview_url` |
+| 新增 `supabase/functions/_shared/doubao-tts.ts` | 抽取共享 TTS 调用 |
+| `supabase/functions/coach-voice-generate/index.ts` | 切到 Doubao（cloned 走 ElevenLabs 兜底） |
+| `supabase/functions/coach-voice-library/index.ts` | preset 预览用 Doubao 按需合成 + 缓存 |
+| `src/pages/CoachVoiceStudio.tsx` | 文案微调、克隆 tab 提示 |
 
-## 不改动
-
-- 数据库 RLS、bucket、其他 edge functions、`coachVoiceTemplates.ts`、access_key 机制
-
-完成后访问 `https://eugeneai.me/coach-voice-studio?key=youjin2026sop` 即可使用全部功能。
+确认无误后我开始执行。
