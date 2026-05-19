@@ -261,6 +261,22 @@ const CampCheckIn = () => {
     }
   }, [user, campId]);
 
+  // 埋点：打卡页 mount（按 day_index 区分）
+  const [hasTrackedPV, setHasTrackedPV] = useState(false);
+  useEffect(() => {
+    if (!camp || hasTrackedPV) return;
+    const dayIdx = Math.min(
+      getDaysSinceStart(camp.start_date) + 1,
+      camp.duration_days || 7,
+    );
+    trackEvent("camp_checkin_page_view", {
+      camp_type: camp.camp_type,
+      camp_id: camp.id,
+      day_index: dayIdx,
+    });
+    setHasTrackedPV(true);
+  }, [camp, hasTrackedPV]);
+
   // 全部完成时触发庆祝动画
   useEffect(() => {
     if (!todayProgress || !camp || hasTriggeredConfetti) return;
