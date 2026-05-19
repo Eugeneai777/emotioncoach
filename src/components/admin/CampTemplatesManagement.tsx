@@ -153,6 +153,16 @@ export function CampTemplatesManagement() {
                         <Button
                           variant="outline"
                           size="sm"
+                          disabled={camp.camp_type !== "emotion_stress_7"}
+                          onClick={() => navigate(`/admin/camps/${camp.camp_type}/insights`)}
+                          title={camp.camp_type !== "emotion_stress_7" ? "即将上线" : "查看数据洞察"}
+                        >
+                          <BarChart3 className="h-4 w-4 mr-1" />
+                          数据洞察
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
                           onClick={() => handleEdit(camp)}
                         >
                           <Pencil className="h-4 w-4 mr-1" />
