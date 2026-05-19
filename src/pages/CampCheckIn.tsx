@@ -812,7 +812,10 @@ const CampCheckIn = () => {
                           badgeText="推荐"
                           badgeColor="emerald"
                           actionLabel="开始冥想"
-                          onAction={() => navigate(`/stress-meditation/${displayCurrentDay || 1}`)}
+                          onAction={() => {
+                            trackEvent("camp_task_start_click", { task: "meditation", camp_type: camp.camp_type, day_index: displayCurrentDay });
+                            navigate(`/stress-meditation/${displayCurrentDay || 1}`);
+                          }}
                           onToggle={(checked) => handleToggleTask('declaration_completed', checked)}
                         />
                       )}
