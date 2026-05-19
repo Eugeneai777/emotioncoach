@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Loader2, ExternalLink, Gift, ShoppingBag, Info, LogIn } from "lucide-react";
 import { detectPlatform } from "@/lib/platformDetector";
 import { extractEdgeFunctionError } from "@/lib/edgeFunctionError";
+import { trackEvent } from "@/lib/behaviorTracker";
 import youzanMiniQr from "@/assets/youzan-miniprogram-qr.png";
 
 const YOUZAN_URL = "https://tuicashier.youzan.com/pay/wscgoods_order?scan=1&activity=none&from=kdt&qr=directgoods_5625577765&shopAutoEnter=1&alias=36c1wn65vbtllos";
