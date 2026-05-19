@@ -461,6 +461,9 @@ const CloneTab = ({ accessKey, onCloned, voices }: { accessKey: string; onCloned
 
   return (
     <div className="space-y-6">
+      <div className="rounded-lg border border-amber-300/60 bg-amber-50 dark:bg-amber-950/30 px-3 py-2 text-xs text-amber-800 dark:text-amber-200">
+        ⚠️ 克隆音色基于 ElevenLabs，中文场景可能略带口音；正式跟进建议优先使用上方「生成跟进语音」里的 Doubao 中文预设。
+      </div>
       <Card className="p-4 space-y-4">
         <div>
           <h3 className="font-semibold mb-1">🎙️ 上传或录制 1-2 分钟样本</h3>
