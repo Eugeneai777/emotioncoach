@@ -65,3 +65,39 @@ export function trackPageView(path: string, referrer?: string | null): void {
     // Silent: never disturb UX.
   }
 }
+
+/**
+ * Fire-and-forget custom event recording.
+ * Use for CTA clicks / funnel events / learning behaviors.
+ * NEVER throws, NEVER blocks UI.
+ */
+export function trackEvent(
+  eventType: string,
+  metadata: Record<string, any> = {},
+  path?: string,
+): void {
+  try {
+    const sessionId = getSessionId();
+    const currentPath =
+      path ?? (typeof window !== "undefined" ? window.location.pathname : null);
+
+    supabase.auth
+      .getUser()
+      .then(({ data }) => {
+        const userId = data?.user?.id ?? null;
+        return supabase.from("user_behavior_signals").insert({
+          user_id: userId,
+          session_id: sessionId,
+          event_type: eventType,
+          path: currentPath,
+          referrer: typeof document !== "undefined" ? document.referrer || null : null,
+          metadata,
+        });
+      })
+      .catch(() => {
+        // Silent.
+      });
+  } catch {
+    // Silent.
+  }
+}
