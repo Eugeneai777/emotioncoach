@@ -22,6 +22,7 @@ function formatMoney(value: number | null | undefined): string {
 
 export function CampTemplatesManagement() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState<string>("youjin");
   const [editingCamp, setEditingCamp] = useState<CampTemplateRow | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
