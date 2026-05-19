@@ -2764,6 +2764,95 @@ export type Database = {
           },
         ]
       }
+      coach_voice_clones: {
+        Row: {
+          coach_name: string
+          created_at: string
+          description: string | null
+          display_order: number
+          elevenlabs_voice_id: string
+          gender: string
+          id: string
+          is_active: boolean
+          sample_storage_path: string | null
+          source: string
+          updated_at: string
+        }
+        Insert: {
+          coach_name: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          elevenlabs_voice_id: string
+          gender: string
+          id?: string
+          is_active?: boolean
+          sample_storage_path?: string | null
+          source?: string
+          updated_at?: string
+        }
+        Update: {
+          coach_name?: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          elevenlabs_voice_id?: string
+          gender?: string
+          id?: string
+          is_active?: boolean
+          sample_storage_path?: string | null
+          source?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      coach_voice_generations: {
+        Row: {
+          audio_storage_path: string
+          coach_name: string
+          created_at: string
+          created_by_label: string | null
+          duration_seconds: number | null
+          hook_type: string
+          id: string
+          template_key: string
+          text_content: string
+          voice_clone_id: string
+        }
+        Insert: {
+          audio_storage_path: string
+          coach_name: string
+          created_at?: string
+          created_by_label?: string | null
+          duration_seconds?: number | null
+          hook_type: string
+          id?: string
+          template_key: string
+          text_content: string
+          voice_clone_id: string
+        }
+        Update: {
+          audio_storage_path?: string
+          coach_name?: string
+          created_at?: string
+          created_by_label?: string | null
+          duration_seconds?: number | null
+          hook_type?: string
+          id?: string
+          template_key?: string
+          text_content?: string
+          voice_clone_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coach_voice_generations_voice_clone_id_fkey"
+            columns: ["voice_clone_id"]
+            isOneToOne: false
+            referencedRelation: "coach_voice_clones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coaching_appointments: {
         Row: {
           amount_paid: number
