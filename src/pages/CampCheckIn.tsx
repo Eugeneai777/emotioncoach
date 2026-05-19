@@ -834,6 +834,7 @@ const CampCheckIn = () => {
                         isPrimary
                         extraBadge={todayProgress?.emotion_logs_count > 0 ? `${todayProgress.emotion_logs_count}次` : undefined}
                         onAction={() => {
+                          trackEvent("camp_task_start_click", { task: "dialog", camp_type: camp.camp_type, day_index: displayCurrentDay });
                           if (camp.camp_type === 'emotion_journal_21' || camp.camp_type === 'emotion_stress_7') {
                             navigate("/emotion-coach");
                           } else {
