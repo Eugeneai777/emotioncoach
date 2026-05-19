@@ -152,7 +152,10 @@ export function SynergyRedeemDialog({ open, onOpenChange, onSuccess, isLoggedIn,
               <Button
                 variant="outline"
                 className="w-full h-10 rounded-lg border-amber-300 text-amber-700 hover:bg-amber-100/60 font-medium text-sm"
-                onClick={() => window.open(YOUZAN_URL, "_blank")}
+                onClick={() => {
+                  trackEvent("synergy_youzan_click", { is_mini_program: false });
+                  window.open(YOUZAN_URL, "_blank");
+                }}
               >
                 <ExternalLink className="w-4 h-4 mr-2" />
                 前往有赞商城下单
