@@ -168,26 +168,18 @@ const GenerateTab = ({ voices, accessKey, onGenerated, history }: {
     <div className="space-y-6">
       {/* Step 1: 选音色 */}
       <Card className="p-4">
-        <h3 className="font-semibold mb-3">① 选音色</h3>
+        <h3 className="font-semibold mb-3">① 选音色（点 ▶︎ 试听）</h3>
         {voices.length === 0 ? (
           <p className="text-sm text-muted-foreground">暂无音色，请先去「克隆教练声音」上传</p>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
             {voices.map(v => (
-              <button
+              <VoiceCard
                 key={v.id}
-                onClick={() => { setSelectedVoice(v); setSelectedTemplate(null); setCoachName(""); }}
-                className={`p-3 rounded-lg border text-left transition ${selectedVoice?.id === v.id ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}
-              >
-                <div className="flex items-center gap-1.5 mb-1">
-                  <span className="text-lg">{v.gender === "male" ? "👨" : "👩"}</span>
-                  <span className="font-medium text-sm">{v.coach_name}</span>
-                </div>
-                <Badge variant={v.source === "cloned" ? "default" : "secondary"} className="text-xs">
-                  {v.source === "cloned" ? "🎤 真人" : "🎵 素材"}
-                </Badge>
-                {v.description && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{v.description}</p>}
-              </button>
+                voice={v}
+                selected={selectedVoice?.id === v.id}
+                onSelect={() => { setSelectedVoice(v); setSelectedTemplate(null); setCoachName(""); }}
+              />
             ))}
           </div>
         )}
@@ -196,21 +188,26 @@ const GenerateTab = ({ voices, accessKey, onGenerated, history }: {
       {/* Step 2: 选模板 */}
       {selectedVoice && (
         <Card className="p-4">
-          <h3 className="font-semibold mb-3">② 选模板（已按音色性别过滤）</h3>
+          <h3 className="font-semibold mb-3">② 选模板（已按音色性别过滤，可展开预览话术）</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {templates.map(t => (
-              <button
+              <div
                 key={t.key}
-                onClick={() => setSelectedTemplate(t)}
-                className={`p-3 rounded-lg border text-left transition ${selectedTemplate?.key === t.key ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}
+                className={`rounded-lg border transition ${selectedTemplate?.key === t.key ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}
               >
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-xl">{t.emoji}</span>
-                  <span className="font-medium">{t.label}</span>
-                </div>
-                <p className="text-xs text-muted-foreground">{t.tagline}</p>
-                <p className="text-xs text-primary/70 mt-1">对应：{t.sourceAssessmentLabel}</p>
-              </button>
+                <button
+                  onClick={() => setSelectedTemplate(t)}
+                  className="w-full p-3 text-left"
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xl">{t.emoji}</span>
+                    <span className="font-medium">{t.label}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">{t.tagline}</p>
+                  <p className="text-xs text-primary/70 mt-1">对应：{t.sourceAssessmentLabel}</p>
+                </button>
+                <TemplatePreview template={t} coachName={selectedVoice.coach_name} />
+              </div>
             ))}
           </div>
         </Card>
