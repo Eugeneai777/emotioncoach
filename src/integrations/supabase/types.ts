@@ -2770,6 +2770,7 @@ export type Database = {
           created_at: string
           description: string | null
           display_order: number
+          doubao_voice_type: string | null
           elevenlabs_voice_id: string
           gender: string
           id: string
@@ -2784,6 +2785,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           display_order?: number
+          doubao_voice_type?: string | null
           elevenlabs_voice_id: string
           gender: string
           id?: string
@@ -2798,6 +2800,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           display_order?: number
+          doubao_voice_type?: string | null
           elevenlabs_voice_id?: string
           gender?: string
           id?: string
