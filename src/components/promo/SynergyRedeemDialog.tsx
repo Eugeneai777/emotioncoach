@@ -25,6 +25,13 @@ export function SynergyRedeemDialog({ open, onOpenChange, onSuccess, isLoggedIn,
   const [loading, setLoading] = useState(false);
   const isMiniProgram = detectPlatform() === 'mini_program';
 
+  // Track QR exposure when dialog opens in mini program
+  useEffect(() => {
+    if (open && isMiniProgram) {
+      trackEvent("synergy_youzan_qr_view", { is_mini_program: true });
+    }
+  }, [open, isMiniProgram]);
+
   const handleRedeem = async () => {
     const trimmed = code.trim();
     if (!trimmed) {
