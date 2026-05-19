@@ -1,27 +1,43 @@
-## 完成最后收尾：注册数据洞察路由
+## 收口 emotion_stress_7 → /promo/synergy，统一售前漏斗
 
-前面所有埋点与 `CampInsightsDetail.tsx` 组件均已就位，仅剩路由注册这一步未完成。
+### 改动概览（3 步）
 
-### 改动（仅 1 个文件）
+#### 1. 评估结果页主 CTA 按权益分流
+**`src/components/dynamic-assessment/male-vitality-funnel/CampPrimaryCTA.tsx`**
+- 注入 `useCampPurchase('emotion_stress_7')`
+- 已购 → `navigate('/camp-checkin?campType=emotion_stress_7')`，按钮文案改为"进入今日打卡 →"
+- 未购 → `navigate('/promo/synergy')`，文案保持"了解 7 天有劲训练营 →"
+- 同时调用 `behaviorTracker.trackEvent('assessment_result_to_synergy_click', { campType:'emotion_stress_7', purchased })`，让漏斗对账
 
-**`src/components/admin/AdminLayout.tsx`**（第 148 行附近）
+#### 2. CampIntro 兜底重定向（防止旧链接 404）
+**`src/pages/CampIntro.tsx`**
+在组件顶部加 `useEffect`：当 `campType === 'emotion_stress_7'` 时 `navigate('/promo/synergy' + window.location.search, { replace: true })`。
 
-在 `<Route path="camps" element={<CampTemplatesManagement />} />` 下方新增：
+效果：所有历史链接（站内残留、二维码海报、微信分享卡）自动收口，**0 回归风险**。
 
-```tsx
-<Route path="camps/:campKey/insights" element={<CampInsightsDetail />} />
-```
+#### 3. 站内调用点统一改为 `/promo/synergy`
+共 10 处 `navigate('/camp-intro/emotion_stress_7')` 直接替换为 `navigate('/promo/synergy')`：
 
-`CampInsightsDetail` 已在第 16 行导入，无需再加 import。
+| 文件 | 行号 |
+|---|---|
+| `src/pages/SynergyPromoPage.tsx` | 409 / 462 / 474（自跳转，应改为相对刷新或留 `/promo/synergy`） |
+| `src/pages/ZhileCoachPromoPage.tsx` | 163 / 212 / 223 |
+| `src/pages/PromoMidlife25to45Women399.tsx` | 119 / 130 / 733 |
+| `src/components/wealth-block/WealthBlockResult.tsx` | 743 |
+| `src/components/women-competitiveness/CompetitivenessResult.tsx` | 510 |
+| `src/components/dynamic-assessment/DynamicAssessmentResult.tsx` | 1206 / 1234 |
+| `src/utils/postPaymentRedirect.ts` | 5（支付后回跳保持 `/camp-checkin?campType=emotion_stress_7`，**不改**） |
 
-### 验证
-
-1. 进入 后台 → 内容管理 → 训练营管理
-2. 在【7天有劲训练营】卡片点击「数据洞察」
-3. 跳转到 `/admin/camps/emotion_stress_7/insights`，可见 总览 / 售前转化 / 学习交付 三个 Tab
-4. 切换日期筛选，确认数据加载正常
+说明：`postPaymentRedirect.ts:5` 是**已购买后**的目的地，应继续指向打卡或保留兜底，不在替换范围。
 
 ### 不在本次范围
+- 不删 `/camp-intro/:campType` 动态路由（其余 5 个 campType 仍在用）
+- 不删 `CampIntro.tsx` 组件
+- 不动 wealth_block_7 / identity_bloom / emotion_journal_21 等其他 campType 的入口
+- 不改业务逻辑、不动支付链路、不动 DB
 
-- 不改业务逻辑、不动支付、不动 DB
-- 21 天训练营卡片的「数据洞察」按钮保持禁用，待后续埋点完成再开放
+### 验证
+1. 未购用户：评估结果 → 点 CTA → 落到 `/promo/synergy`，新增 PV
+2. 已购用户：评估结果 → 点 CTA → 落到 `/camp-checkin?campType=emotion_stress_7`
+3. 直接访问 `/camp-intro/emotion_stress_7` → 自动 302 到 `/promo/synergy`
+4. 其他 campType（如 `/camp-intro/identity_bloom`）不受影响，正常渲染
