@@ -2774,6 +2774,7 @@ export type Database = {
           gender: string
           id: string
           is_active: boolean
+          sample_preview_url: string | null
           sample_storage_path: string | null
           source: string
           updated_at: string
@@ -2787,6 +2788,7 @@ export type Database = {
           gender: string
           id?: string
           is_active?: boolean
+          sample_preview_url?: string | null
           sample_storage_path?: string | null
           source?: string
           updated_at?: string
@@ -2800,6 +2802,7 @@ export type Database = {
           gender?: string
           id?: string
           is_active?: boolean
+          sample_preview_url?: string | null
           sample_storage_path?: string | null
           source?: string
           updated_at?: string
