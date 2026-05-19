@@ -998,7 +998,10 @@ export default function SynergyPromoPage() {
                   立即加入身心舒展计划 →
                 </button>
                 <button
-                  onClick={() => setShowRedeemDialog(true)}
+                  onClick={() => {
+                    trackEvent("synergy_cta_click", { source: "redeem_only_cta" });
+                    setShowRedeemDialog(true);
+                  }}
                   className="w-full py-3.5 rounded-xl text-[14px] transition active:scale-[0.98] flex items-center justify-center gap-2"
                   style={{
                     background: "transparent",
