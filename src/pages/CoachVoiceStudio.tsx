@@ -72,7 +72,7 @@ const CoachVoiceStudio = () => {
       <div className="max-w-5xl mx-auto p-4 sm:p-6">
         <header className="mb-6">
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">🎙️ 教练语音工坊</h1>
-          <p className="text-sm text-muted-foreground mt-1">克隆教练真人声音 + 一键生成测评跟进语音</p>
+          <p className="text-sm text-muted-foreground mt-1">中文 Doubao 教练音色 · 一键生成测评跟进语音</p>
         </header>
 
         <Tabs defaultValue="generate" className="w-full">
