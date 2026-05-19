@@ -27,6 +27,7 @@ import { getTodayCST, getCSTStartUTC, formatDateCST, formatInCST, getDaysSinceSt
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import wecomCoachQr from "@/assets/wecom-coach-qr.jpg";
+import { trackEvent } from "@/lib/behaviorTracker";
 
 // 企微助教引导卡片
 const WeComGuideCard = () => {
@@ -260,6 +261,22 @@ const CampCheckIn = () => {
     }
   }, [user, campId]);
 
+  // 埋点：打卡页 mount（按 day_index 区分）
+  const [hasTrackedPV, setHasTrackedPV] = useState(false);
+  useEffect(() => {
+    if (!camp || hasTrackedPV) return;
+    const dayIdx = Math.min(
+      getDaysSinceStart(camp.start_date) + 1,
+      camp.duration_days || 7,
+    );
+    trackEvent("camp_checkin_page_view", {
+      camp_type: camp.camp_type,
+      camp_id: camp.id,
+      day_index: dayIdx,
+    });
+    setHasTrackedPV(true);
+  }, [camp, hasTrackedPV]);
+
   // 全部完成时触发庆祝动画
   useEffect(() => {
     if (!todayProgress || !camp || hasTriggeredConfetti) return;
@@ -443,6 +460,13 @@ const CampCheckIn = () => {
   };
 
   const handleShare = () => {
+    trackEvent("camp_task_start_click", {
+      task: "share",
+      camp_type: camp?.camp_type,
+    });
+    trackEvent("camp_share_to_community_open", {
+      camp_type: camp?.camp_type,
+    });
     setShowShareDialog(true);
   };
 
@@ -788,7 +812,10 @@ const CampCheckIn = () => {
                           badgeText="推荐"
                           badgeColor="emerald"
                           actionLabel="开始冥想"
-                          onAction={() => navigate(`/stress-meditation/${displayCurrentDay || 1}`)}
+                          onAction={() => {
+                            trackEvent("camp_task_start_click", { task: "meditation", camp_type: camp.camp_type, day_index: displayCurrentDay });
+                            navigate(`/stress-meditation/${displayCurrentDay || 1}`);
+                          }}
                           onToggle={(checked) => handleToggleTask('declaration_completed', checked)}
                         />
                       )}
@@ -807,6 +834,7 @@ const CampCheckIn = () => {
                         isPrimary
                         extraBadge={todayProgress?.emotion_logs_count > 0 ? `${todayProgress.emotion_logs_count}次` : undefined}
                         onAction={() => {
+                          trackEvent("camp_task_start_click", { task: "dialog", camp_type: camp.camp_type, day_index: displayCurrentDay });
                           if (camp.camp_type === 'emotion_journal_21' || camp.camp_type === 'emotion_stress_7') {
                             navigate("/emotion-coach");
                           } else {

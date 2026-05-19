@@ -13,6 +13,7 @@ import { PartnerManagement } from "./PartnerManagement";
 import { PackagesManagement } from "./PackagesManagement";
 import { CoachTemplatesManagement } from "./CoachTemplatesManagement";
 import { CampTemplatesManagement } from "./CampTemplatesManagement";
+import CampInsightsDetail from "./camps/CampInsightsDetail";
 import KnowledgeBaseManagement from "./KnowledgeBaseManagement";
 import CustomerServiceManagement from "./CustomerServiceManagement";
 import CostMonitorDashboard from "./CostMonitorDashboard";

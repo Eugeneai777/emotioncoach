@@ -33,6 +33,7 @@ import zhileProductNew from "@/assets/zhile-product-new.jpg";
 import wecomCoachQr from "@/assets/wecom-coach-qr.jpg";
 import SynergyShareCard from "@/components/promo/SynergyShareCard";
 import { SynergyRedeemDialog } from "@/components/promo/SynergyRedeemDialog";
+import { trackEvent } from "@/lib/behaviorTracker";
 import {
   Accordion,
   AccordionContent,
@@ -484,6 +485,10 @@ export default function SynergyPromoPage() {
 
   // === 主 CTA：弹兑换码弹窗（业务入口不变） ===
   const handlePrimaryCTA = () => {
+    trackEvent("synergy_cta_click", {
+      source: "primary_cta",
+      already_purchased: alreadyPurchased,
+    });
     if (alreadyPurchased) {
       handleEnterCamp();
       return;
@@ -993,7 +998,10 @@ export default function SynergyPromoPage() {
                   立即加入身心舒展计划 →
                 </button>
                 <button
-                  onClick={() => setShowRedeemDialog(true)}
+                  onClick={() => {
+                    trackEvent("synergy_cta_click", { source: "redeem_only_cta" });
+                    setShowRedeemDialog(true);
+                  }}
                   className="w-full py-3.5 rounded-xl text-[14px] transition active:scale-[0.98] flex items-center justify-center gap-2"
                   style={{
                     background: "transparent",

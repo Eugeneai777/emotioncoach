@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Loader2, ExternalLink, Gift, ShoppingBag, Info, LogIn } from "lucide-react";
 import { detectPlatform } from "@/lib/platformDetector";
 import { extractEdgeFunctionError } from "@/lib/edgeFunctionError";
+import { trackEvent } from "@/lib/behaviorTracker";
 import youzanMiniQr from "@/assets/youzan-miniprogram-qr.png";
 
 const YOUZAN_URL = "https://tuicashier.youzan.com/pay/wscgoods_order?scan=1&activity=none&from=kdt&qr=directgoods_5625577765&shopAutoEnter=1&alias=36c1wn65vbtllos";
@@ -23,6 +24,13 @@ export function SynergyRedeemDialog({ open, onOpenChange, onSuccess, isLoggedIn,
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const isMiniProgram = detectPlatform() === 'mini_program';
+
+  // Track QR exposure when dialog opens in mini program
+  useEffect(() => {
+    if (open && isMiniProgram) {
+      trackEvent("synergy_youzan_qr_view", { is_mini_program: true });
+    }
+  }, [open, isMiniProgram]);
 
   const handleRedeem = async () => {
     const trimmed = code.trim();
@@ -55,6 +63,9 @@ export function SynergyRedeemDialog({ open, onOpenChange, onSuccess, isLoggedIn,
       }
 
       if (data?.success) {
+        trackEvent("synergy_redeem_success", {
+          code_prefix: trimmed.slice(0, 3),
+        });
         toast.success("🎉 兑换成功！", { description: "训练营已开通，即将进入" });
         setCode("");
         onOpenChange(false);
@@ -141,7 +152,10 @@ export function SynergyRedeemDialog({ open, onOpenChange, onSuccess, isLoggedIn,
               <Button
                 variant="outline"
                 className="w-full h-10 rounded-lg border-amber-300 text-amber-700 hover:bg-amber-100/60 font-medium text-sm"
-                onClick={() => window.open(YOUZAN_URL, "_blank")}
+                onClick={() => {
+                  trackEvent("synergy_youzan_click", { is_mini_program: false });
+                  window.open(YOUZAN_URL, "_blank");
+                }}
               >
                 <ExternalLink className="w-4 h-4 mr-2" />
                 前往有赞商城下单

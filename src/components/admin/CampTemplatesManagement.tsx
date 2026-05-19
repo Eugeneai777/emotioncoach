@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Pencil, Plus, Tent } from "lucide-react";
+import { Pencil, Plus, Tent, BarChart3 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { CampEditDialog } from "./camps/CampEditDialog";
 import type { Database } from "@/integrations/supabase/types";
@@ -21,6 +22,7 @@ function formatMoney(value: number | null | undefined): string {
 
 export function CampTemplatesManagement() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState<string>("youjin");
   const [editingCamp, setEditingCamp] = useState<CampTemplateRow | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -148,6 +150,16 @@ export function CampTemplatesManagement() {
                             }
                           />
                         </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={camp.camp_type !== "emotion_stress_7"}
+                          onClick={() => navigate(`/admin/camps/${camp.camp_type}/insights`)}
+                          title={camp.camp_type !== "emotion_stress_7" ? "即将上线" : "查看数据洞察"}
+                        >
+                          <BarChart3 className="h-4 w-4 mr-1" />
+                          数据洞察
+                        </Button>
                         <Button
                           variant="outline"
                           size="sm"
