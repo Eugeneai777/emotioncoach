@@ -116,7 +116,7 @@ export default function PromoMidlife25to45Women399() {
 
   usePaymentCallback({
     onSuccess: () => {
-      navigate("/camp-intro/emotion_stress_7");
+      navigate("/promo/synergy");
     },
   });
 
@@ -127,7 +127,7 @@ export default function PromoMidlife25to45Women399() {
       return;
     }
     if (hasPurchased) {
-      navigate("/camp-intro/emotion_stress_7");
+      navigate("/promo/synergy");
       return;
     }
     setShowPay(true);
@@ -730,7 +730,7 @@ export default function PromoMidlife25to45Women399() {
         }
         onSuccess={() => {
           setShowPay(false);
-          navigate("/camp-intro/emotion_stress_7");
+          navigate("/promo/synergy");
         }}
         returnUrl={RETURN_URL}
         openId={openId}

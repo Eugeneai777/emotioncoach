@@ -160,7 +160,7 @@ export default function ZhileCoachPromoPage() {
   const autoCreateAndEnterCamp = async (overrideUserId?: string) => {
     const targetUserId = overrideUserId || user?.id;
     if (!targetUserId) {
-      navigate('/camp-intro/emotion_stress_7');
+      navigate('/promo/synergy');
       return;
     }
     try {
@@ -209,7 +209,7 @@ export default function ZhileCoachPromoPage() {
         .single();
 
       if (createError || !newCamp) {
-        navigate('/camp-intro/emotion_stress_7');
+        navigate('/promo/synergy');
         return;
       }
 
@@ -220,7 +220,7 @@ export default function ZhileCoachPromoPage() {
 
       navigate(`/camp-checkin/${newCamp.id}`);
     } catch {
-      navigate('/camp-intro/emotion_stress_7');
+      navigate('/promo/synergy');
     }
   };
 
