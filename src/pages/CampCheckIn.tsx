@@ -444,6 +444,13 @@ const CampCheckIn = () => {
   };
 
   const handleShare = () => {
+    trackEvent("camp_task_start_click", {
+      task: "share",
+      camp_type: camp?.camp_type,
+    });
+    trackEvent("camp_share_to_community_open", {
+      camp_type: camp?.camp_type,
+    });
     setShowShareDialog(true);
   };
 
