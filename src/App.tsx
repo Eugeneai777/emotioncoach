@@ -426,6 +426,7 @@ const App = () => (
               <Route path="/deployment-package" element={<DeploymentPackage />} />
               <Route path="/energy-studio" element={<EnergyStudio />} />
               <Route path="/mini-app" element={<MiniAppEntry />} />
+              <Route path="/coach-voice-studio" element={<CoachVoiceStudio />} />
               <Route path="/youjin-life" element={<YoujinLife />} />
               <Route path="/youjin-life/chat" element={<YoujinLifeChat />} />
               <Route path="/youjin-life/expenses" element={<YoujinLifeExpenses />} />
