@@ -27,6 +27,7 @@ import { getTodayCST, getCSTStartUTC, formatDateCST, formatInCST, getDaysSinceSt
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import wecomCoachQr from "@/assets/wecom-coach-qr.jpg";
+import { trackEvent } from "@/lib/behaviorTracker";
 
 // 企微助教引导卡片
 const WeComGuideCard = () => {
