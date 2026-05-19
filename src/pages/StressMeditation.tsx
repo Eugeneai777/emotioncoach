@@ -14,6 +14,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useAudioCache } from '@/hooks/useAudioCache';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { trackEvent } from '@/lib/behaviorTracker';
 import { getTodayCST } from '@/utils/dateUtils';
 
 interface StressMeditationData {
