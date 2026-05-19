@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { Mic, Square, Loader2, Play, Download, Sparkles } from "lucide-react";
+import { Mic, Square, Loader2, Play, Pause, Download, Sparkles, ChevronDown } from "lucide-react";
 import {
   COACH_VOICE_TEMPLATES,
   getTemplatesByGender,
@@ -20,6 +20,7 @@ import {
 type VoiceClone = {
   id: string; coach_name: string; gender: 'male'|'female';
   source: 'cloned'|'preset'; display_order: number; description?: string | null;
+  sample_audio_url?: string | null;
 };
 
 type Generation = {
