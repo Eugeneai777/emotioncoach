@@ -119,6 +119,10 @@ export default function StressMeditation() {
     const onEnd = () => {
       setIsPlaying(false);
       setHasListened(true);
+      trackEvent("camp_meditation_complete", {
+        camp_type: "emotion_stress_7",
+        day_index: day,
+      });
       markMeditationCompleted();
     };
     const onWaiting = () => setIsBuffering(true);
