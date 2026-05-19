@@ -64,6 +64,7 @@ const PayEntry = lazyRetry(() => import("./pages/PayEntry"));
 // 能量空间
 const EnergyStudio = lazyRetry(() => import("./pages/EnergyStudio"));
 const MiniAppEntry = lazyRetry(() => import("./pages/MiniAppEntry"));
+const CoachVoiceStudio = lazyRetry(() => import("./pages/CoachVoiceStudio"));
 const YoujinLife = lazyRetry(() => import("./pages/YoujinLife"));
 const YoujinLifeChat = lazyRetry(() => import("./pages/YoujinLifeChat"));
 const YoujinLifeExpenses = lazyRetry(() => import("./pages/YoujinLifeExpenses"));
