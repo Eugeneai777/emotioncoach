@@ -63,6 +63,9 @@ export function SynergyRedeemDialog({ open, onOpenChange, onSuccess, isLoggedIn,
       }
 
       if (data?.success) {
+        trackEvent("synergy_redeem_success", {
+          code_prefix: trimmed.slice(0, 3),
+        });
         toast.success("🎉 兑换成功！", { description: "训练营已开通，即将进入" });
         setCode("");
         onOpenChange(false);
