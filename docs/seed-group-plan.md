@@ -1,0 +1,1 @@
+把 `.lovable/plan.md` 完整内容复制到 `docs/seed-group-plan.md`（非隐藏路径，搜索"plan"或"seed"即可找到）。原 `.lovable/plan.md` 保留不动。后续以 `docs/seed-group-plan.md` 为主要查看入口。无代码改动。
