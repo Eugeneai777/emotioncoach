@@ -77,7 +77,7 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(toClientSecretsBody({
-        model: "gpt-4o-mini-realtime-preview",
+        model: "gpt-realtime-mini",
         voice: "echo",
         instructions: `【交互方式 - 非常重要】
 你正在通过语音和用户实时对话，用户能听到你说话，你也能听到用户说话。

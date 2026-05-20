@@ -1395,7 +1395,7 @@ serve(async (req) => {
           baseUrl,
           OPENAI_API_KEY,
           {
-            model: "gpt-4o-mini-realtime-preview",
+            model: "gpt-realtime-mini",
             voice: mapVoiceTypeToOpenAIVoice(voiceOverride, mode),
             instructions: '你是劲老师，温暖的AI生活教练。请等待系统配置后开始对话。',
             max_response_output_tokens: "inf",
@@ -1649,7 +1649,7 @@ ${photoList}
           baseUrl,
           OPENAI_API_KEY,
           {
-            model: "gpt-4o-mini-realtime-preview",
+            model: "gpt-realtime-mini",
             voice: mapVoiceTypeToOpenAIVoice(voiceOverride, mode),
             instructions: instructions,
             tools: tools,
