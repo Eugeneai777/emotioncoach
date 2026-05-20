@@ -68,9 +68,9 @@ serve(async (req) => {
       metadata 
     } = await req.json();
 
-    // 自动纠正旧模型名：实际使用的是 mini 版本，价格为 1/4
+    // 自动纠正旧模型名：实际使用的是 mini GA 版，价格为 1/4
     const model = rawModel === 'gpt-4o-realtime-preview-2024-12-17' 
-      ? 'gpt-4o-mini-realtime-preview' 
+      ? 'gpt-realtime-mini' 
       : rawModel;
 
     // 计算成本
