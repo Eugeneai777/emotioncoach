@@ -227,7 +227,7 @@ export const FEATURE_COST_ESTIMATES: Record<string, { model: string; avgTokens?:
   'voice_clone': { model: 'elevenlabs_clone', fixedCost: 0.30 },
   
   // 实时语音 (基于 token 估算, 每分钟约 9000 tokens) - 使用 mini 模型降本
-  'realtime_voice': { model: 'gpt-4o-mini-realtime-preview', avgTokens: { input: 4500, output: 4500 } },
+  'realtime_voice': { model: 'gpt-realtime-mini', avgTokens: { input: 4500, output: 4500 } },
 };
 
 // 功能名称映射
