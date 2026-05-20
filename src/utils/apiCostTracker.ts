@@ -195,8 +195,8 @@ export function estimateVoiceCost(
 }
 
 // 估算实时语音成本 (基于 token 定价) - 默认使用 mini 模型
-export function estimateRealtimeCost(minutes: number, model: string = 'gpt-4o-mini-realtime-preview'): { usd: number; cny: number; inputTokens: number; outputTokens: number } {
-  const costs = MODEL_COSTS[model] || MODEL_COSTS['gpt-4o-mini-realtime-preview'];
+export function estimateRealtimeCost(minutes: number, model: string = 'gpt-realtime-mini'): { usd: number; cny: number; inputTokens: number; outputTokens: number } {
+  const costs = MODEL_COSTS[model] || MODEL_COSTS['gpt-realtime-mini'];
   const inputTokens = Math.round(minutes * REALTIME_TOKENS_PER_MINUTE.input);
   const outputTokens = Math.round(minutes * REALTIME_TOKENS_PER_MINUTE.output);
   
