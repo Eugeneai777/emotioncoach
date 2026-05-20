@@ -17,7 +17,8 @@ const MODEL_COSTS: Record<string, { input?: number; output?: number; image?: num
   // OpenAI Realtime API (audio tokens): $40/M input, $80/M output → per 1K: $0.04 input, $0.08 output
   'gpt-4o-realtime-preview-2024-12-17': { input: 0.04, output: 0.08 },
   // OpenAI Realtime Mini API (audio tokens): $10/M input, $20/M output → per 1K: $0.01 input, $0.02 output
-  'gpt-4o-mini-realtime-preview': { input: 0.01, output: 0.02 },
+  'gpt-realtime-mini': { input: 0.01, output: 0.02 }, // GA 正式版（当前使用）
+  'gpt-4o-mini-realtime-preview': { input: 0.01, output: 0.02 }, // 兼容历史日志
   'gpt-4o-mini-realtime-preview-2024-12-17': { input: 0.01, output: 0.02 }, // 兼容历史日志
   'gpt-4o-mini': { input: 0.00015, output: 0.0006 },
   'gpt-4o': { input: 0.005, output: 0.015 },
@@ -67,9 +68,9 @@ serve(async (req) => {
       metadata 
     } = await req.json();
 
-    // 自动纠正旧模型名：实际使用的是 mini 版本，价格为 1/4
+    // 自动纠正旧模型名：实际使用的是 mini GA 版，价格为 1/4
     const model = rawModel === 'gpt-4o-realtime-preview-2024-12-17' 
-      ? 'gpt-4o-mini-realtime-preview' 
+      ? 'gpt-realtime-mini' 
       : rawModel;
 
     // 计算成本

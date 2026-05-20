@@ -197,7 +197,7 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini-realtime-preview",
+        model: "gpt-realtime-mini",
         voice: "shimmer",
         instructions: baseInstructions + memoryPrompt + recentVoicePrompt,
         input_audio_format: "pcm16",

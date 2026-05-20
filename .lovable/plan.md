@@ -1,76 +1,40 @@
+## 目标
+将全站 OpenAI Realtime 语音模型从 `gpt-4o-mini-realtime-preview`（preview）统一升级到 `gpt-realtime-mini`（GA 正式版），确保所有 AI 语音入口稳定可用。
 
-# 方案 A：Coach Voice Studio 切换到 Doubao 中文 TTS
+## 背景
+当前共 14 处硬编码使用 preview 模型，分布在 7 个 token 端点、1 个 WS 中继、3 个前端 client、2 个计费表中。GA 版 `gpt-realtime-mini` 与 preview 价格相同（$10/M input、$20/M output），但 SLA 更稳定、不再属"preview 限流池"。
 
-## 1. 数据库迁移
+## 改动清单（仅替换模型字符串，业务逻辑不动）
 
-`coach_voice_clones` 表新增一列：
+**Edge Functions (7)**
+- `supabase/functions/realtime-token/index.ts:80`
+- `supabase/functions/emotion-realtime-token/index.ts:276`
+- `supabase/functions/wealth-assessment-realtime-token/index.ts:159`
+- `supabase/functions/marriage-realtime-token/index.ts:195`
+- `supabase/functions/teen-realtime-token/index.ts:200`
+- `supabase/functions/vibrant-life-realtime-token/index.ts:1398, 1652`
+- `supabase/functions/miniprogram-voice-relay/index.ts:13`（WSS URL 的 model 参数）
 
-- `doubao_voice_type text` — Doubao BigTTS speaker（如 `zh_male_M392_conversation_wvae_bigtts`），preset 必填、cloned 留空。
+**前端 (3)**
+- `src/utils/RealtimeAudio.ts:875`
+- `src/components/coach/CoachVoiceChat.tsx:766`
+- `src/components/teen/TeenVoiceChat.tsx:217`
 
-不动 `elevenlabs_voice_id`（克隆 Tab 还要用）。
+**计费 / 日志兼容 (2)**
+- `src/utils/apiCostTracker.ts`：新增 `gpt-realtime-mini` 价格条目（$0.01/$0.02），保留 preview 条目兼容历史日志；默认模型字符串改为 `gpt-realtime-mini`
+- `supabase/functions/log-api-cost/index.ts`：同上，新增价格条目，保留旧 key 防止历史日志报错
 
-清掉 6 个 preset 已缓存的 `sample_preview_url`（之前缓存的是英文 mp3），等下次访问时用 Doubao 重新合成。
+## 部署 & 验证
+1. 部署 7 个 token 端点 + log-api-cost + miniprogram-voice-relay
+2. 用 `curl_edge_functions` 调 `realtime-token` 拿一次 token，确认返回的 session 含正确 model
+3. 抽查 edge function logs 看是否有 OpenAI 4xx
+4. 前端不需要额外动作（vite HMR 自动）
 
-## 2. 6 个预设音色替换为 Doubao 中文音色
+## 风险与回退
+- `gpt-realtime-mini` 是 OpenAI 2025-08 GA 模型，国内通过 `OPENAI_PROXY_URL` 走代理；若代理白名单未放行新 model，可能 404。回退方案：把模型字符串改回 `gpt-4o-mini-realtime-preview` 即可（一次 search-replace）
+- 不改任何 voice 配置、scenario、prompt、计费金额、配额扣减逻辑
 
-| coach_name | gender | doubao_voice_type | 定位 |
-|---|---|---|---|
-| 沉稳磁性男 | male | `zh_male_M392_conversation_wvae_bigtts` | 35-55 中年男对话感 |
-| 温暖兄长男 | male | `zh_male_xudong_conversation_wvae_bigtts` | 兄长 / 邻家大哥 |
-| 醇厚长者男 | male | `zh_male_baqiqingshu_mars_bigtts` | 沉稳长者 / 播音感 |
-| 温柔姐姐女 | female | `zh_female_wanwanxiaohe_moon_bigtts` | 温柔知性姐姐 |
-| 治愈轻语女 | female | `zh_female_roumeinvyou_emo_v2_mars_bigtts` | 柔美治愈、轻语感 |
-| 知性主理女 | female | `zh_female_zhixingnvsheng_mars_bigtts` | 知性主理人 |
-
-> 这些是 Doubao BigTTS 标准 speaker，需在火山引擎控制台已开通对应音色权限。如哪个音色未开通，可后续单独换掉那一行的 `doubao_voice_type`，无需改代码。
-
-## 3. 后端改动
-
-### `coach-voice-generate`
-- 移除 ElevenLabs 调用。
-- 读取 `doubao_voice_type`（preset）；如果是 `cloned`（无 doubao_voice_type），暂时回退到 ElevenLabs（保留克隆音色可用）。
-- 复用 `volcengine-tts` 的「V3 优先 → V1 兜底」双重重试逻辑（已成熟），抽到 `_shared/doubao-tts.ts` 共享。
-- 拿到 mp3 buffer 后照旧上传 storage + 入库 + 返回 signedUrl + base64。
-
-### `coach-voice-library`
-- preset 的预览策略改为：
-  - 若 `sample_preview_url` 存在 → 直接返回。
-  - 否则用 Doubao 合成一段固定中文 demo（约 15s），上传到 `voice-recordings/coach-studio/previews/{voice_id}.mp3`，回写 `sample_storage_path` + 24h signed URL 缓存。
-- 预览 demo 文案（按性别）：
-  - 男：「兄弟，状态校准这件事，三十几岁之后，比拼命更重要。今晚做一件事，给自己留一份预警雷达。」
-  - 女：「姐妹，最近的状态我看见了。你不是不够好，是太久没把自己放在前面。今晚，给自己留一个温柔的小动作。」
-- cloned 类型逻辑不变（ElevenLabs preview / storage signed URL）。
-
-### `_shared/doubao-tts.ts`（新增）
-抽取 `volcengine-tts/index.ts` 里的 `tryV3TTS` / `tryV1TTS` 与重试编排，导出 `synthesizeDoubaoMp3(text, voiceType) → Uint8Array`。
-
-## 4. 前端改动（`CoachVoiceStudio.tsx`）
-
-- 卡片描述与页面副标题：去掉 ElevenLabs 字样，改为「中文 Doubao 教练音色」。
-- 「克隆音色」Tab 顶部加一行小字提示：「克隆音色基于 ElevenLabs，中文场景略带口音；正式跟进建议先用上方 Doubao 预设音色。」
-- VoiceCard / 模板预览 / 生成调用方式不变（仍然走 `coach-voice-generate`，只是后端切换了引擎）。
-
-## 5. 不改动
-
-- 路由、Key 校验、模板话术（`coachVoiceTemplates.ts`）、克隆流程、`coach-voice-history`。
-- ElevenLabs API Key 仍保留，用于 cloned tab。
-
-## 6. 部署 & 验证
-
-部署 4 个 edge function（generate / library / clone / history 因 shared 文件变动需要一起部署），随后：
-
-- 访问 `/coach-voice-studio?key=youjin2026sop`
-- 试听 6 个预设 → 应听到中文 demo（首发会有 ~2s 合成延迟，之后秒开）
-- 选模板 + 生成 → 中文 mp3，沉稳磁性男听起来应是国语对话感
-
-## 文件改动清单
-
-| 文件 | 改动 |
-|---|---|
-| 新 migration | `ALTER TABLE coach_voice_clones ADD COLUMN doubao_voice_type text;` + UPDATE 6 行 + 清 `sample_preview_url` |
-| 新增 `supabase/functions/_shared/doubao-tts.ts` | 抽取共享 TTS 调用 |
-| `supabase/functions/coach-voice-generate/index.ts` | 切到 Doubao（cloned 走 ElevenLabs 兜底） |
-| `supabase/functions/coach-voice-library/index.ts` | preset 预览用 Doubao 按需合成 + 缓存 |
-| `src/pages/CoachVoiceStudio.tsx` | 文案微调、克隆 tab 提示 |
-
-确认无误后我开始执行。
+## 不在本次范围
+- 不引入自动降级 fallback（保持简单，如需可后续追加）
+- 不接入 `gpt-realtime`（非 mini，贵 4 倍）
+- 不改 Doubao TTS / ElevenLabs 相关代码

@@ -763,7 +763,7 @@ export const CoachVoiceChat = ({
           body: {
             function_name: 'realtime-voice',
             feature_key: featureKey,
-            model: 'gpt-4o-mini-realtime-preview',
+            model: 'gpt-realtime-mini',
             input_tokens: inputTokens,
             output_tokens: outputTokens,
             metadata: {
