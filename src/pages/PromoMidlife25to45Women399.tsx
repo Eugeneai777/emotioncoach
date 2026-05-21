@@ -686,6 +686,7 @@ export default function PromoMidlife25to45Women399() {
         isLoggedIn={!!user}
         onNeedLogin={handleRedeemNeedLogin}
         youzanUrl={WOMEN_YOUZAN_URL}
+        miniProgramQr={womenYouzanQr}
       />
     </div>
   );
