@@ -125,7 +125,7 @@ function SuccessPanel({ onEnterCamp, onViewLogistics }: { onEnterCamp: () => voi
               <Package className="w-5 h-5 shrink-0 mt-0.5" style={{ color: C.primary }} />
               <div>
                 <p className="text-sm font-medium" style={{ color: C.text }}>知乐胶囊已安排发货</p>
-                <p className="text-xs" style={{ color: C.textMute }}>顺丰匿名包装，预计 4-7 个工作日送达</p>
+                <p className="text-xs" style={{ color: C.textMute }}>匿名包装直发，预计 4-7 个工作日送达</p>
               </div>
             </div>
             <div className="flex items-start gap-3 p-3 rounded-xl" style={{ background: `${C.primarySoft}1c`, border: `1px solid ${C.divider}` }}>
@@ -361,10 +361,10 @@ export default function PromoMidlife25to45Women399() {
               },
               {
                 Icon: Pill,
-                tag: "核心权益 02 · 1 瓶知乐胶囊 · 顺丰匿名到家",
+                tag: "核心权益 02 · 1 瓶知乐胶囊 · 匿名快递到家",
                 title: "GABA + L-茶氨酸 + 酸枣仁 + 镁 · 给那根一直绷着的弦留点缓冲",
                 desc:
-                  "不是药，是给你这根一直绷着的弦留点缓冲。白天稳情绪，夜里沉得下睡眠。0 褪黑素，不依赖。\n\n顺丰匿名包装，外箱不写「情绪」「女性」任何字眼，家里 / 公婆 / 孩子收件都看不出是什么。下单后 48 小时内寄出。",
+                  "不是药，是给你这根一直绷着的弦留点缓冲。白天稳情绪，夜里沉得下睡眠。0 褪黑素，不依赖。\n\n匿名包装直发，外箱不写「情绪」「女性」任何字眼，家里 / 公婆 / 孩子收件都看不出是什么。下单后 48 小时内寄出。",
               },
               {
                 Icon: Users,
@@ -416,7 +416,7 @@ export default function PromoMidlife25to45Women399() {
                  style={{ background: `${C.primarySoft}1c`, border: `1px dashed ${C.divider}` }}>
               <Truck className="w-3.5 h-3.5 mt-0.5 shrink-0" style={{ color: C.accent }} />
               <p className="text-[11.5px]" style={{ color: C.accent, lineHeight: 1.65 }}>
-                实物由「有劲生活馆」统一发货 · 顺丰匿名包邮 · 下单后 48h 内寄出
+                实物由「有劲生活馆」统一发货 · 匿名快递包邮 · 下单后 48h 内寄出
               </p>
             </div>
           </div>
@@ -439,7 +439,7 @@ export default function PromoMidlife25to45Women399() {
                 points: [
                   "全程女性社群 · 实名审核仅平台后台可见",
                   "课程链接仅本人可看 · 不可分享转发",
-                  "胶囊顺丰匿名包装 · 外箱不写敏感字",
+                  "胶囊匿名包装直发 · 外箱不写敏感字",
                 ],
               },
               {
@@ -567,7 +567,7 @@ export default function PromoMidlife25to45Women399() {
                 },
                 {
                   q: "胶囊怎么发？家人会不会看见？",
-                  a: "顺丰匿名包装，外箱不写「情绪」「女性」「健康」任何敏感字眼，家里 / 公婆 / 孩子收件都看不出是什么。下单后 48h 内寄出，物流信息只在你的账号里可见。",
+                  a: "匿名包装直发，外箱不写「情绪」「女性」「健康」任何敏感字眼，家里 / 公婆 / 孩子收件都看不出是什么。下单后 48h 内寄出，物流信息只在你的账号里可见。",
                 },
                 {
                   q: "1V1 教练是怎么陪我的？",
@@ -625,7 +625,7 @@ export default function PromoMidlife25to45Women399() {
               <span style={{ ...serif, color: C.primary, fontSize: 56, fontWeight: 700, lineHeight: 1 }}>{PRICE}</span>
             </div>
             <p className="text-[12px]" style={{ color: C.accent, lineHeight: 1.7 }}>
-              含知乐胶囊 1 瓶（顺丰匿名包邮）· 满员即恢复原价 ¥{ORIGINAL_PRICE}
+              含知乐胶囊 1 瓶（匿名快递包邮）· 满员即恢复原价 ¥{ORIGINAL_PRICE}
             </p>
           </div>
 
