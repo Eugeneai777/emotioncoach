@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { DimensionRadarChart } from "./DimensionRadarChart";
 import midlifeVitalitySceneImage from "@/assets/audience/midlife-vitality-scene-clean.jpg";
+import maleUnspokenSceneImage from "@/assets/audience/male-unspoken-scene.jpg";
 import { getStatusBand } from "@/config/maleMidlifeVitalityCopy";
 
 interface DynamicAssessmentIntroProps {
@@ -120,6 +121,34 @@ const enrichmentData: Record<string, {
       { score: 52, maxScore: 100, label: "核心动力", emoji: "🔥" },
     ],
   },
+  male_unspoken_check: {
+    painPoints: [
+      { emoji: "🌙", text: "闹钟响那一下，全身都在抗议——像没睡过" },
+      { emoji: "🚪", text: "门一关，整个人像泄了气，不想说话" },
+      { emoji: "🤐", text: "晨勃越来越少，但这件事你跟谁也开不了口" },
+      { emoji: "💞", text: "想到「今晚要好好聊聊」，本能就想绕开" },
+    ],
+    authority: [
+      { emoji: "🔒", text: "私密完成：结果只给你自己看，不需要向任何人解释" },
+      { emoji: "🚨", text: "10 道题、3 维度（身体警报 / 难言之隐 / 亲密压力），4 档警报清晰分级" },
+      { emoji: "🛡️", text: "非诊断、不贴标签；如有明显身体不适，建议及时咨询专业医生" },
+    ],
+    comparison: {
+      traditional: "题目太医学化越看越紧张，或者太娱乐化看完还不知道该怎么办。",
+      ours: "用图 / 声音 / 场景化提问，5 分钟看清你身体在向你发什么警报，AI 给出兄弟语气解读。",
+    },
+    scene: {
+      image: maleUnspokenSceneImage,
+      title: "有些信号，不是矫情，是身体在小声喊话",
+      subtitle: "先看清警报等级，再决定要不要立刻处理。",
+      tags: ["睡了像没睡", "晨勃在掉", "回家就泄气", "聊不动了"],
+    },
+    radarPreview: [
+      { score: 55, maxScore: 100, label: "身体警报", emoji: "🚨" },
+      { score: 48, maxScore: 100, label: "难言之隐", emoji: "🤐" },
+      { score: 60, maxScore: 100, label: "亲密压力", emoji: "💞" },
+    ],
+  },
 };
 
 export function DynamicAssessmentIntro({ template, onStart, onShowHistory, hasHistory, requireAuth = true, requirePayment, hasPurchased, price, onPayClick, lastRecord, historyCount }: DynamicAssessmentIntroProps) {
@@ -127,6 +156,8 @@ export function DynamicAssessmentIntro({ template, onStart, onShowHistory, hasHi
   const navigate = useNavigate();
   const needPay = requirePayment && !hasPurchased;
   const isMaleMidlifeVitality = template.assessment_key === 'male_midlife_vitality';
+  const isMaleUnspokenCheck = template.assessment_key === 'male_unspoken_check';
+  const isLimitedFree = isMaleMidlifeVitality || isMaleUnspokenCheck;
   const dimensions = template.dimensions || [];
   const enrichment = template.assessment_key ? enrichmentData[template.assessment_key] : undefined;
 
