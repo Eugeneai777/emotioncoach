@@ -416,7 +416,7 @@ export default function PromoMidlife25to45Women399() {
                  style={{ background: `${C.primarySoft}1c`, border: `1px dashed ${C.divider}` }}>
               <Truck className="w-3.5 h-3.5 mt-0.5 shrink-0" style={{ color: C.accent }} />
               <p className="text-[11.5px]" style={{ color: C.accent, lineHeight: 1.65 }}>
-                实物由「有劲生活馆」统一发货 · 顺丰匿名包邮 · 下单后 48h 内寄出
+                实物由「有劲生活馆」统一发货 · 匿名快递包邮 · 下单后 48h 内寄出
               </p>
             </div>
           </div>
