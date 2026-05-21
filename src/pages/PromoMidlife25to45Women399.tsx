@@ -625,7 +625,7 @@ export default function PromoMidlife25to45Women399() {
               <span style={{ ...serif, color: C.primary, fontSize: 56, fontWeight: 700, lineHeight: 1 }}>{PRICE}</span>
             </div>
             <p className="text-[12px]" style={{ color: C.accent, lineHeight: 1.7 }}>
-              含知乐胶囊 1 瓶（顺丰匿名包邮）· 满员即恢复原价 ¥{ORIGINAL_PRICE}
+              含知乐胶囊 1 瓶（匿名快递包邮）· 满员即恢复原价 ¥{ORIGINAL_PRICE}
             </p>
           </div>
 
