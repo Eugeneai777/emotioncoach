@@ -85,6 +85,20 @@ export const ASSESSMENT_PROMO_CONFIGS: Record<string, AssessmentPromoConfig> = {
     sharePath: '/assessment/male_midlife_vitality',
     tagline: '有劲AI · 看清你的男人有劲状态',
   },
+  male_unspoken_check: {
+    emoji: '🚨',
+    title: '男人身体警报扫描',
+    subtitle: '10 道题，看清身体在向你发什么信号',
+    highlights: [
+      { icon: '🚨', text: '3 维 10 题：身体警报 / 难言之隐 / 亲密压力' },
+      { icon: '🤐', text: '私密完成，结果只给你自己看，不被任何人看到' },
+      { icon: '🧭', text: '4 档警报报告 + AI 兄弟语气解读，非诊断' },
+    ],
+    gradient: 'linear-gradient(135deg, #1e293b 0%, #c2410c 55%, #b91c1c 100%)',
+    accentColor: '#c2410c',
+    sharePath: '/assessment/male_unspoken_check',
+    tagline: '有劲AI · 男人身体信号自查',
+  },
 };
 
 interface AssessmentPromoShareCardProps {

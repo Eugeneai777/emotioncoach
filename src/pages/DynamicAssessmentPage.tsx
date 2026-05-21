@@ -73,7 +73,7 @@ export default function DynamicAssessmentPage() {
   // Cast template to access extended fields
   const tpl = template as any;
   // 强制登录白名单：无论数据库 require_auth 怎么配，这些测评都必须登录后才能答题
-  const FORCE_AUTH_KEYS = ['male_midlife_vitality'];
+  const FORCE_AUTH_KEYS = ['male_midlife_vitality', 'male_unspoken_check'];
   const _requireAuth = FORCE_AUTH_KEYS.includes(template?.assessment_key || '')
     ? true
     : (tpl?.require_auth ?? true);
@@ -510,6 +510,7 @@ export default function DynamicAssessmentPage() {
   // 链接分享卡片（OG meta + 微信 JSSDK）映射：测评 key -> og_configurations.page_key
   const OG_PAGE_KEY_MAP: Record<string, string> = {
     male_midlife_vitality: 'maleMidlifeVitalityAssessment',
+    male_unspoken_check: 'maleMidlifeVitalityAssessment',
   };
   const ogPageKey = template?.assessment_key ? OG_PAGE_KEY_MAP[template.assessment_key] : undefined;
 
