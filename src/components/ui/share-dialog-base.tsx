@@ -211,11 +211,24 @@ export function ShareDialogBase({
       };
 
       if (useDataUrl) {
-        const dataUrl = await generateCardDataUrl(exportCardRef, {
+        let dataUrl = await generateCardDataUrl(exportCardRef, {
           isWeChat,
           skipImageWait: false,
         });
-        
+
+        // Auto-retry with safer settings if first attempt failed
+        if (!dataUrl) {
+          console.warn('[ShareDialogBase] DataUrl first attempt failed, retrying with safe settings...');
+          if (loadingToastId) toast.dismiss(loadingToastId);
+          loadingToastId = toast.loading('正在优化清晰度后重试...');
+          dataUrl = await generateCardDataUrl(exportCardRef, {
+            isWeChat,
+            forceScale: isWeChat ? 1.2 : 1.5,
+            skipFontWait: true,
+            skipImageWait: true,
+          });
+        }
+
         if (dataUrl) {
           if (loadingToastId) toast.dismiss(loadingToastId);
           if (!isiOS) onOpenChange(false);
