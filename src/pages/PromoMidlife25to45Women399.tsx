@@ -23,6 +23,7 @@ import coachXiaojianxiong from "@/assets/coach-xiaojianxiong.jpg";
 import coachBetty from "@/assets/coach-betty.jpg";
 import wecomCoachQr from "@/assets/wecom-coach-qr.jpg";
 import zhileCapsules from "@/assets/zhile-capsules.jpeg";
+import womenYouzanQr from "@/assets/youzan-miniprogram-qr-women.png";
 
 /**
  * 35+ 女性 ¥399 「7 天身心舒展营」售前页
@@ -686,6 +687,7 @@ export default function PromoMidlife25to45Women399() {
         isLoggedIn={!!user}
         onNeedLogin={handleRedeemNeedLogin}
         youzanUrl={WOMEN_YOUZAN_URL}
+        miniProgramQr={womenYouzanQr}
       />
     </div>
   );

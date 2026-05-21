@@ -19,10 +19,12 @@ interface SynergyRedeemDialogProps {
   isLoggedIn: boolean;
   onNeedLogin: (code: string) => void;
   youzanUrl?: string;
+  miniProgramQr?: string;
 }
 
-export function SynergyRedeemDialog({ open, onOpenChange, onSuccess, isLoggedIn, onNeedLogin, youzanUrl }: SynergyRedeemDialogProps) {
+export function SynergyRedeemDialog({ open, onOpenChange, onSuccess, isLoggedIn, onNeedLogin, youzanUrl, miniProgramQr }: SynergyRedeemDialogProps) {
   const targetYouzanUrl = youzanUrl || DEFAULT_YOUZAN_URL;
+  const qrImage = miniProgramQr || youzanMiniQr;
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const isMiniProgram = detectPlatform() === 'mini_program';
@@ -144,7 +146,7 @@ export function SynergyRedeemDialog({ open, onOpenChange, onSuccess, isLoggedIn,
             {isMiniProgram ? (
               <div className="flex flex-col items-center gap-2 py-2">
                 <img
-                  src={youzanMiniQr}
+                  src={qrImage}
                   alt="有赞商品小程序码"
                   className="w-40 h-40 rounded-lg"
                 />
