@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useProfileCompletion } from "@/hooks/useProfileCompletion";
 import { getProxiedAvatarUrl } from "@/utils/avatarUtils";
 import { getPromotionDomain } from "@/utils/partnerQRUtils";
+import { useQRCode } from "@/utils/qrCodeUtils";
 
 interface AssessmentPromoShareDialogProps {
   open: boolean;
@@ -29,6 +30,10 @@ export function AssessmentPromoShareDialog({ open, onOpenChange, assessmentKey, 
   const avatarUrl = getProxiedAvatarUrl(profile?.avatar_url || user?.user_metadata?.avatar_url);
   const shareUrl = `${getPromotionDomain()}${config.sharePath}`;
 
+  // 等 QR 码就绪后才允许生成海报，避免捕获到空白二维码
+  const { qrCodeUrl } = useQRCode(shareUrl);
+  const cardReady = !!qrCodeUrl;
+
   return (
     <ShareDialogBase
       open={open}
@@ -41,6 +46,7 @@ export function AssessmentPromoShareDialog({ open, onOpenChange, assessmentKey, 
       exportCardRef={exportCardRef}
       previewScale={0.75}
       useDataUrl
+      cardReady={cardReady}
       previewCard={
         <AssessmentPromoShareCard config={config} displayName={userName} avatarUrl={avatarUrl} />
       }
