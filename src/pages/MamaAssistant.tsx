@@ -99,7 +99,7 @@ const MamaAssistant = () => {
           <div className="max-w-md mx-auto flex items-center justify-between px-4 py-2.5">
             <span className="text-white text-sm font-medium">🌸 7天有劲训练营 · 找回你的能量</span>
             <button
-              onClick={() => navigate("/promo/synergy?source=mama")}
+              onClick={() => navigate("/promo/midlife-women-399")}
               className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-white/90 text-rose-600 text-xs font-semibold active:scale-95 transition-transform"
             >
               了解详情 <ArrowRight className="w-3 h-3" />
