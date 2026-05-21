@@ -245,15 +245,15 @@ export function DynamicAssessmentIntro({ template, onStart, onShowHistory, hasHi
             >
               {needPay
                 ? <>{`¥${price ?? '?'} 开始测评`} <ArrowRight className="w-5 h-5" /></>
-                : isMaleMidlifeVitality
+                : isLimitedFree
                   ? <>🔥 限时免费开始评估 <ArrowRight className="w-5 h-5" /></>
                   : template.assessment_key === 'sbti_personality'
                     ? <>🔥 限时免费测评 <ArrowRight className="w-5 h-5" /></>
                     : <>开始测评 <ArrowRight className="w-5 h-5" /></>}
             </Button>
-            {!needPay && isMaleMidlifeVitality && (
+            {!needPay && isLimitedFree && (
               <p className="text-center text-[10px] text-muted-foreground mt-2">
-                <span className="line-through opacity-60">原价 ¥29.9</span> · 限时免费开放 · 测完生成 AI 私密报告
+                <span className="line-through opacity-60">原价 {isMaleUnspokenCheck ? '¥19.9' : '¥29.9'}</span> · 限时免费开放 · 测完生成 AI 私密报告
               </p>
             )}
           </motion.div>
@@ -491,7 +491,7 @@ export function DynamicAssessmentIntro({ template, onStart, onShowHistory, hasHi
           >
             {needPay
               ? <>{`¥${price ?? '?'} 开始测评`} <ArrowRight className="w-5 h-5" /></>
-              : isMaleMidlifeVitality
+              : isLimitedFree
                 ? <>🔥 限时免费开始评估 <ArrowRight className="w-5 h-5" /></>
               : template.assessment_key === 'sbti_personality'
                 ? <>🔥 限时免费测评 <ArrowRight className="w-5 h-5" /></>
@@ -508,9 +508,9 @@ export function DynamicAssessmentIntro({ template, onStart, onShowHistory, hasHi
               <span className="line-through opacity-60">原价 ¥9.9</span> · 限时免费开放
             </p>
           )}
-          {!needPay && isMaleMidlifeVitality && (
+          {!needPay && isLimitedFree && (
             <p className="text-center text-[10px] text-muted-foreground mt-2">
-              <span className="line-through opacity-60">原价 ¥29.9</span> · 限时免费开放 · 测完生成 AI 私密报告
+              <span className="line-through opacity-60">原价 {isMaleUnspokenCheck ? '¥19.9' : '¥29.9'}</span> · 限时免费开放 · 测完生成 AI 私密报告
             </p>
           )}
         </motion.div>
