@@ -396,6 +396,7 @@ export function DynamicAssessmentResult({
   const isSBTI = scoringType === 'sbti';
   const isMaleMidlifeVitality = template.assessment_key === 'male_midlife_vitality';
   const isWomenCompetitiveness = template.assessment_key === 'women_competitiveness';
+  const isMaleUnspokenCheck = template.assessment_key === 'male_unspoken_check';
   const useExpandedLayout = isMaleMidlifeVitality || isWomenCompetitiveness;
   const vitalityStatusPercent = isMaleMidlifeVitality ? toVitalityStatusScore(result.totalScore, result.maxScore) : scorePercent;
   const vitalityStatusScores = useMemo(() => {
