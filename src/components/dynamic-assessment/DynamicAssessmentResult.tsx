@@ -396,6 +396,7 @@ export function DynamicAssessmentResult({
   const isSBTI = scoringType === 'sbti';
   const isMaleMidlifeVitality = template.assessment_key === 'male_midlife_vitality';
   const isWomenCompetitiveness = template.assessment_key === 'women_competitiveness';
+  const isMaleUnspokenCheck = template.assessment_key === 'male_unspoken_check';
   const useExpandedLayout = isMaleMidlifeVitality || isWomenCompetitiveness;
   const vitalityStatusPercent = isMaleMidlifeVitality ? toVitalityStatusScore(result.totalScore, result.maxScore) : scorePercent;
   const vitalityStatusScores = useMemo(() => {
@@ -983,6 +984,114 @@ export function DynamicAssessmentResult({
             </Card>
           </motion.div>
         )}
+
+        {/* 男性警报扫描：三维信号柱 + 同档画像 + 一句话破局 */}
+        {isMaleUnspokenCheck && !isLiteMode && (() => {
+          const dims = result.dimensionScores || [];
+          const dimLabelMap: Record<string, { label: string; emoji: string; color: string }> = {
+            somatic_alarm: { label: '躯体信号', emoji: '🫀', color: 'from-rose-400 to-orange-400' },
+            unspoken_male: { label: '沉默压抑', emoji: '🚪', color: 'from-amber-400 to-yellow-400' },
+            intimacy_pressure: { label: '亲密承压', emoji: '💔', color: 'from-violet-400 to-pink-400' },
+          };
+          const cohort: string[] = (result.primaryPattern as any)?.cohort_portrait || [];
+          const tips: string[] = result.primaryPattern?.tips || [];
+          // 破局：tips 第 1 条（最具体的「先做 1 件事」），把"加微回复"那条挪到底
+          const breakthrough = tips.find((t) => !t.includes('加微')) || tips[0];
+          const wechatHook = tips.find((t) => t.includes('加微'));
+
+          return (
+            <>
+              {/* 模块 A：三维信号柱 */}
+              {dims.length > 0 && (
+                <motion.div custom={5} variants={fadeUp} initial="hidden" animate="visible">
+                  <Card className="border-border/40 bg-card/90 backdrop-blur-sm shadow-sm">
+                    <CardContent className="p-4 space-y-3">
+                      <div className="flex items-center gap-2">
+                        <TrendingUp className="w-4 h-4 text-rose-500" />
+                        <h3 className="font-semibold text-sm">三条信号线，哪一条最响？</h3>
+                      </div>
+                      <div className="space-y-2.5">
+                        {dims.map((d) => {
+                          const cfg = dimLabelMap[d.key || ''] || { label: d.label, emoji: '•', color: 'from-slate-400 to-slate-500' };
+                          const pct = d.maxScore > 0 ? Math.round((d.score / d.maxScore) * 100) : 0;
+                          return (
+                            <div key={d.key || d.label}>
+                              <div className="flex items-center justify-between mb-1 text-xs">
+                                <span className="font-medium text-foreground/80">
+                                  <span className="mr-1">{cfg.emoji}</span>{cfg.label}
+                                </span>
+                                <span className="text-muted-foreground tabular-nums">{d.score}/{d.maxScore}</span>
+                              </div>
+                              <div className="h-2 bg-muted/60 rounded-full overflow-hidden">
+                                <motion.div
+                                  className={cn("h-full rounded-full bg-gradient-to-r", cfg.color)}
+                                  initial={{ width: 0 }}
+                                  animate={{ width: `${pct}%` }}
+                                  transition={{ duration: 0.8, ease: "easeOut" }}
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <p className="text-[11px] text-muted-foreground pt-1 border-t border-border/40">
+                        分数越高 = 这条线越响。先处理最长的那一条，比同时调三件都管用。
+                      </p>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              )}
+
+              {/* 模块 B：同档位男人画像 */}
+              {cohort.length > 0 && (
+                <motion.div custom={6} variants={fadeUp} initial="hidden" animate="visible">
+                  <Card className="border-amber-200/60 bg-gradient-to-br from-amber-50/80 to-orange-50/40 dark:from-amber-950/20 dark:to-orange-950/10 shadow-sm">
+                    <CardContent className="p-4 space-y-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">👥</span>
+                        <h3 className="font-semibold text-sm">同档位男人画像</h3>
+                      </div>
+                      <ul className="space-y-2">
+                        {cohort.map((line, i) => (
+                          <li key={i} className="text-sm leading-relaxed text-foreground/85 flex gap-2.5">
+                            <span className="text-amber-600/80 mt-0.5 shrink-0 tabular-nums text-xs">0{i + 1}</span>
+                            <span>{line}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              )}
+
+              {/* 模块 C：一句话破局 + 加微钩子 */}
+              {breakthrough && (
+                <motion.div custom={7} variants={fadeUp} initial="hidden" animate="visible">
+                  <Card className="border-rose-200/70 bg-gradient-to-br from-rose-50 to-orange-50 dark:from-rose-950/30 dark:to-orange-950/20 shadow-md">
+                    <CardContent className="p-5 space-y-3">
+                      <div className="flex items-center gap-2 text-xs font-semibold text-rose-600/90 uppercase tracking-wider">
+                        <Target className="w-3.5 h-3.5" />
+                        今天只做 1 件事
+                      </div>
+                      <p className="text-base font-bold text-foreground leading-snug">
+                        {breakthrough}
+                      </p>
+                      {wechatHook && (
+                        <div className="pt-2 border-t border-rose-200/50">
+                          <p className="text-sm text-foreground/75 leading-relaxed">
+                            <span className="text-rose-500 mr-1">📩</span>{wechatHook}
+                          </p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              )}
+            </>
+          );
+        })()}
+
+
 
         {/* 35+女性版：场景化「绽放行动清单」替代通用 tips */}
         {isWomenCompetitiveness && !isLiteMode && (() => {
