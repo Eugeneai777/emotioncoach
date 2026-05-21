@@ -10,7 +10,7 @@ import { extractEdgeFunctionError } from "@/lib/edgeFunctionError";
 import { trackEvent } from "@/lib/behaviorTracker";
 import youzanMiniQr from "@/assets/youzan-miniprogram-qr.png";
 
-const YOUZAN_URL = "https://tuicashier.youzan.com/pay/wscgoods_order?scan=1&activity=none&from=kdt&qr=directgoods_5625577765&shopAutoEnter=1&alias=36c1wn65vbtllos";
+const DEFAULT_YOUZAN_URL = "https://tuicashier.youzan.com/pay/wscgoods_order?scan=1&activity=none&from=kdt&qr=directgoods_5625577765&shopAutoEnter=1&alias=36c1wn65vbtllos";
 
 interface SynergyRedeemDialogProps {
   open: boolean;
@@ -18,9 +18,11 @@ interface SynergyRedeemDialogProps {
   onSuccess: () => void;
   isLoggedIn: boolean;
   onNeedLogin: (code: string) => void;
+  youzanUrl?: string;
 }
 
-export function SynergyRedeemDialog({ open, onOpenChange, onSuccess, isLoggedIn, onNeedLogin }: SynergyRedeemDialogProps) {
+export function SynergyRedeemDialog({ open, onOpenChange, onSuccess, isLoggedIn, onNeedLogin, youzanUrl }: SynergyRedeemDialogProps) {
+  const targetYouzanUrl = youzanUrl || DEFAULT_YOUZAN_URL;
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const isMiniProgram = detectPlatform() === 'mini_program';
@@ -154,7 +156,7 @@ export function SynergyRedeemDialog({ open, onOpenChange, onSuccess, isLoggedIn,
                 className="w-full h-10 rounded-lg border-amber-300 text-amber-700 hover:bg-amber-100/60 font-medium text-sm"
                 onClick={() => {
                   trackEvent("synergy_youzan_click", { is_mini_program: false });
-                  window.open(YOUZAN_URL, "_blank");
+                  window.open(targetYouzanUrl, "_blank");
                 }}
               >
                 <ExternalLink className="w-4 h-4 mr-2" />
