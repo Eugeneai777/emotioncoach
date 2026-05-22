@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Clock, Users, Award, CheckCircle, MapPin, Play, Settings, Phone } from "lucide-react";
+import { Clock, Users, Award, CheckCircle, MapPin, Play, Settings, MessageCircle, Sparkles } from "lucide-react";
+import { CoachWeChatDialog } from "@/components/human-coach/CoachWeChatDialog";
 import PageHeader from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,7 +14,7 @@ import { CoachRatingDisplay, MultiDimensionRating } from "@/components/human-coa
 import { ReviewCard } from "@/components/human-coach/ReviewCard";
 import { BookingDialog } from "@/components/human-coach/booking/BookingDialog";
 import { supabase } from "@/integrations/supabase/client";
-import { useCoachCallContext } from "@/components/coach-call/CoachCallProvider";
+
 import { toast } from "sonner";
 import { 
   useHumanCoach, 
@@ -31,8 +32,7 @@ export default function HumanCoachDetail() {
   const [bookingOpen, setBookingOpen] = useState(false);
   const [selectedService, setSelectedService] = useState<CoachService | undefined>();
   const [isCurrentUserCoach, setIsCurrentUserCoach] = useState(false);
-  
-  const { startCall, isInCall } = useCoachCallContext();
+  const [wechatOpen, setWechatOpen] = useState(false);
   
   const { data: coach, isLoading: loadingCoach } = useHumanCoach(id);
   const { data: services = [] } = useCoachServices(id);
@@ -161,8 +161,19 @@ export default function HumanCoachDetail() {
                 <div className="text-xs text-muted-foreground">年经验</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-teal-600">{coach.total_sessions}</div>
-                <div className="text-xs text-muted-foreground">次咨询</div>
+                {coach.total_sessions > 0 ? (
+                  <>
+                    <div className="text-2xl font-bold text-teal-600">{coach.total_sessions}</div>
+                    <div className="text-xs text-muted-foreground">次咨询</div>
+                  </>
+                ) : (
+                  <>
+                    <div className="text-2xl font-bold text-teal-600 flex items-center justify-center">
+                      <Sparkles className="w-6 h-6" />
+                    </div>
+                    <div className="text-xs text-muted-foreground">新晋教练</div>
+                  </>
+                )}
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-teal-600">{Number(coach.positive_rate).toFixed(0)}%</div>
@@ -271,6 +282,11 @@ export default function HumanCoachDetail() {
                         <Button 
                           size="sm" 
                           className="mt-2 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedService(service);
+                            setBookingOpen(true);
+                          }}
                         >
                           立即预约
                         </Button>
@@ -314,25 +330,16 @@ export default function HumanCoachDetail() {
             )}
           </div>
           <div className="flex items-center gap-2">
-            {/* 语音通话按钮 */}
-            {coach?.user_id && !isCurrentUserCoach && (
+            {/* 加企微按钮 */}
+            {!isCurrentUserCoach && (
               <Button
                 variant="outline"
                 size="lg"
                 className="border-teal-200 text-teal-600 hover:bg-teal-50"
-                disabled={isInCall}
-                onClick={async () => {
-                  if (coach?.user_id) {
-                    try {
-                      await startCall(coach.user_id, coach.name);
-                    } catch (error: any) {
-                      toast.error(error.message || '发起通话失败');
-                    }
-                  }
-                }}
+                onClick={() => setWechatOpen(true)}
               >
-                <Phone className="w-4 h-4 mr-1" />
-                通话
+                <MessageCircle className="w-4 h-4 mr-1" />
+                加企微
               </Button>
             )}
             <Button 
@@ -362,6 +369,15 @@ export default function HumanCoachDetail() {
           initialService={selectedService}
         />
       )}
+
+      {/* 加企微弹窗 */}
+      <CoachWeChatDialog
+        open={wechatOpen}
+        onOpenChange={setWechatOpen}
+        coachName={coach?.name}
+        qrUrl={(coach as any)?.wechat_qr_url ?? null}
+        wechatId={(coach as any)?.wechat_id ?? null}
+      />
     </>
   );
 }

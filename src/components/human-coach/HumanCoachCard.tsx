@@ -83,10 +83,16 @@ export function HumanCoachCard({ coach }: HumanCoachCardProps) {
                 <Clock className="w-3 h-3" />
                 {coach.experience_years}年
               </span>
-              <span className="flex items-center gap-1">
-                <Users className="w-3 h-3" />
-                {coach.total_sessions}次
-              </span>
+              {coach.total_sessions > 0 ? (
+                <span className="flex items-center gap-1">
+                  <Users className="w-3 h-3" />
+                  {coach.total_sessions}次
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-0.5 text-teal-600 font-medium">
+                  🌱 新晋
+                </span>
+              )}
               <span className="text-teal-600 font-medium">
                 {Number(coach.positive_rate).toFixed(0)}%好评
               </span>
