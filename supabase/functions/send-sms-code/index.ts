@@ -75,7 +75,7 @@ Deno.serve(async (req) => {
       .from('sms_verification_codes')
       .select('created_at')
       .eq('phone_number', phone)
-      .eq('purpose', 'sms_login')
+      .eq('purpose', purpose)
       .gte('created_at', new Date(Date.now() - 60000).toISOString())
       .order('created_at', { ascending: false })
       .limit(1);
@@ -94,7 +94,7 @@ Deno.serve(async (req) => {
       .from('sms_verification_codes')
       .select('*', { count: 'exact', head: true })
       .eq('phone_number', phone)
-      .eq('purpose', 'sms_login')
+      .eq('purpose', purpose)
       .gte('created_at', todayStart.toISOString());
 
     if ((dailyCount ?? 0) >= 10) {
@@ -159,7 +159,7 @@ Deno.serve(async (req) => {
     await adminClient.from('sms_verification_codes').insert({
       phone_number: phone,
       code,
-      purpose: 'sms_login',
+      purpose,
       expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
     });
 
