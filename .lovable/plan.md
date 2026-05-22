@@ -1,60 +1,44 @@
-## 收尾两项
+## 智能推荐：管理员暂停接单后，推荐位仍展示该教练
 
-### 1. 「我的代申请」列表 + 编辑入口（BecomeCoach 顶部）
+### 根因
 
-**位置**：`src/pages/BecomeCoach.tsx` 顶部，邀请校验通过后、表单 Stepper 上方插入一张折叠卡片 `MyProxyApplicationsCard`。
+`supabase/functions/recommend-coaches/index.ts` 第 46 行已经做了 `is_accepting_new = true` 过滤，**后端逻辑正确**。
 
-**数据源**：
+问题出在前端缓存：
+
+`src/hooks/useCoachRecommendations.ts`
 ```ts
-supabase
-  .from("human_coaches")
-  .select("id, name, status, admin_note, created_at, claim_phone, mode_hint")
-  .eq("submitted_by_user_id", user.id)
-  .is("deleted_at", null)
-  .order("created_at", { ascending: false })
-  .limit(20)
+staleTime: 10 * 60 * 1000  // 10 分钟
 ```
 
-**展示**：
-- 每行：教练名 + 状态徽标（待审核/已通过/已拒绝）+ 提交时间 + 操作按钮
-- 状态映射颜色：`pending=secondary` / `approved=default(绿)` / `rejected=destructive`
-- 被拒的展开 `admin_note` 显示拒绝原因
-- 没有记录时整张卡片不渲染（避免新用户看到空状态）
+React Query 把推荐结果缓存 10 分钟，期间不会重新调用边缘函数。所以：
+- 管理员在后台把某教练的「接单」开关关掉
+- 普通用户的浏览器已经缓存了上一份推荐列表
+- 用户在 10 分钟内刷新/重新进入 `/human-coaches`，仍看到该教练
 
-**编辑入口**：
-- `pending` / `rejected` 显示「继续编辑」按钮 → `navigate(\`/become-coach?invite=${inviteCode}&edit=${id}\`)`
-- `approved` 不显示编辑按钮（已生效记录不允许在此页改，避免绕过审核；要改走教练后台）
-- BecomeCoach 检测 `?edit=<id>`：在现有 `loadExisting` 逻辑里优先按 id 拉取该记录预填；保存时若是 `rejected` → 重置为 `pending` 并清空 `admin_note`（已有逻辑可复用，需确认）
+下方「共 N 位教练可预约」的常规列表用的是 `useActiveHumanCoaches`（直接 SDK 查询 + RLS/视图过滤），它的 staleTime 短，所以那块没问题——也印证了截图里推荐位有"林蒿老师"、下方列表只有 Lisa。
 
-**新增组件**：
-- `src/components/coach-application/MyApplicationsCard.tsx` — 独立卡片，自含 query。
+### 方案
 
----
+**仅前端一处改动**（不动数据库、不动边缘函数）：
 
-### 2. 死字段在公开详情页下架
+`src/hooks/useCoachRecommendations.ts`：
+- `staleTime: 30 * 1000`（30 秒，足够防抖且不再让暂停状态滞留 10 分钟）
+- `refetchOnWindowFocus: true`（用户切回 Tab 自动拉新）
+- `refetchOnMount: true`（重新进入页面强制刷新）
 
-**文件**：`src/pages/HumanCoachDetail.tsx`
+### 不做的事
 
-经过排查，仅以下两个字段在前台真正渲染（其余 `training_background / intro_video_url / case_studies` 已无 UI 引用，仅在 types/hook 里残留，无需动）：
-- 第 138 行：`<p>{coach.title}</p>` — 删除整行
-- 第 199–211 行：`{coach.education && (...)}` 整块 — 删除
-
-**不动**：
-- 数据库列保留（防止历史数据丢失，未来如需复活可直接打开 UI）
-- `useHumanCoaches.ts` 的 select 字段保留（避免 types 联动改动扩大）
-- 申请自助表（BasicInfoStep）本来就没有这些字段，无需再清理
-
----
-
-### 改动文件清单
-
-- 新增 `src/components/coach-application/MyApplicationsCard.tsx`
-- 编辑 `src/pages/BecomeCoach.tsx` — 顶部挂载卡片；`loadExisting` 支持 `?edit=<id>` 优先
-- 编辑 `src/pages/HumanCoachDetail.tsx` — 删除 `title` + `education` 渲染块
+- 不动后端过滤逻辑（已经正确）
+- 不引入 realtime 订阅（成本与收益不匹配，30s staleTime 已足够）
+- 不在管理员侧主动失效用户缓存（跨用户/跨设备，不可行）
 
 ### 验收
 
-1. 用户 A 代申请教练 X → 顶部出现 X 的记录，状态「待审核」，可继续编辑
-2. 管理员驳回 X → A 返回 BecomeCoach，看到「已拒绝」+ 原因，可点编辑修改并自动回到 pending
-3. X 审核通过 → 列表显示「已通过」，无编辑按钮
-4. 打开任意已通过教练详情页 → 不再显示 title（如"高级心理咨询师"小字行）和教育背景卡片
+1. 管理员把"林蒿老师"接单开关关掉
+2. 普通用户已停留在 `/human-coaches` 页面 → 切走再切回（或 30s 后刷新） → 智能推荐位不再显示该教练
+3. 重新打开该开关 → 同样在 30s 内自动恢复
+
+### 改动文件
+
+- 编辑 `src/hooks/useCoachRecommendations.ts`

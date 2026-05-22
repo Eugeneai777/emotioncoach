@@ -30,6 +30,8 @@ export function useCoachRecommendations(limit: number = 5) {
       if (error) throw error;
       return data;
     },
-    staleTime: 10 * 60 * 1000, // Cache for 10 minutes
+    staleTime: 30 * 1000,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 }
