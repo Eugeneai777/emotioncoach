@@ -574,6 +574,10 @@ export default function BecomeCoach() {
           </div>
         )}
 
+        {user && !editId && (
+          <MyApplicationsCard userId={user.id} inviteToken={inviteToken} />
+        )}
+
         {existingCoach?.status === "pending" && (
           <div className="max-w-lg mx-auto px-4 pt-4">
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-800">
