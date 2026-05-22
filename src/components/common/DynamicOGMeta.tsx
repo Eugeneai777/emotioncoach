@@ -98,6 +98,7 @@ export function DynamicOGMeta({ pageKey, overrides }: DynamicOGMetaProps) {
     const staticShareUrl = WECHAT_STATIC_SHARE_URLS[pageKey];
     if (staticShareUrl) {
       const params = new URLSearchParams(location.search || '');
+      params.set('target', location.pathname);
       params.set('ref', 'share');
       params.set('wxcard', OG_CACHE_VERSION);
       const search = params.toString();
