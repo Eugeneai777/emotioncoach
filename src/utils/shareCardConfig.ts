@@ -572,14 +572,26 @@ export const getBlobFileExtension = (blob: Blob): 'jpg' | 'png' => {
   return blob.type === 'image/png' ? 'png' : 'jpg';
 };
 
-/** Canvas 转 DataURL - 优化版 */
-export const canvasToDataUrl = (canvas: HTMLCanvasElement): string => {
-  // 大图使用 JPEG 减少数据量
-  const pixels = canvas.width * canvas.height;
-  if (pixels > 2000000) {
-    return canvas.toDataURL('image/jpeg', 0.9);
+/** Canvas 转 DataURL - 优化版（安全处理污染画布） */
+export const canvasToDataUrl = (canvas: HTMLCanvasElement): string | null => {
+  try {
+    // 大图使用 JPEG 减少数据量
+    const pixels = canvas.width * canvas.height;
+    if (pixels > 2000000) {
+      return canvas.toDataURL('image/jpeg', 0.9);
+    }
+    return canvas.toDataURL('image/png', 1.0);
+  } catch (e) {
+    // SecurityError: canvas was tainted by a cross-origin image without proper CORS.
+    // Try JPEG as a last-ditch (same restriction, but log clearly for debugging).
+    console.error('[shareCardConfig] canvas.toDataURL failed (tainted canvas?):', e);
+    try {
+      return canvas.toDataURL('image/jpeg', 0.85);
+    } catch (e2) {
+      console.error('[shareCardConfig] canvas.toDataURL JPEG fallback also failed:', e2);
+      return null;
+    }
   }
-  return canvas.toDataURL('image/png', 1.0);
 };
 
 /**
