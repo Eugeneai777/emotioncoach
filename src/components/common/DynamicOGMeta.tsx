@@ -26,6 +26,17 @@ interface DynamicOGMetaProps {
 const DEFAULT_IMAGE_WIDTH = 1200;
 const DEFAULT_IMAGE_HEIGHT = 630;
 
+// 微信右上角转发有时会忽略 SPA 内动态 Helmet 标签，只抓取被分享链接的首屏 HTML。
+// 这些静态中转页带完整 OG 标签，再自动跳回真实页面，可兜住“SDK ok 但收到普通链接”的情况。
+const WECHAT_STATIC_SHARE_URLS: Record<string, string> = {
+  coach_wealth_coach_4_questions: `${OG_BASE_URL}/share/wealth-coach.html`,
+  maleMidlifeVitalityAssessment: `${OG_BASE_URL}/share/male-midlife-vitality.html`,
+};
+
+const WECHAT_STATIC_SHARE_IMAGES: Record<string, string> = {
+  maleMidlifeVitalityAssessment: `${OG_BASE_URL}/wechat-thumb-male-midlife-vitality.jpg`,
+};
+
 /**
  * 动态 OG Meta 组件
  * 自动从数据库读取 OG 配置，支持管理后台实时修改
@@ -88,6 +99,16 @@ export function DynamicOGMeta({ pageKey, overrides }: DynamicOGMetaProps) {
   // 注意：财富教练页面虽然有静态 landing 页用于爬虫兜底，但 JS-SDK 分享 link 必须与当前页一致，
   // 否则微信 Android 会因路径不匹配丢弃 SDK 设定，回退为纯链接。
   const wechatShareUrl = useMemo(() => {
+    const staticShareUrl = WECHAT_STATIC_SHARE_URLS[pageKey];
+    if (staticShareUrl) {
+      const params = new URLSearchParams(location.search || '');
+      params.set('target', location.pathname);
+      params.set('ref', 'share');
+      params.set('wxcard', OG_CACHE_VERSION);
+      const search = params.toString();
+      return `${staticShareUrl}${search ? `?${search}` : ''}`;
+    }
+
     if (typeof window === 'undefined') return shareUrl;
 
     try {
@@ -101,7 +122,7 @@ export function DynamicOGMeta({ pageKey, overrides }: DynamicOGMetaProps) {
     } catch {
       return shareUrl;
     }
-  }, [baseDomain, shareUrl]);
+  }, [baseDomain, pageKey, shareUrl, location.pathname, location.search]);
 
   // 分享封面降级：缺失/非 https 时退回默认封面，避免微信/小程序卡片图裂
   const safeShareImage = useMemo(() => {
@@ -113,10 +134,12 @@ export function DynamicOGMeta({ pageKey, overrides }: DynamicOGMetaProps) {
   // 微信卡片缩图：优先 wechat_thumb_url（小尺寸正方形 JPG，<128KB），
   // 缺失时降级到横版 og:image（可能因过大或比例问题导致微信丢图）
   const wechatShareImage = useMemo(() => {
+    const staticImage = WECHAT_STATIC_SHARE_IMAGES[pageKey];
+    if (staticImage) return staticImage;
     const thumb = ogConfig.wechatThumbUrl;
     if (thumb && /^https:\/\//i.test(thumb)) return thumb;
     return safeShareImage;
-  }, [ogConfig.wechatThumbUrl, safeShareImage]);
+  }, [pageKey, ogConfig.wechatThumbUrl, safeShareImage]);
 
   // 微信 JS-SDK 分享配置（H5 / 微信浏览器内）
   useWechatShare({
