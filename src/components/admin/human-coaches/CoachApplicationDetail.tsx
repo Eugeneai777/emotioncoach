@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -15,39 +15,56 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
-import { 
-  Check, 
-  X, 
-  Loader2, 
-  Phone, 
-  Briefcase, 
+import {
+  Check,
+  X,
+  Loader2,
+  Phone,
+  Briefcase,
   Clock,
-  Crown
+  Crown,
+  FileText,
+  ExternalLink,
+  Sparkles,
+  User as UserIcon,
 } from "lucide-react";
-import { CertificationReview } from "./CertificationReview";
 import { useCoachPriceTiers } from "@/hooks/useCoachPriceTiers";
+import { suggestTierLevel, type ExperienceBucket } from "@/components/coach-application/ExperienceTierStep";
 
 interface CoachApplicationDetailProps {
   coachId: string;
   onClose: () => void;
-  onApprove: (coachId: string, adminNote?: string, priceTierId?: string) => void;
-  onReject: (coachId: string, adminNote?: string) => void;
+  onApprove: (
+    coachId: string,
+    certificationIds: string[],
+    finalTierId: string,
+  ) => void;
+  onReject: (coachId: string, reason: string) => void;
   isPending: boolean;
 }
+
+const BUCKET_LABEL: Record<string, string> = {
+  lt3: "3年以下",
+  "3to5": "3-5年",
+  "5to10": "5-10年",
+  gte10: "10年以上",
+};
 
 export function CoachApplicationDetail({
   coachId,
   onClose,
   onApprove,
   onReject,
-  isPending
+  isPending,
 }: CoachApplicationDetailProps) {
-  const [adminNote, setAdminNote] = useState("");
+  const [rejectReason, setRejectReason] = useState("");
+  const [showRejectInput, setShowRejectInput] = useState(false);
   const [selectedTierId, setSelectedTierId] = useState<string>("");
+  const [reviewedCertIds, setReviewedCertIds] = useState<Set<string>>(new Set());
 
   const { data: priceTiers } = useCoachPriceTiers();
 
@@ -56,25 +73,70 @@ export function CoachApplicationDetail({
     queryFn: async () => {
       const { data, error } = await supabase
         .from("human_coaches")
-        .select(`
-          *,
-          coach_certifications(*),
-          coach_services(*)
-        `)
+        .select(`*, coach_certifications(*), coach_services(*)`)
         .eq("id", coachId)
         .single();
-      
       if (error) throw error;
-      return data;
-    }
+      return data as any;
+    },
   });
 
-  const handleApprove = () => {
+  // 系统推荐档位（基于经验+持证）
+  const suggestedTier = useMemo(() => {
+    if (!coach || !priceTiers) return undefined;
+    const bucket = (coach.experience_years_bucket as ExperienceBucket | null) || "";
+    const hasCert = (coach.coach_certifications?.length || 0) > 0;
+    if (!bucket) return undefined;
+    const level = suggestTierLevel(bucket, hasCert);
+    return priceTiers.find((t) => t.tier_level === level);
+  }, [coach, priceTiers]);
+
+  const preferredTier = useMemo(
+    () => priceTiers?.find((t) => t.id === coach?.preferred_tier_id),
+    [priceTiers, coach?.preferred_tier_id],
+  );
+
+  // 默认选中：申请人期望 > 系统推荐
+  useEffect(() => {
     if (!selectedTierId) {
-      toast.error("请先选择收费档次");
+      if (preferredTier) setSelectedTierId(preferredTier.id);
+      else if (suggestedTier) setSelectedTierId(suggestedTier.id);
+    }
+  }, [preferredTier, suggestedTier, selectedTierId]);
+
+  const certifications: any[] = coach?.coach_certifications || [];
+  const allCertsReviewed =
+    certifications.length === 0 ||
+    certifications.every((c) => reviewedCertIds.has(c.id));
+  const canApprove = !!selectedTierId && allCertsReviewed;
+
+  const toggleCertReviewed = (id: string, checked: boolean) => {
+    setReviewedCertIds((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  };
+
+  const handleApprove = () => {
+    if (!canApprove) {
+      toast.error(
+        !selectedTierId
+          ? "请先选择最终档位"
+          : "请先勾选每张证书的「已审阅」",
+      );
       return;
     }
-    onApprove(coachId, adminNote, selectedTierId);
+    onApprove(coachId, certifications.map((c) => c.id), selectedTierId);
+  };
+
+  const handleReject = () => {
+    if (!rejectReason.trim()) {
+      toast.error("请填写拒绝原因");
+      return;
+    }
+    onReject(coachId, rejectReason.trim());
   };
 
   if (isLoading) {
@@ -92,11 +154,18 @@ export function CoachApplicationDetail({
   if (!coach) return null;
 
   const isPendingStatus = coach.status === "pending";
-  const selectedTier = priceTiers?.find(t => t.id === selectedTierId);
+  const isProxy =
+    coach.submitted_by_user_id &&
+    coach.user_id &&
+    coach.submitted_by_user_id !== coach.user_id
+      ? true
+      : !coach.user_id && coach.submitted_by_user_id
+        ? true
+        : false;
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent size="xl">
+      <DialogContent size="xl" className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3">
             <div className="w-14 shrink-0 overflow-hidden rounded-lg border border-border bg-muted">
@@ -110,18 +179,40 @@ export function CoachApplicationDetail({
                 )}
               </AspectRatio>
             </div>
-            <div>
-              <div className="flex items-center gap-2">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
                 <span>{coach.name}</span>
-                <Badge variant={
-                  coach.status === "pending" ? "secondary" :
-                  coach.status === "approved" ? "default" : "destructive"
-                }>
-                  {coach.status === "pending" ? "待审核" :
-                   coach.status === "approved" ? "已通过" : "已拒绝"}
+                <Badge
+                  variant={
+                    coach.status === "pending"
+                      ? "secondary"
+                      : coach.status === "approved"
+                        ? "default"
+                        : "destructive"
+                  }
+                >
+                  {coach.status === "pending"
+                    ? "待审核"
+                    : coach.status === "approved"
+                      ? "已通过"
+                      : "已拒绝"}
                 </Badge>
+                <Badge variant="outline" className={isProxy ? "border-amber-500 text-amber-600" : "border-emerald-500 text-emerald-600"}>
+                  {isProxy ? "代申请" : "自助申请"}
+                </Badge>
+                {isProxy && coach.proxy_verified_at && (
+                  <Badge variant="outline" className="border-blue-500 text-blue-600 text-xs">
+                    ✓ 短信已验证
+                  </Badge>
+                )}
               </div>
-              <p className="text-sm font-normal text-muted-foreground">{coach.title}</p>
+              <p className="text-xs font-normal text-muted-foreground mt-1">
+                {coach.experience_years_bucket
+                  ? `经验区间：${BUCKET_LABEL[coach.experience_years_bucket]}`
+                  : "未填写经验区间"}
+                {" · "}
+                {certifications.length} 张证书
+              </p>
             </div>
           </DialogTitle>
         </DialogHeader>
@@ -129,7 +220,14 @@ export function CoachApplicationDetail({
         <Tabs defaultValue="basic" className="mt-4">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="basic">基本信息</TabsTrigger>
-            <TabsTrigger value="certifications">资质证书</TabsTrigger>
+            <TabsTrigger value="certifications">
+              资质审阅
+              {isPendingStatus && certifications.length > 0 && (
+                <span className="ml-1 text-xs">
+                  ({reviewedCertIds.size}/{certifications.length})
+                </span>
+              )}
+            </TabsTrigger>
             <TabsTrigger value="services">服务项目</TabsTrigger>
           </TabsList>
 
@@ -141,8 +239,14 @@ export function CoachApplicationDetail({
                   联系方式
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className="text-sm">{(coach as any).phone || "未填写"}</p>
+              <CardContent className="space-y-1 text-sm">
+                <div>
+                  <span className="text-muted-foreground">手机：</span>
+                  {coach.claim_phone || coach.phone || "未填写"}
+                  {coach.claim_country_code && coach.claim_phone && (
+                    <span className="text-muted-foreground"> ({coach.claim_country_code})</span>
+                  )}
+                </div>
               </CardContent>
             </Card>
 
@@ -155,16 +259,10 @@ export function CoachApplicationDetail({
               </CardHeader>
               <CardContent className="space-y-3">
                 <div>
-                  <Label className="text-xs text-muted-foreground">从业年限</Label>
-                  <p className="text-sm">{coach.experience_years || 0} 年</p>
-                </div>
-                <div>
                   <Label className="text-xs text-muted-foreground">擅长领域</Label>
                   <div className="flex flex-wrap gap-1 mt-1">
-                    {coach.specialties?.map((specialty: string, index: number) => (
-                      <Badge key={index} variant="outline" className="text-xs">
-                        {specialty}
-                      </Badge>
+                    {coach.specialties?.map((s: string, i: number) => (
+                      <Badge key={i} variant="outline" className="text-xs">{s}</Badge>
                     ))}
                   </div>
                 </div>
@@ -182,50 +280,112 @@ export function CoachApplicationDetail({
                   申请信息
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2">
-                <div className="flex justify-between text-sm">
+              <CardContent className="space-y-2 text-sm">
+                <div className="flex justify-between">
                   <span className="text-muted-foreground">申请时间</span>
-                  <span>{format(new Date(coach.created_at), "yyyy年MM月dd日 HH:mm", { locale: zhCN })}</span>
+                  <span>{format(new Date(coach.created_at), "yyyy-MM-dd HH:mm", { locale: zhCN })}</span>
                 </div>
-                {(coach as any).admin_note && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground flex items-center gap-1">
+                    <UserIcon className="h-3 w-3" />
+                    提交者 user_id
+                  </span>
+                  <span className="font-mono text-xs">
+                    {coach.submitted_by_user_id?.slice(0, 8) || "—"}…
+                  </span>
+                </div>
+                {coach.rejected_reason && (
                   <div>
-                    <Label className="text-xs text-muted-foreground">审核备注</Label>
-                    <p className="text-sm mt-1 p-2 bg-muted rounded">{(coach as any).admin_note}</p>
+                    <Label className="text-xs text-muted-foreground">上次拒绝原因</Label>
+                    <p className="text-sm mt-1 p-2 bg-muted rounded">{coach.rejected_reason}</p>
                   </div>
                 )}
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="certifications" className="mt-4">
-            <CertificationReview 
-              coachId={coachId}
-              certifications={coach.coach_certifications || []}
-            />
+          <TabsContent value="certifications" className="mt-4 space-y-3">
+            {certifications.length === 0 ? (
+              <Card>
+                <CardContent className="py-8 text-center text-muted-foreground">
+                  暂未上传资质证书
+                </CardContent>
+              </Card>
+            ) : (
+              <>
+                {isPendingStatus && (
+                  <p className="text-xs text-muted-foreground bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900 rounded p-2">
+                    ⚠️ 通过审核前需逐一勾选「已审阅」，作为法律意义上的人工核验留痕。
+                  </p>
+                )}
+                {certifications.map((cert) => (
+                  <Card key={cert.id}>
+                    <CardContent className="p-4">
+                      <div className="flex items-start gap-4">
+                        {cert.image_url ? (
+                          <a
+                            href={cert.image_url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="w-24 h-24 rounded-lg bg-muted overflow-hidden hover:opacity-80"
+                          >
+                            <img src={cert.image_url} alt={cert.cert_name} className="w-full h-full object-cover" />
+                          </a>
+                        ) : (
+                          <div className="w-24 h-24 rounded-lg bg-muted flex items-center justify-center">
+                            <FileText className="h-8 w-8 text-muted-foreground" />
+                          </div>
+                        )}
+                        <div className="flex-1 text-sm space-y-1">
+                          <div className="font-medium">{cert.cert_name}</div>
+                          <div className="text-muted-foreground">类型：{cert.cert_type}</div>
+                          {cert.cert_number && <div className="text-muted-foreground">编号：{cert.cert_number}</div>}
+                          {cert.issuing_authority && <div className="text-muted-foreground">机构：{cert.issuing_authority}</div>}
+                          {cert.image_url && (
+                            <a
+                              href={cert.image_url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-1 text-primary text-xs hover:underline"
+                            >
+                              <ExternalLink className="h-3 w-3" />
+                              查看大图
+                            </a>
+                          )}
+                        </div>
+                        {isPendingStatus && (
+                          <label className="flex items-center gap-2 text-sm cursor-pointer select-none shrink-0">
+                            <Checkbox
+                              checked={reviewedCertIds.has(cert.id)}
+                              onCheckedChange={(v) => toggleCertReviewed(cert.id, !!v)}
+                            />
+                            <span>已审阅</span>
+                          </label>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </>
+            )}
           </TabsContent>
 
           <TabsContent value="services" className="space-y-3 mt-4">
             {coach.coach_services?.length === 0 ? (
               <Card>
                 <CardContent className="py-8 text-center text-muted-foreground">
-                  暂未设置服务项目
+                  通过审核后将自动创建默认 60 分钟服务
                 </CardContent>
               </Card>
             ) : (
               coach.coach_services?.map((service: any) => (
                 <Card key={service.id}>
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h4 className="font-medium">{service.service_name}</h4>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {service.description || "暂无描述"}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-xs text-muted-foreground">{service.duration_minutes}分钟</p>
-                        <p className="text-xs text-muted-foreground mt-1">价格待设定</p>
-                      </div>
+                  <CardContent className="p-4 flex justify-between">
+                    <div>
+                      <h4 className="font-medium">{service.service_name}</h4>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {service.duration_minutes} 分钟 · ¥{service.price ?? "待设定"}
+                      </p>
                     </div>
                   </CardContent>
                 </Card>
@@ -236,67 +396,122 @@ export function CoachApplicationDetail({
 
         {isPendingStatus && (
           <div className="mt-4 space-y-4">
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <Crown className="h-4 w-4 text-amber-500" />
-                收费档次 *
-              </Label>
-              <Select value={selectedTierId} onValueChange={setSelectedTierId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="请选择收费档次" />
-                </SelectTrigger>
-                <SelectContent>
-                  {priceTiers?.map((tier) => (
-                    <SelectItem key={tier.id} value={tier.id}>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{tier.tier_name}</span>
-                        <span className="text-primary font-semibold">¥{tier.price}</span>
-                        <span className="text-muted-foreground text-xs">- {tier.description}</span>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Crown className="h-4 w-4 text-amber-500" />
+                  档位决策
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div className="p-2 rounded bg-muted/50">
+                    <div className="text-xs text-muted-foreground">申请人期望</div>
+                    <div className="font-medium">
+                      {preferredTier ? `${preferredTier.tier_name} ¥${preferredTier.price}` : "未填写"}
+                    </div>
+                    {coach.preferred_tier_reason && (
+                      <div className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                        {coach.preferred_tier_reason}
                       </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {selectedTier && (
-                <p className="text-sm text-muted-foreground">
-                  选择后，该教练的所有服务将统一定价为 <span className="text-primary font-semibold">¥{selectedTier.price}</span>
-                </p>
-              )}
-            </div>
+                    )}
+                  </div>
+                  <div className="p-2 rounded bg-primary/5 border border-primary/30">
+                    <div className="text-xs text-primary flex items-center gap-1">
+                      <Sparkles className="h-3 w-3" />
+                      系统推荐
+                    </div>
+                    <div className="font-medium">
+                      {suggestedTier ? `${suggestedTier.tier_name} ¥${suggestedTier.price}` : "—"}
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1">基于经验+持证自动计算</div>
+                  </div>
+                </div>
 
-            <div>
-              <Label>审核备注（可选）</Label>
-              <Textarea
-                value={adminNote}
-                onChange={(e) => setAdminNote(e.target.value)}
-                placeholder="填写审核意见或拒绝原因..."
-                className="mt-1"
-              />
-            </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-2 block">最终档位 *</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {priceTiers?.map((tier) => {
+                      const isSel = selectedTierId === tier.id;
+                      const isSuggested = suggestedTier?.id === tier.id;
+                      return (
+                        <button
+                          key={tier.id}
+                          type="button"
+                          onClick={() => setSelectedTierId(tier.id)}
+                          className={`text-left p-3 rounded-lg border-2 transition ${
+                            isSel
+                              ? "border-primary bg-primary/5"
+                              : "border-border hover:border-primary/50"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium text-sm">{tier.tier_name}</span>
+                            {isSuggested && (
+                              <Badge variant="secondary" className="text-xs">推荐</Badge>
+                            )}
+                          </div>
+                          <div className="text-primary font-semibold mt-1">¥{tier.price}</div>
+                          <div className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                            {tier.description}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {showRejectInput && (
+              <div>
+                <Label>拒绝原因 *</Label>
+                <Textarea
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  placeholder="请告知申请人具体原因，将通过短信/系统消息送达"
+                  className="mt-1"
+                />
+              </div>
+            )}
           </div>
         )}
 
         <DialogFooter className="mt-4">
-          <Button variant="outline" onClick={onClose}>
-            关闭
-          </Button>
+          <Button variant="outline" onClick={onClose}>关闭</Button>
           {isPendingStatus && (
             <>
-              <Button
-                variant="destructive"
-                onClick={() => onReject(coachId, adminNote)}
-                disabled={isPending}
-              >
-                {isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <X className="h-4 w-4 mr-1" />}
-                拒绝申请
-              </Button>
-              <Button
-                onClick={handleApprove}
-                disabled={isPending || !selectedTierId}
-              >
-                {isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Check className="h-4 w-4 mr-1" />}
-                通过申请
-              </Button>
+              {showRejectInput ? (
+                <>
+                  <Button variant="ghost" onClick={() => setShowRejectInput(false)} disabled={isPending}>
+                    取消
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={handleReject}
+                    disabled={isPending || !rejectReason.trim()}
+                  >
+                    {isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <X className="h-4 w-4 mr-1" />}
+                    确认拒绝
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button variant="destructive" onClick={() => setShowRejectInput(true)} disabled={isPending}>
+                    <X className="h-4 w-4 mr-1" />
+                    拒绝申请
+                  </Button>
+                  <Button onClick={handleApprove} disabled={isPending || !canApprove}>
+                    {isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Check className="h-4 w-4 mr-1" />}
+                    通过申请
+                    {!canApprove && certifications.length > 0 && (
+                      <span className="ml-1 text-xs opacity-70">
+                        ({reviewedCertIds.size}/{certifications.length})
+                      </span>
+                    )}
+                  </Button>
+                </>
+              )}
             </>
           )}
         </DialogFooter>
