@@ -1,79 +1,60 @@
-## 商业架构师视角评估
+## 收尾两项
 
-**当前漏洞**（按严重度）:
+### 1. 「我的代申请」列表 + 编辑入口（BecomeCoach 顶部）
 
-1. **P0 头像未必填**：`isValid` 不校验 `avatarUrl`。无头像教练展示卡几乎不可点击 → 直接吃掉首屏转化。商业上必须强制。
-2. **P0 静默失败**：按钮 disabled，但用户看不到"哪一项未填"。在大屏长表单里只能凭运气找到红字。流失。
-3. **P1 简介质量**：当前 placeholder 一行字，新教练写 30 字就交，平台陈列质量崩。需要"结构化模板 + AI 优化"双轨。
-4. **P2 手机号格式**：仅 maxLength=11，无 `^1[3-9]\d{9}$` 正则校验，会污染主线索数据。
+**位置**：`src/pages/BecomeCoach.tsx` 顶部，邀请校验通过后、表单 Stepper 上方插入一张折叠卡片 `MyProxyApplicationsCard`。
 
----
-
-## 修改方案
-
-### 1. 必填星标 + 提交校验（BasicInfoStep.tsx）
-
-将每个必填 Label 的 `*` 改为视觉一致的红色星号组件 `<RequiredMark />`（`text-destructive`），必填项：
-- 头像（新增必填）
-- 显示名称
-- 联系电话（追加大陆手机号正则校验，海外号放过）
-- 个人简介（≥80 字，太短的简介对转化无意义）
-- 擅长领域（≥1）
-
-**校验交互升级**：
-- 不再用 `disabled` 灰按钮。按钮始终可点。
-- 点"下一步"时跑 `validate()`，返回首个缺失项 → toast 红色提示"请上传头像 / 请完善个人简介（至少 80 字）"+ 自动滚动并 focus 到该字段（用 `ref` 或 `getElementById`）。
-- 字段失焦后才显示该字段下方的红色错误文案（避免一进页面全是红）。
-
-### 2. 个人简介结构化模板
-
-参照用户上传图，提炼为**4 段式模板**，注入 placeholder + 一键"插入模板"按钮：
-
-```text
-【专业背景】
-持有 XX 证书，专业受训于 XX 流派/技术。
-
-【咨询风格】
-关键词1｜关键词2｜关键词3（如：温暖稳定｜专业落地｜深度陪伴）
-
-【擅长人群与议题】
-面对 XX 人群，我会 XX；
-面对 XX 人群，我会 XX。
-
-【我的承诺】
-（一句话总结你能为来访者带来什么）
+**数据源**：
+```ts
+supabase
+  .from("human_coaches")
+  .select("id, name, status, admin_note, created_at, claim_phone, mode_hint")
+  .eq("submitted_by_user_id", user.id)
+  .is("deleted_at", null)
+  .order("created_at", { ascending: false })
+  .limit(20)
 ```
 
-UI 实现：
-- 简介 Textarea 上方新增按钮组：`[插入模板]` `[AI 优化简介]`。
-- 点"插入模板"→ 若 bio 为空直接填入；若已有内容弹 confirm "将覆盖当前内容？"。
-- placeholder 改成精简版同结构提示。
-- 字数下限 80、上限维持 500，计数器从 `x/500` 改为 `x/500（至少 80 字）`，未达标变红。
+**展示**：
+- 每行：教练名 + 状态徽标（待审核/已通过/已拒绝）+ 提交时间 + 操作按钮
+- 状态映射颜色：`pending=secondary` / `approved=default(绿)` / `rejected=destructive`
+- 被拒的展开 `admin_note` 显示拒绝原因
+- 没有记录时整张卡片不渲染（避免新用户看到空状态）
 
-### 3. AI 优化简介加 system 提示加固
+**编辑入口**：
+- `pending` / `rejected` 显示「继续编辑」按钮 → `navigate(\`/become-coach?invite=${inviteCode}&edit=${id}\`)`
+- `approved` 不显示编辑按钮（已生效记录不允许在此页改，避免绕过审核；要改走教练后台）
+- BecomeCoach 检测 `?edit=<id>`：在现有 `loadExisting` 逻辑里优先按 id 拉取该记录预填；保存时若是 `rejected` → 重置为 `pending` 并清空 `admin_note`（已有逻辑可复用，需确认）
 
-`ai-coach-application` 的 `optimize_bio` action 若已存在则在前端 prompt 上下文里附加："请保留 4 段式结构（专业背景/咨询风格/擅长人群/我的承诺），输出中文，控制在 300 字内"。**仅前端 body 字段补充**，不动 edge function 主逻辑。
-
-### 4. 手机号校验
-
-新增 util `isValidChinaMobile(phone)`。提交时若不为空且不匹配 → 提示"请输入有效的 11 位手机号"。
-
----
-
-## 改动文件清单
-
-- `src/components/coach-application/BasicInfoStep.tsx` — 主战场，加 `RequiredMark`、校验函数、模板插入按钮、错误态、滚动 focus。
-- `src/lib/coachApplicationTemplates.ts`（新建）— 导出 `BIO_TEMPLATE` 字符串常量与 `validateBasicInfo()` 纯函数，便于复用与单测。
-- `src/pages/BecomeCoach.tsx` — 无需改业务逻辑，只在提交前再跑一次最终校验作为兜底。
-
-不动数据库、不动 edge function、不动 RLS。纯前端表单层加固。
+**新增组件**：
+- `src/components/coach-application/MyApplicationsCard.tsx` — 独立卡片，自含 query。
 
 ---
 
-## 验收用例
+### 2. 死字段在公开详情页下架
 
-1. 不传头像点下一步 → 红 toast "请上传头像"，页面滚到头像区。
-2. 简介只填 20 字 → 提示 "个人简介至少 80 字"。
-3. 点"插入模板"→ Textarea 立即填入 4 段结构，字数计数器更新。
-4. 手机号填 `12345` → 提示无效。
-5. 全部填齐 → 正常进入下一步，无 regression。
+**文件**：`src/pages/HumanCoachDetail.tsx`
+
+经过排查，仅以下两个字段在前台真正渲染（其余 `training_background / intro_video_url / case_studies` 已无 UI 引用，仅在 types/hook 里残留，无需动）：
+- 第 138 行：`<p>{coach.title}</p>` — 删除整行
+- 第 199–211 行：`{coach.education && (...)}` 整块 — 删除
+
+**不动**：
+- 数据库列保留（防止历史数据丢失，未来如需复活可直接打开 UI）
+- `useHumanCoaches.ts` 的 select 字段保留（避免 types 联动改动扩大）
+- 申请自助表（BasicInfoStep）本来就没有这些字段，无需再清理
+
+---
+
+### 改动文件清单
+
+- 新增 `src/components/coach-application/MyApplicationsCard.tsx`
+- 编辑 `src/pages/BecomeCoach.tsx` — 顶部挂载卡片；`loadExisting` 支持 `?edit=<id>` 优先
+- 编辑 `src/pages/HumanCoachDetail.tsx` — 删除 `title` + `education` 渲染块
+
+### 验收
+
+1. 用户 A 代申请教练 X → 顶部出现 X 的记录，状态「待审核」，可继续编辑
+2. 管理员驳回 X → A 返回 BecomeCoach，看到「已拒绝」+ 原因，可点编辑修改并自动回到 pending
+3. X 审核通过 → 列表显示「已通过」，无编辑按钮
+4. 打开任意已通过教练详情页 → 不再显示 title（如"高级心理咨询师"小字行）和教育背景卡片
