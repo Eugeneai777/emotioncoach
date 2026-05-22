@@ -71,8 +71,9 @@ export function DynamicAssessmentQuestions({ questions, scoreOptions, onComplete
         setDirection(1);
         setCurrentQ((i) => i + 1);
       } else if (e.key === "Enter" && allAnswered && isLast) {
-        onComplete(answers);
+        handleSubmit();
       }
+
       const num = parseInt(e.key);
       if (!isNaN(num) && q) {
         const opts = shuffledOptionsMap[currentQ] as any[];
