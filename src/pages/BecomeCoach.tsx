@@ -137,7 +137,7 @@ export default function BecomeCoach() {
       setPrefillLoading(true);
       const { data: coach } = await supabase
         .from("human_coaches")
-        .select("id, status, admin_note, name, bio, avatar_url, specialties, experience_years")
+        .select("id, status, admin_note, name, bio, avatar_url, specialties, experience_years, experience_years_bucket, preferred_tier_id, preferred_tier_reason")
         .eq("user_id", user.id)
         .maybeSingle();
 
@@ -153,6 +153,12 @@ export default function BecomeCoach() {
           specialties: coach.specialties || prev.specialties,
           yearsExperience: coach.experience_years || prev.yearsExperience,
         }));
+        setExperienceTier({
+          experienceBucket: (coach.experience_years_bucket as any) || "",
+          preferredTierId: coach.preferred_tier_id || "",
+          preferredTierReason: coach.preferred_tier_reason || "",
+        });
+
 
         // Prefill certifications from existing record
         const { data: certs } = await supabase
