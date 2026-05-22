@@ -156,9 +156,9 @@ export default function BecomeCoach() {
   const [, setPrefillLoading] = useState(false);
 
 
-  // Prefill form when user already has a human_coaches record (self-mode only)
+  // Prefill form when user already has a human_coaches record (self-mode only, no editId)
   useEffect(() => {
-    if (!user || mode === "proxy") return;
+    if (!user || mode === "proxy" || editId) return;
 
     let cancelled = false;
     const loadExisting = async () => {
@@ -208,7 +208,66 @@ export default function BecomeCoach() {
     };
     loadExisting();
     return () => { cancelled = true; };
-  }, [user]);
+  }, [user, mode, editId]);
+
+  // Edit-mode prefill: load specific record by id (typically proxy applications)
+  useEffect(() => {
+    if (!user || !editId) return;
+    let cancelled = false;
+    (async () => {
+      const { data: coach } = await supabase
+        .from("human_coaches")
+        .select("id, status, admin_note, name, phone, bio, avatar_url, specialties, experience_years, experience_years_bucket, preferred_tier_id, preferred_tier_reason, claim_phone, claim_country_code, submitted_by_user_id")
+        .eq("id", editId)
+        .maybeSingle();
+      if (cancelled || !coach) return;
+      if (coach.submitted_by_user_id !== user.id) {
+        toast({ title: "无权限编辑该申请", variant: "destructive" });
+        navigate("/become-coach" + (inviteToken ? `?invite=${inviteToken}` : ""));
+        return;
+      }
+      setExistingCoach({ id: coach.id, status: coach.status, admin_note: coach.admin_note });
+      setBasicInfo((prev) => ({
+        ...prev,
+        displayName: coach.name || prev.displayName,
+        phone: coach.phone || coach.claim_phone || prev.phone,
+        bio: coach.bio || prev.bio,
+        avatarUrl: coach.avatar_url || prev.avatarUrl,
+        specialties: coach.specialties || prev.specialties,
+        yearsExperience: coach.experience_years || prev.yearsExperience,
+      }));
+      setExperienceTier({
+        experienceBucket: (coach.experience_years_bucket as any) || "",
+        preferredTierId: coach.preferred_tier_id || "",
+        preferredTierReason: coach.preferred_tier_reason || "",
+      });
+      if (mode === "proxy") {
+        setProxyData({
+          coachName: coach.name || "",
+          coachPhone: coach.claim_phone || coach.phone || "",
+          coachCountryCode: coach.claim_country_code || "+86",
+          relation: "",
+          verified: true,
+        });
+      }
+      const { data: certs } = await supabase
+        .from("coach_certifications")
+        .select("cert_type, cert_name, issuing_authority, cert_number, image_url, description")
+        .eq("coach_id", coach.id);
+      if (!cancelled && certs && certs.length > 0) {
+        setCertifications(certs.map((c) => ({
+          certType: c.cert_type,
+          certName: c.cert_name,
+          issuingAuthority: c.issuing_authority || "",
+          certNumber: c.cert_number || "",
+          imageUrl: c.image_url || "",
+          description: c.description || "",
+        })));
+      }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, editId]);
 
   const getCurrentStepIndex = () =>
     STEPS.findIndex((s) => s.key === currentStep);
