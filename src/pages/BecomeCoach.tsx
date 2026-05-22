@@ -11,12 +11,17 @@ import {
   suggestTierLevel,
   type ExperienceTierData,
 } from "@/components/coach-application/ExperienceTierStep";
+import {
+  ProxyVerifyStep,
+  type ProxyVerifyData,
+} from "@/components/coach-application/ProxyVerifyStep";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCoachPriceTiers } from "@/hooks/useCoachPriceTiers";
+
 
 type Step = "basic" | "certifications" | "experience" | "submit" | "success";
 
