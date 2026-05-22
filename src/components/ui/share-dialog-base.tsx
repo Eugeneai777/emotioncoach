@@ -235,6 +235,25 @@ export function ShareDialogBase({
           cachedBlobUrlRef.current = dataUrl;
           setPreviewUrl(dataUrl);
           setShowPreview(true);
+
+          // 桌面端（非移动设备 + 非微信 + 非小程序）：同步触发一次下载，
+          // 让用户点击"生成海报"后立刻看到浏览器下载动作，再保留预览供查看/分享。
+          const { isMobile, isMiniProgram, isWeChat: isWX } = getShareEnvironment();
+          if (!isMobile && !isMiniProgram && !isWX) {
+            try {
+              const link = document.createElement('a');
+              link.href = dataUrl;
+              const ext = dataUrl.startsWith('data:image/png') ? 'png' : 'jpg';
+              const cleanName = fileName.replace(/\.(png|jpg|jpeg|webp)$/i, '');
+              link.download = `${cleanName}.${ext}`;
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+              toast.success('海报已生成并下载');
+            } catch (e) {
+              console.warn('[ShareDialogBase] Auto-download failed (preview still available):', e);
+            }
+          }
         } else {
           if (loadingToastId) toast.dismiss(loadingToastId);
           toast.error("生成图片失败，请重试");
