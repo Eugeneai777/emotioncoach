@@ -576,7 +576,7 @@ export default function BecomeCoach() {
                 certifications={certifications}
                 defaultServiceName={invitationData?.default_service_name}
                 onSubmit={handleSubmit}
-                onBack={() => setCurrentStep("certifications")}
+                onBack={() => setCurrentStep("experience")}
                 isSubmitting={isSubmitting}
                 submitLabel={existingCoach ? "保存并重新提交审核" : "提交申请"}
               />
