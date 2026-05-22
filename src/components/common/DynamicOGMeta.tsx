@@ -33,6 +33,10 @@ const WECHAT_STATIC_SHARE_URLS: Record<string, string> = {
   maleMidlifeVitalityAssessment: `${OG_BASE_URL}/share/male-midlife-vitality.html`,
 };
 
+const WECHAT_STATIC_SHARE_IMAGES: Record<string, string> = {
+  maleMidlifeVitalityAssessment: `${OG_BASE_URL}/wechat-thumb-male-midlife-vitality.jpg`,
+};
+
 /**
  * 动态 OG Meta 组件
  * 自动从数据库读取 OG 配置，支持管理后台实时修改
@@ -130,10 +134,12 @@ export function DynamicOGMeta({ pageKey, overrides }: DynamicOGMetaProps) {
   // 微信卡片缩图：优先 wechat_thumb_url（小尺寸正方形 JPG，<128KB），
   // 缺失时降级到横版 og:image（可能因过大或比例问题导致微信丢图）
   const wechatShareImage = useMemo(() => {
+    const staticImage = WECHAT_STATIC_SHARE_IMAGES[pageKey];
+    if (staticImage) return staticImage;
     const thumb = ogConfig.wechatThumbUrl;
     if (thumb && /^https:\/\//i.test(thumb)) return thumb;
     return safeShareImage;
-  }, [ogConfig.wechatThumbUrl, safeShareImage]);
+  }, [pageKey, ogConfig.wechatThumbUrl, safeShareImage]);
 
   // 微信 JS-SDK 分享配置（H5 / 微信浏览器内）
   useWechatShare({
