@@ -313,16 +313,25 @@ export function DynamicAssessmentQuestions({ questions, scoreOptions, onComplete
             transition={{ type: "spring", stiffness: 200 }}
           >
             <Button
-              onClick={() => onComplete(answers)}
+              onClick={handleSubmit}
+              disabled={isSubmitting}
               className="gap-2 rounded-full shadow-lg px-6"
               style={{
                 background: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.8))",
               }}
             >
-              查看结果 <ArrowRight className="w-4 h-4" />
+              {isSubmitting ? (
+                <>
+                  <span className="inline-block w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                  正在生成结果…
+                </>
+              ) : (
+                <>查看结果 <ArrowRight className="w-4 h-4" /></>
+              )}
             </Button>
           </motion.div>
         )}
+
       </motion.div>
     </div>
   );
