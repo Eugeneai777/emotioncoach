@@ -1,85 +1,79 @@
-## 剩余实施计划（基于已落地的数据库 + 自助申请流程）
+## 商业架构师视角评估
 
-默认采纳前次提问的方案：
-- **推荐档位规则**：`10+年 且 有证书 → 金牌` / `5-10年 → 高级` / `3-5年 → 认证` / `<3年 → 新锐`
-- **代申请验证**：走现有阿里云 SMS（`send-sms-code` / `verify-sms-code`），新增 `purpose='coach_proxy_verify'`
+**当前漏洞**（按严重度）:
 
----
-
-### 一、管理员审核 UI（P0-2 落地）
-
-**文件**：`src/pages/admin/CoachApplicationDetail.tsx`（新建 / 改造现有审核详情页）
-
-- 顶部信息卡：申请人姓名、手机、提交方式（自助 / 代申请）、提交时间、经验区间
-- **档位三列对照**：
-  - 申请人期望档位（灰色标签 + 期望理由）
-  - 系统推荐档位（高亮主色，基于经验+证书自动算）
-  - 管理员最终档位（4 个 RadioCard，默认选中"系统推荐"）
-- **证书审阅清单**：每张证书一行（缩略图 + 类型 + 编号 + 发证机构），右侧 `Checkbox "✓ 已审阅"`
-- **底部操作**：
-  - "通过审核" 按钮 `disabled` 直到 **所有证书均勾选 + 选定最终档位**，点击调 `approve_coach_application(coach_id, cert_ids[], final_tier_id)` RPC
-  - "拒绝" 弹窗强制输入拒绝原因，调 `reject_coach_application`
-- 通过 / 拒绝后 toast 提示 + 刷新列表
-
-**文件**：`src/pages/admin/CoachApplicationsList.tsx`（已存在则微调）
-
-- 新增列：`提交方式`（自助/代申请 badge）/ `经验`（bucket）/ `期望档位` / `推荐档位`
-- 筛选器：状态（pending/approved/rejected）+ 提交方式
+1. **P0 头像未必填**：`isValid` 不校验 `avatarUrl`。无头像教练展示卡几乎不可点击 → 直接吃掉首屏转化。商业上必须强制。
+2. **P0 静默失败**：按钮 disabled，但用户看不到"哪一项未填"。在大屏长表单里只能凭运气找到红字。流失。
+3. **P1 简介质量**：当前 placeholder 一行字，新教练写 30 字就交，平台陈列质量崩。需要"结构化模板 + AI 优化"双轨。
+4. **P2 手机号格式**：仅 maxLength=11，无 `^1[3-9]\d{9}$` 正则校验，会污染主线索数据。
 
 ---
 
-### 二、代申请流程（P0-3 落地）
+## 修改方案
 
-**入口**：`/become-coach?invite=xxx&mode=proxy` 或在 `/become-coach` 列表页提供"代他人申请"按钮
+### 1. 必填星标 + 提交校验（BasicInfoStep.tsx）
 
-**文件**：`src/components/coach-application/ProxyVerifyStep.tsx`（新建，作为代申请 Step 0）
+将每个必填 Label 的 `*` 改为视觉一致的红色星号组件 `<RequiredMark />`（`text-destructive`），必填项：
+- 头像（新增必填）
+- 显示名称
+- 联系电话（追加大陆手机号正则校验，海外号放过）
+- 个人简介（≥80 字，太短的简介对转化无意义）
+- 擅长领域（≥1）
 
-- 字段：教练姓名、教练手机号 + 区号、备注（代理人和教练关系）
-- 点击"发送验证码" → 调 `send-sms-code` Edge Function（`purpose='coach_proxy_verify'`）
-- 教练手机收码 → 代理人填入 → 调 `verify-sms-code` 校验
-- 校验成功：本地存 `proxy_verified_at = now()`，进入 Step 1-4（沿用自助流程的表单组件，但禁用"我是教练本人"相关字段）
+**校验交互升级**：
+- 不再用 `disabled` 灰按钮。按钮始终可点。
+- 点"下一步"时跑 `validate()`，返回首个缺失项 → toast 红色提示"请上传头像 / 请完善个人简介（至少 80 字）"+ 自动滚动并 focus 到该字段（用 `ref` 或 `getElementById`）。
+- 字段失焦后才显示该字段下方的红色错误文案（避免一进页面全是红）。
 
-**文件**：`src/pages/BecomeCoach.tsx`（已改造，增加 mode 分支）
+### 2. 个人简介结构化模板
 
-- `mode='proxy'`：前置 ProxyVerifyStep，提交时写入 `submitted_by_user_id = auth.uid()` + `claim_phone/claim_country_code = 教练手机` + `proxy_verified_at`
-- `mode='self'`：保持现状
-- `mode='edit'`：复用表单，根据敏感字段差异决定是否回到 pending（仅前端预判，后端 RLS 已限制）
+参照用户上传图，提炼为**4 段式模板**，注入 placeholder + 一键"插入模板"按钮：
 
-**文件**：`supabase/functions/send-sms-code/index.ts` & `verify-sms-code/index.ts`
+```text
+【专业背景】
+持有 XX 证书，专业受训于 XX 流派/技术。
 
-- 在 `purpose` 枚举白名单加入 `coach_proxy_verify`（其他逻辑不变）
+【咨询风格】
+关键词1｜关键词2｜关键词3（如：温暖稳定｜专业落地｜深度陪伴）
 
----
+【擅长人群与议题】
+面对 XX 人群，我会 XX；
+面对 XX 人群，我会 XX。
 
-### 三、申请人入口 / 我的申请列表
+【我的承诺】
+（一句话总结你能为来访者带来什么）
+```
 
-**文件**：`src/pages/BecomeCoach.tsx` 头部新增"我的申请"区块
+UI 实现：
+- 简介 Textarea 上方新增按钮组：`[插入模板]` `[AI 优化简介]`。
+- 点"插入模板"→ 若 bio 为空直接填入；若已有内容弹 confirm "将覆盖当前内容？"。
+- placeholder 改成精简版同结构提示。
+- 字数下限 80、上限维持 500，计数器从 `x/500` 改为 `x/500（至少 80 字）`，未达标变红。
 
-- 列出当前用户作为 `submitted_by_user_id` 提交的所有 `human_coaches`
-- 每行：教练姓名 + 状态 badge（pending/approved/rejected）+ 拒绝原因（若有）+ "编辑" 按钮（仅 rejected/pending 可编辑）
-- 编辑跳到 `mode='edit'` 表单，编辑敏感字段后提交 → 自动回到 pending、`is_accepting_new=false`
+### 3. AI 优化简介加 system 提示加固
 
----
+`ai-coach-application` 的 `optimize_bio` action 若已存在则在前端 prompt 上下文里附加："请保留 4 段式结构（专业背景/咨询风格/擅长人群/我的承诺），输出中文，控制在 300 字内"。**仅前端 body 字段补充**，不动 edge function 主逻辑。
 
-### 四、死字段下架（P1-3）
+### 4. 手机号校验
 
-仅前端隐藏，DB 列保留：
-
-- `BecomeCoach.tsx` 及子组件移除 `title / education / training_background / intro_video_url / case_studies` 的输入控件
-- 教练详情公开页（`CoachProfile.tsx` 等）移除这些字段的展示
-
----
-
-### 五、验收用例
-
-| 用例 | 期望结果 |
-|---|---|
-| 自助申请，3 张证书，管理员只勾选 2 张点通过 | 按钮 disabled，无法通过 |
-| 代申请，未填验证码直接提交 | 表单拦截 + 后端 RLS 拒绝（无 proxy_verified_at） |
-| 24 小时内同一用户提交第 6 份申请 | 数据库 trigger 抛 `coach_application_throttle_24h`，前端 toast |
-| 通过审核后 | 教练立即出现在前端列表，`is_verified=true`、默认 60min 服务已建 |
-| 编辑已通过教练的姓名 | 自动回到 pending，前端列表立即下架 |
+新增 util `isValidChinaMobile(phone)`。提交时若不为空且不匹配 → 提示"请输入有效的 11 位手机号"。
 
 ---
 
-完成后请确认是否点击 "Implement plan"，我将按一、二、三、四顺序执行。
+## 改动文件清单
+
+- `src/components/coach-application/BasicInfoStep.tsx` — 主战场，加 `RequiredMark`、校验函数、模板插入按钮、错误态、滚动 focus。
+- `src/lib/coachApplicationTemplates.ts`（新建）— 导出 `BIO_TEMPLATE` 字符串常量与 `validateBasicInfo()` 纯函数，便于复用与单测。
+- `src/pages/BecomeCoach.tsx` — 无需改业务逻辑，只在提交前再跑一次最终校验作为兜底。
+
+不动数据库、不动 edge function、不动 RLS。纯前端表单层加固。
+
+---
+
+## 验收用例
+
+1. 不传头像点下一步 → 红 toast "请上传头像"，页面滚到头像区。
+2. 简介只填 20 字 → 提示 "个人简介至少 80 字"。
+3. 点"插入模板"→ Textarea 立即填入 4 段结构，字数计数器更新。
+4. 手机号填 `12345` → 提示无效。
+5. 全部填齐 → 正常进入下一步，无 regression。
