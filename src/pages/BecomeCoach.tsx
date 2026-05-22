@@ -112,6 +112,14 @@ export default function BecomeCoach() {
 
   const [certifications, setCertifications] = useState<Certification[]>([]);
 
+  const [experienceTier, setExperienceTier] = useState<ExperienceTierData>({
+    experienceBucket: "",
+    preferredTierId: "",
+    preferredTierReason: "",
+  });
+
+  const { data: priceTiers = [] } = useCoachPriceTiers();
+
   // Existing coach record (for edit-mode prefill + status banner)
   const [existingCoach, setExistingCoach] = useState<{
     id: string;
@@ -119,6 +127,7 @@ export default function BecomeCoach() {
     admin_note: string | null;
   } | null>(null);
   const [, setPrefillLoading] = useState(false);
+
 
   // Prefill form when user already has a human_coaches record
   useEffect(() => {
