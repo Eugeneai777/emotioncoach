@@ -216,15 +216,16 @@ export function CoachApplicationsList({ status }: CoachApplicationsListProps) {
         <CoachApplicationDetail
           coachId={selectedCoachId}
           onClose={() => setSelectedCoachId(null)}
-          onApprove={(coachId, adminNote, priceTierId) => 
-            updateStatusMutation.mutate({ coachId, newStatus: "approved", adminNote, priceTierId })
+          onApprove={(coachId, certificationIds, finalTierId) =>
+            approveMutation.mutate({ coachId, certificationIds, finalTierId })
           }
-          onReject={(coachId, adminNote) => 
-            updateStatusMutation.mutate({ coachId, newStatus: "rejected", adminNote })
+          onReject={(coachId, reason) =>
+            rejectMutation.mutate({ coachId, reason })
           }
-          isPending={updateStatusMutation.isPending}
+          isPending={isMutating}
         />
       )}
+
     </div>
   );
 }
