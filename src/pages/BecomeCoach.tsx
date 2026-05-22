@@ -61,8 +61,19 @@ export default function BecomeCoach() {
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const { toast } = useToast();
-  const [currentStep, setCurrentStep] = useState<Step>("basic");
+  const mode: "self" | "proxy" = searchParams.get("mode") === "proxy" ? "proxy" : "self";
+  const STEPS = mode === "proxy" ? PROXY_STEPS : SELF_STEPS;
+  const [currentStep, setCurrentStep] = useState<Step>(mode === "proxy" ? "proxy_verify" : "basic");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [proxyData, setProxyData] = useState<ProxyVerifyData>({
+    coachName: "",
+    coachPhone: "",
+    coachCountryCode: "+86",
+    relation: "",
+    verified: false,
+  });
+
 
   // Invitation validation
   const inviteToken = searchParams.get("invite");
