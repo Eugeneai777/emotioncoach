@@ -23,7 +23,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useCoachPriceTiers } from "@/hooks/useCoachPriceTiers";
 
 
-type Step = "basic" | "certifications" | "experience" | "submit" | "success";
+type Step = "proxy_verify" | "basic" | "certifications" | "experience" | "submit" | "success";
 
 interface BasicInfoData {
   displayName: string;
@@ -43,12 +43,18 @@ interface Certification {
   description: string;
 }
 
-const STEPS: { key: Step; label: string }[] = [
+const SELF_STEPS: { key: Step; label: string }[] = [
   { key: "basic", label: "基本信息" },
   { key: "certifications", label: "资质证书" },
   { key: "experience", label: "经验档位" },
   { key: "submit", label: "确认提交" },
 ];
+
+const PROXY_STEPS: { key: Step; label: string }[] = [
+  { key: "proxy_verify", label: "身份核验" },
+  ...SELF_STEPS,
+];
+
 
 export default function BecomeCoach() {
   const navigate = useNavigate();
