@@ -18,12 +18,28 @@ export function DynamicAssessmentQuestions({ questions, scoreOptions, onComplete
   const [currentQ, setCurrentQ] = useState(0);
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [direction, setDirection] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const progress = questions.length > 0 ? ((currentQ + 1) / questions.length) * 100 : 0;
   const allAnswered = Object.keys(answers).length === questions.length;
   const q = questions[currentQ];
   const hasAnswer = answers[currentQ] !== undefined;
   const isLast = currentQ === questions.length - 1;
+
+  const handleSubmit = useCallback(() => {
+    if (isSubmitting || !allAnswered) return;
+    setIsSubmitting(true);
+    // 微小延迟把 loading 渲染让出一帧再触发计算/路由切换，避免桌面端"按了没反应"的感知
+    requestAnimationFrame(() => {
+      try {
+        onComplete(answers);
+      } catch (e) {
+        console.error('[Assessment] onComplete failed:', e);
+        setIsSubmitting(false);
+      }
+    });
+  }, [isSubmitting, allAnswered, onComplete, answers]);
+
 
   const getOptionsForQuestion = useCallback((question: any) => {
     if (question.options?.length > 0) return question.options;
