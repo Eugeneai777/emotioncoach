@@ -151,9 +151,10 @@ export default function BecomeCoach() {
   const [, setPrefillLoading] = useState(false);
 
 
-  // Prefill form when user already has a human_coaches record
+  // Prefill form when user already has a human_coaches record (self-mode only)
   useEffect(() => {
-    if (!user) return;
+    if (!user || mode === "proxy") return;
+
     let cancelled = false;
     const loadExisting = async () => {
       setPrefillLoading(true);
