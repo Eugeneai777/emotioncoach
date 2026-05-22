@@ -37,73 +37,56 @@ export function CoachApplicationsList({ status }: CoachApplicationsListProps) {
     }
   });
 
-  const updateStatusMutation = useMutation({
-    mutationFn: async ({ coachId, newStatus, adminNote, priceTierId }: { 
-      coachId: string; 
-      newStatus: "approved" | "rejected";
-      adminNote?: string;
-      priceTierId?: string;
+  const approveMutation = useMutation({
+    mutationFn: async ({
+      coachId,
+      certificationIds,
+      finalTierId,
+    }: {
+      coachId: string;
+      certificationIds: string[];
+      finalTierId: string;
     }) => {
-      // If approving, we need a price tier
-      if (newStatus === "approved" && !priceTierId) {
-        throw new Error("审核通过必须选择收费档次");
-      }
-
-      let tierPrice: number | null = null;
-
-      // Get tier price if approving
-      if (newStatus === "approved" && priceTierId) {
-        const { data: tier, error: tierError } = await supabase
-          .from("coach_price_tiers")
-          .select("price")
-          .eq("id", priceTierId)
-          .single();
-        
-        if (tierError) throw tierError;
-        tierPrice = tier.price;
-      }
-
-      // Update coach status and price tier
-      const updateData: Record<string, unknown> = {
-        status: newStatus,
-        admin_note: adminNote,
-        updated_at: new Date().toISOString()
-      };
-
-      if (priceTierId) {
-        updateData.price_tier_id = priceTierId;
-        updateData.price_tier_set_at = new Date().toISOString();
-      }
-
-      const { error } = await supabase
-        .from("human_coaches")
-        .update(updateData)
-        .eq("id", coachId);
-      
+      const { error } = await supabase.rpc("approve_coach_application", {
+        p_coach_id: coachId,
+        p_certification_ids: certificationIds,
+        p_final_tier_id: finalTierId,
+      });
       if (error) throw error;
-
-      // Sync service prices if approving
-      if (newStatus === "approved" && tierPrice !== null) {
-        const { error: servicesError } = await supabase
-          .from("coach_services")
-          .update({ price: tierPrice })
-          .eq("coach_id", coachId);
-        
-        if (servicesError) {
-          console.error("Failed to sync service prices:", servicesError);
-        }
-      }
     },
-    onSuccess: (_, { newStatus }) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["human-coaches"] });
       queryClient.invalidateQueries({ queryKey: ["human-coaches-stats"] });
-      toast.success(newStatus === "approved" ? "教练申请已通过，服务价格已同步" : "教练申请已拒绝");
+      queryClient.invalidateQueries({ queryKey: ["human-coach-detail"] });
+      toast.success("教练申请已通过，资质已批量核验，服务价格已同步");
       setSelectedCoachId(null);
     },
-    onError: (error) => {
-      toast.error("操作失败: " + error.message);
-    }
+    onError: (error: any) => {
+      toast.error("通过失败: " + (error?.message ?? "未知错误"));
+    },
   });
+
+  const rejectMutation = useMutation({
+    mutationFn: async ({ coachId, reason }: { coachId: string; reason: string }) => {
+      const { error } = await supabase.rpc("reject_coach_application", {
+        p_coach_id: coachId,
+        p_reason: reason,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["human-coaches"] });
+      queryClient.invalidateQueries({ queryKey: ["human-coaches-stats"] });
+      toast.success("教练申请已拒绝");
+      setSelectedCoachId(null);
+    },
+    onError: (error: any) => {
+      toast.error("拒绝失败: " + (error?.message ?? "未知错误"));
+    },
+  });
+
+  const isMutating = approveMutation.isPending || rejectMutation.isPending;
+
 
   if (isLoading) {
     return (
