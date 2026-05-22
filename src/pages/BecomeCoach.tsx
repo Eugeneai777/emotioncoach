@@ -549,7 +549,7 @@ export default function BecomeCoach() {
               <CertificationsStep
                 data={certifications}
                 onChange={setCertifications}
-                onNext={() => setCurrentStep("submit")}
+                onNext={() => setCurrentStep("experience")}
                 onBack={() => setCurrentStep("basic")}
                 presetCertTypes={
                   Array.isArray((invitationData as any)?.default_certifications)
@@ -558,6 +558,17 @@ export default function BecomeCoach() {
                 }
               />
             )}
+
+            {currentStep === "experience" && (
+              <ExperienceTierStep
+                data={experienceTier}
+                onChange={setExperienceTier}
+                onNext={() => setCurrentStep("submit")}
+                onBack={() => setCurrentStep("certifications")}
+                hasCertifications={certifications.length > 0}
+              />
+            )}
+
 
             {currentStep === "submit" && (
               <SubmitStep
