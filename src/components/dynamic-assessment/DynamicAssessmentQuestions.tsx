@@ -18,12 +18,28 @@ export function DynamicAssessmentQuestions({ questions, scoreOptions, onComplete
   const [currentQ, setCurrentQ] = useState(0);
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [direction, setDirection] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const progress = questions.length > 0 ? ((currentQ + 1) / questions.length) * 100 : 0;
   const allAnswered = Object.keys(answers).length === questions.length;
   const q = questions[currentQ];
   const hasAnswer = answers[currentQ] !== undefined;
   const isLast = currentQ === questions.length - 1;
+
+  const handleSubmit = useCallback(() => {
+    if (isSubmitting || !allAnswered) return;
+    setIsSubmitting(true);
+    // 微小延迟把 loading 渲染让出一帧再触发计算/路由切换，避免桌面端"按了没反应"的感知
+    requestAnimationFrame(() => {
+      try {
+        onComplete(answers);
+      } catch (e) {
+        console.error('[Assessment] onComplete failed:', e);
+        setIsSubmitting(false);
+      }
+    });
+  }, [isSubmitting, allAnswered, onComplete, answers]);
+
 
   const getOptionsForQuestion = useCallback((question: any) => {
     if (question.options?.length > 0) return question.options;
@@ -55,8 +71,9 @@ export function DynamicAssessmentQuestions({ questions, scoreOptions, onComplete
         setDirection(1);
         setCurrentQ((i) => i + 1);
       } else if (e.key === "Enter" && allAnswered && isLast) {
-        onComplete(answers);
+        handleSubmit();
       }
+
       const num = parseInt(e.key);
       if (!isNaN(num) && q) {
         const opts = shuffledOptionsMap[currentQ] as any[];
@@ -296,16 +313,25 @@ export function DynamicAssessmentQuestions({ questions, scoreOptions, onComplete
             transition={{ type: "spring", stiffness: 200 }}
           >
             <Button
-              onClick={() => onComplete(answers)}
+              onClick={handleSubmit}
+              disabled={isSubmitting}
               className="gap-2 rounded-full shadow-lg px-6"
               style={{
                 background: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.8))",
               }}
             >
-              查看结果 <ArrowRight className="w-4 h-4" />
+              {isSubmitting ? (
+                <>
+                  <span className="inline-block w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                  正在生成结果…
+                </>
+              ) : (
+                <>查看结果 <ArrowRight className="w-4 h-4" /></>
+              )}
             </Button>
           </motion.div>
         )}
+
       </motion.div>
     </div>
   );

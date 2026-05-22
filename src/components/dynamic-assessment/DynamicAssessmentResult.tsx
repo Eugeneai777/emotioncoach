@@ -1457,7 +1457,9 @@ export function DynamicAssessmentResult({
         <DynamicAssessmentQRCard
           qrImageUrl={template.qr_image_url}
           qrTitle={template.qr_title}
+          emphasize={isMaleUnspokenCheck}
         />
+
 
         {/* Action Buttons */}
         <motion.div custom={8} variants={fadeUp} initial="hidden" animate="visible" className="space-y-3 mt-4">
