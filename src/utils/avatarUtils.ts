@@ -14,24 +14,29 @@ export const getProxiedAvatarUrl = (avatarUrl?: string | null): string | undefin
     DEBUG_AVATAR && console.log('[avatarUtils] No avatar URL provided');
     return undefined;
   }
-  
-  try {
-    const url = new URL(avatarUrl);
-    // Check if it's a third-party domain that needs proxying
-    const thirdPartyDomains = ['thirdwx.qlogo.cn', 'wx.qlogo.cn', 'qlogo.cn'];
-    const needsProxy = thirdPartyDomains.some(domain => url.hostname.includes(domain));
-    
-    if (needsProxy) {
-      const proxyUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/image-proxy?url=${encodeURIComponent(avatarUrl)}`;
-      DEBUG_AVATAR && console.log('[avatarUtils] Proxying avatar:', { 
-        original: avatarUrl.substring(0, 50), 
-        proxied: proxyUrl.substring(0, 80) 
-      });
-      return proxyUrl;
-    }
-    
-    DEBUG_AVATAR && console.log('[avatarUtils] Using direct URL:', avatarUrl.substring(0, 50));
+
+  // Data URLs and blob URLs are already safe
+  if (avatarUrl.startsWith('data:') || avatarUrl.startsWith('blob:')) {
     return avatarUrl;
+  }
+
+  try {
+    const url = new URL(avatarUrl, typeof window !== 'undefined' ? window.location.href : 'https://placeholder.local');
+    const isSameOrigin = typeof window !== 'undefined' && url.origin === window.location.origin;
+
+    // Same-origin avatars don't taint canvas — pass through.
+    if (isSameOrigin) {
+      return avatarUrl;
+    }
+
+    // All cross-origin avatars: proxy through our edge function so html2canvas
+    // can read pixels without tainting the canvas (which would block toDataURL).
+    const proxyUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/image-proxy?url=${encodeURIComponent(avatarUrl)}`;
+    DEBUG_AVATAR && console.log('[avatarUtils] Proxying cross-origin avatar:', {
+      original: avatarUrl.substring(0, 60),
+      proxied: proxyUrl.substring(0, 80),
+    });
+    return proxyUrl;
   } catch (e) {
     console.error('[avatarUtils] URL parsing error:', e);
     return avatarUrl;
