@@ -112,6 +112,8 @@ const AssessmentPromoShareCard = forwardRef<HTMLDivElement, AssessmentPromoShare
   ({ config, avatarUrl, displayName = '觉醒者', className }, ref) => {
     const shareUrl = `${getPromotionDomain()}${config.sharePath}`;
     const { qrCodeUrl } = useQRCode(shareUrl);
+    const [avatarFailed, setAvatarFailed] = React.useState(false);
+    const showAvatarImg = !!avatarUrl && !avatarFailed;
 
     return (
       <div
@@ -152,8 +154,14 @@ const AssessmentPromoShareCard = forwardRef<HTMLDivElement, AssessmentPromoShare
             background: 'rgba(255,255,255,0.2)', display: 'flex',
             alignItems: 'center', justifyContent: 'center', flexShrink: 0,
           }}>
-            {avatarUrl ? (
-              <img src={avatarUrl} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} crossOrigin="anonymous" />
+            {showAvatarImg ? (
+              <img
+                src={avatarUrl}
+                alt="avatar"
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                crossOrigin="anonymous"
+                onError={() => setAvatarFailed(true)}
+              />
             ) : (
               <span style={{ fontSize: '18px' }}>👤</span>
             )}
@@ -163,6 +171,7 @@ const AssessmentPromoShareCard = forwardRef<HTMLDivElement, AssessmentPromoShare
             <p style={{ fontSize: '11px', opacity: 0.8, margin: 0 }}>推荐你做这个测评</p>
           </div>
         </div>
+
 
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '20px', position: 'relative' }}>
