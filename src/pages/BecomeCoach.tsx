@@ -6,13 +6,19 @@ import { Button } from "@/components/ui/button";
 import { BasicInfoStep } from "@/components/coach-application/BasicInfoStep";
 import { CertificationsStep } from "@/components/coach-application/CertificationsStep";
 import { SubmitStep } from "@/components/coach-application/SubmitStep";
+import {
+  ExperienceTierStep,
+  suggestTierLevel,
+  type ExperienceTierData,
+} from "@/components/coach-application/ExperienceTierStep";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useCoachPriceTiers } from "@/hooks/useCoachPriceTiers";
 
-type Step = "basic" | "certifications" | "submit" | "success";
+type Step = "basic" | "certifications" | "experience" | "submit" | "success";
 
 interface BasicInfoData {
   displayName: string;
@@ -35,6 +41,7 @@ interface Certification {
 const STEPS: { key: Step; label: string }[] = [
   { key: "basic", label: "基本信息" },
   { key: "certifications", label: "资质证书" },
+  { key: "experience", label: "经验档位" },
   { key: "submit", label: "确认提交" },
 ];
 
