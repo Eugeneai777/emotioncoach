@@ -118,7 +118,7 @@ export function DynamicOGMeta({ pageKey, overrides }: DynamicOGMetaProps) {
     } catch {
       return shareUrl;
     }
-  }, [baseDomain, pageKey, shareUrl, location.search]);
+  }, [baseDomain, pageKey, shareUrl, location.pathname, location.search]);
 
   // 分享封面降级：缺失/非 https 时退回默认封面，避免微信/小程序卡片图裂
   const safeShareImage = useMemo(() => {
