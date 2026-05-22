@@ -32,7 +32,9 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { phone, countryCode = '+86' } = await req.json();
+    const { phone, countryCode = '+86', purpose: rawPurpose } = await req.json();
+    const ALLOWED_PURPOSES = ['sms_login', 'coach_proxy_verify'];
+    const purpose = ALLOWED_PURPOSES.includes(rawPurpose) ? rawPurpose : 'sms_login';
 
     if (!phone || !/^\d{11}$/.test(phone)) {
       return new Response(
@@ -40,6 +42,7 @@ Deno.serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
 
     // 目前仅支持中国大陆手机号
     if (countryCode !== '+86') {
