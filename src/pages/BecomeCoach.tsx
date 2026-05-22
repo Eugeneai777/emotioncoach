@@ -21,6 +21,7 @@ import { useToast } from "@/hooks/use-toast";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCoachPriceTiers } from "@/hooks/useCoachPriceTiers";
+import { MyApplicationsCard } from "@/components/coach-application/MyApplicationsCard";
 
 
 type Step = "proxy_verify" | "basic" | "certifications" | "experience" | "submit" | "success";
