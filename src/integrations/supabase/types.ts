@@ -2209,6 +2209,68 @@ export type Database = {
           },
         ]
       }
+      coach_claim_conflicts: {
+        Row: {
+          created_at: string
+          existing_coach_id: string | null
+          id: string
+          pending_coach_id: string | null
+          resolved: boolean
+          resolved_action: string | null
+          resolved_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          existing_coach_id?: string | null
+          id?: string
+          pending_coach_id?: string | null
+          resolved?: boolean
+          resolved_action?: string | null
+          resolved_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          existing_coach_id?: string | null
+          id?: string
+          pending_coach_id?: string | null
+          resolved?: boolean
+          resolved_action?: string | null
+          resolved_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coach_claim_conflicts_existing_coach_id_fkey"
+            columns: ["existing_coach_id"]
+            isOneToOne: false
+            referencedRelation: "human_coaches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_claim_conflicts_existing_coach_id_fkey"
+            columns: ["existing_coach_id"]
+            isOneToOne: false
+            referencedRelation: "human_coaches_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_claim_conflicts_pending_coach_id_fkey"
+            columns: ["pending_coach_id"]
+            isOneToOne: false
+            referencedRelation: "human_coaches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_claim_conflicts_pending_coach_id_fkey"
+            columns: ["pending_coach_id"]
+            isOneToOne: false
+            referencedRelation: "human_coaches_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coach_invitations: {
         Row: {
           created_at: string
@@ -5729,10 +5791,13 @@ export type Database = {
           badge_type: string | null
           bio: string | null
           case_studies: Json | null
+          claim_country_code: string | null
+          claim_phone: string | null
           created_at: string | null
           display_order: number | null
           education: string | null
           experience_years: number | null
+          experience_years_bucket: string | null
           id: string
           intro_video_url: string | null
           is_accepting_new: boolean | null
@@ -5741,15 +5806,21 @@ export type Database = {
           pending_balance: number | null
           phone: string | null
           positive_rate: number | null
+          preferred_tier_id: string | null
+          preferred_tier_reason: string | null
           price_tier_id: string | null
           price_tier_set_at: string | null
           price_tier_set_by: string | null
+          proxy_verified_at: string | null
           rating: number | null
           rating_communication: number | null
           rating_helpfulness: number | null
           rating_professionalism: number | null
+          rejected_reason: string | null
           specialties: string[] | null
           status: string | null
+          submitted_by_user_id: string | null
+          suggested_tier_id: string | null
           title: string | null
           total_earnings: number | null
           total_reviews: number | null
@@ -5768,10 +5839,13 @@ export type Database = {
           badge_type?: string | null
           bio?: string | null
           case_studies?: Json | null
+          claim_country_code?: string | null
+          claim_phone?: string | null
           created_at?: string | null
           display_order?: number | null
           education?: string | null
           experience_years?: number | null
+          experience_years_bucket?: string | null
           id?: string
           intro_video_url?: string | null
           is_accepting_new?: boolean | null
@@ -5780,15 +5854,21 @@ export type Database = {
           pending_balance?: number | null
           phone?: string | null
           positive_rate?: number | null
+          preferred_tier_id?: string | null
+          preferred_tier_reason?: string | null
           price_tier_id?: string | null
           price_tier_set_at?: string | null
           price_tier_set_by?: string | null
+          proxy_verified_at?: string | null
           rating?: number | null
           rating_communication?: number | null
           rating_helpfulness?: number | null
           rating_professionalism?: number | null
+          rejected_reason?: string | null
           specialties?: string[] | null
           status?: string | null
+          submitted_by_user_id?: string | null
+          suggested_tier_id?: string | null
           title?: string | null
           total_earnings?: number | null
           total_reviews?: number | null
@@ -5807,10 +5887,13 @@ export type Database = {
           badge_type?: string | null
           bio?: string | null
           case_studies?: Json | null
+          claim_country_code?: string | null
+          claim_phone?: string | null
           created_at?: string | null
           display_order?: number | null
           education?: string | null
           experience_years?: number | null
+          experience_years_bucket?: string | null
           id?: string
           intro_video_url?: string | null
           is_accepting_new?: boolean | null
@@ -5819,15 +5902,21 @@ export type Database = {
           pending_balance?: number | null
           phone?: string | null
           positive_rate?: number | null
+          preferred_tier_id?: string | null
+          preferred_tier_reason?: string | null
           price_tier_id?: string | null
           price_tier_set_at?: string | null
           price_tier_set_by?: string | null
+          proxy_verified_at?: string | null
           rating?: number | null
           rating_communication?: number | null
           rating_helpfulness?: number | null
           rating_professionalism?: number | null
+          rejected_reason?: string | null
           specialties?: string[] | null
           status?: string | null
+          submitted_by_user_id?: string | null
+          suggested_tier_id?: string | null
           title?: string | null
           total_earnings?: number | null
           total_reviews?: number | null
@@ -5841,8 +5930,22 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "human_coaches_preferred_tier_id_fkey"
+            columns: ["preferred_tier_id"]
+            isOneToOne: false
+            referencedRelation: "coach_price_tiers"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "human_coaches_price_tier_id_fkey"
             columns: ["price_tier_id"]
+            isOneToOne: false
+            referencedRelation: "coach_price_tiers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "human_coaches_suggested_tier_id_fkey"
+            columns: ["suggested_tier_id"]
             isOneToOne: false
             referencedRelation: "coach_price_tiers"
             referencedColumns: ["id"]
@@ -12877,6 +12980,14 @@ export type Database = {
           status: string
         }[]
       }
+      approve_coach_application: {
+        Args: {
+          p_certification_ids: string[]
+          p_coach_id: string
+          p_final_tier_id: string
+        }
+        Returns: undefined
+      }
       check_and_lock_broadcast: { Args: never; Returns: boolean }
       check_phone_exists: {
         Args: { p_country_code?: string; p_phone: string }
@@ -13020,6 +13131,10 @@ export type Database = {
           new_balance: number
           success: boolean
         }[]
+      }
+      reject_coach_application: {
+        Args: { p_coach_id: string; p_reason: string }
+        Returns: undefined
       }
       resolve_family_album_share: {
         Args: { p_token: string }
