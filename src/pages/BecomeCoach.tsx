@@ -570,6 +570,22 @@ export default function BecomeCoach() {
         {/* Content */}
         <div className="max-w-lg mx-auto px-4 pb-8">
           <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 shadow-sm">
+            {currentStep === "proxy_verify" && (
+              <ProxyVerifyStep
+                data={proxyData}
+                onChange={setProxyData}
+                onNext={() => {
+                  // 把代申请填入的姓名/手机号同步到 basicInfo，方便后续步骤展示
+                  setBasicInfo((prev) => ({
+                    ...prev,
+                    displayName: proxyData.coachName,
+                    phone: proxyData.coachPhone,
+                  }));
+                  setCurrentStep("basic");
+                }}
+              />
+            )}
+
             {currentStep === "basic" && (
               <BasicInfoStep
                 data={basicInfo}
@@ -577,6 +593,7 @@ export default function BecomeCoach() {
                 onNext={() => setCurrentStep("certifications")}
               />
             )}
+
 
             {currentStep === "certifications" && (
               <CertificationsStep
