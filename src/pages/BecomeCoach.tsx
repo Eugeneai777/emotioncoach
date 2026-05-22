@@ -220,19 +220,14 @@ export default function BecomeCoach() {
       return;
     }
 
+    if (mode === "proxy" && !proxyData.verified) {
+      toast({ title: "请先完成代申请身份核验", variant: "destructive" });
+      setCurrentStep("proxy_verify");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      // 1) Check existing application for this user
-      const { data: existing, error: existingError } = await supabase
-        .from("human_coaches")
-        .select("id, status")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (existingError) throw existingError;
-
-      let coachData: { id: string };
-
       // 推荐档位（系统按经验+持证计算）
       const hasCert = certifications.length > 0;
       const suggestedLevel = experienceTier.experienceBucket
@@ -242,9 +237,13 @@ export default function BecomeCoach() {
         ? priceTiers.find((t) => t.tier_level === suggestedLevel)
         : undefined;
 
-      const coachPayload = {
-        name: basicInfo.displayName,
-        phone: basicInfo.phone,
+      const isProxy = mode === "proxy";
+      const effectiveName = isProxy ? proxyData.coachName : basicInfo.displayName;
+      const effectivePhone = isProxy ? proxyData.coachPhone : basicInfo.phone;
+
+      const coachPayload: Record<string, any> = {
+        name: effectiveName,
+        phone: effectivePhone,
         bio: basicInfo.bio,
         avatar_url: basicInfo.avatarUrl,
         specialties: basicInfo.specialties,
@@ -254,68 +253,78 @@ export default function BecomeCoach() {
         preferred_tier_reason: experienceTier.preferredTierReason || null,
         suggested_tier_id: suggestedTier?.id || null,
         submitted_by_user_id: user.id,
-        // Any edit (including from approved coach) goes back to pending for re-review
         status: "pending",
         is_accepting_new: false,
         is_verified: false,
       };
 
+      if (isProxy) {
+        // 代申请：教练手机收码已校验，不绑定 user_id（待教练后续认领）
+        coachPayload.user_id = null;
+        coachPayload.claim_phone = proxyData.coachPhone;
+        coachPayload.claim_country_code = proxyData.coachCountryCode;
+        coachPayload.proxy_verified_at = new Date().toISOString();
+        coachPayload.admin_note = proxyData.relation
+          ? `代申请关系：${proxyData.relation}`
+          : null;
+      }
+
+      let coachData: { id: string };
+
+      // 自助模式：先查同一 user_id 的旧记录用于编辑
+      const { data: existing } = isProxy
+        ? { data: null as any }
+        : await supabase
+            .from("human_coaches")
+            .select("id, status")
+            .eq("user_id", user.id)
+            .maybeSingle();
 
       if (existing) {
-        // Pending / approved / rejected -> UPDATE existing record (latest submission wins, status reset to pending)
         const { data: updated, error: updateError } = await supabase
           .from("human_coaches")
           .update(coachPayload)
           .eq("id", existing.id)
           .select("id")
           .single();
-
         if (updateError) throw updateError;
         if (!updated) throw new Error("更新失败：无权限或记录不存在");
         coachData = updated;
 
-        // Wipe old certs & services so latest submission fully replaces them
-        const { error: delCertError } = await supabase
-          .from("coach_certifications")
-          .delete()
-          .eq("coach_id", coachData.id)
-          .select("id");
-        if (delCertError) throw delCertError;
-
-        const { error: delSvcError } = await supabase
-          .from("coach_services")
-          .delete()
-          .eq("coach_id", coachData.id)
-          .select("id");
-        if (delSvcError) throw delSvcError;
+        await supabase.from("coach_certifications").delete().eq("coach_id", coachData.id).select("id");
+        await supabase.from("coach_services").delete().eq("coach_id", coachData.id).select("id");
       } else {
-        // 3) First-time application -> 先做「姓名+手机号」二次防重，避免同人换账号重复申请
-        const { data: dupByName } = await supabase
-          .from("human_coaches")
-          .select("id, user_id, name, phone, status")
-          .eq("phone", basicInfo.phone)
-          .eq("name", basicInfo.displayName)
-          .maybeSingle();
+        // 自助模式做姓名+手机号防重；代申请已由 DB 唯一索引 + 短信验证拦截
+        if (!isProxy) {
+          const { data: dupByName } = await supabase
+            .from("human_coaches")
+            .select("id, user_id, name, phone, status")
+            .eq("phone", basicInfo.phone)
+            .eq("name", basicInfo.displayName)
+            .maybeSingle();
 
-        if (dupByName && dupByName.user_id !== user.id) {
-          toast({
-            title: "该姓名+手机号已被其他账号申请",
-            description: "请使用首次申请时的账号登录，或联系客服合并账号。",
-            variant: "destructive",
-          });
-          setIsSubmitting(false);
-          return;
+          if (dupByName && dupByName.user_id !== user.id) {
+            toast({
+              title: "该姓名+手机号已被其他账号申请",
+              description: "请使用首次申请时的账号登录，或联系客服合并账号。",
+              variant: "destructive",
+            });
+            setIsSubmitting(false);
+            return;
+          }
         }
 
+        const insertPayload = isProxy ? coachPayload : { user_id: user.id, ...coachPayload };
         const { data: inserted, error: coachError } = await supabase
           .from("human_coaches")
-          .insert({ user_id: user.id, ...coachPayload })
+          .insert(insertPayload)
           .select("id")
           .single();
-
         if (coachError) throw coachError;
         coachData = inserted;
       }
+
+
 
       // Create certifications
       if (certifications.length > 0) {
