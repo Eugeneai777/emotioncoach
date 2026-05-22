@@ -210,6 +210,15 @@ export default function BecomeCoach() {
 
       let coachData: { id: string };
 
+      // 推荐档位（系统按经验+持证计算）
+      const hasCert = certifications.length > 0;
+      const suggestedLevel = experienceTier.experienceBucket
+        ? suggestTierLevel(experienceTier.experienceBucket as any, hasCert)
+        : null;
+      const suggestedTier = suggestedLevel != null
+        ? priceTiers.find((t) => t.tier_level === suggestedLevel)
+        : undefined;
+
       const coachPayload = {
         name: basicInfo.displayName,
         phone: basicInfo.phone,
@@ -217,11 +226,17 @@ export default function BecomeCoach() {
         avatar_url: basicInfo.avatarUrl,
         specialties: basicInfo.specialties,
         experience_years: basicInfo.yearsExperience,
+        experience_years_bucket: experienceTier.experienceBucket || null,
+        preferred_tier_id: experienceTier.preferredTierId || null,
+        preferred_tier_reason: experienceTier.preferredTierReason || null,
+        suggested_tier_id: suggestedTier?.id || null,
+        submitted_by_user_id: user.id,
         // Any edit (including from approved coach) goes back to pending for re-review
         status: "pending",
         is_accepting_new: false,
         is_verified: false,
       };
+
 
       if (existing) {
         // Pending / approved / rejected -> UPDATE existing record (latest submission wins, status reset to pending)
