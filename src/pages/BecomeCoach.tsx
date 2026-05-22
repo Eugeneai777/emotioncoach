@@ -352,8 +352,15 @@ export default function BecomeCoach() {
 
       let coachData: { id: string };
 
-      // 自助模式：先查同一 user_id 的旧记录用于编辑
-      const { data: existing } = isProxy
+      // 编辑模式优先用 editId 锁定记录；自助模式回退到按 user_id 查
+      const { data: existing } = editId
+        ? await supabase
+            .from("human_coaches")
+            .select("id, status")
+            .eq("id", editId)
+            .eq("submitted_by_user_id", user.id)
+            .maybeSingle()
+        : isProxy
         ? { data: null as any }
         : await supabase
             .from("human_coaches")
