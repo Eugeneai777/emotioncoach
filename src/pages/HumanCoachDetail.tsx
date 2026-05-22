@@ -369,6 +369,15 @@ export default function HumanCoachDetail() {
           initialService={selectedService}
         />
       )}
+
+      {/* 加企微弹窗 */}
+      <CoachWeChatDialog
+        open={wechatOpen}
+        onOpenChange={setWechatOpen}
+        coachName={coach?.name}
+        qrUrl={(coach as any)?.wechat_qr_url ?? null}
+        wechatId={(coach as any)?.wechat_id ?? null}
+      />
     </>
   );
 }
