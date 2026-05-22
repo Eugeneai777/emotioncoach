@@ -63,8 +63,12 @@ export default function BecomeCoach() {
   const { user } = useAuth();
   const { toast } = useToast();
   const mode: "self" | "proxy" = searchParams.get("mode") === "proxy" ? "proxy" : "self";
+  const editId = searchParams.get("edit");
   const STEPS = mode === "proxy" ? PROXY_STEPS : SELF_STEPS;
-  const [currentStep, setCurrentStep] = useState<Step>(mode === "proxy" ? "proxy_verify" : "basic");
+  // 编辑代申请记录时跳过身份核验（首次申请已完成）
+  const [currentStep, setCurrentStep] = useState<Step>(
+    mode === "proxy" && !editId ? "proxy_verify" : "basic"
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [proxyData, setProxyData] = useState<ProxyVerifyData>({
