@@ -1,44 +1,61 @@
-## 智能推荐：管理员暂停接单后，推荐位仍展示该教练
+## 教练详情页优化（A-3 / B / C-2）
 
-### 根因
+### 1. A-3：移除"通话"按钮，改为"加企微"弹窗
 
-`supabase/functions/recommend-coaches/index.ts` 第 46 行已经做了 `is_accepting_new = true` 过滤，**后端逻辑正确**。
+**底部操作栏（HumanCoachDetail.tsx L317-337）**
+- 删除"通话"按钮，删除 `useCoachCall`、`Phone` 图标、`isInCall`、`startCall` 相关引用（若仅此处使用）
+- 新增"加企微"按钮（outline 风格，teal 主题色），点击打开 `CoachWeChatDialog`
 
-问题出在前端缓存：
+**新增组件 `src/components/human-coach/CoachWeChatDialog.tsx`**
+- 基于 `Sheet`（底部弹出），参考 `MaleVitalityWeChatSheet` 风格
+- 内容：
+  - 标题"添加教练企业微信，沟通预约更顺畅"
+  - 二维码图片（教练专属）+ 占位提示
+  - 底部说明文案："长按识别二维码 / 在企业微信中扫码添加"
+  - 小程序环境兼容提示（参考 `QiWeiQRCard` 的 `isWeChatMiniProgram` 分支）
+- 二维码来源（按优先级 fallback）：
+  1. `coach.wechat_qr_url`（数据库字段，若已存在则使用；不存在则忽略，本次不做迁移）
+  2. 通用占位图 `src/assets/qiwei-placeholder.jpg`（新建占位资源，用户后续上传替换）
 
-`src/hooks/useCoachRecommendations.ts`
-```ts
-staleTime: 10 * 60 * 1000  // 10 分钟
-```
+**占位资源**
+- 在 `src/assets/` 创建 `coach-wechat-placeholder.jpg`（先复制现有 `qiwei-service-qr.jpg` 作为占位，或留 README 说明"待替换"）
+- 文件头部注释标明：此为占位图，用户上传正式教练企微二维码后替换
 
-React Query 把推荐结果缓存 10 分钟，期间不会重新调用边缘函数。所以：
-- 管理员在后台把某教练的「接单」开关关掉
-- 普通用户的浏览器已经缓存了上一份推荐列表
-- 用户在 10 分钟内刷新/重新进入 `/human-coaches`，仍看到该教练
+### 2. B：修复服务卡片"立即预约"死按钮
 
-下方「共 N 位教练可预约」的常规列表用的是 `useActiveHumanCoaches`（直接 SDK 查询 + RLS/视图过滤），它的 staleTime 短，所以那块没问题——也印证了截图里推荐位有"林蒿老师"、下方列表只有 Lisa。
+**HumanCoachDetail.tsx L271-276**
+- 给服务卡片的"立即预约"按钮添加 `onClick`：
+  ```
+  setSelectedService(service);
+  setBookingOpen(true);
+  ```
+- 加上 `e.stopPropagation()`（防止冒泡到 Card）
 
-### 方案
+### 3. C-2：用"新晋教练"徽章替代"0次咨询"
 
-**仅前端一处改动**（不动数据库、不动边缘函数）：
+**统计区（L163-166）**
+- 当 `coach.total_sessions === 0` 时，整列展示替换为徽章风格：
+  - 大字部分：🌱 emoji
+  - 副标题：「新晋教练」
+  - 使用 teal 配色，保持与其他两列视觉等高
+- 当 `total_sessions > 0` 时，保留原"X 次咨询"显示
 
-`src/hooks/useCoachRecommendations.ts`：
-- `staleTime: 30 * 1000`（30 秒，足够防抖且不再让暂停状态滞留 10 分钟）
-- `refetchOnWindowFocus: true`（用户切回 Tab 自动拉新）
-- `refetchOnMount: true`（重新进入页面强制刷新）
+**HumanCoachCard.tsx L97-100（列表卡片）**
+- 同步处理：`total_sessions === 0` 时，将"0次"替换为"新晋"小徽章（保持 inline 风格，无需图标）
 
-### 不做的事
+### 4. 技术细节
 
-- 不动后端过滤逻辑（已经正确）
-- 不引入 realtime 订阅（成本与收益不匹配，30s staleTime 已足够）
-- 不在管理员侧主动失效用户缓存（跨用户/跨设备，不可行）
+- `useCoachCall` 仅 HumanCoachDetail 引用 → 直接移除 import；否则只移除调用
+- 新建组件保持与现有 sheet/dialog 风格统一（rounded-t-2xl、px-5 间距）
+- 占位图通过 ES6 import 引入，便于后续替换：
+  ```ts
+  import qrPlaceholder from "@/assets/coach-wechat-placeholder.jpg";
+  ```
+- 不涉及后端 / DB schema 变更（即使 `wechat_qr_url` 字段不存在也能 fallback 到占位图）
 
-### 验收
+### 5. 验证
 
-1. 管理员把"林蒿老师"接单开关关掉
-2. 普通用户已停留在 `/human-coaches` 页面 → 切走再切回（或 30s 后刷新） → 智能推荐位不再显示该教练
-3. 重新打开该开关 → 同样在 30s 内自动恢复
-
-### 改动文件
-
-- 编辑 `src/hooks/useCoachRecommendations.ts`
+- 点击底部"加企微" → 弹窗显示占位二维码
+- 服务卡片"立即预约" → 打开 BookingDialog 且预选该服务
+- `total_sessions=0` 教练 → 显示"🌱 新晋教练"而非"0 次咨询"
+- `total_sessions>0` 教练 → 显示原咨询次数
