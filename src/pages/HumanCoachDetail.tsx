@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Clock, Users, Award, CheckCircle, MapPin, GraduationCap, Play, Settings, Phone } from "lucide-react";
+import { Clock, Users, Award, CheckCircle, MapPin, Play, Settings, Phone } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -135,7 +135,7 @@ export default function HumanCoachDetail() {
                     </Badge>
                   )}
                 </div>
-                <p className="text-muted-foreground mt-1">{coach.title}</p>
+                
                 
                 <div className="mt-3">
                   <CoachRatingDisplay 
@@ -195,22 +195,7 @@ export default function HumanCoachDetail() {
               </Card>
             )}
             
-            {/* 教育背景 */}
-            {coach.education && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <GraduationCap className="w-4 h-4" />
-                    教育背景
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">
-                    {coach.education}
-                  </p>
-                </CardContent>
-              </Card>
-            )}
+            
             
             {/* 资质认证 */}
             {certifications.length > 0 && (
