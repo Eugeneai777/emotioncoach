@@ -226,6 +226,23 @@ export default function BecomeCoach() {
       return;
     }
 
+    // 最终兜底校验（自申请模式）
+    if (mode !== "proxy") {
+      const { validateBasicInfo } = await import("@/lib/coachApplicationTemplates");
+      const err = validateBasicInfo({
+        displayName: basicInfo.displayName,
+        phone: basicInfo.phone,
+        bio: basicInfo.bio,
+        avatarUrl: basicInfo.avatarUrl,
+        specialties: basicInfo.specialties,
+      });
+      if (err) {
+        toast({ title: err.message, variant: "destructive" });
+        setCurrentStep("basic");
+        return;
+      }
+    }
+
     setIsSubmitting(true);
     try {
       // 推荐档位（系统按经验+持证计算）
