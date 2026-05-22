@@ -6,13 +6,19 @@ import { Button } from "@/components/ui/button";
 import { BasicInfoStep } from "@/components/coach-application/BasicInfoStep";
 import { CertificationsStep } from "@/components/coach-application/CertificationsStep";
 import { SubmitStep } from "@/components/coach-application/SubmitStep";
+import {
+  ExperienceTierStep,
+  suggestTierLevel,
+  type ExperienceTierData,
+} from "@/components/coach-application/ExperienceTierStep";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useCoachPriceTiers } from "@/hooks/useCoachPriceTiers";
 
-type Step = "basic" | "certifications" | "submit" | "success";
+type Step = "basic" | "certifications" | "experience" | "submit" | "success";
 
 interface BasicInfoData {
   displayName: string;
@@ -35,6 +41,7 @@ interface Certification {
 const STEPS: { key: Step; label: string }[] = [
   { key: "basic", label: "基本信息" },
   { key: "certifications", label: "资质证书" },
+  { key: "experience", label: "经验档位" },
   { key: "submit", label: "确认提交" },
 ];
 
@@ -105,6 +112,14 @@ export default function BecomeCoach() {
 
   const [certifications, setCertifications] = useState<Certification[]>([]);
 
+  const [experienceTier, setExperienceTier] = useState<ExperienceTierData>({
+    experienceBucket: "",
+    preferredTierId: "",
+    preferredTierReason: "",
+  });
+
+  const { data: priceTiers = [] } = useCoachPriceTiers();
+
   // Existing coach record (for edit-mode prefill + status banner)
   const [existingCoach, setExistingCoach] = useState<{
     id: string;
@@ -112,6 +127,7 @@ export default function BecomeCoach() {
     admin_note: string | null;
   } | null>(null);
   const [, setPrefillLoading] = useState(false);
+
 
   // Prefill form when user already has a human_coaches record
   useEffect(() => {
@@ -121,7 +137,7 @@ export default function BecomeCoach() {
       setPrefillLoading(true);
       const { data: coach } = await supabase
         .from("human_coaches")
-        .select("id, status, admin_note, name, bio, avatar_url, specialties, experience_years")
+        .select("id, status, admin_note, name, bio, avatar_url, specialties, experience_years, experience_years_bucket, preferred_tier_id, preferred_tier_reason")
         .eq("user_id", user.id)
         .maybeSingle();
 
@@ -137,6 +153,12 @@ export default function BecomeCoach() {
           specialties: coach.specialties || prev.specialties,
           yearsExperience: coach.experience_years || prev.yearsExperience,
         }));
+        setExperienceTier({
+          experienceBucket: (coach.experience_years_bucket as any) || "",
+          preferredTierId: coach.preferred_tier_id || "",
+          preferredTierReason: coach.preferred_tier_reason || "",
+        });
+
 
         // Prefill certifications from existing record
         const { data: certs } = await supabase
@@ -188,6 +210,15 @@ export default function BecomeCoach() {
 
       let coachData: { id: string };
 
+      // 推荐档位（系统按经验+持证计算）
+      const hasCert = certifications.length > 0;
+      const suggestedLevel = experienceTier.experienceBucket
+        ? suggestTierLevel(experienceTier.experienceBucket as any, hasCert)
+        : null;
+      const suggestedTier = suggestedLevel != null
+        ? priceTiers.find((t) => t.tier_level === suggestedLevel)
+        : undefined;
+
       const coachPayload = {
         name: basicInfo.displayName,
         phone: basicInfo.phone,
@@ -195,11 +226,17 @@ export default function BecomeCoach() {
         avatar_url: basicInfo.avatarUrl,
         specialties: basicInfo.specialties,
         experience_years: basicInfo.yearsExperience,
+        experience_years_bucket: experienceTier.experienceBucket || null,
+        preferred_tier_id: experienceTier.preferredTierId || null,
+        preferred_tier_reason: experienceTier.preferredTierReason || null,
+        suggested_tier_id: suggestedTier?.id || null,
+        submitted_by_user_id: user.id,
         // Any edit (including from approved coach) goes back to pending for re-review
         status: "pending",
         is_accepting_new: false,
         is_verified: false,
       };
+
 
       if (existing) {
         // Pending / approved / rejected -> UPDATE existing record (latest submission wins, status reset to pending)
@@ -512,7 +549,7 @@ export default function BecomeCoach() {
               <CertificationsStep
                 data={certifications}
                 onChange={setCertifications}
-                onNext={() => setCurrentStep("submit")}
+                onNext={() => setCurrentStep("experience")}
                 onBack={() => setCurrentStep("basic")}
                 presetCertTypes={
                   Array.isArray((invitationData as any)?.default_certifications)
@@ -522,13 +559,24 @@ export default function BecomeCoach() {
               />
             )}
 
+            {currentStep === "experience" && (
+              <ExperienceTierStep
+                data={experienceTier}
+                onChange={setExperienceTier}
+                onNext={() => setCurrentStep("submit")}
+                onBack={() => setCurrentStep("certifications")}
+                hasCertifications={certifications.length > 0}
+              />
+            )}
+
+
             {currentStep === "submit" && (
               <SubmitStep
                 basicInfo={basicInfo}
                 certifications={certifications}
                 defaultServiceName={invitationData?.default_service_name}
                 onSubmit={handleSubmit}
-                onBack={() => setCurrentStep("certifications")}
+                onBack={() => setCurrentStep("experience")}
                 isSubmitting={isSubmitting}
                 submitLabel={existingCoach ? "保存并重新提交审核" : "提交申请"}
               />

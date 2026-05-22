@@ -1,56 +1,108 @@
-## 目标
-对 `/assessment/male_unspoken_check` 做一次面向电脑端、H5、微信/小程序 WebView 的稳定性加固，确保用户路径可完成：公开链接打开 → 生成/保存海报 → 开始测评 → 完成最后一题 → 看到结果 → 扫码加微。
 
-## 已定位的问题
-1. 售前页“生成海报”现在生成后只弹出全屏预览，不会自动触发下载；在电脑端用户预期是点击后直接下载，所以会被认为“没反应”。
-2. `useDataUrl` 分支没有走统一的 `handleShareWithFallback`/下载能力，生成成功后只设置 `previewUrl`，桌面端不会自动保存。
-3. 头像代理改成“所有跨域头像都走 image-proxy”，但 `image-proxy` 只允许微信域名；Google 等头像会被代理拦截，存在再次污染 canvas 或头像加载失败的风险。
-4. 结果页通用二维码卡片尺寸仅 80px，且文案是“长按识别二维码，获取专属服务”，对“男人有劲状态评估测评”不够显眼。
-5. 最后一题点击“查看结果”缺少提交锁和明确加载态；如果保存结果或 AI 洞察请求慢，用户会感知为卡住。
-6. 题目图片虽存在且体积不大，但 H5/小程序图片失败时只显示“点击重试”，没有低网速兜底占位和预加载策略。
+# 教练申请流程 · 最终实施方案（已并入 P0/P1/P2 加固）
 
-## 修复计划
+## 一、数据库改动
 
-### 1. 修复电脑端售前页生成海报“无下载动作”
-- 调整 `ShareDialogBase` 的 `useDataUrl` 分支：
-  - 生成成功后继续显示预览，保证微信/H5可长按保存。
-  - 在电脑端同步触发一次 `<a download>` 下载，让用户点击“生成海报”后立即看到浏览器下载动作。
-  - 移动端、小程序、微信仍以预览/长按保存为主，避免自动下载兼容性差。
-- 为生成过程增加更明确的日志和 toast：生成成功后提示“海报已生成，可保存图片”。
+### 1.1 `human_coaches` 表
+- 新增 `submitted_by_user_id uuid`（代申请提交者，所有路径必填）
+- 新增 `claim_phone text` + `claim_country_code text default '+86'`（代申请锚定手机号）
+- 新增 `proxy_verified_at timestamptz`（代申请的教练本人短信验证通过时间，P0-3）
+- 新增 `experience_years_bucket text` check in ('lt3','3to5','5to10','gte10')（P0-1 经验区间）
+- 新增 `preferred_tier_id uuid references coach_price_tiers`（申请者期望档位，可空）
+- 新增 `preferred_tier_reason text`（一句话理由，可空）
+- 新增 `suggested_tier_id uuid references coach_price_tiers`（系统按经验+持证算出的推荐档位）
+- `user_id` 改为 nullable
+- 旧的 `unique(user_id)` 改为 `unique(user_id) where user_id is not null`
 
-### 2. 统一头像/跨域图片安全策略，避免 canvas 污染和代理拦截
-- 修正 `getProxiedAvatarUrl`：
-  - 微信/企微头像继续走 `image-proxy`。
-  - 非白名单第三方头像不再强行代理，改为在分享卡片中优雅降级为默认头像，避免被 edge function 403 或污染 canvas。
-- 在分享卡片头像 `<img>` 失败时隐藏头像图，使用默认头像占位，保证海报生成不被头像拖垮。
+### 1.2 唯一约束 & 防滥用
+- `unique (claim_phone, claim_country_code) where user_id is null and status in ('pending','approved')` —— 防 P0-3 撞号
+- 触发器：同一 `submitted_by_user_id` 24h pending ≤ 5、累积 pending ≤ 10，超额抛错（P1-2）
 
-### 3. 加强海报隐藏渲染容器兼容性
-- 调整 `ShareDialogBase` 的隐藏导出卡容器：
-  - 不再使用 `height:0;width:0` 包裹真实卡片，避免部分浏览器/WebView 中 html2canvas 计算尺寸或渲染异常。
-  - 改成屏幕外固定尺寸、透明但可布局的渲染区，确保电脑端、H5、小程序都能稳定捕获。
+### 1.3 RLS
+- SELECT/UPDATE：`submitted_by_user_id = auth.uid()` OR `user_id = auth.uid()` OR admin
+- INSERT：必须 `submitted_by_user_id = auth.uid()`
+- `coach_price_tiers` SELECT：仅 `auth.uid() is not null`（P2-1，禁匿名爬取）
 
-### 4. 优化结果页“加微二维码”显眼程度
-- 对 `male_unspoken_check` 使用专属二维码展示样式：
-  - 将二维码从 80px 提升到 120–160px 级别（移动端可读，桌面更突出）。
-  - 标题明确改为“男人有劲状态评估测评 · 加顾问微信”。
-  - 增加“扫码/长按识别”“备注：有劲 + 你的颜色档”的强提示。
-- 同步优化底部弹窗二维码：对 `male_unspoken_check` 也启用类似男人有劲结果页的大二维码弹窗，而不是只走通用小卡。
+### 1.4 复用现有 SMS 通道
+- `send-sms-code` / `verify-sms-code` 复用阿里云短信，新增 `purpose='coach_proxy_verify'`
+- 验证通过后由 edge function 写入 `human_coaches.proxy_verified_at`
 
-### 5. 修复最后一题做完“卡住”的感知问题
-- 在 `DynamicAssessmentQuestions` 增加 `isSubmitting` 状态：
-  - 点击“查看结果”后按钮进入 loading 并禁用重复点击。
-  - 等 `onComplete` 链路启动后再释放/切页，避免用户重复触发或误以为没反应。
-- 在 `DynamicAssessmentPage` 中将“计算并切到结果页”保持优先执行，保存结果和 AI 洞察继续异步，不阻塞出结果。
-- 对 AI 洞察保留现有 loading 状态，不影响结果页首屏展示。
+### 1.5 一次性审核通过 RPC（P2-2 事务化）
+- `approve_coach_application(coach_id, certification_ids[])`：
+  - 校验所有 `certification_ids` 属于该 coach 且调用者为 admin
+  - update `human_coaches` set status='approved', is_accepting_new=true, is_verified=true, verified_at=now()
+  - update 这些 `coach_certifications` set verification_status='verified', verified_by=auth.uid()
+  - 插入 `coach_services`（依赖 `apply_tier_price_on_service_insert` 触发器自动填价）
+  - 任一失败回滚
 
-### 6. 图片加载与跨端预加载加固
-- 对 `male_unspoken_check` 首屏和题目媒体提前 preload 关键图片：`q1_keychain.jpg`、`q6_sofa.jpg`。
-- `QuestionMedia` 图片失败时增加更友好的占位：显示题目仍可继续答，不让图片失败阻断用户路径。
-- 检查图片路径统一使用同源绝对 URL，保留当前 WebView 兼容逻辑。
+### 1.6 自动认领冲突保护（P2-3）
+- 用户注册时若 `claim_phone` 匹配且本人已存在 active 教练记录 → 不静默 bind，写入 `coach_claim_conflicts` 表待用户在前端二选一
 
-## 验证清单
-- 电脑端：公开链接打开，点击分享 → 生成海报后出现下载动作，同时预览可见。
-- H5 移动端：生成海报后显示全屏图片预览，可长按/保存。
-- 微信/小程序 WebView：生成海报不依赖浏览器下载，展示可长按保存的预览。
-- 测评链路：完成第 10 题后点击“查看结果”有 loading，不重复提交，不停留卡死。
-- 结果页：加微二维码在首屏后半段更显眼，文案明确指向“男人有劲状态评估测评”。
+---
+
+## 二、前端改动
+
+### 2.1 `/become-coach?invite=xxx` 改造为「入口 + 列表」
+- 顶部列出当前用户作为 `submitted_by_user_id` 或 `user_id` 的所有 `human_coaches`，带状态徽章（pending / approved / rejected）+ 「编辑」按钮
+- 两个 CTA：「➕ 我要申请」（self）、「➕ 帮他人申请」（proxy）
+
+### 2.2 `CoachApplicationForm` 三种模式
+- `mode: 'self' | 'proxy' | 'edit'`
+- **Step 1 基础信息**：头像 / 姓名 / 手机号 / bio
+  - proxy 模式：手机号填教练本人号 → 触发"获取验证码"按钮 → 教练本人收到 6 位码 → 代理人输入 → 校验通过后才能进入 Step 2
+- **Step 2 资质上传**：现有 `CertificationsStep` 不变
+- **Step 3 经验 & 期望档位（P0-1）**：
+  - 必选：从业年限区间 radio（4 选 1）
+  - 系统按规则即时显示推荐档位卡片（10+ & 持证 → 金牌，5-10 → 高级，3-5 → 认证，<3 → 新锐）
+  - 可选：期望档位 radio + 一句话理由 textarea
+- 编辑模式分两类提交按钮（P1-1）：
+  - **快速更新**（头像/bio/擅长/年限）→ 直接生效不下架
+  - **重新提审**（姓名/手机号/资质增减/期望档位变更）→ status=pending, is_accepting_new=false, is_verified=false
+
+### 2.3 死字段处理（P1-3）
+- 前端表单/管理后台 UI 全部隐藏 `title/education/training_background/intro_video_url/case_studies`
+- DB 列保留不删除，便于未来恢复
+
+---
+
+## 三、管理后台改动
+
+### 3.1 `CoachApplicationDetail.tsx` 审核页
+- 顶部信息卡：申请者姓名/手机号 + 提交方式标签（自申请 / 代申请，代申请显示代理人）
+- 经验 & 档位卡片：
+  - 申请者年限区间
+  - 系统推荐档位（高亮，默认选中）
+  - 申请者期望档位 + 理由（如果有，灰色对比展示）
+  - 一个 radio 让管理员一键确认（默认就是推荐档位，零思考通过）
+- 资质审阅区（P0-2）：
+  - 每张证书一个 Checkbox「✓ 已审阅」（默认未勾）
+  - 「通过」按钮 disabled，直到全部勾选才可点
+- 「通过」按钮 → 调用 1.5 的 RPC，一次完成 status + verification + service 创建
+- 「拒绝」按钮 → 弹窗必填 `rejected_reason`
+
+### 3.2 `CoachApplicationsList.tsx`
+- 列表增加「提交方式」「期望档位」「推荐档位」三列，便于批量分流
+
+---
+
+## 四、删除/废弃
+- `ServicesStep.tsx`（dead code）
+- 旧的 `updateStatusMutation` 中分散的 verify 步骤 → 改用 1.5 的 RPC
+
+---
+
+## 五、验证路径
+
+1. **自申请**：登录 → /become-coach?invite=xxx → 我要申请 → 填 3 步 → 提交 → 列表出现 pending
+2. **代申请**：同一账号 → 帮他人申请 → 填教练手机号 → 验证码（短信到教练本人）→ 输入→ 校验通过 → 填资质/经验 → 提交 → 列表出现 pending（user_id=null, claim_phone=教练号）
+3. **审核**：admin 进详情 → 看到推荐档位（已选）→ 勾选所有证书 → 通过 → 教练立即上线、可接单、价格已同步
+4. **编辑通过的教练**：教练本人进入 → 快速改头像 → 仍在线；改资质 → 自动转 pending 重审
+5. **撞号防护**：同号代申请第二次 → DB 抛唯一约束错误，前端提示「该手机号已有未完成申请」
+6. **教练注册认领**：教练用 claim_phone 注册 → 若该号已 proxy_verified → 自动 bind user_id；若已有 active 教练记录 → 弹合并选择
+
+---
+
+## 六、待用户确认（实施前最后一关）
+
+- 推荐档位规则是否就用：`10+&持证→金牌 / 5-10→高级 / 3-5→认证 / <3→新锐`？或你想自定义阈值？
+- 代申请短信验证码可以走现有阿里云 SMS 通道（已配置），无新增成本，确认即可开工。
