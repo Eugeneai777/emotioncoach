@@ -317,9 +317,10 @@ export default function BecomeCoach() {
         const insertPayload = isProxy ? coachPayload : { user_id: user.id, ...coachPayload };
         const { data: inserted, error: coachError } = await supabase
           .from("human_coaches")
-          .insert(insertPayload)
+          .insert(insertPayload as any)
           .select("id")
           .single();
+
         if (coachError) throw coachError;
         coachData = inserted;
       }
