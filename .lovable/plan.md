@@ -1,61 +1,28 @@
-## 教练详情页优化（A-3 / B / C-2）
+## 海报二维码替换方案
 
-### 1. A-3：移除"通话"按钮，改为"加企微"弹窗
+### 目标
+把第一张海报（网瘾休学公开课）左下角的二维码，替换为第二张图中的企微二维码，其他内容保持不变，且替换后能长按识别加到对应企微。
 
-**底部操作栏（HumanCoachDetail.tsx L317-337）**
-- 删除"通话"按钮，删除 `useCoachCall`、`Phone` 图标、`isInCall`、`startCall` 相关引用（若仅此处使用）
-- 新增"加企微"按钮（outline 风格，teal 主题色），点击打开 `CoachWeChatDialog`
+### 技术方案
 
-**新增组件 `src/components/human-coach/CoachWeChatDialog.tsx`**
-- 基于 `Sheet`（底部弹出），参考 `MaleVitalityWeChatSheet` 风格
-- 内容：
-  - 标题"添加教练企业微信，沟通预约更顺畅"
-  - 二维码图片（教练专属）+ 占位提示
-  - 底部说明文案："长按识别二维码 / 在企业微信中扫码添加"
-  - 小程序环境兼容提示（参考 `QiWeiQRCard` 的 `isWeChatMiniProgram` 分支）
-- 二维码来源（按优先级 fallback）：
-  1. `coach.wechat_qr_url`（数据库字段，若已存在则使用；不存在则忽略，本次不做迁移）
-  2. 通用占位图 `src/assets/qiwei-placeholder.jpg`（新建占位资源，用户后续上传替换）
+**核心做法：像素级精准替换（不用 AI 重绘）**
 
-**占位资源**
-- 在 `src/assets/` 创建 `coach-wechat-placeholder.jpg`（先复制现有 `qiwei-service-qr.jpg` 作为占位，或留 README 说明"待替换"）
-- 文件头部注释标明：此为占位图，用户上传正式教练企微二维码后替换
+为什么不用 AI 图像编辑模型？因为 Nano Banana 等模型会重新生成二维码像素，新二维码的黑白点阵几乎一定无法被微信扫出来——长按识别会失败。必须用确定性的图像合成，把第二张图的真二维码原样贴到第一张海报对应位置。
 
-### 2. B：修复服务卡片"立即预约"死按钮
+**执行步骤：**
 
-**HumanCoachDetail.tsx L271-276**
-- 给服务卡片的"立即预约"按钮添加 `onClick`：
-  ```
-  setSelectedService(service);
-  setBookingOpen(true);
-  ```
-- 加上 `e.stopPropagation()`（防止冒泡到 Card）
+1. 用 Python + Pillow 读取两张上传图
+2. 从第二张图中裁出纯二维码区域（去掉底部"扫描二维码，添加我的企业微信"文字，只保留二维码方块）
+3. 在第一张海报中定位左下角二维码的精确坐标和尺寸（通过查看图像确定 bbox）
+4. 将裁出的新二维码缩放到匹配尺寸，paste 到第一张海报对应位置，覆盖旧二维码
+5. 周围保留原海报米黄色背景，不动其他像素
+6. 输出 `/mnt/documents/网瘾休学公开课-海报-v2.jpg`
 
-### 3. C-2：用"新晋教练"徽章替代"0次咨询"
+### 验证
 
-**统计区（L163-166）**
-- 当 `coach.total_sessions === 0` 时，整列展示替换为徽章风格：
-  - 大字部分：🌱 emoji
-  - 副标题：「新晋教练」
-  - 使用 teal 配色，保持与其他两列视觉等高
-- 当 `total_sessions > 0` 时，保留原"X 次咨询"显示
+- 视觉 QA：用 code--view 查看输出图，确认二维码位置/尺寸自然、无白边错位、海报其他内容（标题、插画、"每周日晚8点 / 腾讯会议"卡片）完全未变
+- 扫码可用性：因为是原始二维码像素整块平移缩放（保持足够分辨率，不过度压缩），微信长按识别应能正常工作
 
-**HumanCoachCard.tsx L97-100（列表卡片）**
-- 同步处理：`total_sessions === 0` 时，将"0次"替换为"新晋"小徽章（保持 inline 风格，无需图标）
+### 交付
 
-### 4. 技术细节
-
-- `useCoachCall` 仅 HumanCoachDetail 引用 → 直接移除 import；否则只移除调用
-- 新建组件保持与现有 sheet/dialog 风格统一（rounded-t-2xl、px-5 间距）
-- 占位图通过 ES6 import 引入，便于后续替换：
-  ```ts
-  import qrPlaceholder from "@/assets/coach-wechat-placeholder.jpg";
-  ```
-- 不涉及后端 / DB schema 变更（即使 `wechat_qr_url` 字段不存在也能 fallback 到占位图）
-
-### 5. 验证
-
-- 点击底部"加企微" → 弹窗显示占位二维码
-- 服务卡片"立即预约" → 打开 BookingDialog 且预选该服务
-- `total_sessions=0` 教练 → 显示"🌱 新晋教练"而非"0 次咨询"
-- `total_sessions>0` 教练 → 显示原咨询次数
+一个 `<presentation-artifact>` 指向新海报 JPG，用户可直接下载替换。
