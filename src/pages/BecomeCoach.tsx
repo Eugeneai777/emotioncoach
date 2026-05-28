@@ -89,7 +89,7 @@ export default function BecomeCoach() {
   const coachBypass = mode === "proxy" && !inviteToken && isApprovedCoach;
 
   const [inviteStatus, setInviteStatus] = useState<"loading" | "valid" | "invalid" | "none">(
-    inviteToken ? "loading" : "none"
+    inviteToken || mode === "proxy" ? "loading" : "none"
   );
   const [invitationData, setInvitationData] = useState<any>(null);
 
