@@ -48,11 +48,22 @@ export default function HumanCoaches() {
       <DynamicOGMeta pageKey="humanCoaches" />
       <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50" style={{ WebkitOverflowScrolling: 'touch' }}>
       <PageHeader title="真人教练" showBack showHomeButton rightActions={
-        coachProfile ? (
-          <Button variant="outline" size="sm" onClick={() => navigate("/coach-dashboard")} className="text-teal-600 border-teal-200 hover:bg-teal-50">
-            我的后台
-          </Button>
-        ) : null
+        <div className="flex items-center gap-2">
+          {coachProfile ? (
+            <>
+              <Button variant="outline" size="sm" onClick={() => navigate("/coach-dashboard")} className="text-teal-600 border-teal-200 hover:bg-teal-50">
+                我的后台
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => navigate("/become-coach?mode=proxy")} className="text-teal-600 border-teal-200 hover:bg-teal-50">
+                代他人申请
+              </Button>
+            </>
+          ) : (
+            <Button variant="outline" size="sm" onClick={() => navigate("/coach-recruitment")} className="text-teal-600 border-teal-200 hover:bg-teal-50">
+              申请入驻
+            </Button>
+          )}
+        </div>
       } />
       
       {/* 搜索和筛选 */}
