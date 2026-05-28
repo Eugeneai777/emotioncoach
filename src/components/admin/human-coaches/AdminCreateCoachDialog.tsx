@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
-import { Loader2, X, Plus, ArrowLeft } from "lucide-react";
+import { Loader2, X, Plus } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useCoachPriceTiers } from "@/hooks/useCoachPriceTiers";
 import { AdminCertificationUploader } from "./AdminCertificationUploader";
