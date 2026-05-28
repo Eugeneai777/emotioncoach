@@ -98,6 +98,40 @@ export function ApprovedCoachesList() {
     }
   });
 
+  const deleteCoachMutation = useMutation({
+    mutationFn: async (coachId: string) => {
+      // 按依赖顺序删除关联数据
+      const certRes = await supabase.from("coach_certifications").delete().eq("coach_id", coachId).select("id");
+      if (certRes.error) throw certRes.error;
+
+      const svcRes = await supabase.from("coach_services").delete().eq("coach_id", coachId).select("id");
+      if (svcRes.error) throw svcRes.error;
+
+      const tierRes = await supabase.from("coach_price_tiers").delete().eq("coach_id", coachId).select("id");
+      if (tierRes.error) throw tierRes.error;
+
+      const coachRes = await supabase.from("human_coaches").delete().eq("id", coachId).select("id");
+      if (coachRes.error) throw coachRes.error;
+      if (!coachRes.data || coachRes.data.length === 0) {
+        throw new Error("删除失败：未找到记录或无权限");
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["human-coaches"] });
+      queryClient.invalidateQueries({ queryKey: ["human-coaches-stats"] });
+      toast.success("教练已删除");
+      setDeletingCoach(null);
+    },
+    onError: (error: any) => {
+      const msg = error?.message || String(error);
+      if (msg.includes("foreign key") || msg.includes("violates")) {
+        toast.error("该教练存在历史订单或评价，无法删除，请改为停用");
+      } else {
+        toast.error("删除失败: " + msg);
+      }
+    }
+  });
+
   const filteredCoaches = coaches?.filter(coach => 
     coach.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     coach.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
