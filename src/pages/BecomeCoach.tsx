@@ -369,7 +369,7 @@ export default function BecomeCoach() {
 
       let coachData: { id: string };
 
-      // 编辑模式优先用 editId 锁定记录；自助模式回退到按 user_id 查
+      // 查找已有记录：编辑模式锁 editId；代申请按 submitter+claim_phone 复用 pending/rejected；自助按 user_id
       const { data: existing } = editId
         ? await supabase
             .from("human_coaches")
@@ -378,7 +378,15 @@ export default function BecomeCoach() {
             .eq("submitted_by_user_id", user.id)
             .maybeSingle()
         : isProxy
-        ? { data: null as any }
+        ? await supabase
+            .from("human_coaches")
+            .select("id, status")
+            .eq("submitted_by_user_id", user.id)
+            .eq("claim_phone", proxyData.coachPhone)
+            .eq("claim_country_code", proxyData.coachCountryCode)
+            .is("user_id", null)
+            .in("status", ["pending", "rejected"])
+            .maybeSingle()
         : await supabase
             .from("human_coaches")
             .select("id, status")
@@ -390,16 +398,17 @@ export default function BecomeCoach() {
           .from("human_coaches")
           .update(coachPayload)
           .eq("id", existing.id)
-          .select("id")
-          .single();
+          .select("id");
         if (updateError) throw updateError;
-        if (!updated) throw new Error("更新失败：无权限或记录不存在");
-        coachData = updated;
+        if (!updated || updated.length === 0) {
+          throw new Error("更新失败：无权限或记录已被他人占用");
+        }
+        coachData = updated[0];
 
-        await supabase.from("coach_certifications").delete().eq("coach_id", coachData.id).select("id");
-        await supabase.from("coach_services").delete().eq("coach_id", coachData.id).select("id");
+        await supabase.from("coach_certifications").delete().eq("coach_id", coachData.id);
+        await supabase.from("coach_services").delete().eq("coach_id", coachData.id);
       } else {
-        // 自助模式做姓名+手机号防重；代申请已由 DB 唯一索引 + 短信验证拦截
+        // 自助模式做姓名+手机号防重；代申请已由 DB 唯一索引拦截
         if (!isProxy) {
           const { data: dupByName } = await supabase
             .from("human_coaches")
@@ -430,8 +439,6 @@ export default function BecomeCoach() {
         coachData = inserted;
       }
 
-
-
       // Create certifications
       if (certifications.length > 0) {
         const certRecords = certifications.map((cert) => ({
@@ -452,21 +459,32 @@ export default function BecomeCoach() {
         if (certError) throw certError;
       }
 
-      // Auto-create default service (60 min)
+      // Auto-create default service (60 min) — 兜底确保后台审核可见
       const serviceName = invitationData.default_service_name || `${effectiveName} 咨询`;
-      const { error: serviceError } = await supabase
+      const { data: existingService } = await supabase
         .from("coach_services")
-        .insert({
-          coach_id: coachData.id,
-          service_name: serviceName,
-          description: null,
-          duration_minutes: 60,
-          price: 0,
-          is_active: true,
-          display_order: 0,
-        });
+        .select("id")
+        .eq("coach_id", coachData.id)
+        .limit(1)
+        .maybeSingle();
 
-      if (serviceError) throw serviceError;
+      if (!existingService) {
+        const { error: serviceError } = await supabase
+          .from("coach_services")
+          .insert({
+            coach_id: coachData.id,
+            service_name: serviceName,
+            description: null,
+            duration_minutes: 60,
+            price: 0,
+            is_active: true,
+            display_order: 0,
+          });
+        // 默认服务可由管理员审核时补建，失败不阻断主流程
+        if (serviceError) {
+          console.warn("默认服务创建失败（管理员审核时会自动补建）:", serviceError);
+        }
+      }
 
       // Increment invitation usage count (skip for coach-self-initiated proxy without invite)
       if (invitationData.id && invitationData.source !== "coach_self_initiated") {
@@ -475,11 +493,24 @@ export default function BecomeCoach() {
 
       setCurrentStep("success");
       toast({ title: "申请提交成功！" });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Submit error:", error);
+      const raw = error?.message || error?.error_description || "";
+      let description = "请稍后重试或联系客服";
+      if (raw.includes("coach_application_throttle_24h")) {
+        description = "24 小时内最多提交 5 份待审核申请，请稍后再试";
+      } else if (raw.includes("coach_application_throttle_total")) {
+        description = "您累计待审核申请已达 10 份，请等待审核后再提交";
+      } else if (raw.includes("human_coaches_claim_phone_unique") || raw.includes("duplicate key")) {
+        description = "该手机号已有一份待审核或已通过的申请，请等待审核或联系客服";
+      } else if (raw.toLowerCase().includes("row-level security") || raw.toLowerCase().includes("permission")) {
+        description = "当前账号无权限提交，请联系客服";
+      } else if (raw) {
+        description = raw.length > 80 ? raw.slice(0, 80) + "…" : raw;
+      }
       toast({
         title: "提交失败",
-        description: "请稍后重试或联系客服",
+        description,
         variant: "destructive",
       });
     } finally {
