@@ -285,7 +285,6 @@ export function ApprovedCoachesList() {
           isPending={false}
         />
       )}
-      )}
 
       <AlertDialog open={!!deletingCoach} onOpenChange={(o) => !o && setDeletingCoach(null)}>
         <AlertDialogContent>
