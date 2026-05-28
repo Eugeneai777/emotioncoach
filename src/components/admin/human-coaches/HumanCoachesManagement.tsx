@@ -1,15 +1,18 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { CoachApplicationsList } from "./CoachApplicationsList";
 import { ApprovedCoachesList } from "./ApprovedCoachesList";
 import { CoachInvitationManager } from "./CoachInvitationManager";
+import { AdminCreateCoachDialog } from "./AdminCreateCoachDialog";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { UserCheck, Clock, XCircle, Users, Link2 } from "lucide-react";
+import { UserCheck, Clock, XCircle, Users, Link2, UserPlus } from "lucide-react";
 
 export function HumanCoachesManagement() {
   const [activeTab, setActiveTab] = useState("invitations");
+  const [createOpen, setCreateOpen] = useState(false);
 
   // 获取统计数据
   const { data: stats } = useQuery({
@@ -32,10 +35,18 @@ export function HumanCoachesManagement() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">真人教练管理</h1>
-        <p className="text-muted-foreground">管理教练申请、审核资质、编辑教练信息</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">真人教练管理</h1>
+          <p className="text-muted-foreground">管理教练申请、审核资质、编辑教练信息</p>
+        </div>
+        <Button onClick={() => setCreateOpen(true)} className="gap-2 shrink-0">
+          <UserPlus className="h-4 w-4" />
+          手动录入教练
+        </Button>
       </div>
+
+      <AdminCreateCoachDialog open={createOpen} onClose={() => setCreateOpen(false)} />
 
       {/* 统计卡片 */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
