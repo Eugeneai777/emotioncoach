@@ -14,10 +14,21 @@ import {
   Star, 
   Loader2,
   CheckCircle,
-  Eye
+  Eye,
+  Trash2
 } from "lucide-react";
 import { CoachEditDialog } from "./CoachEditDialog";
 import { CoachApplicationDetail } from "./CoachApplicationDetail";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export function ApprovedCoachesList() {
   const queryClient = useQueryClient();
