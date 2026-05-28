@@ -453,7 +453,7 @@ export default function BecomeCoach() {
       }
 
       // Auto-create default service (60 min)
-      const serviceName = invitationData.default_service_name || `${basicInfo.displayName} 咨询`;
+      const serviceName = invitationData.default_service_name || `${effectiveName} 咨询`;
       const { error: serviceError } = await supabase
         .from("coach_services")
         .insert({
@@ -468,8 +468,10 @@ export default function BecomeCoach() {
 
       if (serviceError) throw serviceError;
 
-      // Increment invitation usage count
-      await supabase.rpc('increment_coach_invitation_count', { p_invitation_id: invitationData.id });
+      // Increment invitation usage count (skip for coach-self-initiated proxy without invite)
+      if (invitationData.id && invitationData.source !== "coach_self_initiated") {
+        await supabase.rpc('increment_coach_invitation_count', { p_invitation_id: invitationData.id });
+      }
 
       setCurrentStep("success");
       toast({ title: "申请提交成功！" });
