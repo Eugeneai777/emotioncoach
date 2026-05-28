@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { Loader2, X, Plus, Crown } from "lucide-react";
 import { useCoachPriceTiers, useUpdateCoachPriceTier } from "@/hooks/useCoachPriceTiers";
 import { CoachPhotoUploader } from "./CoachPhotoUploader";
+import { AdminCertificationUploader } from "./AdminCertificationUploader";
 
 interface CoachEditDialogProps {
   coachId: string;
@@ -252,6 +253,14 @@ export function CoachEditDialog({ coachId, onClose }: CoachEditDialogProps) {
               onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
               rows={4}
             />
+          </div>
+
+          <div className="space-y-2 pt-4 border-t">
+            <Label className="text-base font-semibold">资质证书管理</Label>
+            <p className="text-xs text-muted-foreground">
+              管理员可代教练新增、替换、删除证书；新增证书将自动标记为「已验证」。
+            </p>
+            <AdminCertificationUploader coachId={coachId} />
           </div>
         </div>
 

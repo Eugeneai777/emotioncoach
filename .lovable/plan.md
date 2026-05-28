@@ -1,62 +1,49 @@
+# 管理员代上传教练证书
+
 ## 目标
+- 在「真人教练管理 → 资质审阅」中，管理员可以替教练新增、替换、编辑、删除证书
+- 在 `AdminCreateCoachDialog`（手动录入教练）的成功流之后，允许立即补充证书
+- 已通过教练在 `CoachEditDialog` 中也提供「资质管理」入口
 
-在管理后台 `/admin/human-coaches`（真人教练管理）页面新增第三条申请路径：**管理员手动录入教练信息**，直接创建一条 `human_coaches` 记录，可选择直接置为 `approved` 或 `pending`。
+数据表 `coach_certifications` 已对 `admin` 角色开放完整 RLS（`管理员可以管理所有资质`），无需迁移。
 
-## 现有路径回顾
+## 改动
 
-1. 用户自申请：`/become-coach`（self）
-2. 已是教练代他人申请：`/become-coach?mode=proxy`
-3. **新增：管理员后台手动录入**
+### 1. 新增组件 `AdminCertificationUploader.tsx`
+位置：`src/components/admin/human-coaches/AdminCertificationUploader.tsx`
 
-## 改动范围
+复用 `CertificationsStep` 的字段语义 + `CoachPhotoUploader` 的压缩上传模式：
+- 字段：证书名称（必填）、类型下拉（沿用 psychology/coaching/counseling/training/education/other）、颁发机构、证书编号、颁发日期、图片（上传到 `community-images/certifications/{coachId}/{timestamp}.jpg`，自动压缩到 ≤1600px JPG 0.85）
+- 提交：`insert coach_certifications` 时写入 `verification_status='verified'`、`verified_by=auth.uid()`、`verified_at=now()`、`admin_note='管理员代上传'`
+- 提供两种用法：
+  - 行内「+ 替学员新增证书」按钮 → 内嵌折叠表单
+  - 「替换图片」按钮 → 仅上传图片并 `update` 当前行 `image_url`
 
-### 1. `HumanCoachesManagement.tsx`
-- 在页头 `actions` 区新增按钮「+ 手动录入教练」，点击打开 `AdminCreateCoachDialog`。
-- 提交成功后刷新 `human-coaches-stats` 和列表 query。
+### 2. 修改 `CoachApplicationDetail.tsx`（待审核流程）
+在「资质审阅」Tab：
+- 顶部加 `AdminCertificationUploader`（新增模式），提交后 `invalidateQueries(['coach-applications'])` + 重新拉取证书
+- 每条证书卡片右侧追加「替换图片」「编辑信息」「删除」三个按钮（小图标）
+  - 替换图片：调用 uploader 的 patch 模式
+  - 编辑：弹窗复用同一表单，预填
+  - 删除：`delete from coach_certifications where id=?`，二次确认
+- 管理员新增的证书 `verification_status` 默认 `verified`，待审核流程的「已审阅」计数将其自动计入（保持现有 `reviewedCertIds` 联动逻辑兼容：把 `verification_status==='verified'` 也算入已审阅初始集合）
 
-### 2. 新增 `src/components/admin/human-coaches/AdminCreateCoachDialog.tsx`
-表单字段（参考 `CoachEditDialog` 风格）：
-- **必填**：姓名、手机号（11 位，写入 `phone` 和 `claim_phone`，`claim_country_code` 默认 `+86`）
-- **可选**：头像（复用 `CoachPhotoUploader`）、职称 title、简介 bio、从业年限、专长 specialties（标签）、价格档位 price_tier_id、admin_note
-- **状态选择**：单选「直接通过(approved)」或「列入待审核(pending)」，默认 approved
-- 提交逻辑：
-  - 客户端校验姓名 + 11 位手机号
-  - `insert into human_coaches`：
-    - `name`, `phone`, `claim_phone`, `claim_country_code='+86'`
-    - `status`：根据选择填 approved / pending
-    - 若 approved：同时设置 `is_verified=true`, `verified_at=now()`, `is_accepting_new=true`, `trust_level=1`
-    - `submitted_by_user_id = 当前管理员 user.id`（标识录入来源）
-    - 其他可选字段按填写写入
-  - `.select().single()` 拿回 coach
-  - 若状态为 approved 且选了 price_tier_id，写入 `price_tier_id`、`price_tier_set_at`、`price_tier_set_by`
-  - 自动创建一条默认 `coach_services`（参考代申请流程中的默认服务逻辑，避免列表显示异常）
-  - 错误统一通过 `extractEdgeFunctionError` 提取
-- 成功后 toast 提示、关闭对话框、刷新统计与列表
+### 3. 修改 `CoachEditDialog.tsx`（已通过教练）
+新增「资质管理」Tab（若现状是单页表单则增加分区），内含证书列表 + `AdminCertificationUploader`，操作能力与上方一致。
 
-### 3. RLS 校验（只读检查，无需迁移）
-- `human_coaches` INSERT：管理员（has_role admin）应已允许；如不允许则补一条 admin INSERT 策略。
-- `coach_services` INSERT：管理员可代写；若策略仅限 coach 自己，沿用 `coach_id` 由当前管理员 submitted_by 角色逻辑或补 admin 策略。
-- 实际实施时会先 `select` 现有策略，若缺失才补迁移；目前预期不需要新迁移。
-
-## 技术细节
-
-```text
-HumanCoachesManagement
- ├─ actions: <Button onClick={openCreateDialog}>手动录入教练</Button>
- └─ <AdminCreateCoachDialog open onClose refetch />
-       ├─ 表单 (姓名/手机/状态/头像/title/bio/经验/标签/档位/备注)
-       ├─ submit:
-       │     insert human_coaches → coachId
-       │     [若 approved] update price_tier 字段
-       │     insert coach_services (默认一条)
-       └─ onSuccess: queryClient.invalidateQueries(['human-coaches-stats'])
-                                 .invalidateQueries(['coach-applications'])
-                                 .invalidateQueries(['approved-coaches'])
-```
+### 4. 修改 `AdminCreateCoachDialog.tsx`
+当前对话框成功创建后直接关闭。改为：
+- 创建成功后切换到第 2 步「资质补充（可选）」，复用 `AdminCertificationUploader` 列表 + 新增表单
+- 底部按钮：「完成」关闭对话框，「跳过」直接关闭
+- 提示行：「头像、详细资质等…」改为「头像可在教练编辑入口补充」
 
 ## 验收
+1. 后台「待审核」打开 Angela 的资质审阅 → 可新增「家庭教育指导师」证书并上传图片，列表立即出现，状态为「已验证」
+2. 同一张证书可点「替换图片」更换图，刷新后展示新图
+3. 已通过教练在编辑入口可看到证书列表并执行同样的增删改
+4. 手动录入新教练时，创建后即可在第 2 步上传至少 1 张证书，跳过亦可
 
-- 管理员在 `/admin/human-coaches` 点击「手动录入教练」可打开对话框
-- 填入姓名 + 11 位手机号即可提交，默认创建 approved 教练并出现在「已通过」Tab；选择 pending 时出现在「待审核」Tab
-- 列表/统计数字立即刷新
-- 不影响现有自申请 / 代申请链路
+## 不改动
+- 自助 / 代申请流程的 `CertificationsStep`
+- `coach-photos` Bucket、`community-images` Bucket 权限
+- 现有审批通过 RPC

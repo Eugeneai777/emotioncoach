@@ -26,6 +26,7 @@ import { toast } from "sonner";
 import { Loader2, X, Plus } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useCoachPriceTiers } from "@/hooks/useCoachPriceTiers";
+import { AdminCertificationUploader } from "./AdminCertificationUploader";
 
 interface AdminCreateCoachDialogProps {
   open: boolean;
@@ -40,6 +41,8 @@ export function AdminCreateCoachDialog({ open, onClose }: AdminCreateCoachDialog
   const { data: priceTiers } = useCoachPriceTiers();
 
   const [submitting, setSubmitting] = useState(false);
+  const [createdCoachId, setCreatedCoachId] = useState<string | null>(null);
+  const [createdCoachName, setCreatedCoachName] = useState<string>("");
   const [form, setForm] = useState({
     name: "",
     phone: "",
@@ -66,6 +69,8 @@ export function AdminCreateCoachDialog({ open, onClose }: AdminCreateCoachDialog
       status: "approved",
     });
     setNewSpecialty("");
+    setCreatedCoachId(null);
+    setCreatedCoachName("");
   };
 
   const handleClose = () => {
@@ -168,8 +173,8 @@ export function AdminCreateCoachDialog({ open, onClose }: AdminCreateCoachDialog
       queryClient.invalidateQueries({ queryKey: ["coach-applications"] });
       queryClient.invalidateQueries({ queryKey: ["approved-coaches"] });
       queryClient.invalidateQueries({ queryKey: ["active-human-coaches"] });
-      reset();
-      onClose();
+      setCreatedCoachId(coach.id);
+      setCreatedCoachName(name);
     } catch (e: any) {
       toast.error(`创建失败：${e?.message || "请稍后重试"}`);
     } finally {
@@ -177,13 +182,41 @@ export function AdminCreateCoachDialog({ open, onClose }: AdminCreateCoachDialog
     }
   };
 
+  if (createdCoachId) {
+    return (
+      <Dialog open={open} onOpenChange={(o) => !o && handleClose()}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              第 2 步 · 补充资质证书
+            </DialogTitle>
+            <DialogDescription>
+              已为「{createdCoachName}」创建档案，可在此代上传证书，或跳过直接完成。
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-2">
+            <AdminCertificationUploader coachId={createdCoachId} />
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button variant="ghost" onClick={handleClose}>
+              跳过，稍后再补
+            </Button>
+            <Button onClick={handleClose}>完成</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   return (
     <Dialog open={open} onOpenChange={(o) => !o && handleClose()}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>手动录入教练</DialogTitle>
+          <DialogTitle>手动录入教练 · 第 1 步</DialogTitle>
           <DialogDescription>
-            管理员直接创建教练档案，可选「直接通过」或「列入待审核」
+            管理员直接创建教练档案，可选「直接通过」或「列入待审核」；下一步可补充证书
           </DialogDescription>
         </DialogHeader>
 
@@ -334,7 +367,7 @@ export function AdminCreateCoachDialog({ open, onClose }: AdminCreateCoachDialog
           </div>
 
           <p className="text-xs text-muted-foreground">
-            提示：头像、详细资质等可在创建后通过教练编辑入口补充。
+            提示：提交后将进入第 2 步以代上传证书；头像可在教练编辑入口补充。
           </p>
         </div>
 
@@ -344,7 +377,7 @@ export function AdminCreateCoachDialog({ open, onClose }: AdminCreateCoachDialog
           </Button>
           <Button onClick={handleSubmit} disabled={submitting}>
             {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            提交
+            提交并下一步
           </Button>
         </DialogFooter>
       </DialogContent>
