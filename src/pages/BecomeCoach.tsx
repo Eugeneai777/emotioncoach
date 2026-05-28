@@ -143,7 +143,7 @@ export default function BecomeCoach() {
     };
 
     validateInvite();
-  }, [inviteToken, coachBypass, isCoachLoading, mode]);
+  }, [inviteToken, coachBypass, isCoachLoading, mode, user?.id]);
 
   const [basicInfo, setBasicInfo] = useState<BasicInfoData>({
     displayName: "",
