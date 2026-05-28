@@ -528,7 +528,9 @@ export default function BecomeCoach() {
 
   // Need login
   if (!user) {
-    const currentUrl = `/become-coach?invite=${inviteToken}`;
+    const currentUrl = inviteToken
+      ? `/become-coach?invite=${inviteToken}`
+      : `/become-coach${mode === "proxy" ? "?mode=proxy" : ""}`;
     return (
       <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 flex items-center justify-center p-4">
         <div className="text-center space-y-6 max-w-md">
