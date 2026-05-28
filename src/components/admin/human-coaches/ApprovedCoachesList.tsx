@@ -254,6 +254,14 @@ export function ApprovedCoachesList() {
                   >
                     <Edit className="h-4 w-4" />
                   </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                    onClick={() => setDeletingCoach({ id: coach.id, name: coach.name || "该教练" })}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
             </CardContent>
