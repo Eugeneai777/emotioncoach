@@ -1,28 +1,62 @@
-## 发现的问题
+## 目标
 
-这次不是手机号验证的问题。数据库里已经出现了一条新的代申请记录：Angela / 13528467591，状态是 pending，并且证书也写入了；但默认服务没有创建成功，所以前端最后抛出「提交失败」。这会造成用户看到失败，但后台其实已有一条待审核申请的“半提交”状态。
+在管理后台 `/admin/human-coaches`（真人教练管理）页面新增第三条申请路径：**管理员手动录入教练信息**，直接创建一条 `human_coaches` 记录，可选择直接置为 `approved` 或 `pending`。
 
-## 修复计划
+## 现有路径回顾
 
-1. **修复后端服务创建失败点**
-   - 调整 `coach_services` 的访问策略，确保代申请提交者能为自己刚创建的待审核教练记录创建默认服务。
-   - 同时检查 `coach_certifications` 的策略是否缺少 `WITH CHECK`，避免证书插入在某些账号下也发生类似 RLS 隐性失败。
+1. 用户自申请：`/become-coach`（self）
+2. 已是教练代他人申请：`/become-coach?mode=proxy`
+3. **新增：管理员后台手动录入**
 
-2. **让提交链路具备恢复能力**
-   - 修改 `src/pages/BecomeCoach.tsx`：代申请时如果同一手机号已由当前账号创建过 pending 记录，不再再次插入导致失败，而是复用这条记录并补齐证书/服务。
-   - 如果上一次已经写入教练和证书、但服务缺失，再点提交时自动补创建服务并进入「申请已提交」。
+## 改动范围
 
-3. **改进错误提示**
-   - 不再只显示「请稍后重试或联系客服」。
-   - 对常见失败给出明确提示：手机号已在审核中、24 小时提交过多、累计待审核过多、权限/策略失败等。
-   - 保留控制台详细错误，方便后续排查。
+### 1. `HumanCoachesManagement.tsx`
+- 在页头 `actions` 区新增按钮「+ 手动录入教练」，点击打开 `AdminCreateCoachDialog`。
+- 提交成功后刷新 `human-coaches-stats` 和列表 query。
 
-4. **补齐现有半提交数据**
-   - 给当前已创建但缺少默认服务的 pending 代申请补一条默认服务，让后台审核页看到完整申请资料。
+### 2. 新增 `src/components/admin/human-coaches/AdminCreateCoachDialog.tsx`
+表单字段（参考 `CoachEditDialog` 风格）：
+- **必填**：姓名、手机号（11 位，写入 `phone` 和 `claim_phone`，`claim_country_code` 默认 `+86`）
+- **可选**：头像（复用 `CoachPhotoUploader`）、职称 title、简介 bio、从业年限、专长 specialties（标签）、价格档位 price_tier_id、admin_note
+- **状态选择**：单选「直接通过(approved)」或「列入待审核(pending)」，默认 approved
+- 提交逻辑：
+  - 客户端校验姓名 + 11 位手机号
+  - `insert into human_coaches`：
+    - `name`, `phone`, `claim_phone`, `claim_country_code='+86'`
+    - `status`：根据选择填 approved / pending
+    - 若 approved：同时设置 `is_verified=true`, `verified_at=now()`, `is_accepting_new=true`, `trust_level=1`
+    - `submitted_by_user_id = 当前管理员 user.id`（标识录入来源）
+    - 其他可选字段按填写写入
+  - `.select().single()` 拿回 coach
+  - 若状态为 approved 且选了 price_tier_id，写入 `price_tier_id`、`price_tier_set_at`、`price_tier_set_by`
+  - 自动创建一条默认 `coach_services`（参考代申请流程中的默认服务逻辑，避免列表显示异常）
+  - 错误统一通过 `extractEdgeFunctionError` 提取
+- 成功后 toast 提示、关闭对话框、刷新统计与列表
 
-5. **验收点**
-   - 已通过教练账号进入「代他人申请」。
-   - 只输入 11 位手机号，无短信验证。
-   - 填资料并提交后直接显示「申请已提交」。
-   - 再次点击同一手机号不会出现泛化失败，而是复用/提示已有待审核记录。
-   - 后台 `/admin/human-coaches` 能看到 pending 申请、证书与默认服务。
+### 3. RLS 校验（只读检查，无需迁移）
+- `human_coaches` INSERT：管理员（has_role admin）应已允许；如不允许则补一条 admin INSERT 策略。
+- `coach_services` INSERT：管理员可代写；若策略仅限 coach 自己，沿用 `coach_id` 由当前管理员 submitted_by 角色逻辑或补 admin 策略。
+- 实际实施时会先 `select` 现有策略，若缺失才补迁移；目前预期不需要新迁移。
+
+## 技术细节
+
+```text
+HumanCoachesManagement
+ ├─ actions: <Button onClick={openCreateDialog}>手动录入教练</Button>
+ └─ <AdminCreateCoachDialog open onClose refetch />
+       ├─ 表单 (姓名/手机/状态/头像/title/bio/经验/标签/档位/备注)
+       ├─ submit:
+       │     insert human_coaches → coachId
+       │     [若 approved] update price_tier 字段
+       │     insert coach_services (默认一条)
+       └─ onSuccess: queryClient.invalidateQueries(['human-coaches-stats'])
+                                 .invalidateQueries(['coach-applications'])
+                                 .invalidateQueries(['approved-coaches'])
+```
+
+## 验收
+
+- 管理员在 `/admin/human-coaches` 点击「手动录入教练」可打开对话框
+- 填入姓名 + 11 位手机号即可提交，默认创建 approved 教练并出现在「已通过」Tab；选择 pending 时出现在「待审核」Tab
+- 列表/统计数字立即刷新
+- 不影响现有自申请 / 代申请链路
