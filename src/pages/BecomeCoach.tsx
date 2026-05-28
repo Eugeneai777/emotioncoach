@@ -83,6 +83,11 @@ export default function BecomeCoach() {
 
   // Invitation validation
   const inviteToken = searchParams.get("invite");
+  const { data: myCoachProfile, isLoading: isCoachLoading } = useCoachProfile();
+  const isApprovedCoach = myCoachProfile?.status === "approved";
+  // 已通过审核的教练在 proxy 模式且无 invite 时，可绕过邀请校验
+  const coachBypass = mode === "proxy" && !inviteToken && isApprovedCoach;
+
   const [inviteStatus, setInviteStatus] = useState<"loading" | "valid" | "invalid" | "none">(
     inviteToken ? "loading" : "none"
   );
@@ -90,7 +95,18 @@ export default function BecomeCoach() {
 
   useEffect(() => {
     if (!inviteToken) {
-      setInviteStatus("none");
+      // 教练自主代申请：等教练资料加载完再决定
+      if (mode === "proxy" && isCoachLoading) return;
+      if (coachBypass) {
+        setInvitationData({
+          source: "coach_self_initiated",
+          invitee_name: null,
+          default_certifications: [],
+        });
+        setInviteStatus("valid");
+      } else {
+        setInviteStatus("none");
+      }
       return;
     }
 
@@ -127,7 +143,7 @@ export default function BecomeCoach() {
     };
 
     validateInvite();
-  }, [inviteToken]);
+  }, [inviteToken, coachBypass, isCoachLoading, mode]);
 
   const [basicInfo, setBasicInfo] = useState<BasicInfoData>({
     displayName: "",
