@@ -35,6 +35,7 @@ export function ApprovedCoachesList() {
   const [searchQuery, setSearchQuery] = useState("");
   const [editingCoachId, setEditingCoachId] = useState<string | null>(null);
   const [viewingCoachId, setViewingCoachId] = useState<string | null>(null);
+  const [deletingCoach, setDeletingCoach] = useState<{ id: string; name: string } | null>(null);
 
   const { data: coaches, isLoading } = useQuery({
     queryKey: ["human-coaches", "approved"],
