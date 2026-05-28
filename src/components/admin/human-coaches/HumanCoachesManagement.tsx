@@ -35,10 +35,18 @@ export function HumanCoachesManagement() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">真人教练管理</h1>
-        <p className="text-muted-foreground">管理教练申请、审核资质、编辑教练信息</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">真人教练管理</h1>
+          <p className="text-muted-foreground">管理教练申请、审核资质、编辑教练信息</p>
+        </div>
+        <Button onClick={() => setCreateOpen(true)} className="gap-2 shrink-0">
+          <UserPlus className="h-4 w-4" />
+          手动录入教练
+        </Button>
       </div>
+
+      <AdminCreateCoachDialog open={createOpen} onClose={() => setCreateOpen(false)} />
 
       {/* 统计卡片 */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
