@@ -173,8 +173,8 @@ export function AdminCreateCoachDialog({ open, onClose }: AdminCreateCoachDialog
       queryClient.invalidateQueries({ queryKey: ["coach-applications"] });
       queryClient.invalidateQueries({ queryKey: ["approved-coaches"] });
       queryClient.invalidateQueries({ queryKey: ["active-human-coaches"] });
-      reset();
-      onClose();
+      setCreatedCoachId(coach.id);
+      setCreatedCoachName(name);
     } catch (e: any) {
       toast.error(`创建失败：${e?.message || "请稍后重试"}`);
     } finally {
