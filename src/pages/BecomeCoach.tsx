@@ -583,12 +583,20 @@ export default function BecomeCoach() {
       >
         <PageHeader title="申请成为教练" showBack />
 
-        {invitationData && !existingCoach && (
+        {invitationData && !existingCoach && invitationData.source !== "coach_self_initiated" && (
           <div className="max-w-lg mx-auto px-4 pt-4">
             <div className="bg-teal-50 border border-teal-200 rounded-lg p-3 text-sm text-teal-700">
               ✨ 您已收到教练入驻邀请
               {invitationData.invitee_name && `（${invitationData.invitee_name}）`}
               ，请填写以下资料完成申请
+            </div>
+          </div>
+        )}
+
+        {coachBypass && myCoachProfile && (
+          <div className="max-w-lg mx-auto px-4 pt-4">
+            <div className="bg-teal-50 border border-teal-200 rounded-lg p-3 text-sm text-teal-700">
+              👥 您正以教练 <b>{myCoachProfile.name}</b> 的身份代他人申请，提交后将进入管理员审核队列
             </div>
           </div>
         )}
