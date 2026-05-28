@@ -74,6 +74,7 @@ const faqItems = [
 export default function CoachRecruitment() {
   const navigate = useNavigate();
   const goApply = () => navigate("/become-coach");
+  const goProxyApply = () => navigate("/become-coach?mode=proxy");
 
   return (
     <div className="min-h-screen bg-background">
@@ -108,6 +109,11 @@ export default function CoachRecruitment() {
             立即申请入驻
             <ArrowRight className="h-4 w-4" />
           </Button>
+          <div className="mt-3">
+            <button onClick={goProxyApply} className="text-sm text-primary underline-offset-4 hover:underline">
+              我要替他人申请 →
+            </button>
+          </div>
         </motion.div>
       </section>
 
@@ -226,6 +232,11 @@ export default function CoachRecruitment() {
             立即申请入驻
             <ArrowRight className="h-4 w-4" />
           </Button>
+          <div className="mt-3">
+            <button onClick={goProxyApply} className="text-sm text-primary underline-offset-4 hover:underline">
+              我要替他人申请 →
+            </button>
+          </div>
         </motion.div>
       </section>
     </div>
