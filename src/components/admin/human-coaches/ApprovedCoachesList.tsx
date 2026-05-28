@@ -285,6 +285,31 @@ export function ApprovedCoachesList() {
           isPending={false}
         />
       )}
+      )}
+
+      <AlertDialog open={!!deletingCoach} onOpenChange={(o) => !o && setDeletingCoach(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>删除教练 {deletingCoach?.name}？</AlertDialogTitle>
+            <AlertDialogDescription>
+              此操作不可恢复，将同时移除该教练的资质、服务、价格档位等关联数据。若存在历史订单或评价，删除会失败，请改为停用。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteCoachMutation.isPending}>取消</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleteCoachMutation.isPending}
+              onClick={(e) => {
+                e.preventDefault();
+                if (deletingCoach) deleteCoachMutation.mutate(deletingCoach.id);
+              }}
+            >
+              {deleteCoachMutation.isPending ? "删除中..." : "确认删除"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
