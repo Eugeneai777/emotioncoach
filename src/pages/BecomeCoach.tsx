@@ -22,6 +22,7 @@ import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCoachPriceTiers } from "@/hooks/useCoachPriceTiers";
 import { MyApplicationsCard } from "@/components/coach-application/MyApplicationsCard";
+import { useCoachProfile } from "@/hooks/useCoachDashboard";
 
 
 type Step = "proxy_verify" | "basic" | "certifications" | "experience" | "submit" | "success";
@@ -82,14 +83,30 @@ export default function BecomeCoach() {
 
   // Invitation validation
   const inviteToken = searchParams.get("invite");
+  const { data: myCoachProfile, isLoading: isCoachLoading } = useCoachProfile();
+  const isApprovedCoach = myCoachProfile?.status === "approved";
+  // 已通过审核的教练在 proxy 模式且无 invite 时，可绕过邀请校验
+  const coachBypass = mode === "proxy" && !inviteToken && isApprovedCoach;
+
   const [inviteStatus, setInviteStatus] = useState<"loading" | "valid" | "invalid" | "none">(
-    inviteToken ? "loading" : "none"
+    inviteToken || mode === "proxy" ? "loading" : "none"
   );
   const [invitationData, setInvitationData] = useState<any>(null);
 
   useEffect(() => {
     if (!inviteToken) {
-      setInviteStatus("none");
+      // 教练自主代申请：等教练资料加载完再决定
+      if (mode === "proxy" && isCoachLoading) return;
+      if (coachBypass) {
+        setInvitationData({
+          source: "coach_self_initiated",
+          invitee_name: null,
+          default_certifications: [],
+        });
+        setInviteStatus("valid");
+      } else {
+        setInviteStatus("none");
+      }
       return;
     }
 
@@ -126,7 +143,7 @@ export default function BecomeCoach() {
     };
 
     validateInvite();
-  }, [inviteToken]);
+  }, [inviteToken, coachBypass, isCoachLoading, mode, user?.id]);
 
   const [basicInfo, setBasicInfo] = useState<BasicInfoData>({
     displayName: "",
@@ -511,7 +528,9 @@ export default function BecomeCoach() {
 
   // Need login
   if (!user) {
-    const currentUrl = `/become-coach?invite=${inviteToken}`;
+    const currentUrl = inviteToken
+      ? `/become-coach?invite=${inviteToken}`
+      : `/become-coach${mode === "proxy" ? "?mode=proxy" : ""}`;
     return (
       <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 flex items-center justify-center p-4">
         <div className="text-center space-y-6 max-w-md">
@@ -564,12 +583,20 @@ export default function BecomeCoach() {
       >
         <PageHeader title="申请成为教练" showBack />
 
-        {invitationData && !existingCoach && (
+        {invitationData && !existingCoach && invitationData.source !== "coach_self_initiated" && (
           <div className="max-w-lg mx-auto px-4 pt-4">
             <div className="bg-teal-50 border border-teal-200 rounded-lg p-3 text-sm text-teal-700">
               ✨ 您已收到教练入驻邀请
               {invitationData.invitee_name && `（${invitationData.invitee_name}）`}
               ，请填写以下资料完成申请
+            </div>
+          </div>
+        )}
+
+        {coachBypass && myCoachProfile && (
+          <div className="max-w-lg mx-auto px-4 pt-4">
+            <div className="bg-teal-50 border border-teal-200 rounded-lg p-3 text-sm text-teal-700">
+              👥 您正以教练 <b>{myCoachProfile.name}</b> 的身份代他人申请，提交后将进入管理员审核队列
             </div>
           </div>
         )}

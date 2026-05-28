@@ -54,9 +54,17 @@ export default function HumanCoaches() {
               <Button variant="outline" size="sm" onClick={() => navigate("/coach-dashboard")} className="text-teal-600 border-teal-200 hover:bg-teal-50">
                 我的后台
               </Button>
-              <Button variant="outline" size="sm" onClick={() => navigate("/become-coach?mode=proxy")} className="text-teal-600 border-teal-200 hover:bg-teal-50">
-                代他人申请
-              </Button>
+              {coachProfile.status === "approved" && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate("/become-coach?mode=proxy")}
+                  className="text-teal-600 border-teal-200 hover:bg-teal-50"
+                  title="为他人代填申请，提交后由管理员审核"
+                >
+                  代他人申请
+                </Button>
+              )}
             </>
           ) : (
             <Button variant="outline" size="sm" onClick={() => navigate("/coach-recruitment")} className="text-teal-600 border-teal-200 hover:bg-teal-50">
