@@ -527,6 +527,7 @@ const App = () => (
               <Route path="/my-tickets/:id" element={<MyTicketDetail />} />
               <Route path="/human-coaches" element={<HumanCoaches />} />
               <Route path="/human-coaches/:id" element={<HumanCoachDetail />} />
+              <Route path="/admin/human-coaches" element={<Navigate to="/human-coaches" replace />} />
               <Route path="/my-appointments" element={<MyAppointments />} />
               <Route path="/become-coach" element={<BecomeCoach />} />
               <Route path="/coach-recruitment" element={<CoachRecruitment />} />
