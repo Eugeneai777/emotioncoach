@@ -12,6 +12,7 @@ import { UserCheck, Clock, XCircle, Users, Link2, UserPlus } from "lucide-react"
 
 export function HumanCoachesManagement() {
   const [activeTab, setActiveTab] = useState("invitations");
+  const [createOpen, setCreateOpen] = useState(false);
 
   // 获取统计数据
   const { data: stats } = useQuery({
