@@ -74,6 +74,7 @@ const faqItems = [
 export default function CoachRecruitment() {
   const navigate = useNavigate();
   const goApply = () => navigate("/become-coach");
+  const goProxyApply = () => navigate("/become-coach?mode=proxy");
 
   return (
     <div className="min-h-screen bg-background">
