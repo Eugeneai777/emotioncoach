@@ -41,6 +41,8 @@ export function AdminCreateCoachDialog({ open, onClose }: AdminCreateCoachDialog
   const { data: priceTiers } = useCoachPriceTiers();
 
   const [submitting, setSubmitting] = useState(false);
+  const [createdCoachId, setCreatedCoachId] = useState<string | null>(null);
+  const [createdCoachName, setCreatedCoachName] = useState<string>("");
   const [form, setForm] = useState({
     name: "",
     phone: "",
