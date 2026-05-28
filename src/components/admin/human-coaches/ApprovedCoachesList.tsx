@@ -107,7 +107,7 @@ export function ApprovedCoachesList() {
       const svcRes = await supabase.from("coach_services").delete().eq("coach_id", coachId).select("id");
       if (svcRes.error) throw svcRes.error;
 
-      const tierRes = await supabase.from("coach_price_tiers").delete().eq("coach_id", coachId).select("id");
+      const tierRes = await (supabase.from("coach_price_tiers") as any).delete().eq("coach_id", coachId).select("id");
       if (tierRes.error) throw tierRes.error;
 
       const coachRes = await supabase.from("human_coaches").delete().eq("id", coachId).select("id");
