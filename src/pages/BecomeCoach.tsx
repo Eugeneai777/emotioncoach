@@ -22,6 +22,7 @@ import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCoachPriceTiers } from "@/hooks/useCoachPriceTiers";
 import { MyApplicationsCard } from "@/components/coach-application/MyApplicationsCard";
+import { useCoachProfile } from "@/hooks/useCoachDashboard";
 
 
 type Step = "proxy_verify" | "basic" | "certifications" | "experience" | "submit" | "success";
