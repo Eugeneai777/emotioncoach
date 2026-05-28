@@ -14,16 +14,28 @@ import {
   Star, 
   Loader2,
   CheckCircle,
-  Eye
+  Eye,
+  Trash2
 } from "lucide-react";
 import { CoachEditDialog } from "./CoachEditDialog";
 import { CoachApplicationDetail } from "./CoachApplicationDetail";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export function ApprovedCoachesList() {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [editingCoachId, setEditingCoachId] = useState<string | null>(null);
   const [viewingCoachId, setViewingCoachId] = useState<string | null>(null);
+  const [deletingCoach, setDeletingCoach] = useState<{ id: string; name: string } | null>(null);
 
   const { data: coaches, isLoading } = useQuery({
     queryKey: ["human-coaches", "approved"],
@@ -83,6 +95,40 @@ export function ApprovedCoachesList() {
     },
     onError: (error) => {
       toast.error("操作失败: " + error.message);
+    }
+  });
+
+  const deleteCoachMutation = useMutation({
+    mutationFn: async (coachId: string) => {
+      // 按依赖顺序删除关联数据
+      const certRes = await supabase.from("coach_certifications").delete().eq("coach_id", coachId).select("id");
+      if (certRes.error) throw certRes.error;
+
+      const svcRes = await supabase.from("coach_services").delete().eq("coach_id", coachId).select("id");
+      if (svcRes.error) throw svcRes.error;
+
+      const tierRes = await (supabase.from("coach_price_tiers") as any).delete().eq("coach_id", coachId).select("id");
+      if (tierRes.error) throw tierRes.error;
+
+      const coachRes = await supabase.from("human_coaches").delete().eq("id", coachId).select("id");
+      if (coachRes.error) throw coachRes.error;
+      if (!coachRes.data || coachRes.data.length === 0) {
+        throw new Error("删除失败：未找到记录或无权限");
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["human-coaches"] });
+      queryClient.invalidateQueries({ queryKey: ["human-coaches-stats"] });
+      toast.success("教练已删除");
+      setDeletingCoach(null);
+    },
+    onError: (error: any) => {
+      const msg = error?.message || String(error);
+      if (msg.includes("foreign key") || msg.includes("violates")) {
+        toast.error("该教练存在历史订单或评价，无法删除，请改为停用");
+      } else {
+        toast.error("删除失败: " + msg);
+      }
     }
   });
 
@@ -208,6 +254,14 @@ export function ApprovedCoachesList() {
                   >
                     <Edit className="h-4 w-4" />
                   </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                    onClick={() => setDeletingCoach({ id: coach.id, name: coach.name || "该教练" })}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
             </CardContent>
@@ -231,6 +285,30 @@ export function ApprovedCoachesList() {
           isPending={false}
         />
       )}
+
+      <AlertDialog open={!!deletingCoach} onOpenChange={(o) => !o && setDeletingCoach(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>删除教练 {deletingCoach?.name}？</AlertDialogTitle>
+            <AlertDialogDescription>
+              此操作不可恢复，将同时移除该教练的资质、服务、价格档位等关联数据。若存在历史订单或评价，删除会失败，请改为停用。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteCoachMutation.isPending}>取消</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleteCoachMutation.isPending}
+              onClick={(e) => {
+                e.preventDefault();
+                if (deletingCoach) deleteCoachMutation.mutate(deletingCoach.id);
+              }}
+            >
+              {deleteCoachMutation.isPending ? "删除中..." : "确认删除"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
