@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import { useCoachPriceTiers } from "@/hooks/useCoachPriceTiers";
 import { suggestTierLevel, type ExperienceBucket } from "@/components/coach-application/ExperienceTierStep";
+import { AdminCertificationUploader } from "./AdminCertificationUploader";
 
 interface CoachApplicationDetailProps {
   coachId: string;
