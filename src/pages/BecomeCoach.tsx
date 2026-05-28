@@ -615,6 +615,23 @@ export default function BecomeCoach() {
                 <span className="block mt-0.5">下次编辑请使用<strong>同一账号</strong>登录，否则系统会视为新申请。</span>
               </span>
             </div>
+            {mode === "self" && !existingCoach && !editId && (
+              <div className="mt-2 text-xs text-muted-foreground text-right">
+                不是为自己申请？
+                <button
+                  type="button"
+                  onClick={() => {
+                    const params = new URLSearchParams();
+                    if (inviteToken) params.set("invite", inviteToken);
+                    params.set("mode", "proxy");
+                    navigate(`/become-coach?${params.toString()}`);
+                  }}
+                  className="text-primary underline-offset-4 hover:underline ml-1"
+                >
+                  切换为代他人申请 →
+                </button>
+              </div>
+            )}
           </div>
         )}
 
