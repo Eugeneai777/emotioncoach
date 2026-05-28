@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { Loader2, X, Plus, Crown } from "lucide-react";
 import { useCoachPriceTiers, useUpdateCoachPriceTier } from "@/hooks/useCoachPriceTiers";
 import { CoachPhotoUploader } from "./CoachPhotoUploader";
+import { AdminCertificationUploader } from "./AdminCertificationUploader";
 
 interface CoachEditDialogProps {
   coachId: string;
