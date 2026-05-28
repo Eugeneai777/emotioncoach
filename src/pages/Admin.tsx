@@ -38,7 +38,11 @@ export default function Admin() {
       if (cancelled) return;
 
       if (error || !roles || roles.length === 0) {
-        navigate("/", { replace: true });
+        if (window.location.pathname.startsWith("/admin/human-coaches")) {
+          navigate("/human-coaches", { replace: true });
+        } else {
+          navigate("/", { replace: true });
+        }
         return;
       }
 
