@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { CoachApplicationsList } from "./CoachApplicationsList";
 import { ApprovedCoachesList } from "./ApprovedCoachesList";
 import { CoachInvitationManager } from "./CoachInvitationManager";
+import { AdminCreateCoachDialog } from "./AdminCreateCoachDialog";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { UserCheck, Clock, XCircle, Users, Link2 } from "lucide-react";
+import { UserCheck, Clock, XCircle, Users, Link2, UserPlus } from "lucide-react";
 
 export function HumanCoachesManagement() {
   const [activeTab, setActiveTab] = useState("invitations");
