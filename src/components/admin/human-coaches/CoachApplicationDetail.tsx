@@ -305,69 +305,16 @@ export function CoachApplicationDetail({
           </TabsContent>
 
           <TabsContent value="certifications" className="mt-4 space-y-3">
-            {certifications.length === 0 ? (
-              <Card>
-                <CardContent className="py-8 text-center text-muted-foreground">
-                  暂未上传资质证书
-                </CardContent>
-              </Card>
-            ) : (
-              <>
-                {isPendingStatus && (
-                  <p className="text-xs text-muted-foreground bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900 rounded p-2">
-                    ⚠️ 通过审核前需逐一勾选「已审阅」，作为法律意义上的人工核验留痕。
-                  </p>
-                )}
-                {certifications.map((cert) => (
-                  <Card key={cert.id}>
-                    <CardContent className="p-4">
-                      <div className="flex items-start gap-4">
-                        {cert.image_url ? (
-                          <a
-                            href={cert.image_url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="w-24 h-24 rounded-lg bg-muted overflow-hidden hover:opacity-80"
-                          >
-                            <img src={cert.image_url} alt={cert.cert_name} className="w-full h-full object-cover" />
-                          </a>
-                        ) : (
-                          <div className="w-24 h-24 rounded-lg bg-muted flex items-center justify-center">
-                            <FileText className="h-8 w-8 text-muted-foreground" />
-                          </div>
-                        )}
-                        <div className="flex-1 text-sm space-y-1">
-                          <div className="font-medium">{cert.cert_name}</div>
-                          <div className="text-muted-foreground">类型：{cert.cert_type}</div>
-                          {cert.cert_number && <div className="text-muted-foreground">编号：{cert.cert_number}</div>}
-                          {cert.issuing_authority && <div className="text-muted-foreground">机构：{cert.issuing_authority}</div>}
-                          {cert.image_url && (
-                            <a
-                              href={cert.image_url}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="inline-flex items-center gap-1 text-primary text-xs hover:underline"
-                            >
-                              <ExternalLink className="h-3 w-3" />
-                              查看大图
-                            </a>
-                          )}
-                        </div>
-                        {isPendingStatus && (
-                          <label className="flex items-center gap-2 text-sm cursor-pointer select-none shrink-0">
-                            <Checkbox
-                              checked={reviewedCertIds.has(cert.id)}
-                              onCheckedChange={(v) => toggleCertReviewed(cert.id, !!v)}
-                            />
-                            <span>已审阅</span>
-                          </label>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </>
+            {isPendingStatus && (
+              <p className="text-xs text-muted-foreground bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900 rounded p-2">
+                ⚠️ 通过审核前需逐一勾选「已审阅」，作为法律意义上的人工核验留痕。管理员可代上传/替换/删除证书。
+              </p>
             )}
+            <AdminCertificationUploader
+              coachId={coachId}
+              reviewedCertIds={isPendingStatus ? reviewedCertIds : undefined}
+              onToggleReviewed={isPendingStatus ? toggleCertReviewed : undefined}
+            />
           </TabsContent>
 
           <TabsContent value="services" className="space-y-3 mt-4">
