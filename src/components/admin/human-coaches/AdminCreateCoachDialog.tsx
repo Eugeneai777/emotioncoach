@@ -69,6 +69,8 @@ export function AdminCreateCoachDialog({ open, onClose }: AdminCreateCoachDialog
       status: "approved",
     });
     setNewSpecialty("");
+    setCreatedCoachId(null);
+    setCreatedCoachName("");
   };
 
   const handleClose = () => {
