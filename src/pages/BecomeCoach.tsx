@@ -105,7 +105,13 @@ export default function BecomeCoach() {
         });
         setInviteStatus("valid");
       } else {
-        setInviteStatus("none");
+        // 默认自助申请：任何已登录用户均可提交，进入待审核
+        setInvitationData({
+          source: "self_initiated",
+          invitee_name: null,
+          default_certifications: [],
+        });
+        setInviteStatus("valid");
       }
       return;
     }
