@@ -492,8 +492,8 @@ export default function BecomeCoach() {
         }
       }
 
-      // Increment invitation usage count (skip for coach-self-initiated proxy without invite)
-      if (invitationData.id && invitationData.source !== "coach_self_initiated") {
+      // Increment invitation usage count (skip for self-initiated applications without invite)
+      if (invitationData.id && invitationData.source !== "coach_self_initiated" && invitationData.source !== "self_initiated") {
         await supabase.rpc('increment_coach_invitation_count', { p_invitation_id: invitationData.id });
       }
 
