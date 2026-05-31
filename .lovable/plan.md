@@ -1,57 +1,50 @@
-# 修复真人教练删除失败
+## 问题根因
 
-## 问题
-管理员点"删除教练"时，无论该教练是否有订单，都会失败。
+- `/coach-recruitment` 页「立即申请入驻」按钮跳到 `/become-coach`（不带 `?invite=...`）。
+- `src/pages/BecomeCoach.tsx` 第 91–110 行的逻辑：没有 `inviteToken` 且不是「已审核教练 + proxy 模式」时，`inviteStatus` 被设为 `"none"`，渲染第 534–547 行的「需要邀请链接」拦截页。
+- 这导致普通用户无法自助申请——与招募页 CTA 文案矛盾。
 
-根因：`ApprovedCoachesList.tsx` 的 `deleteCoachMutation` 里有这一步——
+## 目标（按你的选择：混合模式）
 
-```ts
-const tierRes = await (supabase.from("coach_price_tiers") as any)
-  .delete().eq("coach_id", coachId).select("id");
-```
+- **默认自助**：任何已登录用户访问 `/become-coach` 都能填表提交，进入待审核。
+- **保留邀请特权**：带 `?invite=token` 时，照旧从邀请记录预填资质（`default_certifications`）、默认服务名（`default_service_name`），并在提交后对邀请计数 +1。
+- **保留 proxy 代申请**：已通过审核的教练继续可走 `mode=proxy` 不带 invite 的代申请路径（已实现，不动）。
+- **失效邀请仍拦截**：`?invite=xxx` 但 token 过期/无效时，仍显示「邀请链接已失效」页，不静默降级为自助（避免用户误以为邀请有效）。
 
-但 `coach_price_tiers` 是**全局价格档位**表（字段只有 `tier_name / tier_level / price / duration_minutes …`），根本没有 `coach_id` 列。Postgres 直接报 `column "coach_id" does not exist`，整个删除中断，主记录留下来。这就是 18898593978 李先生这条测试数据怎么都删不掉的原因。
+## 变更点
 
-## 方案
+### 1. `src/pages/BecomeCoach.tsx`
 
-### 1. 简化 `ApprovedCoachesList.tsx` 的删除逻辑
-数据库里这些子表本来就是 `ON DELETE CASCADE`：
-- `coach_certifications` ✅
-- `coach_services` ✅
-- `coach_time_slots` ✅
-- `coach_settlements` ✅
-- `coach_claim_conflicts`（两个外键）✅
+- **第 91–110 行**：当 `!inviteToken && !coachBypass` 时，不再设置 `"none"`，而是设置：
+  ```ts
+  setInvitationData({
+    source: "self_initiated",
+    invitee_name: null,
+    default_certifications: [],
+    // id 故意留空 → 提交时跳过 increment（已有逻辑兼容）
+  });
+  setInviteStatus("valid");
+  ```
+- **第 489–492 行**：把 `invitationData.source !== "coach_self_initiated"` 改为同时排除 `"self_initiated"`，确保无邀请的自助申请不会去 `increment_coach_invitation_count`。
+- **第 534–562 行**：保留「邀请链接已失效」分支（`inviteStatus === "invalid"`），删除/不再触发 `"none"` 拦截渲染（实际上 `"none"` 不会再被设置，可以保留分支作为兜底但不可达）。
+- 第 619 行的「您已收到教练入驻邀请」提示已经判断了 `invitationData.source !== "coach_self_initiated"`，需要同步加上 `!== "self_initiated"`，让自助申请不显示这条横幅。
+- 第 463 行默认服务名 `invitationData.default_service_name || \`${effectiveName} 咨询\`` 已经有 fallback，无需改动。
 
-所以根本不需要在前端逐个删，直接 `delete from human_coaches where id = ?` 即可，CASCADE 会自动清理。
+### 2. `src/pages/CoachRecruitment.tsx`
 
-而真正会"挡住"删除的是这几张**没有 CASCADE** 的业务表（保护历史数据）：
-- `coaching_appointments`（预约订单）
-- `appointment_reviews`（评价）
-- `camp_coach_assignments`（训练营带教）
-- `camp_delivery_reviews`（训练营评价）
-- `bloom_delivery_completions`（绽放交付）
+无需改动——按钮已经跳 `/become-coach`，配合上面改造后会正常进入填表流程。
 
-只要这几张表里没数据，删除就成功；有数据，就会抛 FK 外键错误 → 已有的 toast "该教练存在历史订单或评价，无法删除，请改为停用" 会触发。
+## 不影响的部分
 
-新的 mutation 大致：
-```ts
-const { data, error } = await supabase
-  .from("human_coaches")
-  .delete()
-  .eq("id", coachId)
-  .select("id");
-if (error) throw error;
-if (!data || data.length === 0) throw new Error("删除失败：未找到记录或无权限");
-```
-
-### 2. 18898593978 这条测试数据
-按上述代码确认子表都是空的，前端修复后再点一次"删除"就能成功。不需要单独做数据库迁移去硬删。
+- 邀请链接的所有现有能力（预填资质、计数、过期校验）。
+- proxy 代申请路径（`coachBypass` 分支保持原样）。
+- 后端 RLS / `human_coaches` 插入策略（proxy 路径已证明无 invite 也能插入，无需迁移）。
+- 防刷限制（`coach_application_throttle_24h` 等错误处理已存在）。
 
 ## 验收
-- 测试数据"李先生 18898593978" 可以一键删除，列表立刻消失。
-- 若教练已有真实订单/评价，点删除会提示"请改为停用"，主记录保留。
-- 已通过列表 + 统计卡片自动刷新。
 
-## 不改动的范围
-- 数据库 schema / RLS / 外键
-- 其他教练相关组件（编辑、申请详情、上传证书等）
+1. 未登录访问 `/become-coach` → 跳登录后回到表单（已有逻辑）。
+2. 已登录无邀请访问 `/become-coach` → 直接看到填表页，提交后进入待审核，**不再**显示「需要邀请链接」。
+3. 带有效 `?invite=xxx` 访问 → 看到「您已收到邀请」横幅，资质字段预填，提交后邀请计数 +1。
+4. 带过期 `?invite=xxx` 访问 → 仍显示「邀请链接已失效」页。
+5. 已审核教练 `?mode=proxy` → 代申请路径不变。
