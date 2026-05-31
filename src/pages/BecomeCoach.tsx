@@ -622,7 +622,7 @@ export default function BecomeCoach() {
       >
         <PageHeader title="申请成为教练" showBack />
 
-        {invitationData && !existingCoach && invitationData.source !== "coach_self_initiated" && (
+        {invitationData && !existingCoach && invitationData.source !== "coach_self_initiated" && invitationData.source !== "self_initiated" && (
           <div className="max-w-lg mx-auto px-4 pt-4">
             <div className="bg-teal-50 border border-teal-200 rounded-lg p-3 text-sm text-teal-700">
               ✨ 您已收到教练入驻邀请
