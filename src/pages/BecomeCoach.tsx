@@ -105,7 +105,13 @@ export default function BecomeCoach() {
         });
         setInviteStatus("valid");
       } else {
-        setInviteStatus("none");
+        // 默认自助申请：任何已登录用户均可提交，进入待审核
+        setInvitationData({
+          source: "self_initiated",
+          invitee_name: null,
+          default_certifications: [],
+        });
+        setInviteStatus("valid");
       }
       return;
     }
@@ -486,8 +492,8 @@ export default function BecomeCoach() {
         }
       }
 
-      // Increment invitation usage count (skip for coach-self-initiated proxy without invite)
-      if (invitationData.id && invitationData.source !== "coach_self_initiated") {
+      // Increment invitation usage count (skip for self-initiated applications without invite)
+      if (invitationData.id && invitationData.source !== "coach_self_initiated" && invitationData.source !== "self_initiated") {
         await supabase.rpc('increment_coach_invitation_count', { p_invitation_id: invitationData.id });
       }
 
@@ -616,7 +622,7 @@ export default function BecomeCoach() {
       >
         <PageHeader title="申请成为教练" showBack />
 
-        {invitationData && !existingCoach && invitationData.source !== "coach_self_initiated" && (
+        {invitationData && !existingCoach && invitationData.source !== "coach_self_initiated" && invitationData.source !== "self_initiated" && (
           <div className="max-w-lg mx-auto px-4 pt-4">
             <div className="bg-teal-50 border border-teal-200 rounded-lg p-3 text-sm text-teal-700">
               ✨ 您已收到教练入驻邀请
