@@ -121,10 +121,13 @@ export function useHumanCoach(coachId: string | undefined) {
         .from("human_coaches_public" as any)
         .select("*, price_tier:coach_price_tiers(price, tier_name)")
         .eq("id", coachId)
-        .single();
-      
-      if (error) throw error;
-      return data as unknown as HumanCoach;
+        .maybeSingle();
+
+      if (error) {
+        if ((error as any).code === 'PGRST116') return null;
+        throw error;
+      }
+      return data as unknown as HumanCoach | null;
     },
     enabled: !!coachId,
   });
