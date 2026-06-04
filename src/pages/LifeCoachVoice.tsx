@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { getSavedVoiceType } from "@/config/voiceTypeConfig";
 import { toast } from "@/hooks/use-toast";
+import { safeNavigateBack } from "@/utils/safeNavigateBack";
 
 const CoachVoiceChat = lazy(() => import("@/components/coach/CoachVoiceChat").then((m) => ({ default: m.CoachVoiceChat })));
 
@@ -92,7 +93,7 @@ const LifeCoachVoice = () => {
       </div>
     }>
       <CoachVoiceChat
-        onClose={() => navigate(-1)}
+        onClose={() => safeNavigateBack(navigate, "/")}
         coachEmoji="❤️"
         coachTitle="有劲AI生活教练"
         primaryColor="rose"
