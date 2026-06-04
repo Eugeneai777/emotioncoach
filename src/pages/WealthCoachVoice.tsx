@@ -4,6 +4,7 @@ import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
 import { PostCallAdvisorDialog } from "@/components/wealth-block/PostCallAdvisorDialog";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { useAuth } from "@/hooks/useAuth";
+import { safeNavigateBack } from "@/utils/safeNavigateBack";
 
 interface LocationState {
   fromAssessment?: boolean;
@@ -38,13 +39,13 @@ const WealthCoachVoice = () => {
     if (isFromAssessment && locationState?.reactionPattern && locationState?.dominantPoor) {
       setShowPostCallDialog(true);
     } else {
-      navigate(-1);
+      safeNavigateBack(navigate, "/");
     }
   };
 
   const handlePostCallClose = () => {
     setShowPostCallDialog(false);
-    navigate(-1);
+    safeNavigateBack(navigate, "/");
   };
 
   return (

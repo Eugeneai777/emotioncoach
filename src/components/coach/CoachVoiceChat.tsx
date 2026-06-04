@@ -307,9 +307,13 @@ export const CoachVoiceChat = ({
           normalizeVoiceType(storedVoiceType) === resolvedVoiceTypeForSession;
 
         if (elapsed < RECONNECT_WINDOW && isSameContext) {
-          console.log(
-            `Reconnecting within ${elapsed}ms, reusing session ${sessionId}, billed minutes: ${billedMinutes}`
-          );
+          // 只在首次复用时打 log,避免 render 循环每秒刷屏
+          if (!(window as any).__voiceChatReuseLogged?.[sessionId]) {
+            ((window as any).__voiceChatReuseLogged ||= {})[sessionId] = true;
+            console.log(
+              `Reconnecting within ${elapsed}ms, reusing session ${sessionId}, billed minutes: ${billedMinutes}`
+            );
+          }
           return { sessionId, billedMinutes: billedMinutes || 0 };
         }
       }

@@ -1,44 +1,56 @@
-# 修复真人教练详情页"教练不存在"
+# 智能语音挂断失效 — 根因与修复
 
-## 问题
-- `human_coaches` 表 RLS 只允许教练本人 / 提交人 / 管理员读
-- 列表上的卡片由 `recommend-coaches` Edge Function（service role）返回，能看到
-- 详情页 `useHumanCoach` 用前端 SDK 查 `human_coaches_public` 视图（`security_invoker=on`，继承基表 RLS）→ 被过滤为空 → 显示"教练不存在"
-- 同一根因还会让 `useActiveHumanCoaches` 列表查询、按 specialty 筛选、搜索等对普通用户全部返回空
+## 现象
+路由 `/life-coach-voice?ref=share`,用户连接成功后点"挂断"按钮无任何反应,通话计时器继续走(session 截图为 0:35)。控制台没有 `[VoiceChat] 挂断 clicked` 日志,但有持续每秒的 `Reconnecting within ...ms`。
+
+## 根因
+
+`src/pages/LifeCoachVoice.tsx` 把关闭回调写成:
+```ts
+<CoachVoiceChat onClose={() => navigate(-1)} ... pttMode />
+```
+
+而 `CoachVoiceChat` 在 PTT 模式下挂断分支(行 2477-2484)执行:
+```ts
+chatRef.current?.disconnect();
+releaseLock();
+onClose();        // → navigate(-1)
+```
+
+用户从分享链接直接打开页面,**浏览器历史栈里没有上一页**,`navigate(-1)` 静默失败,组件不卸载,WebRTC 虽然断开但 UI 仍停留在通话界面,用户感知就是"挂不掉"。同样问题存在于:
+- `src/pages/WealthCoachVoice.tsx`(2 处 `navigate(-1)`)
+- 任何通过分享/小程序 webview 直接落地的语音页
+
+(顺便:控制台每秒刷 `Reconnecting within Xms` 是因为 `getOrCreateSessionId()` 写在 render body 里,每次 duration tick 都会重读 localStorage 并打 log。属于日志噪音,不影响功能,顺手清理。)
 
 ## 修复方案
 
-### 1. 数据库迁移
-- 在 `human_coaches` 上新增 SELECT 策略：允许任意角色（anon + authenticated）读取 `status IN ('approved','active') AND is_accepting_new = true` 的行
-  - 该策略只对基表生效；通过 `human_coaches_public` 视图查询时，因 `security_invoker=on`，仍会走这条策略，安全字段（phone、wechat_id、submitted_by_user_id 等）依然只能由教练本人 / 管理员通过基表读取
-- 给 `human_coaches_public` 视图补齐 `GRANT SELECT TO anon, authenticated`（视图本身缺 grants）
-- 保持现有"教练本人/管理员看完整资料"的策略不变
-
-### 2. 前端兜底（防御性）
-- `useHumanCoach`：当 `error.code === 'PGRST116'`（single 找不到）时返回 `null` 而不是 throw，避免一次性把整页打挂
-- `HumanCoachDetail` 在 `!coach` 分支里，文案保留"教练不存在"，但增加一段提示行（如"可能已下线或不公开"），便于日后排查
-
-### 3. 防止类似回归
-- 在 `mem://technical/security/rls-systemic-hardening-and-view-isolation` 追加规则：**所有面向用户列表/详情的"安全视图"都必须确保基表对目标受众有匹配的 SELECT 策略**，否则视图查询会静默返回空。给本次新增策略写测试性 SELECT 验证（通过 `set role authenticated` + `set request.jwt.claims` 模拟普通用户读取）
-
-## 技术细节
-
-涉及文件：
-- `supabase/migrations/<new>.sql`：新增策略 + 视图 grants
-- `src/hooks/useHumanCoaches.ts`：`useHumanCoach` 错误兜底
-- `src/pages/HumanCoachDetail.tsx`：空态文案微调（可选）
-- `mem://technical/security/rls-systemic-hardening-and-view-isolation`：更新规则
-
-SQL 草案：
-```sql
-CREATE POLICY "Anyone can view active approved coaches"
-ON public.human_coaches FOR SELECT
-USING (status IN ('approved','active') AND is_accepting_new = true);
-
-GRANT SELECT ON public.human_coaches_public TO anon, authenticated;
+### 1. 新增统一的"安全返回"工具 `src/utils/safeNavigateBack.ts`
+```ts
+export function safeNavigateBack(navigate, fallback = '/') {
+  // history.state.idx === 0 表示当前是历史栈起点(分享/直链落地)
+  const idx = (window.history.state as any)?.idx;
+  if (typeof idx === 'number' && idx > 0) {
+    navigate(-1);
+  } else {
+    navigate(fallback, { replace: true });
+  }
+}
 ```
 
-不影响：
-- 现有"教练本人/提交人/管理员看完整资料"的策略
-- 推荐列表 Edge Function 行为
-- 写入策略
+### 2. 接入语音页关闭回调
+- `src/pages/LifeCoachVoice.tsx`:`onClose={() => safeNavigateBack(navigate, '/')}`
+- `src/pages/WealthCoachVoice.tsx`:两处 `navigate(-1)` 同样替换,fallback 用 `/coach/wealth_coach_4_questions` 的入口或 `/`。
+
+### 3. 顺手清理日志噪音(可选,低风险)
+`src/components/coach/CoachVoiceChat.tsx` 行 310-312 的 `console.log('Reconnecting within ...')` 只在真正命中复用分支的"首次"打印,而不是每次 render。做法:把首次值缓存到 `useRef` 中,值不变则不再打 log。
+
+## 不在本次范围
+- 不修改 WebRTC / 计费 / RLS 任何业务逻辑
+- 不调整 PTT 按钮样式或交互
+- 不动 CoachVoiceChat 的挂断流程本身(它已正确调用 onClose)
+
+## 验证
+- 在新标签直接打开 `/life-coach-voice?ref=share`,连接成功后点挂断 → 应跳到 `/`,通话计时停止。
+- 正常从 App 内点进语音页(有历史栈)→ 行为不变,仍 `navigate(-1)`。
+- 控制台不再每秒刷 `Reconnecting within`。
