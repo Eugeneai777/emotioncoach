@@ -191,7 +191,7 @@ const MamaAssistant = () => {
               <span className="text-base w-7 h-7 flex items-center justify-center rounded-lg bg-pink-50">💛</span>
               <div className="text-left">
                 <p className="text-[13px] font-medium text-rose-900">情绪健康自评</p>
-                <p className="text-[10px] text-rose-600/60">5分钟 · 限时¥9.9</p>
+                <p className="text-[10px] text-rose-600/60">5分钟 · 限时免费</p>
               </div>
             </div>
             <ChevronRight className="w-3.5 h-3.5 text-rose-400" />
