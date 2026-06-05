@@ -130,10 +130,11 @@ Deno.serve(async (req) => {
 
     try {
       // 连接到 OpenAI Realtime API
+      // Realtime GA: keep the standard realtime protocol and API-key subprotocol,
+      // but do NOT send the deprecated `openai-beta.realtime-v1` subprotocol.
       openaiSocket = new WebSocket(OPENAI_REALTIME_URL, [
         'realtime',
         `openai-insecure-api-key.${OPENAI_API_KEY}`,
-        'openai-beta.realtime-v1',
       ]);
 
       openaiSocket.onopen = async () => {
@@ -190,17 +191,25 @@ Deno.serve(async (req) => {
         const sessionConfig = {
           type: 'session.update',
           session: {
-            modalities: ['text', 'audio'],
+            type: 'realtime',
+            output_modalities: ['audio'],
             instructions: finalInstructions,
-            voice: resolvedVoice,
-            input_audio_format: AUDIO_CONFIG.format,
-            output_audio_format: AUDIO_CONFIG.format,
             max_response_output_tokens: "inf",
-            input_audio_transcription: {
-              model: 'whisper-1',
-              language: 'zh',
+            audio: {
+              input: {
+                format: { type: 'audio/pcm', rate: AUDIO_CONFIG.sampleRate },
+                transcription: {
+                  model: 'gpt-4o-mini-transcribe',
+                  language: 'zh',
+                  prompt: '用户使用简体中文交流。如果识别不到清晰的中文内容，请输出空字符串，不要猜测。',
+                },
+                turn_detection: effectiveTurnDetection,
+              },
+              output: {
+                format: { type: 'audio/pcm', rate: AUDIO_CONFIG.sampleRate },
+                voice: resolvedVoice,
+              },
             },
-            turn_detection: effectiveTurnDetection,
           },
         };
 
@@ -234,7 +243,15 @@ Deno.serve(async (req) => {
         isConnected = false;
         stopHealthCheck(); // 🔧 停止健康检查
         if (clientSocket.readyState === WebSocket.OPEN) {
-          clientSocket.close(1000, 'OpenAI disconnected');
+          try {
+            clientSocket.send(JSON.stringify({
+              type: 'error',
+              fatal: true,
+              code: event.code,
+              error: event.reason || 'AI service disconnected',
+            }));
+          } catch (_) {}
+          clientSocket.close(1011, 'AI_SERVICE_ERROR');
         }
       };
     } catch (error) {
