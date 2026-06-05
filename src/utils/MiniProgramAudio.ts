@@ -463,7 +463,7 @@ export class MiniProgramAudioClient {
         if (this.pttPreset) {
           payload.turn_detection = null;
         }
-          if ((this.cachedInstructions || voiceType || this.pttPreset) && this.ws === socket) {
+        if ((this.cachedInstructions || voiceType || this.pttPreset) && this.ws === socket) {
           console.log('[MiniProgramAudio] Sending session_config', { hasInstructions: !!this.cachedInstructions, voiceType, ptt: this.pttPreset });
           socket.send(JSON.stringify(payload));
         }
