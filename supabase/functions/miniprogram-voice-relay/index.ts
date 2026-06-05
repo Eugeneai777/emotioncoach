@@ -194,7 +194,6 @@ Deno.serve(async (req) => {
             type: 'realtime',
             output_modalities: ['audio'],
             instructions: finalInstructions,
-            max_response_output_tokens: "inf",
             audio: {
               input: {
                 format: { type: 'audio/pcm', rate: AUDIO_CONFIG.sampleRate },

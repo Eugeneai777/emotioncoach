@@ -256,6 +256,12 @@ export class MiniProgramAudioClient {
    */
   async connect(): Promise<void> {
     try {
+      this.fatalError = null;
+      this.diag.wsOpen = false;
+      this.diag.pttConfigApplied = false;
+      this.diag.serverTurnDetectionNull = false;
+      this.diag.lastError = null;
+      this.emitDiag();
       this.updateStatus('connecting');
 
       // 1. 获取 ephemeral token
@@ -298,6 +304,12 @@ export class MiniProgramAudioClient {
    * 断开连接
    */
   disconnect(): void {
+    this.fatalError = null;
+    this.reconnectAttempts = 0;
+    this.diag.wsOpen = false;
+    this.diag.isPressing = false;
+    this.diag.lastError = null;
+    this.emitDiag();
     this.stopHeartbeat();
     this.stopAudioHealthMonitor();
     this.stopRecording();
