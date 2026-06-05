@@ -130,10 +130,11 @@ Deno.serve(async (req) => {
 
     try {
       // 连接到 OpenAI Realtime API
+      // Realtime GA: keep the standard realtime protocol and API-key subprotocol,
+      // but do NOT send the deprecated `openai-beta.realtime-v1` subprotocol.
       openaiSocket = new WebSocket(OPENAI_REALTIME_URL, [
         'realtime',
         `openai-insecure-api-key.${OPENAI_API_KEY}`,
-        'openai-beta.realtime-v1',
       ]);
 
       openaiSocket.onopen = async () => {
@@ -190,17 +191,25 @@ Deno.serve(async (req) => {
         const sessionConfig = {
           type: 'session.update',
           session: {
-            modalities: ['text', 'audio'],
+            type: 'realtime',
+            output_modalities: ['audio'],
             instructions: finalInstructions,
-            voice: resolvedVoice,
-            input_audio_format: AUDIO_CONFIG.format,
-            output_audio_format: AUDIO_CONFIG.format,
             max_response_output_tokens: "inf",
-            input_audio_transcription: {
-              model: 'whisper-1',
-              language: 'zh',
+            audio: {
+              input: {
+                format: { type: 'audio/pcm', rate: AUDIO_CONFIG.sampleRate },
+                transcription: {
+                  model: 'gpt-4o-mini-transcribe',
+                  language: 'zh',
+                  prompt: '用户使用简体中文交流。如果识别不到清晰的中文内容，请输出空字符串，不要猜测。',
+                },
+                turn_detection: effectiveTurnDetection,
+              },
+              output: {
+                format: { type: 'audio/pcm', rate: AUDIO_CONFIG.sampleRate },
+                voice: resolvedVoice,
+              },
             },
-            turn_detection: effectiveTurnDetection,
           },
         };
 
@@ -234,7 +243,15 @@ Deno.serve(async (req) => {
         isConnected = false;
         stopHealthCheck(); // 🔧 停止健康检查
         if (clientSocket.readyState === WebSocket.OPEN) {
-          clientSocket.close(1000, 'OpenAI disconnected');
+          try {
+            clientSocket.send(JSON.stringify({
+              type: 'error',
+              fatal: true,
+              code: event.code,
+              error: event.reason || 'AI service disconnected',
+            }));
+          } catch (_) {}
+          clientSocket.close(1011, 'AI_SERVICE_ERROR');
         }
       };
     } catch (error) {
@@ -357,6 +374,7 @@ function handleOpenAIMessage(data: string, clientSocket: WebSocket) {
 
     switch (message.type) {
       case 'response.audio.delta':
+      case 'response.output_audio.delta':
         // 转发音频增量
         if (message.delta) {
           clientSocket.send(JSON.stringify({
@@ -367,6 +385,7 @@ function handleOpenAIMessage(data: string, clientSocket: WebSocket) {
         break;
 
       case 'response.audio_transcript.delta':
+      case 'response.output_audio_transcript.delta':
         // 转发 AI 响应转录（部分）
         if (message.delta) {
           clientSocket.send(JSON.stringify({
@@ -379,6 +398,7 @@ function handleOpenAIMessage(data: string, clientSocket: WebSocket) {
         break;
 
       case 'response.audio_transcript.done':
+      case 'response.output_audio_transcript.done':
         // AI 响应转录完成
         if (message.transcript) {
           clientSocket.send(JSON.stringify({
@@ -420,14 +440,28 @@ function handleOpenAIMessage(data: string, clientSocket: WebSocket) {
         }));
         break;
 
-      case 'error':
+      case 'error': {
         // 转发错误
         console.error('[Relay] OpenAI error:', message.error);
+        const errorMessage = message.error?.message || 'Unknown error';
+        const errorCode = message.error?.code || '';
+        const errorType = message.error?.type || '';
+        const isFatalConfigError = String(errorType).includes('invalid_request')
+          || String(errorCode).includes('beta_api_shape_disabled')
+          || String(errorCode).includes('missing_required_parameter')
+          || String(errorMessage).includes('session.')
+          || String(errorMessage).includes('Realtime Beta');
         clientSocket.send(JSON.stringify({
           type: 'error',
-          error: message.error?.message || 'Unknown error',
+          error: errorMessage,
+          code: errorCode,
+          fatal: isFatalConfigError,
         }));
+        if (isFatalConfigError) {
+          try { clientSocket.close(1011, 'AI_CONFIG_ERROR'); } catch (_) {}
+        }
         break;
+      }
 
       case 'session.created':
       case 'session.updated':
@@ -453,6 +487,7 @@ function handleOpenAIMessage(data: string, clientSocket: WebSocket) {
         break;
 
       case 'response.audio.interrupted':
+      case 'response.output_audio.interrupted':
         // AI 音频被用户打断 → 通知客户端停止播放
         console.log('[Relay] Audio interrupted by user speech');
         clientSocket.send(JSON.stringify({

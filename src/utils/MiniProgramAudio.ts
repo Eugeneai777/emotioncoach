@@ -109,6 +109,7 @@ export class MiniProgramAudioClient {
   private static readonly PTT_MIN_RECORDING_MS = 300;
   private static readonly PTT_UNMUTE_FALLBACK_MS = 2000;
   private recorderRunning = false;
+  private fatalError: string | null = null;
 
   // 🩺 PTT 诊断指标
   private diag: PttDiagnostics = {
@@ -437,13 +438,15 @@ export class MiniProgramAudioClient {
 
   private establishWebSocket(url: string): Promise<void> {
     return new Promise((resolve, reject) => {
-      this.ws = new WebSocket(url);
+      const socket = new WebSocket(url);
+      this.ws = socket;
 
       const timeout = setTimeout(() => {
         reject(new Error('WebSocket connection timeout'));
       }, 10000);
 
-      this.ws.onopen = () => {
+      socket.onopen = () => {
+        if (this.ws !== socket) return;
         clearTimeout(timeout);
         console.log('[MiniProgramAudio] WebSocket connected');
         this.diag.wsOpen = true;
@@ -460,25 +463,28 @@ export class MiniProgramAudioClient {
         if (this.pttPreset) {
           payload.turn_detection = null;
         }
-        if ((this.cachedInstructions || voiceType || this.pttPreset) && this.ws) {
+        if ((this.cachedInstructions || voiceType || this.pttPreset) && this.ws === socket) {
           console.log('[MiniProgramAudio] Sending session_config', { hasInstructions: !!this.cachedInstructions, voiceType, ptt: this.pttPreset });
-          this.ws.send(JSON.stringify(payload));
+          socket.send(JSON.stringify(payload));
         }
 
         resolve();
       };
 
-      this.ws.onmessage = (event) => {
+      socket.onmessage = (event) => {
+        if (this.ws !== socket) return;
         this.handleServerMessage(event.data);
       };
 
-      this.ws.onerror = (error) => {
+      socket.onerror = (error) => {
+        if (this.ws !== socket) return;
         clearTimeout(timeout);
         console.error('[MiniProgramAudio] WebSocket error:', error);
         reject(error);
       };
 
-      this.ws.onclose = (event) => {
+      socket.onclose = (event) => {
+        if (this.ws !== socket) return;
         console.log('[MiniProgramAudio] WebSocket closed:', event.code, event.reason);
         this.handleDisconnect();
       };
@@ -830,11 +836,14 @@ export class MiniProgramAudioClient {
           const isFatalCode = typeof errCode === 'string' && fatalCodes.some(c => errCode.toLowerCase().includes(c));
           const wsClosed = !this.ws || this.ws.readyState !== WebSocket.OPEN;
           const channelAlive = !wsClosed && (Date.now() - this.lastInboundAt < 3000);
-          const isFatal = isFatalCode || wsClosed;
-          if (isFatal && !channelAlive) {
+          const explicitlyFatal = (message as any).fatal === true;
+          const isFatal = explicitlyFatal || isFatalCode || wsClosed;
+          if (isFatal && (explicitlyFatal || !channelAlive)) {
             console.error('[MiniProgramAudio] Fatal server error:', errStr);
+            this.fatalError = errStr || 'fatal_server_error';
             this.diag.lastError = errStr.slice(0, 120);
             this.updateStatus('error');
+            try { this.ws?.close(1011, 'fatal_server_error'); } catch {}
           } else {
             console.warn('[MiniProgramAudio] Non-fatal server error (downgraded):', errStr);
             this.diag.lastError = errStr.slice(0, 120);
@@ -1322,6 +1331,11 @@ export class MiniProgramAudioClient {
 
   private handleDisconnect(): void {
     this.stopHeartbeat();
+    if (this.fatalError) {
+      console.log('[MiniProgramAudio] Not reconnecting after fatal error:', this.fatalError);
+      this.updateStatus('error');
+      return;
+    }
     
     // 🔧 只在之前是已连接状态时才尝试重连
     const wasConnected = this.status === 'connected';
