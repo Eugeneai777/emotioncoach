@@ -2965,18 +2965,24 @@ export const CoachVoiceChat = ({
         {pttMode && status !== 'idle' && (
           <p className="text-[11px] text-white/60">按通话时长计费 · {POINTS_PER_MINUTE} 点/分钟</p>
         )}
-        {pttMode && statusRef.current !== 'connecting' ? (
+        {pttMode ? (
           <PushToTalkButton
             primaryColor={primaryColor}
             colors={colors}
+            isConnecting={status === 'connecting'}
+            isDisabled={isEnding || insufficientDuringCall}
             onStart={() => {
               if (shouldDelayMiniProgramPttConnect && !chatRef.current && status !== 'connected') {
                 if (statusRef.current === 'connecting') return;
                 pendingPttStartRef.current = true;
                 armPendingPttReleaseWatch();
                 startCall();
+                try { navigator.vibrate?.([15]); } catch {}
                 return;
               }
+
+              // 连接中：还没建好通道，仅给视觉反馈，不调用 pttStart
+              if (status === 'connecting') return;
 
               const client = chatRef.current as any;
               // 优先用 pttStart（小程序 WebSocket 通道），其次 startRecording（WebRTC 通道）
@@ -2996,7 +3002,12 @@ export const CoachVoiceChat = ({
             }}
             onStop={() => {
               if (shouldDelayMiniProgramPttConnect && status !== 'connected') {
-                clearPendingPttStart();
+                // 注意：保持 pendingPttStartRef，以便连接完成后可以立刻继续按住录音
+                setSpeakingStatus('idle');
+                return;
+              }
+
+              if (status === 'connecting') {
                 setSpeakingStatus('idle');
                 return;
               }
