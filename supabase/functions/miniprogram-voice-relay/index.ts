@@ -374,6 +374,7 @@ function handleOpenAIMessage(data: string, clientSocket: WebSocket) {
 
     switch (message.type) {
       case 'response.audio.delta':
+      case 'response.output_audio.delta':
         // 转发音频增量
         if (message.delta) {
           clientSocket.send(JSON.stringify({
@@ -384,6 +385,7 @@ function handleOpenAIMessage(data: string, clientSocket: WebSocket) {
         break;
 
       case 'response.audio_transcript.delta':
+      case 'response.output_audio_transcript.delta':
         // 转发 AI 响应转录（部分）
         if (message.delta) {
           clientSocket.send(JSON.stringify({
@@ -396,6 +398,7 @@ function handleOpenAIMessage(data: string, clientSocket: WebSocket) {
         break;
 
       case 'response.audio_transcript.done':
+      case 'response.output_audio_transcript.done':
         // AI 响应转录完成
         if (message.transcript) {
           clientSocket.send(JSON.stringify({
@@ -470,6 +473,7 @@ function handleOpenAIMessage(data: string, clientSocket: WebSocket) {
         break;
 
       case 'response.audio.interrupted':
+      case 'response.output_audio.interrupted':
         // AI 音频被用户打断 → 通知客户端停止播放
         console.log('[Relay] Audio interrupted by user speech');
         clientSocket.send(JSON.stringify({
