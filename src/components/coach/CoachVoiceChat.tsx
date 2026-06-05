@@ -2374,8 +2374,8 @@ export const CoachVoiceChat = ({
           </Button>
         </div>
       )}
-      {/* 🔧 静默重连细条：网络抖动时显示，避免整页弹"连接成功"页 */}
-      {(isSilentReconnecting || (status === 'connecting' && hasEverConnectedRef.current)) && (
+      {/* 🔧 静默重连细条：仅当 chatRef 仍存活（真实重连中）才显示，避免 PTT 等待按下时误报 */}
+      {chatRef.current && (isSilentReconnecting || (status === 'connecting' && hasEverConnectedRef.current)) && (
         <div className="bg-amber-500/90 text-white text-xs py-1.5 px-4 flex items-center justify-center gap-2 animate-in slide-in-from-top duration-200">
           <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
           网络波动，正在自动恢复…
