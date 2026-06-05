@@ -833,7 +833,7 @@ export class MiniProgramAudioClient {
           const channelAlive = !wsClosed && (Date.now() - this.lastInboundAt < 3000);
           const explicitlyFatal = (message as any).fatal === true;
           const isFatal = explicitlyFatal || isFatalCode || wsClosed;
-          if (isFatal && !channelAlive) {
+          if (isFatal && (explicitlyFatal || !channelAlive)) {
             console.error('[MiniProgramAudio] Fatal server error:', errStr);
             this.fatalError = errStr || 'fatal_server_error';
             this.diag.lastError = errStr.slice(0, 120);
