@@ -443,10 +443,23 @@ function handleOpenAIMessage(data: string, clientSocket: WebSocket) {
       case 'error':
         // 转发错误
         console.error('[Relay] OpenAI error:', message.error);
+        const errorMessage = message.error?.message || 'Unknown error';
+        const errorCode = message.error?.code || '';
+        const errorType = message.error?.type || '';
+        const isFatalConfigError = String(errorType).includes('invalid_request')
+          || String(errorCode).includes('beta_api_shape_disabled')
+          || String(errorCode).includes('missing_required_parameter')
+          || String(errorMessage).includes('session.')
+          || String(errorMessage).includes('Realtime Beta');
         clientSocket.send(JSON.stringify({
           type: 'error',
-          error: message.error?.message || 'Unknown error',
+          error: errorMessage,
+          code: errorCode,
+          fatal: isFatalConfigError,
         }));
+        if (isFatalConfigError) {
+          try { clientSocket.close(1011, 'AI_CONFIG_ERROR'); } catch (_) {}
+        }
         break;
 
       case 'session.created':
