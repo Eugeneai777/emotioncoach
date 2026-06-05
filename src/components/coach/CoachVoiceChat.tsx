@@ -1063,6 +1063,12 @@ export const CoachVoiceChat = ({
     } else if (mappedStatus === 'disconnected' || mappedStatus === 'error') {
       setIsSilentReconnecting(false);
       if (durationRef.current) clearInterval(durationRef.current);
+      if (mappedStatus === 'error') {
+        chatRef.current = null;
+        isInitializingRef.current = false;
+        clearPendingPttStart();
+        releaseLock();
+      }
 
       // 🔧 优先展示“明确断开原因”（例如计费网络失败/点数不足）
       const notice = disconnectNoticeRef.current;
@@ -1748,6 +1754,8 @@ export const CoachVoiceChat = ({
         await refundPreDeductedQuota('connection_failed');
       }
       
+      chatRef.current = null;
+      clearPendingPttStart();
       setStatus('error');
       isInitializingRef.current = false;
       releaseLock();
