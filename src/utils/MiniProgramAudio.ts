@@ -438,13 +438,15 @@ export class MiniProgramAudioClient {
 
   private establishWebSocket(url: string): Promise<void> {
     return new Promise((resolve, reject) => {
-      this.ws = new WebSocket(url);
+      const socket = new WebSocket(url);
+      this.ws = socket;
 
       const timeout = setTimeout(() => {
         reject(new Error('WebSocket connection timeout'));
       }, 10000);
 
-      this.ws.onopen = () => {
+      socket.onopen = () => {
+        if (this.ws !== socket) return;
         clearTimeout(timeout);
         console.log('[MiniProgramAudio] WebSocket connected');
         this.diag.wsOpen = true;
@@ -461,25 +463,28 @@ export class MiniProgramAudioClient {
         if (this.pttPreset) {
           payload.turn_detection = null;
         }
-        if ((this.cachedInstructions || voiceType || this.pttPreset) && this.ws) {
+          if ((this.cachedInstructions || voiceType || this.pttPreset) && this.ws === socket) {
           console.log('[MiniProgramAudio] Sending session_config', { hasInstructions: !!this.cachedInstructions, voiceType, ptt: this.pttPreset });
-          this.ws.send(JSON.stringify(payload));
+          socket.send(JSON.stringify(payload));
         }
 
         resolve();
       };
 
-      this.ws.onmessage = (event) => {
+      socket.onmessage = (event) => {
+        if (this.ws !== socket) return;
         this.handleServerMessage(event.data);
       };
 
-      this.ws.onerror = (error) => {
+      socket.onerror = (error) => {
+        if (this.ws !== socket) return;
         clearTimeout(timeout);
         console.error('[MiniProgramAudio] WebSocket error:', error);
         reject(error);
       };
 
-      this.ws.onclose = (event) => {
+      socket.onclose = (event) => {
+        if (this.ws !== socket) return;
         console.log('[MiniProgramAudio] WebSocket closed:', event.code, event.reason);
         this.handleDisconnect();
       };
