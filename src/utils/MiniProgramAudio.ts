@@ -1337,7 +1337,10 @@ export class MiniProgramAudioClient {
         this.connect().then(() => {
           console.log('[MiniProgramAudio] Reconnect successful');
           this.reconnectAttempts = 0;
-          this.startRecording(); // 重连成功后恢复录音
+          // 🔧 PTT 模式：录音由用户按下触发，重连后不要常驻开启，否则会破坏 PTT 闸门
+          if (!this.pttPreset) {
+            this.startRecording();
+          }
         }).catch((error) => {
           console.error('[MiniProgramAudio] Reconnect failed:', error);
           if (this.reconnectAttempts >= this.maxReconnectAttempts) {
