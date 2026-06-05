@@ -109,6 +109,7 @@ export class MiniProgramAudioClient {
   private static readonly PTT_MIN_RECORDING_MS = 300;
   private static readonly PTT_UNMUTE_FALLBACK_MS = 2000;
   private recorderRunning = false;
+  private fatalError: string | null = null;
 
   // 🩺 PTT 诊断指标
   private diag: PttDiagnostics = {
@@ -830,11 +831,14 @@ export class MiniProgramAudioClient {
           const isFatalCode = typeof errCode === 'string' && fatalCodes.some(c => errCode.toLowerCase().includes(c));
           const wsClosed = !this.ws || this.ws.readyState !== WebSocket.OPEN;
           const channelAlive = !wsClosed && (Date.now() - this.lastInboundAt < 3000);
-          const isFatal = isFatalCode || wsClosed;
+          const explicitlyFatal = (message as any).fatal === true;
+          const isFatal = explicitlyFatal || isFatalCode || wsClosed;
           if (isFatal && !channelAlive) {
             console.error('[MiniProgramAudio] Fatal server error:', errStr);
+            this.fatalError = errStr || 'fatal_server_error';
             this.diag.lastError = errStr.slice(0, 120);
             this.updateStatus('error');
+            try { this.ws?.close(1011, 'fatal_server_error'); } catch {}
           } else {
             console.warn('[MiniProgramAudio] Non-fatal server error (downgraded):', errStr);
             this.diag.lastError = errStr.slice(0, 120);
@@ -1322,6 +1326,11 @@ export class MiniProgramAudioClient {
 
   private handleDisconnect(): void {
     this.stopHeartbeat();
+    if (this.fatalError) {
+      console.log('[MiniProgramAudio] Not reconnecting after fatal error:', this.fatalError);
+      this.updateStatus('error');
+      return;
+    }
     
     // 🔧 只在之前是已连接状态时才尝试重连
     const wasConnected = this.status === 'connected';
