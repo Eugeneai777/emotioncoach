@@ -440,7 +440,7 @@ function handleOpenAIMessage(data: string, clientSocket: WebSocket) {
         }));
         break;
 
-      case 'error':
+      case 'error': {
         // 转发错误
         console.error('[Relay] OpenAI error:', message.error);
         const errorMessage = message.error?.message || 'Unknown error';
@@ -461,6 +461,7 @@ function handleOpenAIMessage(data: string, clientSocket: WebSocket) {
           try { clientSocket.close(1011, 'AI_CONFIG_ERROR'); } catch (_) {}
         }
         break;
+      }
 
       case 'session.created':
       case 'session.updated':
