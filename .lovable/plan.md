@@ -1,28 +1,30 @@
-## 问题定位
+## 目标
 
-后端日志已经显示真实失败点：`miniprogram-voice-relay` 在初始化实时语音会话时发送了不被当前接口支持的字段：
+将 `mini-app` 首页"想说点什么？按住和有劲AI说"区块中的语音教练入口，从当前的"在当前页弹出全局语音浮层 (`useGlobalVoice().startVoice`)"模式，改为与情绪教练入口一致的"直接跳转独立页面"模式 —— 即点击卡片直接 `navigate('/life-coach-voice?topic=...')`，由 `LifeCoachVoice` 页面承接后续逻辑。
 
-```text
-Unknown parameter: 'session.max_response_output_tokens'
-```
+不改动任何业务逻辑、token endpoint、scenario 映射、音色配置、AI 模型参数等。
 
-这会触发后端把连接关闭为 `AI_CONFIG_ERROR`，前端收到 fatal error 后不再重连；用户再点“长按语音通话”时，WebSocket 通道已经不是 open 状态，所以出现“连接还没准备好”。
+## 改动范围
 
-## 修复计划
+仅修改一个文件：`src/pages/MiniAppEntry.tsx`
 
-1. 修复后端实时语音 session 配置
-   - 删除 `supabase/functions/miniprogram-voice-relay/index.ts` 中的 `session.max_response_output_tokens`。
-   - 保留当前 GA 版本所需的 `session.type`、`output_modalities`、`audio.input/output`、`turn_detection` 配置。
-   - 同时确认错误分级不再把这个配置错误反复带入前端重连循环。
+### 具体修改
 
-2. 优化前端失败后的重试状态
-   - 在 `src/utils/MiniProgramAudio.ts` 的 `connect()` / `disconnect()` 路径中重置上一轮 `fatalError`、诊断状态和 WebSocket 状态，避免用户挂断后重新尝试仍继承旧 fatal 状态。
-   - 让新一次点击可以真正创建新连接，而不是一直停留在“没准备好”。
+1. `handleUseCaseClick(topic)` 简化为：
+   - 未登录：`navigate('/auth?redirect=/life-coach-voice?topic=' + topic)`（保留原有逻辑）
+   - 已登录：`navigate('/life-coach-voice?topic=' + topic)`
+2. 删除 `useGlobalVoice` 调用与 `startVoice(...)` 整段配置。
+3. 删除本文件中不再使用的导入：
+   - `useGlobalVoice`（from `@/components/voice/GlobalVoiceProvider`）
+   - `getSavedVoiceType`（from `@/config/voiceTypeConfig`）
+   - `TOPIC_TO_SCENARIO_KEY` 本地常量（场景映射由 `LifeCoachVoice.tsx` 内部已有的同名映射处理，不影响行为）
+4. 卡片上 `onPointerDown={() => preloadRouteOnIntent('/life-coach-voice?topic=' + c.topic)}` 保留，预加载行为不变。
 
-3. 优化 PTT 首次按住体验
-   - 在 `src/components/coach/CoachVoiceChat.tsx` 中，连接失败或致命错误后清空 `chatRef.current` 与初始化锁，保证重新点击能重新执行完整建连流程。
-   - 对“连接中”与“连接失败”做更明确分支，避免还没建好通道时直接调用 `pttStart()` 触发误报 toast。
+## 不改动
 
-4. 验证
-   - 部署/验证 `miniprogram-voice-relay` 后查看函数日志，确认不再出现 `Unknown parameter: session.max_response_output_tokens`。
-   - 用函数日志和前端连接状态确认流程至少能到 `session.updated` / `ptt_config_applied`，再允许用户按住说话。
+- `LifeCoachVoice.tsx`、`CoachVoiceChat.tsx`、`vibrant-life-realtime-token` edge function、`MiniProgramAudio.ts`、`GlobalVoiceProvider`、音色 / scenario / 预热逻辑全部保持原样。
+- 其它页面（YoujinLifeChat、FloatingVoiceButton 等）继续使用现有 `startVoice` 浮层模式，不受影响。
+
+## 预期效果
+
+mini-app 中点击场景卡 → 像点击"情绪教练"那样直接跳转到独立的 `/life-coach-voice` 页面（该页面本身已实现 token 预热、麦克风预热、scenario 解析），避免了在小程序 WebView 中通过全局浮层启动语音时遇到的连接初始化时序问题。
