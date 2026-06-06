@@ -102,7 +102,6 @@ const LifeCoachVoice = () => {
         mode="general"
         featureKey="realtime_voice"
         voiceType={getSavedVoiceType()}
-        pttMode
         scenario={scenarioKey}
       />
     </Suspense>
