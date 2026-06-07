@@ -275,7 +275,7 @@ export default function LaogeAI() {
                 <span className="text-2xl">💚</span>
                 <span className="font-bold text-xs text-[hsl(var(--laoge-text))]">情绪健康</span>
                 <span className="text-[9px] text-[hsl(var(--laoge-text-muted))]">PHQ-9+GAD-7·5分钟</span>
-                <span className="text-[9px] font-bold text-[hsl(var(--laoge-accent))]">限时 ¥9.9</span>
+                <span className="text-[9px] font-bold text-[hsl(var(--laoge-accent))]">限时免费</span>
               </button>
             )}
             {!midlifeCompleted && (
