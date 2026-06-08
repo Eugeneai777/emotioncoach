@@ -212,11 +212,24 @@ const DynamicCoach = () => {
 
   if (!template) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-6">
         <p className="text-muted-foreground">教练配置加载失败</p>
+        <button
+          onClick={() => {
+            if (window.history.length > 1) {
+              window.history.back();
+            } else {
+              window.location.href = "/";
+            }
+          }}
+          className="px-4 py-2 rounded-md border text-sm text-foreground hover:bg-muted"
+        >
+          返回
+        </button>
       </div>
     );
   }
+
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
