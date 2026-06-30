@@ -2,7 +2,7 @@
 import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, ChevronUp, ChevronRight, Wrench, BarChart3, Target, Quote, ShoppingBag } from "lucide-react";
+import { ChevronDown, ChevronUp, ChevronRight, Wrench, BarChart3, Target, Quote, ShoppingBag, BookOpen } from "lucide-react";
 import useEmblaCarousel from "embla-carousel-react";
 
 import logoImage from "@/assets/logo-youjin-ai.png";
@@ -112,6 +112,19 @@ const exploreBlocks = [
     bg: "bg-gradient-to-br from-rose-500/15 to-pink-500/8",
     ring: "ring-rose-400/25",
     glow: "shadow-rose-500/10",
+  },
+  {
+    icon: BookOpen,
+    title: "故事教练",
+    sub: "说出你的成长",
+    desc: "用英雄之旅的方法，把你的经历变成动人的成长故事。",
+    route: "/story-coach",
+    illustrationKey: "block_story_coach",
+    iconColor: "text-orange-300",
+    iconBg: "bg-orange-500/20",
+    bg: "bg-gradient-to-br from-orange-500/15 to-amber-500/8",
+    ring: "ring-orange-400/25",
+    glow: "shadow-orange-500/10",
   },
 ];
 
@@ -593,6 +606,47 @@ const MiniAppEntry = () => {
         </div>
       </div>
 
+      {/* ── 探索模块 ── */}
+      <div className="px-4 pb-4">
+        <div className="flex items-center gap-2 mb-3 px-0.5">
+          <div className="w-1 h-4 rounded-full bg-gradient-to-b from-primary to-accent" />
+          <h3 className="text-sm font-bold text-foreground">探索更多</h3>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {exploreBlocks.map((block, i) => {
+            const BlockIcon = block.icon;
+            return (
+              <motion.button
+                key={block.title}
+                type="button"
+                onPointerDown={() => preloadRouteOnIntent(block.route)}
+                onClick={() => navigate(block.route)}
+                initial={reduceMotion ? false : { opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15 + i * 0.05, duration: 0.3 }}
+                whileTap={{ scale: 0.95 }}
+                className={`group relative rounded-xl p-3.5 text-left ring-1 shadow-lg transition-all hover:brightness-110 ${block.bg} ${block.ring} ${block.glow}`}
+              >
+                <div className="flex items-start gap-2.5 mb-2">
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${block.iconBg}`}>
+                    <BlockIcon className={`w-4 h-4 ${block.iconColor}`} />
+                  </div>
+                  <div className="min-w-0 pt-0.5">
+                    <h4 className="text-[13px] font-bold text-foreground leading-tight">{block.title}</h4>
+                    <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">{block.sub}</p>
+                  </div>
+                </div>
+                <p className="text-[11px] text-muted-foreground/80 leading-relaxed line-clamp-2 mb-2.5">
+                  {block.desc}
+                </p>
+                <span className="text-[11px] font-medium text-primary flex items-center gap-0.5 group-hover:gap-1 transition-all">
+                  去查看 <ChevronRight className="w-3 h-3" />
+                </span>
+              </motion.button>
+            );
+          })}
+        </div>
+      </div>
 
       {/* ── 活动轮播图 ── */}
       <PromoBanner
