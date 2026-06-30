@@ -2,7 +2,7 @@
 import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, ChevronUp, ChevronRight, Wrench, BarChart3, Target, Quote, ShoppingBag, BookOpen } from "lucide-react";
+import { ChevronDown, ChevronUp, ChevronRight, Wrench, BarChart3, Target, Quote, BookOpen } from "lucide-react";
 import useEmblaCarousel from "embla-carousel-react";
 
 import logoImage from "@/assets/logo-youjin-ai.png";
@@ -99,19 +99,6 @@ const exploreBlocks = [
     bg: "bg-gradient-to-br from-amber-500/15 to-orange-500/8",
     ring: "ring-amber-400/25",
     glow: "shadow-amber-500/10",
-  },
-  {
-    icon: ShoppingBag,
-    title: "健康商城",
-    sub: "守护身心平衡",
-    desc: "知乐胶囊、协同套餐……科学配方，为你的情绪健康保驾护航。",
-    route: "/health-store",
-    illustrationKey: "block_health_store",
-    iconColor: "text-rose-300",
-    iconBg: "bg-rose-500/20",
-    bg: "bg-gradient-to-br from-rose-500/15 to-pink-500/8",
-    ring: "ring-rose-400/25",
-    glow: "shadow-rose-500/10",
   },
   {
     icon: BookOpen,
@@ -612,7 +599,7 @@ const MiniAppEntry = () => {
           <div className="w-1 h-4 rounded-full bg-gradient-to-b from-primary to-accent" />
           <h3 className="text-sm font-bold text-foreground">探索更多</h3>
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 snap-x snap-mandatory">
           {exploreBlocks.map((block, i) => {
             const BlockIcon = block.icon;
             return (
@@ -625,7 +612,7 @@ const MiniAppEntry = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.15 + i * 0.05, duration: 0.3 }}
                 whileTap={{ scale: 0.95 }}
-                className={`group relative rounded-xl p-3.5 text-left ring-1 shadow-lg transition-all hover:brightness-110 ${block.bg} ${block.ring} ${block.glow}`}
+                className={`group relative shrink-0 snap-start min-w-[180px] rounded-xl p-3.5 text-left ring-1 shadow-lg transition-all hover:brightness-110 ${block.bg} ${block.ring} ${block.glow}`}
               >
                 <div className="flex items-start gap-2.5 mb-2">
                   <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${block.iconBg}`}>
