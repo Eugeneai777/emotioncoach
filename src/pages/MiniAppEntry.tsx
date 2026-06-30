@@ -113,6 +113,19 @@ const exploreBlocks = [
     ring: "ring-rose-400/25",
     glow: "shadow-rose-500/10",
   },
+  {
+    icon: BookOpen,
+    title: "故事教练",
+    sub: "说出你的成长",
+    desc: "用英雄之旅的方法，把你的经历变成动人的成长故事。",
+    route: "/story-coach",
+    illustrationKey: "block_story_coach",
+    iconColor: "text-orange-300",
+    iconBg: "bg-orange-500/20",
+    bg: "bg-gradient-to-br from-orange-500/15 to-amber-500/8",
+    ring: "ring-orange-400/25",
+    glow: "shadow-orange-500/10",
+  },
 ];
 
 const useCases = [
