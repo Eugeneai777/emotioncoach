@@ -596,10 +596,10 @@ const MiniAppEntry = () => {
       {/* ── 探索模块 ── */}
       <div className="px-4 pb-4">
         <div className="flex items-center gap-2 mb-3 px-0.5">
-          <div className="w-1 h-4 rounded-full bg-gradient-to-b from-cyan-400 to-violet-500" />
+          <div className="w-1 h-4 rounded-full bg-gradient-to-b from-primary to-accent" />
           <h3 className="text-sm font-bold text-foreground">探索更多</h3>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 snap-x snap-mandatory">
           {exploreBlocks.map((block, i) => {
             const BlockIcon = block.icon;
             return (
@@ -610,21 +610,30 @@ const MiniAppEntry = () => {
                 onClick={() => navigate(block.route)}
                 initial={reduceMotion ? false : { opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.15 + i * 0.04, duration: 0.25 }}
+                transition={{ delay: 0.15 + i * 0.05, duration: 0.3 }}
                 whileTap={{ scale: 0.95 }}
-                className={`group relative rounded-xl p-3 text-left ring-1 shadow-lg transition-all hover:brightness-110 ${block.bg} ${block.ring} ${block.glow}`}
+                className={`group relative shrink-0 snap-start min-w-[180px] rounded-xl p-3.5 text-left ring-1 shadow-lg transition-all hover:brightness-110 ${block.bg} ${block.ring} ${block.glow}`}
               >
-                <div className={`w-9 h-9 rounded-full flex items-center justify-center mb-1.5 ${block.iconBg}`}>
-                  <BlockIcon className={`w-4 h-4 ${block.iconColor}`} />
+                <div className="flex items-start gap-2.5 mb-2">
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${block.iconBg}`}>
+                    <BlockIcon className={`w-4 h-4 ${block.iconColor}`} />
+                  </div>
+                  <div className="min-w-0 pt-0.5">
+                    <h4 className="text-[13px] font-bold text-foreground leading-tight">{block.title}</h4>
+                    <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">{block.sub}</p>
+                  </div>
                 </div>
-                <div className="text-[12px] font-bold text-foreground leading-tight">{block.title}</div>
-                <div className="text-[10px] text-muted-foreground mt-0.5 leading-tight">{block.sub}</div>
+                <p className="text-[11px] text-muted-foreground/80 leading-relaxed line-clamp-2 mb-2.5">
+                  {block.desc}
+                </p>
+                <span className="text-[11px] font-medium text-primary flex items-center gap-0.5 group-hover:gap-1 transition-all">
+                  去查看 <ChevronRight className="w-3 h-3" />
+                </span>
               </motion.button>
             );
           })}
         </div>
       </div>
-
 
       {/* ── 活动轮播图 ── */}
       <PromoBanner
