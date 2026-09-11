@@ -33,7 +33,7 @@ serve(async (req) => {
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
   const supabase = createClient(supabaseUrl, serviceKey);
 
-  const alerts: Array<{ type: string; level: string; message: string; details: string }> = [];
+  const alerts: Array<{ type: string; alertType?: string; level: string; message: string; details: string }> = [];
   const fifteenMinAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
   const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
 
