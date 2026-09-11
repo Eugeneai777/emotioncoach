@@ -127,62 +127,18 @@ serve(async (req) => {
       });
     }
 
-    // 推送告警
-    if (alerts.length > 0) {
-      const { data: contacts } = await supabase
-        .from('emergency_contacts')
-        .select('*')
-        .eq('is_active', true);
+    // 推送告警（统一冷却去重 + 日志）
+    const dispatchResult = await dispatchEmergencyAlerts(supabase, supabaseUrl, serviceKey,
+      alerts.map((a: any) => ({
+        source: 'og_health',
+        level: a.level,
+        alertType: a.alertType || a.type,
+        message: a.message,
+        details: a.details,
+      }))
+    );
 
-      for (const alert of alerts) {
-        const matchedContacts = (contacts || []).filter((c: any) =>
-          c.alert_types?.includes(alert.type) &&
-          c.alert_levels?.includes(alert.level)
-        );
-
-        for (const contact of matchedContacts) {
-          try {
-            await fetch(`${supabaseUrl}/functions/v1/send-emergency-alert`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${serviceKey}` },
-              body: JSON.stringify({
-                webhook_url: contact.wecom_webhook_url,
-                contact_name: contact.name,
-                alert_type: 'OG分享监控',
-                alert_level: alert.level,
-                message: alert.message,
-                details: alert.details,
-              }),
-            });
-
-            await supabase.from('emergency_alert_logs').insert({
-              contact_id: contact.id,
-              contact_name: contact.name,
-              alert_source: 'og_health',
-              alert_level: alert.level,
-              alert_type: alert.type,
-              message: alert.message,
-              details: alert.details,
-              send_status: 'success',
-            });
-          } catch (e) {
-            console.error(`Failed to send OG health alert to ${contact.name}:`, e);
-            await supabase.from('emergency_alert_logs').insert({
-              contact_id: contact.id,
-              contact_name: contact.name,
-              alert_source: 'og_health',
-              alert_level: alert.level,
-              alert_type: alert.type,
-              message: alert.message,
-              send_status: 'failed',
-              error_message: e instanceof Error ? e.message : 'Unknown error',
-            });
-          }
-        }
-      }
-    }
-
-    console.log(`OG health check completed. ${alerts.length} alerts triggered.`);
+    console.log(`OG health check completed. ${alerts.length} alerts, sent=${dispatchResult.sent}, skipped=${dispatchResult.skipped}`);
 
     return new Response(JSON.stringify({ success: true, alerts_count: alerts.length, alerts }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
