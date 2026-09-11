@@ -115,50 +115,37 @@ serve(async (req) => {
       });
     }
 
-    // 推送告警
-    if (alerts.length > 0) {
-      const { data: contacts } = await supabase
-        .from('emergency_contacts')
-        .select('*')
-        .eq('is_active', true);
+    // 4. 待处理异常总量堆积（15分钟内 ≥ 5 条，且无 critical 已告警）
+    if (alerts.length === 0) {
+      const { count: pendingTotal } = await supabase
+        .from('monitor_user_anomalies')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'pending')
+        .gte('created_at', fifteenMinAgo);
 
-      for (const alert of alerts) {
-        const matchedContacts = (contacts || []).filter((c: any) =>
-          c.alert_types?.includes(alert.type) &&
-          c.alert_levels?.includes(alert.level)
-        );
-
-        for (const contact of matchedContacts) {
-          try {
-            await fetch(`${supabaseUrl}/functions/v1/send-emergency-alert`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${serviceKey}` },
-              body: JSON.stringify({
-                webhook_url: contact.wecom_webhook_url,
-                contact_name: contact.name,
-                alert_type: alert.type,
-                alert_level: alert.level,
-                message: alert.message,
-                details: alert.details,
-              }),
-            });
-
-            await supabase.from('emergency_alert_logs').insert({
-              contact_id: contact.id,
-              contact_name: contact.name,
-              alert_type: alert.type,
-              alert_level: alert.level,
-              message: alert.message,
-              status: 'sent',
-            });
-          } catch (e) {
-            console.error(`Failed to send user anomaly alert to ${contact.name}:`, e);
-          }
-        }
+      if ((pendingTotal || 0) >= 5) {
+        alerts.push({
+          type: 'user_anomaly',
+          alertType: 'user_anomaly_accumulated',
+          level: 'high',
+          message: `用户异常堆积：最近15分钟内累计 ${pendingTotal} 条待处理异常`,
+          details: `建议进入后台「用户异常监控」查看明细并处理`,
+        });
       }
     }
 
-    console.log(`User anomaly check completed. ${alerts.length} alerts triggered.`);
+    // 推送告警（统一冷却去重 + 日志）
+    const dispatchResult = await dispatchEmergencyAlerts(supabase, supabaseUrl, serviceKey,
+      alerts.map((a: any) => ({
+        source: a.type,
+        level: a.level,
+        alertType: a.alertType || a.type,
+        message: a.message,
+        details: a.details,
+      }))
+    );
+
+    console.log(`User anomaly check completed. ${alerts.length} alerts, sent=${dispatchResult.sent}, skipped=${dispatchResult.skipped}`);
 
     return new Response(JSON.stringify({ success: true, alerts_count: alerts.length, alerts }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
