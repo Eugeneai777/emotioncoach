@@ -54,7 +54,7 @@ serve(async (req) => {
         .join('\n');
 
       alerts.push({
-        type: 'og_health',
+        type: 'og_health', alertType: 'og_critical_issues',
         level: 'critical',
         message: `OG分享异常预警：最近15分钟内检测到 ${criticalCount} 条严重分享问题`,
         details: `最新异常记录:\n${summary}`,
@@ -71,7 +71,7 @@ serve(async (req) => {
 
     if ((imageFailCount || 0) > 5) {
       alerts.push({
-        type: 'og_health',
+        type: 'og_health', alertType: 'og_image_load_failed',
         level: 'critical',
         message: `OG图片加载异常：最近15分钟内 ${imageFailCount} 次图片加载失败`,
         details: `大量用户分享时无法正常显示预览图片，可能影响传播效果，请检查图片CDN或存储服务`,
@@ -103,7 +103,7 @@ serve(async (req) => {
           .join('\n');
 
         alerts.push({
-          type: 'og_health',
+          type: 'og_health', alertType: 'og_hot_pages',
           level: 'high',
           message: `OG配置异常集中：${hotPages.length} 个页面在1小时内反复出现分享问题`,
           details: `高频异常页面:\n${pageSummary}`,
@@ -121,7 +121,7 @@ serve(async (req) => {
 
     if ((warningCount || 0) > 20 && alerts.length === 0) {
       alerts.push({
-        type: 'og_health',
+        type: 'og_health', alertType: 'og_warning_backlog',
         level: 'high',
         message: `OG分享警告堆积：最近15分钟内累计 ${warningCount} 条未处理警告`,
         details: `大量页面OG配置存在问题（如图片尺寸不合规、缺少描述字段等），建议批量排查`,
