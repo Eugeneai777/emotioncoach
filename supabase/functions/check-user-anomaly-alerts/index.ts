@@ -55,7 +55,7 @@ serve(async (req) => {
         .join('\n');
 
       alerts.push({
-        type: 'user_anomaly',
+        type: 'user_anomaly', alertType: 'user_anomaly_critical',
         level: (criticalAnomalies || []).some(a => a.severity === 'critical') ? 'critical' : 'high',
         message: `用户异常预警：最近15分钟内检测到 ${criticalCount} 条高危异常行为`,
         details: `最新异常记录:\n${summary}`,
@@ -91,7 +91,7 @@ serve(async (req) => {
         // 避免与上面重复告警
         if (alerts.length === 0) {
           alerts.push({
-            type: 'user_anomaly',
+            type: 'user_anomaly', alertType: 'user_anomaly_frequent_users',
             level: 'high',
             message: `高频异常用户预警：${heavyUsers.length} 个用户在1小时内触发多次异常`,
             details: `频繁异常用户:\n${userSummary}`,
@@ -109,7 +109,7 @@ serve(async (req) => {
 
     if ((loginAnomalyCount || 0) > 3) {
       alerts.push({
-        type: 'user_anomaly',
+        type: 'user_anomaly', alertType: 'user_anomaly_suspicious_login',
         level: 'critical',
         message: `异地登录预警：最近15分钟内检测到 ${loginAnomalyCount} 条可疑登录行为`,
         details: `可能存在账号被盗或批量攻击，请立即核查`,
