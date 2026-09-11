@@ -37,7 +37,7 @@ serve(async (req) => {
 
   const requestMode = await req.clone().json().then((body) => body?.mode).catch(() => null);
   const normalizeOnly = requestMode === 'normalize' || new URL(req.url).searchParams.get('mode') === 'normalize';
-  const alerts: Array<{ type: string; level: string; message: string; details: string }> = [];
+  const alerts: Array<{ type: string; alertType?: string; level: string; message: string; details: string }> = [];
   const fifteenMinAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
   const twentyMinAgo = new Date(Date.now() - 20 * 60 * 1000).toISOString();
   const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
