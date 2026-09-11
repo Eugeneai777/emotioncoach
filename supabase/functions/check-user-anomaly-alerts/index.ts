@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, validateCronSecret } from '../_shared/auth.ts';
+import { dispatchEmergencyAlerts } from '../_shared/emergencyAlert.ts';
 
 /**
  * 用户异常监控定时检查（每15分钟）
