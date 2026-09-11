@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, validateCronSecret } from '../_shared/auth.ts';
+import { dispatchEmergencyAlerts } from '../_shared/emergencyAlert.ts';
 
 /**
  * OG 分享健康监控定时检查（每15分钟）
@@ -31,7 +32,7 @@ serve(async (req) => {
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
   const supabase = createClient(supabaseUrl, serviceKey);
 
-  const alerts: Array<{ type: string; level: string; message: string; details: string }> = [];
+  const alerts: Array<{ type: string; alertType?: string; level: string; message: string; details: string }> = [];
   const fifteenMinAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
   const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
 
