@@ -1,5 +1,4 @@
-import { useState, useEffect, useRef } from "react";
-import { triggerEmergencyAlert } from "@/lib/emergencyAlertService";
+import { useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -57,37 +56,6 @@ export default function UserAnomalyMonitor() {
     suspicious_operation: anomalies.filter((a: any) => a.anomaly_type === 'suspicious_operation').length,
   };
 
-  // 当出现严重异常时自动推送紧急告警
-  const alertSentRef = useRef(false);
-  useEffect(() => {
-    if (alertSentRef.current || anomalies.length === 0) return;
-    const criticalCount = anomalies.filter((a: any) => a.severity === 'critical').length;
-    const totalCount = anomalies.length;
-
-    if (criticalCount > 0) {
-      alertSentRef.current = true;
-      const criticalItems = anomalies.filter((a: any) => a.severity === 'critical').slice(0, 5);
-      const criticalMessages = criticalItems.map((a: any) => `• ${a.title || a.message}`).join('\n');
-      triggerEmergencyAlert({
-        source: 'user_anomaly',
-        level: 'critical',
-        alertType: 'user_anomaly_critical',
-        message: `发现 ${criticalCount} 条严重用户异常`,
-        details: `异常明细:\n${criticalMessages}\n\n统计: 异常登录 ${stats.abnormal_login} 次 · 高频调用 ${stats.high_frequency} 次 · 可疑操作 ${stats.suspicious_operation} 次\n总异常数: ${totalCount} 条`,
-      });
-    } else if (totalCount >= 5) {
-      alertSentRef.current = true;
-      const topItems = anomalies.slice(0, 5);
-      const topMessages = topItems.map((a: any) => `• ${a.title || a.message}`).join('\n');
-      triggerEmergencyAlert({
-        source: 'user_anomaly',
-        level: 'high',
-        alertType: 'user_anomaly_high_volume',
-        message: `用户异常监控累计 ${totalCount} 条告警`,
-        details: `最新异常:\n${topMessages}\n\n统计: 异常登录 ${stats.abnormal_login} 次 · 高频调用 ${stats.high_frequency} 次 · 可疑操作 ${stats.suspicious_operation} 次`,
-      });
-    }
-  }, [anomalies]);
 
   const filtered = searchText
     ? anomalies.filter((a: any) =>

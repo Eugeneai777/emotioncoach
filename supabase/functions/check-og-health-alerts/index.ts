@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, validateCronSecret } from '../_shared/auth.ts';
+import { dispatchEmergencyAlerts } from '../_shared/emergencyAlert.ts';
 
 /**
  * OG 分享健康监控定时检查（每15分钟）
@@ -31,7 +32,7 @@ serve(async (req) => {
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
   const supabase = createClient(supabaseUrl, serviceKey);
 
-  const alerts: Array<{ type: string; level: string; message: string; details: string }> = [];
+  const alerts: Array<{ type: string; alertType?: string; level: string; message: string; details: string }> = [];
   const fifteenMinAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
   const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
 
@@ -53,7 +54,7 @@ serve(async (req) => {
         .join('\n');
 
       alerts.push({
-        type: 'og_health',
+        type: 'og_health', alertType: 'og_critical_issues',
         level: 'critical',
         message: `OG分享异常预警：最近15分钟内检测到 ${criticalCount} 条严重分享问题`,
         details: `最新异常记录:\n${summary}`,
@@ -70,7 +71,7 @@ serve(async (req) => {
 
     if ((imageFailCount || 0) > 5) {
       alerts.push({
-        type: 'og_health',
+        type: 'og_health', alertType: 'og_image_load_failed',
         level: 'critical',
         message: `OG图片加载异常：最近15分钟内 ${imageFailCount} 次图片加载失败`,
         details: `大量用户分享时无法正常显示预览图片，可能影响传播效果，请检查图片CDN或存储服务`,
@@ -102,7 +103,7 @@ serve(async (req) => {
           .join('\n');
 
         alerts.push({
-          type: 'og_health',
+          type: 'og_health', alertType: 'og_hot_pages',
           level: 'high',
           message: `OG配置异常集中：${hotPages.length} 个页面在1小时内反复出现分享问题`,
           details: `高频异常页面:\n${pageSummary}`,
@@ -120,69 +121,25 @@ serve(async (req) => {
 
     if ((warningCount || 0) > 20 && alerts.length === 0) {
       alerts.push({
-        type: 'og_health',
+        type: 'og_health', alertType: 'og_warning_backlog',
         level: 'high',
         message: `OG分享警告堆积：最近15分钟内累计 ${warningCount} 条未处理警告`,
         details: `大量页面OG配置存在问题（如图片尺寸不合规、缺少描述字段等），建议批量排查`,
       });
     }
 
-    // 推送告警
-    if (alerts.length > 0) {
-      const { data: contacts } = await supabase
-        .from('emergency_contacts')
-        .select('*')
-        .eq('is_active', true);
+    // 推送告警（统一冷却去重 + 日志）
+    const dispatchResult = await dispatchEmergencyAlerts(supabase, supabaseUrl, serviceKey,
+      alerts.map((a: any) => ({
+        source: 'og_health',
+        level: a.level,
+        alertType: a.alertType || a.type,
+        message: a.message,
+        details: a.details,
+      }))
+    );
 
-      for (const alert of alerts) {
-        const matchedContacts = (contacts || []).filter((c: any) =>
-          c.alert_types?.includes(alert.type) &&
-          c.alert_levels?.includes(alert.level)
-        );
-
-        for (const contact of matchedContacts) {
-          try {
-            await fetch(`${supabaseUrl}/functions/v1/send-emergency-alert`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${serviceKey}` },
-              body: JSON.stringify({
-                webhook_url: contact.wecom_webhook_url,
-                contact_name: contact.name,
-                alert_type: 'OG分享监控',
-                alert_level: alert.level,
-                message: alert.message,
-                details: alert.details,
-              }),
-            });
-
-            await supabase.from('emergency_alert_logs').insert({
-              contact_id: contact.id,
-              contact_name: contact.name,
-              alert_source: 'og_health',
-              alert_level: alert.level,
-              alert_type: alert.type,
-              message: alert.message,
-              details: alert.details,
-              send_status: 'success',
-            });
-          } catch (e) {
-            console.error(`Failed to send OG health alert to ${contact.name}:`, e);
-            await supabase.from('emergency_alert_logs').insert({
-              contact_id: contact.id,
-              contact_name: contact.name,
-              alert_source: 'og_health',
-              alert_level: alert.level,
-              alert_type: alert.type,
-              message: alert.message,
-              send_status: 'failed',
-              error_message: e instanceof Error ? e.message : 'Unknown error',
-            });
-          }
-        }
-      }
-    }
-
-    console.log(`OG health check completed. ${alerts.length} alerts triggered.`);
+    console.log(`OG health check completed. ${alerts.length} alerts, sent=${dispatchResult.sent}, skipped=${dispatchResult.skipped}`);
 
     return new Response(JSON.stringify({ success: true, alerts_count: alerts.length, alerts }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

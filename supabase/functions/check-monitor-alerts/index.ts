@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, validateCronSecret } from '../_shared/auth.ts';
+import { dispatchEmergencyAlerts } from '../_shared/emergencyAlert.ts';
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -37,7 +38,7 @@ serve(async (req) => {
 
   const requestMode = await req.clone().json().then((body) => body?.mode).catch(() => null);
   const normalizeOnly = requestMode === 'normalize' || new URL(req.url).searchParams.get('mode') === 'normalize';
-  const alerts: Array<{ type: string; level: string; message: string; details: string }> = [];
+  const alerts: Array<{ type: string; alertType?: string; level: string; message: string; details: string }> = [];
   const fifteenMinAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
   const twentyMinAgo = new Date(Date.now() - 20 * 60 * 1000).toISOString();
   const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
@@ -324,50 +325,48 @@ serve(async (req) => {
       });
     }
 
-    // 推送告警
-    if (alerts.length > 0) {
-      const { data: contacts } = await supabase
-        .from('emergency_contacts')
-        .select('*')
-        .eq('is_active', true);
+    // 5. 系统成功率检查（近15分钟稳定性记录）
+    const { data: stabilityRows } = await supabase
+      .from('monitor_stability_records')
+      .select('success')
+      .gte('created_at', fifteenMinAgo)
+      .limit(1000);
 
-      for (const alert of alerts) {
-        const matchedContacts = (contacts || []).filter(c =>
-          c.alert_types?.includes(alert.type) &&
-          c.alert_levels?.includes(alert.level)
-        );
-
-        for (const contact of matchedContacts) {
-          try {
-            await fetch(`${supabaseUrl}/functions/v1/send-emergency-alert`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${serviceKey}` },
-              body: JSON.stringify({
-                webhook_url: contact.wecom_webhook_url,
-                contact_name: contact.name,
-                alert_type: alert.type,
-                alert_level: alert.level,
-                message: alert.message,
-                details: alert.details,
-              }),
-            });
-
-            await supabase.from('emergency_alert_logs').insert({
-              contact_id: contact.id,
-              contact_name: contact.name,
-              alert_type: alert.type,
-              alert_level: alert.level,
-              message: alert.message,
-              status: 'sent',
-            });
-          } catch (e) {
-            console.error(`Failed to send alert to ${contact.name}:`, e);
-          }
-        }
+    const totalReq = (stabilityRows || []).length;
+    const failedReq = (stabilityRows || []).filter((r: any) => r.success === false).length;
+    if (totalReq >= 20 && failedReq > 0) {
+      const successRate = ((totalReq - failedReq) / totalReq) * 100;
+      if (successRate < 90) {
+        alerts.push({
+          type: 'stability',
+          alertType: 'success_rate_critical',
+          level: 'critical',
+          message: `系统成功率降至 ${successRate.toFixed(1)}%，失败请求 ${failedReq} 条`,
+          details: `最近15分钟共 ${totalReq} 次请求，其中 ${failedReq} 次失败`,
+        });
+      } else if (successRate < 95) {
+        alerts.push({
+          type: 'stability',
+          alertType: 'success_rate_degraded',
+          level: 'high',
+          message: `系统成功率降至 ${successRate.toFixed(1)}%`,
+          details: `最近15分钟共 ${totalReq} 次请求，其中 ${failedReq} 次失败`,
+        });
       }
     }
 
-    console.log(`Monitor check completed. ${alerts.length} alerts triggered.`);
+    // 推送告警（统一冷却去重 + 日志）
+    const dispatchResult = await dispatchEmergencyAlerts(supabase, supabaseUrl, serviceKey,
+      alerts.map((a: any) => ({
+        source: a.type,
+        level: a.level,
+        alertType: a.alertType || a.type,
+        message: a.message,
+        details: a.details,
+      }))
+    );
+
+    console.log(`Monitor check completed. ${alerts.length} alerts, sent=${dispatchResult.sent}, skipped=${dispatchResult.skipped}`);
 
     return new Response(JSON.stringify({ success: true, alerts_count: alerts.length, alerts }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

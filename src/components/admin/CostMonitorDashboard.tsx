@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo } from "react";
-import { triggerEmergencyAlert } from "@/lib/emergencyAlertService";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -201,20 +200,7 @@ export default function CostMonitorDashboard() {
       if (error) throw error;
       toast.success(`预警检查完成，发现 ${data.alerts_count} 个新预警`);
 
-      // 触发紧急告警推送 - 包含具体预警详情
-      if (data.alerts_count > 0 && data.alerts?.length > 0) {
-        const alertDetails = data.alerts.map((a: any) => a.alert_message).join('\n');
-        const alertTypes = data.alerts.map((a: any) => a.alert_type).join(', ');
-        const maxCost = Math.max(...data.alerts.map((a: any) => a.actual_cost_cny || 0));
-        
-        triggerEmergencyAlert({
-          source: 'cost_monitor',
-          level: data.alerts_count >= 3 ? 'critical' : 'high',
-          alertType: 'cost_alert_triggered',
-          message: `成本预警: ${alertDetails}`,
-          details: `预警类型: ${alertTypes}\n预警数量: ${data.alerts_count} 个\n最高实际成本: ¥${maxCost.toFixed(2)}\n${data.alerts.map((a: any) => `• ${a.alert_message} (阈值 ¥${a.threshold_cny}, 实际 ¥${a.actual_cost_cny?.toFixed(2)})`).join('\n')}`,
-        });
-      }
+      // 告警推送由服务端每15分钟自动巡检统一处理
 
       fetchData();
     } catch (error) {
