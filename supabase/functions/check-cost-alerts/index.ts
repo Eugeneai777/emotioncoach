@@ -241,37 +241,20 @@ serve(async (req) => {
         console.error('Error inserting alerts:', error);
       }
 
-      // 发送企业微信通知（查询 emergency_contacts）
+      // 发送企业微信通知（统一冷却去重 + 日志）
       const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
       const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
-      const { data: contacts } = await supabase
-        .from('emergency_contacts')
-        .select('*')
-        .eq('is_active', true)
-        .contains('alert_types', ['cost_monitor']);
 
-      for (const alert of alerts) {
-        for (const contact of (contacts || [])) {
-          if (!contact.alert_levels?.includes('high') && !contact.alert_levels?.includes('critical')) continue;
-          try {
-            await fetch(`${supabaseUrl}/functions/v1/send-emergency-alert`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${serviceKey}` },
-              body: JSON.stringify({
-                webhook_url: contact.wecom_webhook_url,
-                contact_name: contact.name,
-                alert_type: 'cost_monitor',
-                alert_level: 'high',
-                message: `⚠️ 成本预警\n\n${alert.alert_message}`,
-                details: `阈值: ¥${alert.threshold_cny} | 实际: ¥${alert.actual_cost_cny.toFixed(2)}`,
-              }),
-            });
-            console.log(`Cost alert sent to ${contact.name}`);
-          } catch (e) {
-            console.error(`Failed to send cost alert to ${contact.name}:`, e);
-          }
-        }
-      }
+      const dispatchResult = await dispatchEmergencyAlerts(supabase, supabaseUrl, serviceKey,
+        alerts.map((a: any) => ({
+          source: 'cost_monitor',
+          level: 'high',
+          alertType: a.alert_type,
+          message: `⚠️ 成本预警\n\n${a.alert_message}`,
+          details: `阈值: ¥${a.threshold_cny} | 实际: ¥${Number(a.actual_cost_cny || 0).toFixed(2)}`,
+        }))
+      );
+      console.log(`Cost alerts dispatched: sent=${dispatchResult.sent}, skipped=${dispatchResult.skipped}`);
     }
 
     console.log(`Cost alert check completed. ${alerts.length} new alerts generated.`);
